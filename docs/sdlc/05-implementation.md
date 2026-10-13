@@ -10,7 +10,7 @@ Record what was built, with the paths a later change should start from.
 - Expo Router, file-based. Routes are in `app/`, not `src/app/`. Shared code is in `src/`.
 - Async Storage for the device record of language, session, notes, reviews, recognition drafts, downloads, and chat.
 - `expo-document-picker`, `expo-file-system`, and `expo-sharing` for import and export. The file system is imported only when a native export or a native text read actually runs.
-- A Node server in `server/index.mjs` with no npm dependencies. It calls `https://api.x.ai/v1/responses`.
+- A Node server in `server/index.mjs` with no npm dependencies. It calls `https://api.x.ai/v1/responses`, and `server/oidc.mjs` calls the university token and userinfo endpoints. The browser calls the authorize endpoint.
 
 `ios/` and `android/` are not in the tree. Continuous Native Generation produces them at build time from `app.json`.
 

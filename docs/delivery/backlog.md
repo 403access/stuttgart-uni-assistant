@@ -11,7 +11,7 @@ Status of the prototype on 13 October 2026. "Done" means the screen or script ex
 - Optional Grok proxy (`server/index.mjs`, `grok-4.7`, `store: false`) with a campus fallback.
 - ILIAS-style local sync, text import, notes, on-device sharing, reader, extractive summary, export.
 - Schematic campus for Vaihingen and Stadtmitte.
-- Sign-in that discards the password.
+- SIAM sign-in through the TIK identity provider (authorization code, secret on the server). Demonstration profile remains. See [oidc-login.md](../engineering/oidc-login.md).
 - Documentation of the product, the lifecycle, and this engineering set.
 - `npm run typecheck`, `npm run check`, and a web export of the routes. `GET /health` without a key.
 

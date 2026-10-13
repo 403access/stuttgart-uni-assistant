@@ -208,9 +208,16 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export type SessionMode = 'oidc' | 'demo';
+
 export interface PersistedState {
   locale: Locale;
   sessionAccount: string | null;
+  sessionMode: SessionMode | null;
+  sessionName: string | null;
+  sessionEmail: string | null;
+  sessionSubject: string | null;
+  oidcSessionId: string | null;
   syncAt: Partial<Record<PlatformId, string>>;
   downloadedIds: string[];
   imports: ImportedDocument[];

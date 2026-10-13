@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 
+import { endUniversitySession, universityUrls } from '@/src/auth/oidc';
 import { assistantUrl } from '@/src/assistant/remote';
 import { Button, Card, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
@@ -7,7 +8,11 @@ import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function SettingsScreen() {
-  const { locale, setLocale, reset, signOut } = useApp();
+  const { locale, setLocale, reset, signOut, oidcSessionId, sessionMode } = useApp();
+  async function leave() {
+    if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
+    signOut();
+  }
   return (
     <Screen back kicker={tx(locale, 'App', 'App')} title={tx(locale, 'Einstellungen', 'Settings')}>
       <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -38,8 +43,19 @@ export default function SettingsScreen() {
           )}
         </Text>
       </Card>
+      <Card>
+        <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{tx(locale, 'Universitätslogin', 'University sign-in')}</Text>
+        <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>{universityUrls.authorize}</Text>
+        <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
+          {tx(
+            locale,
+            'Client-ID und Secret liegen in der .env des Servers. Ein Passwort wird dort nicht gelesen. Abmelden widerruft das Token auf dem Server, soweit die Sitzung noch im Speicher liegt.',
+            'The client id and secret live in the server .env. A password is not read there. Sign-out revokes the token on the server while that session is still in memory.',
+          )}
+        </Text>
+      </Card>
       <Button label={tx(locale, 'Lokale Ergänzungen zurücksetzen', 'Reset local additions')} onPress={reset} secondary />
-      <Button label={tx(locale, 'Sitzung beenden', 'End session')} onPress={signOut} />
+      <Button label={tx(locale, 'Sitzung beenden', 'End session')} onPress={leave} />
     </Screen>
   );
 }

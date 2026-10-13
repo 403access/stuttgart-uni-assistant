@@ -66,7 +66,8 @@ The description above is the target product. This repository implements the info
 - A simplified 180 ECTS plan. It is not the legal Prüfungsordnung.
 - Fictional lecturers and a schematic campus. Room numbers are orientation markers, not a surveyed floor plan.
 - Past-exam entries list topics and study hints. They do not redistribute exam PDFs.
-- Sign-in demonstrates the SIAM moment. It does not contact the university identity provider.
-- Platform sync updates a local timestamp. It does not call C@MPUS, ILIAS, or SDG Campus.
+- Sign-in opens the university identity provider at `https://idp.uni-stuttgart.de` with authorization-code OpenID Connect. SIAM is the account system behind that provider. The password is entered on the provider's page. Client id and secret come from TIK and stay in the server `.env`. See [engineering/oidc-login.md](engineering/oidc-login.md).
+- A successful sign-in identifies the account. It does not replace the timetable or the grades. Those remain the demonstration record until a C@MPUS connector exists.
+- Platform sync for C@MPUS, ILIAS, and SDG Campus updates a local timestamp. It does not call those hosts.
 
 A later phase replaces each local connector with a server-side integration. That boundary is specified in [engineering/integrations.md](engineering/integrations.md) and [engineering/security-and-privacy.md](engineering/security-and-privacy.md).

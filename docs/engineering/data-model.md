@@ -122,6 +122,11 @@ Key: `stuttgart-uni-assistant/v1`.
 interface PersistedState {
   locale: 'de' | 'en';
   sessionAccount: string | null;
+  sessionMode: 'oidc' | 'demo' | null;
+  sessionName: string | null;
+  sessionEmail: string | null;
+  sessionSubject: string | null;
+  oidcSessionId: string | null;
   syncAt: Partial<Record<'campus' | 'ilias' | 'sdg' | 'siam', string>>;
   downloadedIds: string[];
   imports: ImportedDocument[];
@@ -134,4 +139,4 @@ interface PersistedState {
 
 `sanitize` keeps only well-typed fields. Unknown JSON is ignored. ILIAS sync unions every `source: 'ilias'` document id into `downloadedIds` and sets `syncAt.ilias`. Other platforms only set their timestamp.
 
-Not stored: the password, the API key, grades, the catalog, GPS, or anyone else's account.
+Not stored: the password, the OIDC client secret, the university access token, the API key, grades, the catalog, GPS, or anyone else's account. `oidcSessionId` only names a record in the server's memory.

@@ -9,6 +9,7 @@ import type {
   PersistedState,
   PlatformId,
   Review,
+  SessionMode,
   TransferDraft,
 } from '@/src/types';
 
@@ -17,6 +18,11 @@ const STORAGE_KEY = 'stuttgart-uni-assistant/v1';
 const empty: PersistedState = {
   locale: 'de',
   sessionAccount: null,
+  sessionMode: null,
+  sessionName: null,
+  sessionEmail: null,
+  sessionSubject: null,
+  oidcSessionId: null,
   syncAt: {},
   downloadedIds: [],
   imports: [],
@@ -28,7 +34,8 @@ const empty: PersistedState = {
 
 type AppContextValue = PersistedState & {
   ready: boolean;
-  signIn: (account: string) => void;
+  signInDemo: (account: string) => void;
+  signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
   syncPlatform: (platform: PlatformId) => void;
@@ -52,6 +59,11 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
   return {
     locale: value.locale === 'en' ? 'en' : 'de',
     sessionAccount: typeof value.sessionAccount === 'string' ? value.sessionAccount : null,
+    sessionMode: value.sessionMode === 'oidc' || value.sessionMode === 'demo' ? value.sessionMode : null,
+    sessionName: typeof value.sessionName === 'string' ? value.sessionName : null,
+    sessionEmail: typeof value.sessionEmail === 'string' ? value.sessionEmail : null,
+    sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
+    oidcSessionId: typeof value.oidcSessionId === 'string' ? value.oidcSessionId : null,
     syncAt: value.syncAt ?? {},
     downloadedIds: Array.isArray(value.downloadedIds) ? value.downloadedIds.filter((id) => typeof id === 'string') : [],
     imports: Array.isArray(value.imports) ? value.imports : [],
@@ -91,8 +103,37 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       ready,
-      signIn: (account) => setState((current) => ({ ...current, sessionAccount: account.trim() || 'st123456' })),
-      signOut: () => setState((current) => ({ ...current, sessionAccount: null })),
+      signInDemo: (account) =>
+        setState((current) => ({
+          ...current,
+          sessionAccount: account.trim() || 'st123456',
+          sessionMode: 'demo' satisfies SessionMode,
+          sessionName: null,
+          sessionEmail: null,
+          sessionSubject: null,
+          oidcSessionId: null,
+        })),
+      signInOidc: (profile) =>
+        setState((current) => ({
+          ...current,
+          sessionAccount: profile.account,
+          sessionMode: 'oidc',
+          sessionName: profile.name,
+          sessionEmail: profile.email,
+          sessionSubject: profile.subject,
+          oidcSessionId: profile.sessionId,
+          syncAt: { ...current.syncAt, siam: new Date().toISOString() },
+        })),
+      signOut: () =>
+        setState((current) => ({
+          ...current,
+          sessionAccount: null,
+          sessionMode: null,
+          sessionName: null,
+          sessionEmail: null,
+          sessionSubject: null,
+          oidcSessionId: null,
+        })),
       setLocale: (locale) => setState((current) => ({ ...current, locale })),
       syncPlatform: (platform) =>
         setState((current) => ({
@@ -131,7 +172,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           ...current,
           plannedIds: current.plannedIds.includes(id) ? current.plannedIds.filter((item) => item !== id) : [...current.plannedIds, id],
         })),
-      reset: () => setState((current) => ({ ...empty, locale: current.locale, sessionAccount: current.sessionAccount })),
+      reset: () =>
+        setState((current) => ({
+          ...empty,
+          locale: current.locale,
+          sessionAccount: current.sessionAccount,
+          sessionMode: current.sessionMode,
+          sessionName: current.sessionName,
+          sessionEmail: current.sessionEmail,
+          sessionSubject: current.sessionSubject,
+          oidcSessionId: current.oidcSessionId,
+          syncAt: current.sessionMode === 'oidc' ? { siam: current.syncAt.siam } : {},
+        })),
     }),
     [ready, state],
   );

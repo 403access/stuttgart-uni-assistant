@@ -51,7 +51,7 @@ A build is eligible to leave the author's machine when:
 
 1. `npm run typecheck` and `npm run check` pass.
 2. The web export completes.
-3. The sign-in screen still states that SIAM is not contacted.
+3. The sign-in screen still sends the password nowhere, and it names the identity-provider URL.
 4. No secret is in the diff.
 5. The version in `app.json` is the version being handed to someone.
 

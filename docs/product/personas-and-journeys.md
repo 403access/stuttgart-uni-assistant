@@ -33,7 +33,7 @@ Each journey names the path through the current app. Dates assume the demonstrat
 
 ### 1. Open the day
 
-1. Sign in with `st123456` and any password.
+1. Sign in with **Mit SIAM anmelden**, or open the demonstration profile. The demonstration profile is Lena Hartmann, account `st123456`. There is no password field.
 2. Land on Heute.
 3. See the credit strip, today's AI lecture (Tuesday 09:45–11:15, V47.02), the next deadlines, and the latest notice.
 4. Open the lecture room or the deadline list from that screen.

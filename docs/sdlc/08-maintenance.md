@@ -16,8 +16,8 @@ Keep the demonstration true after the first build: the numbers, the disclaimer, 
 
 ## Operating rules
 
-- Do not add a client-side call to a university login form.
-- Do not store the password, even in Async Storage.
+- Do not add a client-side call that posts the university password. The authorize redirect in `server/oidc.mjs` is the login.
+- Do not store the password, even in Async Storage or `.env`.
 - Do not put `XAI_API_KEY` in `EXPO_PUBLIC_*` or in source.
 - Do not add exam PDFs to `src/data` or to the document hub.
 - Do not replace the drawn mark with the university signet.

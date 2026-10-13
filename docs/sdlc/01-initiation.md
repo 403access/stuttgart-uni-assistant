@@ -22,7 +22,7 @@ The product is a companion that reads those sources and answers in the student's
 
 ## Constraints discovered at the start
 
-- SIAM credentials must not be collected and sent to a private server. A password field that forwards the password would be the wrong product, even as a demo.
+- SIAM credentials must not be collected and sent to a private server. A password field that forwards the password would be the wrong product, even as a demo. The later sign-in opens the TIK identity provider and keeps the password on that page. See [oidc-login.md](../engineering/oidc-login.md).
 - C@MPUS, ILIAS, and SDG Campus do not offer a public student API that this project can call.
 - Past exam papers are often copyrighted. An index of topics is in scope. Hosting the papers is not.
 - The corporate design (anthracite, mid blue, light blue, the circle motif) is published. The signet and the Univers typeface are not free to embed.

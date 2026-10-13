@@ -4,11 +4,13 @@ This build is a demonstration on one device. The rules below are what the code d
 
 ## Credentials
 
-The login form has a password field so the SIAM moment is visible. The handler does not put the password in state, Async Storage, logs, or a request. `signIn` stores the trimmed account string, or `st123456` when the field is blank. Sign-out clears `sessionAccount` and leaves the rest of the device record.
+There is no password field. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize`. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Async Storage keeps the account, name, email, subject, and a local session id used only to ask this server to revoke that memory entry.
 
-There is no account database. Anyone who can open the app can reach the fictional record. That is acceptable only because the record is fictional.
+`OIDC_LOGIN_HINT` may hold the account id so the identity provider can prefill its form. It is not accepted as a password. Environment variables named `OIDC_PASSWORD`, `PASSWORD`, `CAMPUS_PASSWORD`, `SIAM_PASSWORD`, and `UNI_PASSWORD` are ignored.
 
-A real deployment uses server-side OpenID Connect. The university password stays on the identity provider. See [integrations](integrations.md).
+The demonstration button still opens Lena Hartmann's record without contacting the identity provider. Anyone who can open the app can reach that fictional record.
+
+The flow, the discovery URLs, and the TIK registration step are in [oidc-login.md](oidc-login.md).
 
 ## API key
 
@@ -22,7 +24,10 @@ The server sends `Authorization: Bearer` to `https://api.x.ai/v1`. The client ne
 
 | Data | Leaves the device? |
 | --- | --- |
-| Password | No |
+| Password | No. It is typed at the identity provider |
+| Authorization code | Sent once to this server, then exchanged. Not stored |
+| Access token and refresh token | Stay in the server process. Not sent back to the app |
+| Account, name, email from UserInfo | Stored on the device so the profile can show them |
 | Catalog grades, rooms, deadlines | Only inside the fact sheet, and only if the student asks a question while the assistant server is reachable |
 | Chat history (last six turns) | Same request, sliced |
 | Focused document text | Included in that fact sheet when a document is open |

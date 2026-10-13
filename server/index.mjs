@@ -1,7 +1,10 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
+import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
+
 loadEnv(new URL('../.env', import.meta.url));
+warnIfPasswordPresent();
 
 const port = Number(process.env.PORT || 8787);
 const model = 'grok-4.7';
@@ -76,7 +79,39 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (request.method === 'GET' && url.pathname === '/health') {
-    send(response, 200, { ok: true, model, configured: Boolean(process.env.XAI_API_KEY) });
+    send(response, 200, { ok: true, model, configured: Boolean(process.env.XAI_API_KEY), oidc: publicOidcStatus() });
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/oidc/config') {
+    send(response, 200, publicOidcStatus());
+    return;
+  }
+  if (url.pathname === '/v1/oidc/start' || url.pathname === '/v1/oidc/exchange' || url.pathname === '/v1/oidc/logout') {
+    if (request.method !== 'POST') {
+      send(response, 405, { error: 'method' });
+      return;
+    }
+    let oidcBody;
+    try {
+      oidcBody = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      if (url.pathname === '/v1/oidc/start') {
+        send(response, 200, await startLogin(String(oidcBody.redirectUri ?? '')));
+        return;
+      }
+      if (url.pathname === '/v1/oidc/exchange') {
+        send(response, 200, await exchangeCode({ code: oidcBody.code, state: oidcBody.state, redirectUri: String(oidcBody.redirectUri ?? '') }));
+        return;
+      }
+      send(response, 200, await endRemoteSession(oidcBody.sessionId));
+    } catch (error) {
+      const status = Number(error.status) || 500;
+      send(response, status, { error: error.message || 'oidc_failed', detail: error.detail });
+    }
     return;
   }
   if (request.method !== 'POST' || url.pathname !== '/v1/assist') {

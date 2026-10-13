@@ -2,7 +2,7 @@
 
 A study assistant for students at the University of Stuttgart. The app brings the timetable, degree progress, course material, campus orientation, and peer notes into one Expo app, and answers questions about that record in German or English.
 
-This repository is a student demonstration. It is not a service of the University of Stuttgart, it does not use the university logo, and it does not connect to SIAM, C@MPUS, ILIAS, or SDG Campus. The academic record belongs to a fictional student, Lena Hartmann.
+This repository is a student demonstration. It is not a service of the University of Stuttgart, and it does not use the university logo. Sign-in can open the university identity provider (the same OpenID Connect login that C@MPUS uses). The timetable, grades, ILIAS files, and SDG Campus data in the app are still the fictional record of Lena Hartmann. The password is typed only on the university page.
 
 ## Run the app
 
@@ -22,7 +22,7 @@ npm run ios
 npm run android
 ```
 
-On the sign-in screen, keep the account `st123456` and type any password. The password is discarded. It is not stored and not sent.
+On the sign-in screen, **Mit SIAM anmelden** opens the university identity provider. That needs `npm run assistant` and a client id and secret from TIK in `.env`. The values and every URL are documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** skips the identity provider and loads Lena Hartmann (`st123456`). There is no password field.
 
 ## Run the assistant server
 
@@ -36,7 +36,7 @@ npm run assistant
 
 The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`.
 
-`GET /health` reports whether a key is configured. Without a key the server returns 503 for `/v1/assist` and the app keeps the local answer.
+`GET /health` reports whether an xAI key is configured and whether `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are set. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
 ## Checks
 

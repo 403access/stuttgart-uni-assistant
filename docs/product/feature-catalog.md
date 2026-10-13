@@ -1,6 +1,6 @@
 # Feature catalog
 
-Each row is a capability from the product description, the screen that carries it in this build, and what the screen does with the demonstration record. Nothing in this catalog calls SIAM, C@MPUS, ILIAS, or SDG Campus.
+Each row is a capability from the product description, the screen that carries it in this build, and what the screen does. C@MPUS, ILIAS, and SDG Campus are still the demonstration record. SIAM sign-in opens the university identity provider. The URLs are in [oidc-login.md](../engineering/oidc-login.md).
 
 Status words:
 
@@ -15,7 +15,7 @@ Status words:
 | C@MPUS schedule, exams, handbook, grades, announcements | `/plattformen`, Heute, Fristen, module list | In this build | Reads the bundled timetable, deadlines, modules, and grades. Sync writes a timestamp in `syncAt.campus`. |
 | ILIAS materials, slides, homework, forum notices | `/dokumente`, `/plattformen` | In this build | Sync marks every bundled ILIAS document as downloaded and stamps `syncAt.ilias`. Forum-style text lives in the news feed. |
 | SDG Campus and FÜSQ courses | `/plattformen`, Nachhaltigkeit module, Tutorien | In this build | The enrolled key-competency module, its tutorial, and SDG news items stand in for the platform. Sync stamps `syncAt.sdg`. |
-| SIAM single sign-on | `/login` | Local only | Account field, password field, and a banner that the app is not connected. The password is discarded. The session stores the trimmed account string, default `st123456`. |
+| SIAM single sign-on | `/login` | In this build, once TIK has registered a client | **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` in the system browser. The server exchanges the code with the client secret. The password is not collected. Without a client id the button explains the gap. **Demonstrationsprofil öffnen** still loads Lena Hartmann. |
 
 ## 2. Modules (Module)
 

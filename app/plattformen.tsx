@@ -21,23 +21,27 @@ const copy: Record<PlatformId, { de: string; en: string }> = {
     en: 'Key-competency catalogue and enrollment, including the sustainability course.',
   },
   siam: {
-    de: 'Die Sitzung gilt nur auf diesem Gerät. Ein produktiver Anschluss wäre OpenID Connect, serverseitig.',
-    en: 'The session is valid only on this device. A production connection would be OpenID Connect, server-side.',
+    de: 'Nutzerkonto im Identitätsmanagement. Die Anmeldung öffnet den OIDC-Endpunkt des TIK, https://idp.uni-stuttgart.de/idp/profile/oidc/authorize. C@MPUS unter https://campus.uni-stuttgart.de/ verwendet denselben Provider.',
+    en: 'Account in the identity management. Sign-in opens the TIK OIDC endpoint, https://idp.uni-stuttgart.de/idp/profile/oidc/authorize. C@MPUS at https://campus.uni-stuttgart.de/ uses the same provider.',
   },
 };
 
 export default function PlatformsScreen() {
-  const { locale, syncAt, syncPlatform, sessionAccount } = useApp();
+  const { locale, syncAt, syncPlatform, sessionAccount, sessionMode } = useApp();
   const ids: PlatformId[] = ['siam', 'campus', 'ilias', 'sdg'];
   return (
-    <Screen back kicker={tx(locale, 'Anbindung', 'Connections')} title={tx(locale, 'Plattformen', 'Platforms')} subtitle={tx(locale, 'Nichts verlässt das Gerät. Sync aktualisiert nur den lokalen Zeitstempel.', 'Nothing leaves the device. Sync only refreshes the local timestamp.')}>
+    <Screen back kicker={tx(locale, 'Anbindung', 'Connections')} title={tx(locale, 'Plattformen', 'Platforms')} subtitle={tx(locale, 'C@MPUS, ILIAS und SDG Campus bleiben lokal. SIAM öffnet den Identity Provider im Browser.', 'C@MPUS, ILIAS, and SDG Campus stay local. SIAM opens the identity provider in the browser.')}>
       {ids.map((id) => (
         <Card key={id}>
           <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>{platformName(id)}</Text>
           <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>{copy[id][locale]}</Text>
           <Text style={{ color: colors.blue, fontWeight: '700' }}>
             {id === 'siam'
-              ? tx(locale, `Konto ${sessionAccount ?? '–'} · lokal`, `Account ${sessionAccount ?? '–'} · local`)
+              ? tx(
+                  locale,
+                  sessionMode === 'oidc' ? `Konto ${sessionAccount ?? '–'} · IdP` : `Konto ${sessionAccount ?? '–'} · Demonstration`,
+                  sessionMode === 'oidc' ? `Account ${sessionAccount ?? '–'} · IdP` : `Account ${sessionAccount ?? '–'} · demonstration`,
+                )
               : syncAt[id]
                 ? tx(locale, `Zuletzt markiert ${new Date(syncAt[id] as string).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB')}`, `Last marked ${new Date(syncAt[id] as string).toLocaleString('en-GB')}`)
                 : tx(locale, 'Noch nicht synchronisiert', 'Not synced yet')}

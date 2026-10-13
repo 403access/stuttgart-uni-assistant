@@ -25,7 +25,7 @@ Scripts in `package.json`:
 | `check` | `tsx scripts/check-assistant.ts` | Catalog totals and German answers |
 | `assistant` | `node server/index.mjs` | Local Grok proxy on port 8787 |
 
-Sign in as `st123456` with any password. The password is discarded.
+Sign in with **Mit SIAM anmelden** when `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are in `.env`, or open the demonstration profile. There is no password field. The URLs and the TIK registration step are in [oidc-login.md](../engineering/oidc-login.md).
 
 ### Assistant process
 
@@ -39,7 +39,7 @@ curl -s http://127.0.0.1:8787/health
 Healthy and unconfigured:
 
 ```json
-{"ok":true,"model":"grok-4.7","configured":false}
+{"ok":true,"model":"grok-4.7","configured":false,"oidc":{"configured":false}}
 ```
 
 `POST /v1/assist` without a key returns 503 `{ "error": "missing_key" }`. The app then keeps the local answer.
@@ -112,7 +112,7 @@ Install Expo libraries with `npx expo install <package>` from the project direct
 
 ## Support answers that match the product
 
-- "Is this the university app?" No. It is a student demonstration. It does not sign in to SIAM.
-- "Why is my password accepted?" Any password is discarded. The record is always Lena Hartmann's fictional plan.
+- "Is this the university app?" No. It is a student demonstration. Sign-in can use the university identity provider. The timetable in the app is still the demonstration record.
+- "Where do I put my password?" Only on `https://idp.uni-stuttgart.de`. The `.env` file takes the OIDC client id and secret from TIK, and optionally `OIDC_LOGIN_HINT` for the account id.
 - "Why did chat answer without the internet?" The campus engine is local. Grok is a rewrite when the proxy and the key are both present.
 - "Can I upload an Altklausur PDF?" The screen indexes topics only. This project does not host exam files.

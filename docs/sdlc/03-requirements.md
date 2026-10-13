@@ -12,7 +12,7 @@ Requirements use three words on purpose:
 
 ## Accounts and trust
 
-- The app must offer a sign-in moment labeled as SIAM, and must not transmit the password.
+- The app must offer SIAM sign-in through the university identity provider, and must not transmit the password. The password is entered on `https://idp.uni-stuttgart.de`. Client id and secret stay on the server. See [oidc-login.md](../engineering/oidc-login.md).
 - The app must load one named demonstration record, and must show that name even if the typed account differs.
 - The app must keep language, notes, drafts, and chat on the device.
 - The app won't create accounts on a server.
@@ -22,7 +22,7 @@ Requirements use three words on purpose:
 - The app must show C@MPUS, ILIAS, SDG Campus, and SIAM as separate connectors with a plain description of what each would sync.
 - Sync must be an explicit action and must only update local state.
 - ILIAS sync must mark the bundled lecture files as saved on the device.
-- The app won't call university hosts.
+- The app won't call C@MPUS, ILIAS, or SDG Campus. The identity provider is the exception, and only through the authorization-code flow.
 
 ## Degree
 

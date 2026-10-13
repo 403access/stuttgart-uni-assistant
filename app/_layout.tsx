@@ -1,8 +1,11 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
+
+WebBrowser.maybeCompleteAuthSession();
 
 import { AppStateProvider, useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -32,7 +35,7 @@ function Gate() {
 
   useEffect(() => {
     if (!ready) return;
-    const onLogin = segments[0] === 'login';
+    const onLogin = segments[0] === 'login' || segments[0] === 'oidc';
     if (!sessionAccount && !onLogin) {
       router.replace('/login');
       return;

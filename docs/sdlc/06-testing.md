@@ -20,6 +20,8 @@ Catch a wrong credit total or a fabricated answer before a screen redesign hides
 | "Kann ich Maschinelles Lernen jetzt belegen?" | Names M-INF-640 and says it is not yet open |
 | Summary of the week-3 slides | Keeps the token A* |
 
+`npm run check` also runs `node --test server/oidc.test.mjs`. That test checks the authorize URL, the redirect allowlist, and that a password variable is not copied into the request. It does not sign in to the identity provider.
+
 `npm run typecheck` runs `tsc --noEmit` over the app, the domain, and the check script.
 
 The assistant server is checked by starting it and requesting `GET /health`. With no key, the body is `{ "ok": true, "model": "grok-4.7", "configured": false }`.

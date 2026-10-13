@@ -8,7 +8,7 @@ import { pick, tx } from '@/src/text';
 import { Text } from 'react-native';
 
 export default function MoreScreen() {
-  const { locale, sessionAccount } = useApp();
+  const { locale, sessionAccount, sessionMode, sessionName, sessionEmail } = useApp();
   const entries: Array<{ title: string; detail: string; href: '/plattformen' | '/dokumente' | '/kommilitonen' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' }> = [
     { title: tx(locale, 'Plattformen', 'Platforms'), detail: 'C@MPUS · ILIAS · SDG · SIAM', href: '/plattformen' },
     { title: tx(locale, 'Dokumente', 'Documents'), detail: tx(locale, 'ILIAS, Notizen, Import', 'ILIAS, notes, import'), href: '/dokumente' },
@@ -22,11 +22,22 @@ export default function MoreScreen() {
   return (
     <Screen kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Mehr', 'More')}>
       <Card>
-        <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>{student.name}</Text>
-        <Text style={{ color: colors.inkSoft }}>
-          {sessionAccount} · {student.matriculation}
+        <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>
+          {sessionMode === 'oidc' ? sessionName || sessionAccount : student.name}
         </Text>
-        <Text style={{ color: colors.inkSoft }}>{pick(student.faculty, locale)}</Text>
+        <Text style={{ color: colors.inkSoft }}>
+          {sessionAccount}
+          {sessionEmail ? ` · ${sessionEmail}` : ` · ${student.matriculation}`}
+        </Text>
+        <Text style={{ color: colors.inkSoft }}>
+          {sessionMode === 'oidc'
+            ? tx(
+                locale,
+                `Angemeldet über den Identity Provider. Stundenplan und Noten sind weiter der Demonstrationsstand von ${student.name}.`,
+                `Signed in through the identity provider. The timetable and grades are still the demonstration record of ${student.name}.`,
+              )
+            : pick(student.faculty, locale)}
+        </Text>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
           {pick(program.degree, locale)} {pick(program.title, locale)}
         </Text>

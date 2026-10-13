@@ -1,6 +1,6 @@
 # Architecture
 
-Stuttgart Uni is a single Expo client plus an optional Node proxy. The academic record is compiled into the client. Screens and the assistant read that record. The only network call the client makes is the optional rewrite through the assistant server.
+Stuttgart Uni is a single Expo client plus an optional Node proxy. The academic record is compiled into the client. Screens and the assistant read that record. The client calls the local server for two things: the optional Grok rewrite, and the OpenID Connect start, code exchange, and logout. The browser, not the app, talks to `https://idp.uni-stuttgart.de`.
 
 ```text
 app/                         Expo Router screens
@@ -68,7 +68,11 @@ The password never enters this object.
 
 | Route | Behavior |
 | --- | --- |
-| `GET /health` | `{ ok, model: "grok-4.7", configured }` |
+| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc }` |
+| `GET /v1/oidc/config` | Public OIDC status. No secret, no login hint |
+| `POST /v1/oidc/start` | Authorize URL for a redirect this server allows |
+| `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims, not tokens |
+| `POST /v1/oidc/logout` | Revokes the server-side token and drops the session |
 | `POST /v1/assist` | 503 `missing_key` when `XAI_API_KEY` is absent. Otherwise forwards to `https://api.x.ai/v1/responses` with `store: false` and a 50 second timeout. |
 | Anything else | 404 |
 
@@ -76,4 +80,4 @@ The body is capped at 200 KB. The question is sliced to 4,000 characters, the fa
 
 ## What is intentionally not a layer
 
-There is no API client for C@MPUS, ILIAS, SDG Campus, or SIAM. Adding one inside a screen would blur the boundary the domain layer is there to protect. A connector belongs behind a server, replacing `src/data` for the signed-in student, as described in [integrations](integrations.md).
+There is no API client for C@MPUS, ILIAS, or SDG Campus. SIAM sign-in is the identity-provider flow in [oidc-login.md](oidc-login.md): the screen opens the browser, and `server/oidc.mjs` holds the client secret. A later connector for timetable and grades belongs behind that same server, replacing `src/data` for the signed-in student.

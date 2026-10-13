@@ -1,8 +1,8 @@
 # Integrations
 
-The product description names four university systems. This repository does not call any of them. Each platform screen explains the connector and offers a local sync action so the information architecture can be tried without university credentials or a private API.
+The product description names four university systems. C@MPUS, ILIAS, and SDG Campus are not called. SIAM sign-in is a real OpenID Connect authorization-code flow against the TIK identity provider, documented with every URL in [oidc-login.md](oidc-login.md).
 
-Calling SIAM, C@MPUS, ILIAS, or SDG Campus from a student demo, or storing a real password to do so, is out of scope on purpose.
+The app never stores or sends the university password. The student types it on `https://idp.uni-stuttgart.de`. Client id and client secret, issued by TIK, stay in the server `.env`.
 
 ## What sync does today
 
@@ -10,16 +10,16 @@ Calling SIAM, C@MPUS, ILIAS, or SDG Campus from a student demo, or storing a rea
 
 | Platform id | Screen copy | Local effect |
 | --- | --- | --- |
-| `siam` | Sign-in moment | Session account string. Password dropped in the login handler. |
+| `siam` | Sign-in through the identity provider | Browser authorization code flow. On success, account, name, and email from UserInfo, plus `syncAt.siam`. |
 | `campus` | C@MPUS | Timestamp only. Schedule and grades are the bundle. |
 | `ilias` | ILIAS | Timestamp, plus `downloadedIds` for bundled ILIAS texts. |
 | `sdg` | SDG Campus | Timestamp only. The FÜSQ module is already enrolled in the bundle. |
 
 ## Why there is no client
 
-These systems are authenticated, personal, and not published as an open API for third-party mobile apps. A password field that posted to a university host would be the wrong design even if a host answered: the app would be handling credentials it should never see, and a demo binary would be easy to confuse with an official client.
+C@MPUS, ILIAS, and SDG Campus are authenticated, personal, and not published as an open API for third-party mobile apps. A password field that posted to a university host would be the wrong design: the app would be handling a credential it should never see.
 
-The login screen still shows an account field and a password field, because the product description includes the SIAM moment. The banner states that this build is not connected.
+SIAM is different because TIK publishes an identity provider for relying parties and asks services to use it instead of collecting passwords. This app is that relying party. It still needs a client id that TIK registers. It does not reuse the C@MPUS client, and it does not replay the `execution=` parameter that appears in the address bar after C@MPUS has already started a login. The login screen states that the project is not an official university app.
 
 ## Shape of a later connector
 
@@ -30,7 +30,7 @@ Student → this app → project backend → university IdP and academic systems
                          → xAI Responses API (already this shape)
 ```
 
-1. **Identity.** Authorization-code OpenID Connect against the university IdP, with the token exchange on the backend. The app receives its own session. It never receives the university password. The ac-account is an identifier, not a secret to store in Async Storage beyond a display value.
+1. **Identity.** Implemented as authorization-code OpenID Connect. The token exchange already runs on this server. The app stores the account, name, email, and subject for display. It does not store the university tokens. Details and URLs: [oidc-login.md](oidc-login.md).
 2. **C@MPUS.** The backend returns the same shapes the client already uses: modules, sessions, grades, deadlines, handbook text. `src/domain/plan.ts` keeps working if those shapes stay stable.
 3. **ILIAS.** The backend lists file metadata and streams files the student is enrolled to see. The one-tap control becomes a real download into the app's document directory. Copyright stays with the course. The app should not republish those files to other students.
 4. **SDG Campus.** Enrollment and the FÜSQ catalog come from that backend. The sustainability module row is the placeholder.
