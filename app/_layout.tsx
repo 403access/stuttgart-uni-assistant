@@ -1,56 +1,59 @@
-import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { AppStateProvider, useApp } from '@/src/state/AppState';
+import { colors } from '@/src/theme';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from 'expo-router';
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
+  return (
+    <AppStateProvider>
+      <StatusBar style="dark" />
+      <Gate />
+    </AppStateProvider>
+  );
 }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+function Gate() {
+  const { ready, sessionAccount } = useApp();
+  const segments = useSegments();
+  const router = useRouter();
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    if (!ready) return;
+    const onLogin = segments[0] === 'login';
+    if (!sessionAccount && !onLogin) {
+      router.replace('/login');
+      return;
+    }
+    if (sessionAccount && onLogin) {
+      router.replace('/');
+      return;
+    }
+    setSettled(true);
+  }, [ready, sessionAccount, segments, router]);
+
+  useEffect(() => {
+    if (settled) SplashScreen.hideAsync().catch(() => undefined);
+  }, [settled]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    <View style={{ flex: 1, opacity: settled ? 1 : 0 }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist } }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="login" />
       </Stack>
-    </ThemeProvider>
+    </View>
   );
 }

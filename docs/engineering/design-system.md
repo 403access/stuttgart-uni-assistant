@@ -1,0 +1,80 @@
+# Design system
+
+The interface follows the university's published corporate colors and an original mark. It does not reproduce the Stankowski signet, and it does not embed the licensed Univers typeface. The platform UI font is used throughout.
+
+`userInterfaceStyle` is `light` in `app.json`. The web document background matches the app mist color so a dark-mode browser does not flash black.
+
+## Color
+
+Defined in `src/theme.ts`.
+
+| Token | Hex | Use |
+| --- | --- | --- |
+| `anthracite` | `#323232` | Primary text, tab labels when active |
+| `blue` | `#004191` | Actions, links, splash, adaptive icon ground |
+| `blueSoft` | `#E6EEF7` | Selected chips, info pills |
+| `light` | `#00BEFF` | The small circle in the mark, highlights |
+| `lightSoft` | `#E5F8FF` | Light-blue wash |
+| `paper` | `#FFFFFF` | Cards |
+| `mist` | `#F3F6F8` | Screen background |
+| `line` | `#E1E5E8` | Hairlines |
+| `inkSoft` | `#5E666E` | Secondary text |
+| `mute` | `#8B939A` | Meta text |
+| `success` / `successSoft` | `#1C6B45` / `#E5F4EC` | Passed, open seats |
+| `warning` / `warningSoft` | `#8A5A00` / `#FBF3E4` | Locked, caution on recognition |
+| `danger` / `dangerSoft` | `#8E2F2F` / `#F8E8E8` | Destructive or overdue emphasis |
+
+Screen padding is 20. Card padding is 16.
+
+Official names stay official in both languages: C@MPUS, ILIAS, SIAM, SDG Campus, stuvus, FÜSQ, Prüfungsordnung.
+
+## Mark
+
+`Mark` in `src/components/ui.tsx` draws two circles: a mid-blue disc and a smaller light-blue disc. It is the splash and header motif. Do not replace it with the university logo.
+
+The generated Expo icons under `assets/images/` are the template icons tinted by the splash and adaptive background `#004191`. They are not the signet.
+
+## Type
+
+System font. German copy uses the local conventions in `src/text.ts`:
+
+- Dates: `13.10.2026` in German, `13 Oct 2026` in English.
+- Grades: a comma in German (`1,9`), a point in English (`1.9`).
+
+Strings that the student sees are `Localized` objects (`de` and `en`) or they pass through `tx`. The language toggle in Einstellungen is the only switch. German is the default when storage is empty.
+
+## Components
+
+`src/components/ui.tsx` is the set screens actually share.
+
+| Piece | Role |
+| --- | --- |
+| `Screen` | Safe area, mist background, scroll, optional title |
+| `Card` | White surface. Pressable when an `onPress` is set |
+| `Section` | Heading over a group |
+| `Pill` | Status chip. Tones map to the soft colors above |
+| `Meter` | ECTS progress inside an area |
+| `Button` | Primary mid-blue action, or a quiet variant |
+| `FieldLabel`, `Muted`, `Strong`, `InfoRow` | Form and definition-list text |
+
+Tab icons in `app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small geometric mark per tab. The five labels are Heute, Studium, Chat, Campus, and Mehr, translated with `tx`.
+
+## Screen patterns
+
+- One primary idea per card. Heute stacks a credit card, today's sessions, deadlines, and news as separate cards.
+- A locked module uses the warning tone and a sentence ("Noch nicht belegbar"), not only a disabled control.
+- Demo boundaries are visible copy: the login banner, the schematic-map label, the "not a live C@MPUS extract" line in assistant answers, and the PDF note when a file has no text layer.
+- Stack screens keep a back affordance in the screen header. The navigator header is hidden so the mark and the language stay consistent.
+- Empty chat explains that answers come from the demonstration record.
+
+## Map
+
+Campus is not a map SDK. Dots are absolutely positioned from each place's `x` and `y`. The caption says the drawing is schematic. Addresses on the room screen are the orientation, not a walking route.
+
+## Motion and splash
+
+The splash background is `#004191`. It hides only after storage has loaded and the route agrees with the session. There is no other entrance animation. Reanimated is a dependency of the Expo template and is not used for feature motion in this build.
+
+## Writing
+
+Short labels. German is the voice of the default interface: "Anforderungen", "Anrechnung", "Altklausuren", "Kommilitonen", "Fristen". English is a full second set of the same strings, not a partial overlay. The assistant answers in the active language in both engines.

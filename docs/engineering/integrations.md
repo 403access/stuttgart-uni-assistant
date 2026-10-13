@@ -1,0 +1,51 @@
+# Integrations
+
+The product description names four university systems. This repository does not call any of them. Each platform screen explains the connector and offers a local sync action so the information architecture can be tried without university credentials or a private API.
+
+Calling SIAM, C@MPUS, ILIAS, or SDG Campus from a student demo, or storing a real password to do so, is out of scope on purpose.
+
+## What sync does today
+
+`syncPlatform` in `src/state/AppState.tsx` writes an ISO timestamp on `syncAt[platform]`. For ILIAS it also marks the bundled ILIAS document ids as downloaded. The handbook, grades, deadlines, and news do not change, because they already are the record.
+
+| Platform id | Screen copy | Local effect |
+| --- | --- | --- |
+| `siam` | Sign-in moment | Session account string. Password dropped in the login handler. |
+| `campus` | C@MPUS | Timestamp only. Schedule and grades are the bundle. |
+| `ilias` | ILIAS | Timestamp, plus `downloadedIds` for bundled ILIAS texts. |
+| `sdg` | SDG Campus | Timestamp only. The FÜSQ module is already enrolled in the bundle. |
+
+## Why there is no client
+
+These systems are authenticated, personal, and not published as an open API for third-party mobile apps. A password field that posted to a university host would be the wrong design even if a host answered: the app would be handling credentials it should never see, and a demo binary would be easy to confuse with an official client.
+
+The login screen still shows an account field and a password field, because the product description includes the SIAM moment. The banner states that this build is not connected.
+
+## Shape of a later connector
+
+A real integration replaces the bundled snapshot for the signed-in student. It does not grow new `fetch` calls inside screens.
+
+```text
+Student → this app → project backend → university IdP and academic systems
+                         → xAI Responses API (already this shape)
+```
+
+1. **Identity.** Authorization-code OpenID Connect against the university IdP, with the token exchange on the backend. The app receives its own session. It never receives the university password. The ac-account is an identifier, not a secret to store in Async Storage beyond a display value.
+2. **C@MPUS.** The backend returns the same shapes the client already uses: modules, sessions, grades, deadlines, handbook text. `src/domain/plan.ts` keeps working if those shapes stay stable.
+3. **ILIAS.** The backend lists file metadata and streams files the student is enrolled to see. The one-tap control becomes a real download into the app's document directory. Copyright stays with the course. The app should not republish those files to other students.
+4. **SDG Campus.** Enrollment and the FÜSQ catalog come from that backend. The sustainability module row is the placeholder.
+5. **News.** Faculty, institute, stuvus, and university items become feeds the backend normalizes into `NewsItem`.
+
+Until that backend exists, the honest demo is the one in this repository: labeled data, local timestamps, no outbound university traffic.
+
+## Assistant integration
+
+This one is implemented. The client calls only the project server. The server calls `https://api.x.ai/v1/responses`. Details are in [ai-assistant.md](ai-assistant.md).
+
+`EXPO_PUBLIC_ASSISTANT_URL` defaults to `http://127.0.0.1:8787`. A physical device must use the computer's LAN address, because `127.0.0.1` on the phone is the phone. Setting the variable to `off` disables the remote call and leaves the local answer.
+
+## Files and sharing
+
+Import uses the platform document picker (iOS Files, Android storage, or the desktop file dialog). Export uses `expo-sharing` on native and a Blob download on web. `app.json` enables `supportsOpeningDocumentsInPlace` and `enableFileSharing` on the `expo-file-system` plugin so a development build can see those files. Expo Go covers the picker and sharing modules that ship with the SDK. A custom native module would need a development build.
+
+Peer sharing in this build is a boolean on the device record. A shared folder that other students can open needs accounts, storage, and a policy for who may upload solution guides. That service is not in this repository, and it must not become a dump for copyrighted lecture or exam files.
