@@ -40,6 +40,8 @@ curl -s http://127.0.0.1:8787/health
 
 Rotate the C@MPUS secrets without editing the file by hand: `npm run campus:token -- <token>` and `npm run campus:session -- <PSESSIONID>`. A pasted `Bearer` header or a full cookie string is reduced to the bare value, the value can be piped or typed without echoing, and `npm run campus:secret -- list` reports masked status. Restart `npm run assistant` after a change.
 
+Restart the assistant server after every server code change as well, not only after secret changes. An old process answers new calls in the old error shape (no `detail`), which the app reports as `… ohne Detail` — the absence of `[campus #N]` request lines in the server terminal confirms the staleness. The campus logs and the diagnosis steps are in [campus-logging.md](../engineering/campus-logging.md).
+
 Healthy and unconfigured:
 
 ```json

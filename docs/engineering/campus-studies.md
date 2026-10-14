@@ -83,13 +83,13 @@ Both had `studyStatus` `STUDYING_ALLOWED`. The Philosophie study is the one `CAM
 
 | Method | Path | Behavior |
 | --- | --- | --- |
-| `GET` | `/v1/campus/studies` | Calls the chooser and returns `{ studies }` |
+| `GET` | `/v1/campus/studies` | Calls the chooser and returns `{ studies, activeStudyId }` |
 
 `server/catalog.mjs` lists it as `campus-studies`, so the Schnittstelle screen can replay it. The mapped `CampusStudy` keeps `studyId`, the German `name`, `intendedDegree`, `versionIdentifier`, `studyStatus`, `identifier`, `curriculumVersionId`, `curriculumId`, `color`, `lastAccessed`, and `elementId`. The raw body is not stored.
 
-`campusStudies` lives on the device record next to `curriculumNodes`. Sign-out, and a switch to the demo, local, or OIDC session, clears it. A later chooser call replaces the whole list, because the endpoint returns every study at once.
+`campusStudies` lives on the device record next to `curriculumNodes`, plus `activeStudyId` for the selected study. Sign-out, and a switch to the demo, local, or OIDC session, clears both. A later chooser call replaces the whole list, because the endpoint returns every study at once. The selection rule (single study auto-selected, else stored choice, `lastAccessed`, first row) and the switcher UI are documented in [campus-study-switcher.md](campus-study-switcher.md).
 
-Known portal failures are the same codes as the structure read: `missing_session_cookie`, `invalid_token`, `campus_unauthorized`, `token_missing`, `campus_failed`, and `campus_unexpected` when the body names no study. The token and `PSESSIONID` are never logged. A first chooser read on 14 October 2026 returned `200` with the two studies above. A second read minutes later, after the portal session had turned over, returned `401` and `invalid_token`; the server mapped it to the `invalid_token` code.
+Known portal failures are the same codes as the structure read: `missing_session_cookie`, `invalid_token`, `campus_unauthorized`, `token_missing`, `campus_failed`, and `campus_unexpected` when the body names no study. Every failure carries a `detail` string (`upstream <status>[: <portal message>]`), which the app shows and logs as documented in [campus-logging.md](campus-logging.md). The token and `PSESSIONID` are never logged. A first chooser read on 14 October 2026 returned `200` with the two studies above. A second read minutes later, after the portal session had turned over, returned `401` and `invalid_token`; the server mapped it to the `invalid_token` code.
 
 ## What this call does not return
 

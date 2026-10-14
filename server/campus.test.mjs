@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 
 import { apiCatalog } from './catalog.mjs';
-import { campusAuthorizationHeader, campusRequestHeaders, elementIdFromLink, parseElementId, profileFromCurriculum, publicCampusStatus, studiesFromChooser } from './campus.mjs';
+import { campusAuthorizationHeader, campusRequestHeaders, elementIdFromLink, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, publicCampusStatus, studiesFromChooser } from './campus.mjs';
 
 afterEach(() => {
   delete process.env.CAMPUS_BEARER_TOKEN;
@@ -141,6 +141,54 @@ test('root element ids are read only from a myCurriculumElements link', () => {
   assert.equal(elementIdFromLink('https://campus.uni-stuttgart.de/other/1'), null);
   assert.equal(elementIdFromLink(''), null);
   assert.equal(elementIdFromLink(undefined), null);
+});
+
+test('study ids stay positive integers', () => {
+  assert.equal(parseStudyId(''), null);
+  assert.equal(parseStudyId(339484), 339484);
+  for (const value of ['1/../x', 0, -1, 1.5, 'PSESSIONID=abc']) {
+    assert.throws(() => parseStudyId(value), (error) => error.message === 'bad_study_id');
+  }
+});
+
+test('portal messages are read from the coErrorDto shape and fallbacks', () => {
+  assert.equal(
+    portalMessage({ resource: [{ content: { coErrorDto: { message: 'invalid_token: expired' } } }] }),
+    'invalid_token: expired',
+  );
+  assert.equal(portalMessage({ message: 'boom' }), 'boom');
+  assert.equal(portalMessage({}), '');
+  assert.equal(portalMessage(null), '');
+});
+
+test('a failing structure read keeps the upstream status and message as detail', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'test-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'test-cookie';
+  const fetchImpl = async () => ({
+    ok: false,
+    status: 500,
+    json: async () => ({ resource: [{ content: { coErrorDto: { message: 'something broke' } } }] }),
+  });
+  await assert.rejects(() => loadCurriculumStructure(278343, 339485, fetchImpl), (error) => {
+    assert.equal(error.message, 'campus_failed');
+    assert.equal(error.detail, 'upstream 500: something broke');
+    return true;
+  });
+});
+
+test('an empty portal error body still reports the upstream status', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'test-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'test-cookie';
+  const fetchImpl = async () => ({
+    ok: false,
+    status: 403,
+    json: async () => ({}),
+  });
+  await assert.rejects(() => loadCurriculumStructure(278343, 339485, fetchImpl), (error) => {
+    assert.equal(error.message, 'campus_failed');
+    assert.equal(error.detail, 'upstream 403');
+    return true;
+  });
 });
 
 test('api catalog only names known paths', () => {

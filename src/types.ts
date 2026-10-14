@@ -244,6 +244,7 @@ export interface PersistedState {
   oidcSessionId: string | null;
   curriculumNodes: CurriculumNode[];
   campusStudies: CampusStudy[];
+  activeStudyId: number | null;
   syncAt: Partial<Record<PlatformId, string>>;
   downloadedIds: string[];
   imports: ImportedDocument[];

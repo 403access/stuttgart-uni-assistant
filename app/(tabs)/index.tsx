@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
+import { activeStudy } from '@/src/auth/campus';
 import { Card, InfoRow, Mark, Meter, Pill, Screen, Section } from '@/src/components/ui';
+import { StudySelector } from '@/src/components/study-selector';
 import { deadlines, modules, news, places, program, student } from '@/src/data';
 import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
 import { newsSource, sessionKind } from '@/src/labels';
@@ -14,22 +16,28 @@ function todayIso(now = new Date()): string {
 }
 
 export default function TodayScreen() {
-  const { locale } = useApp();
+  const { locale, campusStudies, activeStudyId, sessionMode, sessionName } = useApp();
   const now = new Date();
   const credit = totals(modules);
   const average = weightedAverage(modules);
   const sessions = scheduleForDay(modules, now.getDay(), places);
   const upcoming = deadlines.filter((item) => item.date >= todayIso(now)).slice(0, 3);
   const latest = [...news].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
+  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
+  const subtitle = study
+    ? `${study.name}${study.intendedDegree ? ` · ${study.intendedDegree}` : ''}${study.versionIdentifier ? ` · ${study.versionIdentifier}` : ''}`
+    : `${student.name} · ${tx(locale, 'Demonstration', 'Demonstration')} · ${student.semester}. ${tx(locale, 'Semester', 'semester')}`;
+  const degreePill = study ? study.name : `${program.degree.de.split(' ')[0]} ${pick(program.title, locale)}`;
 
   return (
     <Screen
       kicker="Stuttgart Uni"
-      title={tx(locale, 'Guten Tag', 'Good day')}
-      subtitle={`${student.name} · ${tx(locale, 'Demonstration', 'Demonstration')} · ${student.semester}. ${tx(locale, 'Semester', 'semester')}`}>
+      title={sessionMode === 'campus' && sessionName ? sessionName : tx(locale, 'Guten Tag', 'Good day')}
+      subtitle={subtitle}>
+      <StudySelector />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Mark size={28} />
-        <Pill label={`${program.degree.de.split(' ')[0]} ${pick(program.title, locale)}`} tone="blue" />
+        <Pill label={degreePill} tone="blue" />
       </View>
       <Card onPress={() => router.push('/anforderungen')}>
         <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'Bestandene Leistung', 'Credits passed')}</Text>

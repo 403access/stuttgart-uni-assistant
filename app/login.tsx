@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fetchCampusStatus, signInWithCampusToken, type CampusStatus } from '@/src/auth/campus';
+import { campusDetail, fetchCampusStatus, signInWithCampusToken, type CampusStatus } from '@/src/auth/campus';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
 import { student } from '@/src/data';
@@ -42,17 +42,18 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const profile = await signInWithCampusToken();
+      const names = profile.studies.map((item) => item.name).join(', ');
       setCampusLog(
         tx(
           locale,
-          `Angemeldet als ${profile.name} (${profile.account}). ${profile.nodes.length} Knoten geladen.`,
-          `Signed in as ${profile.name} (${profile.account}). Loaded ${profile.nodes.length} nodes.`,
+          `Angemeldet als ${profile.name} (${profile.account}). ${profile.nodes.length} Knoten, ${profile.studies.length} ${profile.studies.length === 1 ? 'Studiengang' : 'Studiengänge'}: ${names}.`,
+          `Signed in as ${profile.name} (${profile.account}). ${profile.nodes.length} nodes, ${profile.studies.length} ${profile.studies.length === 1 ? 'study' : 'studies'}: ${names}.`,
         ),
       );
       signInCampus(profile);
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
-      const message = campusMessage(locale, code);
+      const message = campusMessage(locale, code, campusDetail(caught));
       setCampusLog(message);
       setError(message);
     } finally {
@@ -204,7 +205,8 @@ export default function LoginScreen() {
   );
 }
 
-function campusMessage(locale: 'de' | 'en', code: string): string {
+function campusMessage(locale: 'de' | 'en', code: string, detail = ''): string {
+  const suffix = detail ? ` ${detail}` : '';
   if (code === 'server_unreachable') {
     return tx(
       locale,
@@ -230,9 +232,9 @@ function campusMessage(locale: 'de' | 'en', code: string): string {
     );
   }
   if (code === 'campus_unauthorized') {
-    return tx(locale, 'C@MPUS hat den Token abgelehnt.', 'C@MPUS rejected the token.');
+    return tx(locale, `C@MPUS hat den Token abgelehnt.${suffix}`, `C@MPUS rejected the token.${suffix}`);
   }
-  return tx(locale, `C@MPUS-Anmeldung nicht abgeschlossen (${code}).`, `C@MPUS sign-in did not finish (${code}).`);
+  return tx(locale, `C@MPUS-Anmeldung nicht abgeschlossen (${code}).${suffix}`, `C@MPUS sign-in did not finish (${code}).${suffix}`);
 }
 
 function messageFor(locale: 'de' | 'en', code: string, status: OidcStatus | null): string {

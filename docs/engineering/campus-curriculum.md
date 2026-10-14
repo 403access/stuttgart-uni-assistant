@@ -36,9 +36,9 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 
 ## Sign-in button
 
-**Mit C@MPUS-Token anmelden** on the login screen calls `POST /v1/campus/login`. The server sends the token and `PSESSIONID` to the structure URL above. On success it returns the German root name, the designation, and the nodes on that level (`id`, `designation`, `elementType`, `name`, `parentId`, `completed`, `inProgress`). The app stores those nodes with the session. The token and cookie are not returned.
+**Mit C@MPUS-Token anmelden** on the login screen calls `POST /v1/campus/login`. The server sends the token and `PSESSIONID` to the structure URL above, then reads the study chooser, and returns the German root name, the designation, the nodes on that level, and `{ studies, activeStudyId }`. The app stores those nodes and the study list with the session. The token and cookie are not returned.
 
-**Schnittstelle** (`app/api.tsx`, linked from Mehr) lists the routes from `GET /v1/api` and can send the ones marked for replay. `POST /v1/campus/structure` accepts an optional positive integer `elementId` and calls the same path for that node. It does not accept a URL. A tap on a loaded node sends that node’s id. OIDC start, exchange, and logout stay in the browser sign-in flow and are not replayed from this screen.
+**Schnittstelle** (`app/api.tsx`, linked from Mehr) lists the routes from `GET /v1/api` and can send the ones marked for replay. `POST /v1/campus/structure` accepts an optional positive integer `elementId` and an optional `studyId`, and calls the same path for that study and node; a `studyId` without an `elementId` resolves the root through the chooser. It does not accept a URL. A tap on a loaded node sends that node’s id. OIDC start, exchange, and logout stay in the browser sign-in flow and are not replayed from this screen.
 
 ## Server routes
 
@@ -49,8 +49,8 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 | `GET` | `/health` | Yes. Status only |
 | `GET` | `/v1/campus/config` | Yes. `tokenConfigured`, `sessionCookieConfigured`, `studyId`, `elementId` |
 | `GET` | `/v1/oidc/config` | Yes. No client secret |
-| `POST` | `/v1/campus/login` | Yes. Root structure, then a campus session |
-| `POST` | `/v1/campus/structure` | Yes. Optional `elementId` |
+| `POST` | `/v1/campus/login` | Yes. Root structure, chooser list, then a campus session |
+| `POST` | `/v1/campus/structure` | Yes. Optional `elementId` and `studyId` |
 | `GET` | `/v1/campus/studies` | Yes. The study chooser, see [campus-studies.md](campus-studies.md) |
 | `POST` | `/v1/assist` | Yes. A fixed short question, so the button does not invent a prompt |
 | `POST` | `/v1/oidc/start` | No |
@@ -61,7 +61,7 @@ The client types are `src/auth/campus.ts` and `src/auth/api.ts`. `nodesFromCurri
 
 `curriculumNodes` lives on the device record. Sign-out, and a switch to the demo, local, or OIDC session, clears it. Reset keeps it while the campus session stays. A later structure call merges nodes by id, so loading a child does not drop the root.
 
-Known portal failures, mapped to short codes and never logged with the token or cookie:
+Known portal failures, mapped to short codes and never logged with the token or cookie. Every failure carries a `detail` string with the upstream status and the portal message, shown in the app and in the logs as documented in [campus-logging.md](campus-logging.md):
 
 | Portal signal | App code |
 | --- | --- |
@@ -71,6 +71,7 @@ Known portal failures, mapped to short codes and never logged with the token or 
 | Token unset | `token_missing` |
 | Other failure, or a body with no named node | `campus_failed` or `campus_unexpected` |
 | `elementId` that is not a positive integer | `bad_element_id` |
+| `studyId` that is not a positive integer | `bad_study_id` |
 
 A call from this server with only the bearer token was answered `401` and `$core.lib.authn.missing_session_cookie`. A call with only a guessed `JSESSIONID` was answered `401` and `Authorization missing`. C@MPUS expects the bearer token and the portal session cookie together when the request does not come from the already signed-in browser.
 

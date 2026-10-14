@@ -31,7 +31,7 @@ function preview(value: unknown): string {
 }
 
 export default function ApiScreen() {
-  const { locale, curriculumNodes, campusStudies, setCurriculum, setStudies, signInCampus } = useApp();
+  const { locale, curriculumNodes, campusStudies, activeStudyId, setCurriculum, setStudies, setActiveStudy, signInCampus } = useApp();
   const [operations, setOperations] = useState<ApiOperation[]>([]);
   const [live, setLive] = useState(true);
   const [elementId, setElementId] = useState('');
@@ -63,26 +63,34 @@ export default function ApiScreen() {
     try {
       const next = await sendApiOperation(operation, typed, locale);
       setResult(next);
-      const error = next.body && typeof next.body === 'object' && 'error' in next.body && typeof next.body.error === 'string' ? next.body.error : '';
+      const failure = (next.body ?? {}) as { error?: unknown; detail?: unknown };
+      const error = typeof failure.error === 'string' ? failure.error : '';
+      const detail = typeof failure.detail === 'string' ? failure.detail : '';
+      const withDetail = detail ? ` (${detail})` : '';
       if (error === 'invalid_token') {
         setNotice(
           tx(
             locale,
-            'C@MPUS meldet invalid_token. Der gespeicherte Bearer-Token passt nicht mehr zu dieser Sitzung.',
-            'C@MPUS reports invalid_token. The stored bearer token no longer matches this session.',
+            `C@MPUS meldet invalid_token${withDetail}. Der gespeicherte Bearer-Token passt nicht mehr zu dieser Sitzung.`,
+            `C@MPUS reports invalid_token${withDetail}. The stored bearer token no longer matches this session.`,
           ),
         );
+        return;
+      }
+      if (next.status !== 200 && error) {
+        setNotice(`${error}${withDetail}`);
         return;
       }
       if (operation.id === 'campus-login' && next.status === 200) {
         const body = next.body as Partial<CampusLogin>;
         const nodes = asCurriculumNodes(body.nodes);
-        if (body.account && body.name) signInCampus({ account: body.account, name: body.name, nodes });
+        const studies = asCampusStudies(body.studies);
+        if (body.account && body.name) signInCampus({ account: body.account, name: body.name, nodes, studies: studies.length ? studies : undefined });
         setNotice(
           tx(
             locale,
-            body.name ? `${body.name}: ${nodes.length} Knoten.` : 'Anmeldung ohne Namen.',
-            body.name ? `${body.name}: ${nodes.length} nodes.` : 'Sign-in without a name.',
+            body.name ? `${body.name}: ${nodes.length} Knoten${studies.length ? `, ${studies.length} Studiengänge` : ''}.` : 'Anmeldung ohne Namen.',
+            body.name ? `${body.name}: ${nodes.length} nodes${studies.length ? `, ${studies.length} studies` : ''}.` : 'Sign-in without a name.',
           ),
         );
       }
@@ -172,7 +180,7 @@ export default function ApiScreen() {
         campusStudies.map((study) => (
           <InfoRow
             key={study.studyId}
-            title={study.name}
+            title={`${study.studyId === activeStudyId ? '● ' : ''}${study.name}`}
             meta={study.intendedDegree || String(study.studyId)}
             detail={[
               study.studyStatus,
@@ -182,6 +190,7 @@ export default function ApiScreen() {
             ]
               .filter(Boolean)
               .join(' · ')}
+            onPress={() => setActiveStudy(study.studyId)}
           />
         ))
       )}

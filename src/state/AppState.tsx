@@ -27,6 +27,7 @@ const empty: PersistedState = {
   oidcSessionId: null,
   curriculumNodes: [],
   campusStudies: [],
+  activeStudyId: null,
   syncAt: {},
   downloadedIds: [],
   imports: [],
@@ -40,9 +41,10 @@ type AppContextValue = PersistedState & {
   ready: boolean;
   signInDemo: (account: string) => void;
   signInLocal: (account: string) => void;
-  signInCampus: (profile: { account: string; name: string; nodes?: CurriculumNode[] }) => void;
+  signInCampus: (profile: { account: string; name: string; nodes?: CurriculumNode[]; studies?: CampusStudy[]; activeStudyId?: number | null }) => void;
   setCurriculum: (nodes: CurriculumNode[]) => void;
   setStudies: (studies: CampusStudy[]) => void;
+  setActiveStudy: (studyId: number) => void;
   signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
@@ -106,8 +108,21 @@ function sanitizeStudies(value: unknown): CampusStudy[] {
   });
 }
 
+/** Single study is auto-selected. Otherwise prefer lastAccessed, then the stored choice, then the first row. */
+export function pickActiveStudyId(studies: CampusStudy[], current: number | null = null): number | null {
+  if (!studies.length) return null;
+  if (studies.length === 1) return studies[0].studyId;
+  if (current !== null && studies.some((item) => item.studyId === current)) return current;
+  return studies.find((item) => item.lastAccessed)?.studyId ?? studies[0].studyId;
+}
+
 function sanitize(value: Partial<PersistedState> | null): PersistedState {
   if (!value) return empty;
+  const campusStudies = sanitizeStudies(value.campusStudies);
+  const activeStudyId =
+    typeof value.activeStudyId === 'number' && campusStudies.some((item) => item.studyId === value.activeStudyId)
+      ? value.activeStudyId
+      : pickActiveStudyId(campusStudies, null);
   return {
     locale: value.locale === 'en' ? 'en' : 'de',
     sessionAccount: typeof value.sessionAccount === 'string' ? value.sessionAccount : null,
@@ -117,7 +132,8 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
     sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
     oidcSessionId: typeof value.oidcSessionId === 'string' ? value.oidcSessionId : null,
     curriculumNodes: sanitizeNodes(value.curriculumNodes),
-    campusStudies: sanitizeStudies(value.campusStudies),
+    campusStudies,
+    activeStudyId,
     syncAt: value.syncAt ?? {},
     downloadedIds: Array.isArray(value.downloadedIds) ? value.downloadedIds.filter((id) => typeof id === 'string') : [],
     imports: Array.isArray(value.imports) ? value.imports : [],
@@ -168,6 +184,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           oidcSessionId: null,
           curriculumNodes: [],
           campusStudies: [],
+          activeStudyId: null,
         })),
       signInLocal: (account) =>
         setState((current) => ({
@@ -180,27 +197,41 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           oidcSessionId: null,
           curriculumNodes: [],
           campusStudies: [],
+          activeStudyId: null,
         })),
       signInCampus: (profile) =>
-        setState((current) => ({
-          ...current,
-          sessionAccount: profile.account,
-          sessionMode: 'campus',
-          sessionName: profile.name,
-          sessionEmail: null,
-          sessionSubject: null,
-          oidcSessionId: null,
-          curriculumNodes: profile.nodes ?? current.curriculumNodes,
-          campusStudies: current.campusStudies,
-          syncAt: { ...current.syncAt, campus: new Date().toISOString() },
-        })),
+        setState((current) => {
+          const studies = profile.studies ?? current.campusStudies;
+          const activeStudyId =
+            profile.activeStudyId !== undefined && profile.activeStudyId !== null
+              ? profile.activeStudyId
+              : pickActiveStudyId(studies, current.activeStudyId);
+          return {
+            ...current,
+            sessionAccount: profile.account,
+            sessionMode: 'campus',
+            sessionName: profile.name,
+            sessionEmail: null,
+            sessionSubject: null,
+            oidcSessionId: null,
+            curriculumNodes: profile.nodes ?? current.curriculumNodes,
+            campusStudies: studies,
+            activeStudyId,
+            syncAt: { ...current.syncAt, campus: new Date().toISOString() },
+          };
+        }),
       setCurriculum: (nodes) =>
         setState((current) => {
           const map = new Map(current.curriculumNodes.map((node) => [node.id, node]));
           for (const node of nodes) map.set(node.id, node);
           return { ...current, curriculumNodes: [...map.values()] };
         }),
-      setStudies: (studies) => setState((current) => ({ ...current, campusStudies: studies })),
+      setStudies: (studies) =>
+        setState((current) => ({ ...current, campusStudies: studies, activeStudyId: pickActiveStudyId(studies, current.activeStudyId) })),
+      setActiveStudy: (studyId) =>
+        setState((current) =>
+          current.campusStudies.some((item) => item.studyId === studyId) ? { ...current, activeStudyId: studyId } : current,
+        ),
       signInOidc: (profile) =>
         setState((current) => ({
           ...current,
@@ -212,6 +243,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           oidcSessionId: profile.sessionId,
           curriculumNodes: [],
           campusStudies: [],
+          activeStudyId: null,
           syncAt: { ...current.syncAt, siam: new Date().toISOString() },
         })),
       signOut: () =>
@@ -225,6 +257,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           oidcSessionId: null,
           curriculumNodes: [],
           campusStudies: [],
+          activeStudyId: null,
         })),
       setLocale: (locale) => setState((current) => ({ ...current, locale })),
       syncPlatform: (platform) =>
@@ -276,6 +309,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           oidcSessionId: current.oidcSessionId,
           curriculumNodes: current.sessionMode === 'campus' ? current.curriculumNodes : [],
           campusStudies: current.sessionMode === 'campus' ? current.campusStudies : [],
+          activeStudyId: current.sessionMode === 'campus' ? current.activeStudyId : null,
           syncAt:
             current.sessionMode === 'oidc'
               ? { siam: current.syncAt.siam }

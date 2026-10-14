@@ -74,6 +74,30 @@ function send(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
+function campusFailure(error) {
+  const body = { error: error.message || 'campus_failed' };
+  if (error.detail) body.detail = String(error.detail).slice(0, 300);
+  if (typeof error.status === 'number') body.status = error.status;
+  return body;
+}
+
+let campusReqSeq = 0;
+
+function campusReq(route, extra) {
+  const id = ++campusReqSeq;
+  const stamp = new Date().toISOString();
+  console.log(`[campus #${id} ${stamp}] ${route}${extra ? ` ${extra}` : ''}`);
+  return id;
+}
+
+function previewBody(body) {
+  try {
+    return JSON.stringify(body ?? {}).slice(0, 200);
+  } catch {
+    return '?';
+  }
+}
+
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', 'http://127.0.0.1');
   if (request.method === 'OPTIONS') {
@@ -99,20 +123,19 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (request.method === 'POST' && url.pathname === '/v1/campus/login') {
-    console.log('[campus] POST /v1/campus/login');
+    const reqId = campusReq('POST /v1/campus/login');
     try {
       const profile = await loginWithCampusToken();
-      console.log(`[campus] login ok name=${profile.name} account=${profile.account} nodes=${profile.nodes.length}`);
+      console.log(`[campus #${reqId}] login ok name=${profile.name} account=${profile.account} nodes=${profile.nodes.length} studies=${profile.studies?.length ?? 0}`);
       send(response, 200, profile);
     } catch (error) {
       const code = error.message || 'campus_failed';
-      console.log(`[campus] login failed ${code}`);
-      send(response, Number(error.status) || 500, { error: code });
+      console.log(`[campus #${reqId}] login failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
     }
     return;
   }
   if (request.method === 'POST' && url.pathname === '/v1/campus/structure') {
-    console.log('[campus] POST /v1/campus/structure');
     let body = {};
     try {
       body = await readBody(request);
@@ -120,27 +143,28 @@ const server = createServer(async (request, response) => {
       send(response, 400, { error: 'bad_json' });
       return;
     }
+    const reqId = campusReq('POST /v1/campus/structure', `body=${previewBody(body)}`);
     try {
-      const result = await loadCurriculumStructure(body?.elementId);
-      console.log(`[campus] structure ok element=${result.elementId} nodes=${result.nodes.length}`);
+      const result = await loadCurriculumStructure(body?.elementId, body?.studyId);
+      console.log(`[campus #${reqId}] structure ok study=${result.studyId} element=${result.elementId} nodes=${result.nodes.length}`);
       send(response, 200, result);
     } catch (error) {
       const code = error.message || 'campus_failed';
-      console.log(`[campus] structure failed ${code}`);
-      send(response, Number(error.status) || 500, { error: code });
+      console.log(`[campus #${reqId}] structure failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
     }
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/studies') {
-    console.log('[campus] GET /v1/campus/studies');
+    const reqId = campusReq('GET /v1/campus/studies');
     try {
       const result = await loadCampusStudies();
-      console.log(`[campus] studies ok count=${result.studies.length}`);
+      console.log(`[campus #${reqId}] studies ok count=${result.studies.length}`);
       send(response, 200, result);
     } catch (error) {
       const code = error.message || 'campus_failed';
-      console.log(`[campus] studies failed ${code}`);
-      send(response, Number(error.status) || 500, { error: code });
+      console.log(`[campus #${reqId}] studies failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
     }
     return;
   }

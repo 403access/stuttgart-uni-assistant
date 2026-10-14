@@ -45,10 +45,28 @@ export function publicCampusStatus() {
   };
 }
 
-function httpError(status, code) {
+function httpError(status, code, detail) {
   const error = new Error(code);
   error.status = status;
+  if (detail) error.detail = detail;
   return error;
+}
+
+/** Portal error text from the observed `coErrorDto` shape, plus common fallbacks. Never includes secrets. */
+export function portalMessage(payload) {
+  const first = Array.isArray(payload?.resource) ? payload.resource[0]?.content : payload?.content;
+  const candidates = [
+    first?.coErrorDto?.message,
+    first?.coErrorDto?.code,
+    payload?.error?.message,
+    payload?.message,
+    payload?.error_description,
+    payload?.error,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim().slice(0, 300);
+  }
+  return '';
 }
 
 function langValue(data) {
@@ -71,6 +89,23 @@ export function parseElementId(value) {
   const id = typeof value === 'number' ? value : Number(value);
   if (!Number.isInteger(id) || id <= 0 || id > 1_000_000_000) throw httpError(400, 'bad_element_id');
   return id;
+}
+
+/** Study id from the chooser, or null when the caller wants the configured study. */
+export function parseStudyId(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'string' && !/^[1-9]\d{0,9}$/.test(value)) throw httpError(400, 'bad_study_id');
+  const id = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(id) || id <= 0 || id > 1_000_000_000) throw httpError(400, 'bad_study_id');
+  return id;
+}
+
+/** Single study is shown directly. Otherwise prefer lastAccessed, then the first row. */
+export function pickActiveStudyId(studies, current = null) {
+  if (!Array.isArray(studies) || !studies.length) return null;
+  if (studies.length === 1) return studies[0].studyId;
+  if (current != null && studies.some((item) => item?.studyId === current)) return current;
+  return studies.find((item) => item?.lastAccessed)?.studyId ?? studies[0].studyId;
 }
 
 /** Root curriculum element id from a `myStudyLink` href, or null when the portal omits it. */
@@ -144,23 +179,27 @@ export function profileFromCurriculum(payload, studyId, elementId) {
 
 async function readCampus(url, label, fetchImpl) {
   if (!campusBearerToken()) throw httpError(503, 'token_missing');
+  const started = Date.now();
   let response;
   try {
     response = await fetchImpl(url, { headers: campusRequestHeaders(), signal: AbortSignal.timeout(20_000) });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
-    console.log(`[campus] ${label} request failed ${reason}`);
-    throw httpError(502, 'campus_failed');
+    console.log(`[campus] ${label} request failed ${reason} ${Date.now() - started}ms`);
+    throw httpError(502, 'campus_failed', `request failed: ${String(reason).slice(0, 200)}`);
   }
   const payload = await response.json().catch(() => ({}));
-  console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status}`);
+  const elapsed = Date.now() - started;
   if (!response.ok) {
-    const message = payload?.resource?.[0]?.content?.coErrorDto?.message || '';
-    if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie');
-    if (message.includes('invalid_token')) throw httpError(401, 'invalid_token');
-    if (response.status === 401) throw httpError(401, 'campus_unauthorized');
-    throw httpError(502, 'campus_failed');
+    const message = portalMessage(payload);
+    const detail = `upstream ${response.status}${message ? `: ${message}` : ''}`;
+    console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} message=${message || '-'} ${elapsed}ms`);
+    if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie', detail);
+    if (message.includes('invalid_token')) throw httpError(401, 'invalid_token', detail);
+    if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
+    throw httpError(502, 'campus_failed', detail);
   }
+  console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} ${elapsed}ms`);
   return payload;
 }
 
@@ -173,21 +212,40 @@ export async function loginWithCampusToken(fetchImpl = fetch) {
   const payload = await readCurriculum(studyId, elementId, fetchImpl);
   const profile = profileFromCurriculum(payload, studyId, elementId);
   if (!profile) throw httpError(502, 'campus_unexpected');
-  return profile;
+  // Attach the enrolled studies so the app starts from production data, not mockup data.
+  try {
+    const { studies } = await loadCampusStudies(fetchImpl);
+    return { ...profile, studies, activeStudyId: pickActiveStudyId(studies, null) };
+  } catch {
+    return { ...profile, studies: [], activeStudyId: null };
+  }
 }
 
-export async function loadCurriculumStructure(elementIdOverride, fetchImpl = fetch) {
+export async function loadCurriculumStructure(elementIdOverride, studyIdOverride, fetchImpl = fetch) {
+  if (typeof studyIdOverride === 'function') {
+    fetchImpl = studyIdOverride;
+    studyIdOverride = undefined;
+  }
   const target = campusStudyTarget();
-  const elementId = parseElementId(elementIdOverride) ?? target.elementId;
-  const payload = await readCurriculum(target.studyId, elementId, fetchImpl);
+  const studyId = parseStudyId(studyIdOverride) ?? target.studyId;
+  let elementId = parseElementId(elementIdOverride);
+  if (elementId == null && studyId !== target.studyId) {
+    // Resolve the root element for another enrolled study via the chooser.
+    const { studies } = await loadCampusStudies(fetchImpl);
+    const match = studies.find((item) => item.studyId === studyId);
+    if (!match?.elementId) throw httpError(400, 'bad_study_id');
+    elementId = match.elementId;
+  }
+  elementId ??= target.elementId;
+  const payload = await readCurriculum(studyId, elementId, fetchImpl);
   const nodes = nodesFromCurriculum(payload);
-  if (!nodes.length) throw httpError(502, 'campus_unexpected');
-  return { studyId: target.studyId, elementId, nodes };
+  if (!nodes.length) throw httpError(502, 'campus_unexpected', `empty structure study=${studyId} element=${elementId}`);
+  return { studyId, elementId, nodes };
 }
 
 export async function loadCampusStudies(fetchImpl = fetch) {
   const payload = await readCampus(studiesRequestUrl(), 'studies', fetchImpl);
   const studies = studiesFromChooser(payload);
   if (!studies.length) throw httpError(502, 'campus_unexpected');
-  return { studies };
+  return { studies, activeStudyId: pickActiveStudyId(studies, null) };
 }

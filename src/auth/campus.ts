@@ -1,4 +1,5 @@
 import { assistantUrl } from '@/src/assistant/remote';
+import { recordCampusCall, type CampusOp } from '@/src/auth/campus-log';
 import type { CampusStudy, CurriculumNode } from '@/src/types';
 
 export interface CampusLogin {
@@ -7,6 +8,8 @@ export interface CampusLogin {
   studyId: number;
   elementId: number;
   nodes: CurriculumNode[];
+  studies: CampusStudy[];
+  activeStudyId: number | null;
 }
 
 export interface CurriculumLoad {
@@ -17,6 +20,7 @@ export interface CurriculumLoad {
 
 export interface StudiesLoad {
   studies: CampusStudy[];
+  activeStudyId: number | null;
 }
 
 export interface CampusStatus {
@@ -30,6 +34,54 @@ function endpoint(path: string): string {
   return `${assistantUrl.replace(/\/$/, '')}${path}`;
 }
 
+export interface CampusFailure {
+  error?: string;
+  detail?: string;
+  status?: number;
+}
+
+/** Server error code plus the upstream detail (`upstream 500: …`), without secrets. */
+export function campusFailure(payload: unknown, fallback: string, httpStatus?: number): Error {
+  const body = (payload ?? {}) as CampusFailure;
+  const code = typeof body.error === 'string' && body.error ? body.error : fallback;
+  const error = new Error(code);
+  const detail = typeof body.detail === 'string' && body.detail ? body.detail : '';
+  // An old assistant server answers `{ error }` without `detail`. Keep the HTTP
+  // status so the failure is still distinguishable from a portal message.
+  const resolved = detail || (typeof httpStatus === 'number' ? `http ${httpStatus} vom Assistenz-Server ohne Detail — 'npm run assistant' neu starten` : '');
+  if (resolved) (error as { detail?: string }).detail = resolved.slice(0, 300);
+  if (typeof body.status === 'number') (error as { status?: number }).status = body.status;
+  return error;
+}
+
+export function campusDetail(caught: unknown): string {
+  if (!caught || typeof caught !== 'object') return '';
+  const detail = (caught as { detail?: unknown }).detail;
+  return typeof detail === 'string' ? detail : '';
+}
+
+function logCall(
+  op: CampusOp,
+  started: number,
+  ids: { studyId?: number; elementId?: number },
+  outcome: { ok: true; httpStatus: number } | { ok: false; httpStatus?: number; error: unknown },
+): void {
+  if (outcome.ok) {
+    recordCampusCall({ op, studyId: ids.studyId, elementId: ids.elementId, ok: true, httpStatus: outcome.httpStatus, elapsedMs: Date.now() - started });
+  } else {
+    recordCampusCall({
+      op,
+      studyId: ids.studyId,
+      elementId: ids.elementId,
+      ok: false,
+      httpStatus: outcome.httpStatus,
+      code: outcome.error instanceof Error ? outcome.error.message : 'campus_failed',
+      detail: campusDetail(outcome.error) || undefined,
+      elapsedMs: Date.now() - started,
+    });
+  }
+}
+
 export async function fetchCampusStatus(): Promise<CampusStatus | null> {
   try {
     const response = await fetch(endpoint('/v1/campus/config'));
@@ -40,8 +92,21 @@ export async function fetchCampusStatus(): Promise<CampusStatus | null> {
   }
 }
 
+export function pickActiveStudyId(studies: CampusStudy[], current: number | null = null): number | null {
+  if (!studies.length) return null;
+  if (studies.length === 1) return studies[0].studyId;
+  if (current !== null && studies.some((item) => item.studyId === current)) return current;
+  return studies.find((item) => item.lastAccessed)?.studyId ?? studies[0].studyId;
+}
+
+export function activeStudy(studies: CampusStudy[], activeStudyId: number | null): CampusStudy | null {
+  if (!studies.length) return null;
+  return studies.find((item) => item.studyId === activeStudyId) ?? studies.find((item) => item.lastAccessed) ?? studies[0];
+}
+
 export async function signInWithCampusToken(): Promise<CampusLogin> {
   const url = endpoint('/v1/campus/login');
+  const started = Date.now();
   console.info('[campus-login] POST', url);
   let response: Response;
   try {
@@ -49,40 +114,83 @@ export async function signInWithCampusToken(): Promise<CampusLogin> {
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.info('[campus-login] unreachable', reason);
-    throw new Error('server_unreachable');
+    const error = new Error('server_unreachable');
+    logCall('login', started, {}, { ok: false, error });
+    throw error;
   }
-  const payload = (await response.json().catch(() => ({}))) as CampusLogin & { error?: string };
+  const payload = (await response.json().catch(() => ({}))) as CampusLogin & CampusFailure;
   console.info('[campus-login] status', response.status, payload.error ?? payload.name ?? 'ok');
-  if (!response.ok) throw new Error(payload.error || `http_${response.status}`);
-  if (!payload.name || !payload.account) throw new Error('campus_unexpected');
-  return { ...payload, nodes: asCurriculumNodes(payload.nodes) };
+  if (!response.ok) {
+    const error = campusFailure(payload, `http_${response.status}`, response.status);
+    logCall('login', started, {}, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
+  if (!payload.name || !payload.account) {
+    const error = campusFailure({ error: 'campus_unexpected', detail: 'Antwort ohne Name oder Kennung' }, 'campus_unexpected', response.status);
+    logCall('login', started, {}, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
+  const nodes = asCurriculumNodes(payload.nodes);
+  // The login may already carry the chooser list (new server). Otherwise fetch it:
+  // the enrolled studies are production data and drive the selector at the top.
+  let studies = asCampusStudies(payload.studies);
+  if (!studies.length) {
+    const loaded = await loadCampusStudies().catch((error: unknown) => {
+      // Surface the studies failure: without it the app would fall back to mockup data.
+      throw error instanceof Error ? error : new Error('campus_failed');
+    });
+    studies = loaded.studies;
+  }
+  logCall('login', started, {}, { ok: true, httpStatus: response.status });
+  return { ...payload, nodes, studies, activeStudyId: pickActiveStudyId(studies, null) };
 }
 
-export async function loadCampusCurriculum(elementId?: number): Promise<CurriculumLoad> {
+export async function loadCampusCurriculum(elementId?: number, studyId?: number): Promise<CurriculumLoad> {
   const url = endpoint('/v1/campus/structure');
-  console.info('[campus-structure] POST', url, elementId ?? 'root');
+  const started = Date.now();
+  const ids = { studyId, elementId };
+  console.info('[campus-structure] POST', url, elementId ?? 'root', studyId ?? '');
+  const body: Record<string, number> = {};
+  if (elementId) body.elementId = elementId;
+  if (studyId) body.studyId = studyId;
   let response: Response;
   try {
     response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(elementId ? { elementId } : {}),
+      body: JSON.stringify(body),
     });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.info('[campus-structure] unreachable', reason);
-    throw new Error('server_unreachable');
+    const error = new Error('server_unreachable');
+    logCall('structure', started, ids, { ok: false, error });
+    throw error;
   }
-  const payload = (await response.json().catch(() => ({}))) as CurriculumLoad & { error?: string };
+  const payload = (await response.json().catch(() => ({}))) as CurriculumLoad & CampusFailure;
   console.info('[campus-structure] status', response.status, payload.error ?? payload.nodes?.length ?? 'ok');
-  if (!response.ok) throw new Error(payload.error || `http_${response.status}`);
+  if (!response.ok) {
+    const error = campusFailure(payload, `http_${response.status}`, response.status);
+    logCall('structure', started, ids, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
   const nodes = asCurriculumNodes(payload.nodes);
-  if (!nodes.length || typeof payload.studyId !== 'number' || typeof payload.elementId !== 'number') throw new Error('campus_unexpected');
+  if (!nodes.length || typeof payload.studyId !== 'number' || typeof payload.elementId !== 'number') {
+    const error = campusFailure(
+      { error: 'campus_unexpected', detail: `Leere Struktur study=${studyId ?? '-'} element=${elementId ?? '-'}` },
+      'campus_unexpected',
+      response.status,
+    );
+    logCall('structure', started, ids, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
+  logCall('structure', started, ids, { ok: true, httpStatus: response.status });
   return { studyId: payload.studyId, elementId: payload.elementId, nodes };
 }
 
 export async function loadCampusStudies(): Promise<StudiesLoad> {
   const url = endpoint('/v1/campus/studies');
+  const started = Date.now();
   console.info('[campus-studies] GET', url);
   let response: Response;
   try {
@@ -90,14 +198,26 @@ export async function loadCampusStudies(): Promise<StudiesLoad> {
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.info('[campus-studies] unreachable', reason);
-    throw new Error('server_unreachable');
+    const error = new Error('server_unreachable');
+    logCall('studies', started, {}, { ok: false, error });
+    throw error;
   }
-  const payload = (await response.json().catch(() => ({}))) as StudiesLoad & { error?: string };
+  const payload = (await response.json().catch(() => ({}))) as StudiesLoad & CampusFailure;
   console.info('[campus-studies] status', response.status, payload.error ?? payload.studies?.length ?? 'ok');
-  if (!response.ok) throw new Error(payload.error || `http_${response.status}`);
+  if (!response.ok) {
+    const error = campusFailure(payload, `http_${response.status}`, response.status);
+    logCall('studies', started, {}, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
   const studies = asCampusStudies(payload.studies);
-  if (!studies.length) throw new Error('campus_unexpected');
-  return { studies };
+  if (!studies.length) {
+    const error = campusFailure({ error: 'campus_unexpected', detail: 'Leere Chooser-Antwort' }, 'campus_unexpected', response.status);
+    logCall('studies', started, {}, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
+  const requested = typeof payload.activeStudyId === 'number' ? payload.activeStudyId : null;
+  logCall('studies', started, {}, { ok: true, httpStatus: response.status });
+  return { studies, activeStudyId: pickActiveStudyId(studies, requested) };
 }
 
 export function asCampusStudies(value: unknown): CampusStudy[] {

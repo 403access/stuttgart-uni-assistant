@@ -56,7 +56,11 @@ export async function fetchApiCatalog(): Promise<{ operations: ApiOperation[]; l
   }
 }
 
-export async function sendApiOperation(operation: ApiOperation, elementId?: number, locale: 'de' | 'en' = 'de'): Promise<ApiCallResult> {
+export async function sendApiOperation(
+  operation: ApiOperation,
+  elementId?: number | { elementId?: number; studyId?: number },
+  locale: 'de' | 'en' = 'de',
+): Promise<ApiCallResult> {
   const allowed = operation.replay && (operation.path === '/health' || operation.path.startsWith('/v1/'));
   if (!allowed || operation.path.includes('://') || operation.path.includes('..')) throw new Error('not_replayable');
   const started = Date.now();
@@ -64,7 +68,11 @@ export async function sendApiOperation(operation: ApiOperation, elementId?: numb
   let body: string | undefined;
   if (operation.id === 'campus-structure') {
     headers['Content-Type'] = 'application/json';
-    body = JSON.stringify(elementId ? { elementId } : {});
+    const requested = typeof elementId === 'object' && elementId !== null ? elementId : { elementId: typeof elementId === 'number' ? elementId : undefined };
+    const payload: Record<string, number> = {};
+    if (typeof requested.elementId === 'number') payload.elementId = requested.elementId;
+    if (typeof requested.studyId === 'number') payload.studyId = requested.studyId;
+    body = JSON.stringify(payload);
   } else if (operation.id === 'assist') {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify({

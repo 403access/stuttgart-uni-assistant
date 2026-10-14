@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 
+import { activeStudy } from '@/src/auth/campus';
 import { Card, InfoRow, Screen } from '@/src/components/ui';
+import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -8,7 +10,8 @@ import { pick, tx } from '@/src/text';
 import { Text } from 'react-native';
 
 export default function MoreScreen() {
-  const { locale, sessionAccount, sessionMode, sessionName, sessionEmail } = useApp();
+  const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId } = useApp();
+  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
   const entries: Array<{ title: string; detail: string; href: '/api' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' }> = [
     { title: tx(locale, 'Schnittstelle', 'Interface'), detail: tx(locale, 'Aufrufe senden, Curriculum laden', 'Send calls, load the curriculum'), href: '/api' },
     { title: tx(locale, 'Plattformen', 'Platforms'), detail: 'C@MPUS · ILIAS · SDG · SIAM', href: '/plattformen' },
@@ -22,6 +25,7 @@ export default function MoreScreen() {
   ];
   return (
     <Screen kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Mehr', 'More')}>
+      {sessionMode === 'campus' ? <StudySelector /> : null}
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>
           {sessionMode === 'oidc' || sessionMode === 'campus' ? sessionName || sessionAccount : sessionMode === 'local' ? sessionAccount : student.name}
@@ -55,7 +59,9 @@ export default function MoreScreen() {
               : pick(student.faculty, locale)}
         </Text>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
-          {pick(program.degree, locale)} {pick(program.title, locale)}
+          {study
+            ? `${study.intendedDegree ? `${study.intendedDegree} ` : ''}${study.name}`
+            : `${pick(program.degree, locale)} ${pick(program.title, locale)}`}
         </Text>
       </Card>
       {entries.map((entry) => (

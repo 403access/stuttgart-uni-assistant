@@ -35,6 +35,8 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/integrations.md](engineering/integrations.md) | SIAM, C@MPUS, ILIAS, SDG Campus, and which of them are live |
 | [engineering/campus-curriculum.md](engineering/campus-curriculum.md) | C@MPUS curriculum-structure request, stored nodes, and the API screen |
 | [engineering/campus-studies.md](engineering/campus-studies.md) | C@MPUS study-chooser request, the mapped study list, and the route |
+| [engineering/campus-study-switcher.md](engineering/campus-study-switcher.md) | Enrolled studies at the top of Today: selection, per-study structure load, failure UX |
+| [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
