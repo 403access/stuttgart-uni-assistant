@@ -39,7 +39,10 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "check": "tsx scripts/check-assistant.ts && node --test server/oidc.test.mjs server/campus.test.mjs",
-    "assistant": "node server/index.mjs"
+    "assistant": "node server/index.mjs",
+    "campus:secret": "node scripts/set-campus-secret.mjs",
+    "campus:token": "node scripts/set-campus-secret.mjs token",
+    "campus:session": "node scripts/set-campus-secret.mjs session"
   },
   "private": true
 }

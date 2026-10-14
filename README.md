@@ -38,6 +38,8 @@ The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8
 
 `GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
+Write the C@MPUS secrets without editing the file by hand. `npm run campus:token -- <token>` sets `CAMPUS_BEARER_TOKEN` and `npm run campus:session -- <value>` sets `CAMPUS_SESSION_COOKIE` in the git-ignored `.env`. A pasted `Bearer <token>` header, an `Authorization:` line, or a full `PSESSIONID=...; ...` cookie string is reduced to the bare value. Omit the value to type it without echoing, or pipe it with `echo "$TOKEN" | npm run campus:token`. `npm run campus:secret -- list` shows which values are set, masked. Restart `npm run assistant` after a change.
+
 ## Checks
 
 ```bash
@@ -58,6 +60,7 @@ npm run check
 | `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
 | `app/api.tsx` | API overview. Replays known server routes |
 | `server/index.mjs` | Assistant server. Holds the xAI key and the C@MPUS secrets |
+| `scripts/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |
 
 ## Documentation

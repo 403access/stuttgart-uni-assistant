@@ -14,7 +14,7 @@ The flow, the discovery URLs, and the TIK registration step are in [oidc-login.m
 
 ## API key
 
-`XAI_API_KEY`, `CAMPUS_BEARER_TOKEN`, and `CAMPUS_SESSION_COOKIE` are read by `server/index.mjs` from the environment or from a git-ignored `.env`. `.gitignore` lists `.env` and `.env*.local`. `.env.example` leaves the secrets empty and must stay empty. The campus token and the `PSESSIONID` value are not `EXPO_PUBLIC_` variables. `/health` reports `campus.tokenConfigured` and `campus.sessionCookieConfigured`, plus the study and element ids. It does not return either secret. The Schnittstelle screen can replay only the routes in `server/catalog.mjs`, including the study chooser at `GET /v1/campus/studies`. It cannot pass a URL through to C@MPUS.
+`XAI_API_KEY`, `CAMPUS_BEARER_TOKEN`, and `CAMPUS_SESSION_COOKIE` are read by `server/index.mjs` from the environment or from a git-ignored `.env`. `.gitignore` lists `.env` and `.env*.local`. `.env.example` leaves the secrets empty and must stay empty. `npm run campus:token` and `npm run campus:session` write the two campus values, set `.env` to mode `0600`, and print only a masked confirmation. The campus token and the `PSESSIONID` value are not `EXPO_PUBLIC_` variables. `/health` reports `campus.tokenConfigured` and `campus.sessionCookieConfigured`, plus the study and element ids. It does not return either secret. The Schnittstelle screen can replay only the routes in `server/catalog.mjs`, including the study chooser at `GET /v1/campus/studies`. It cannot pass a URL through to C@MPUS.
 
 `EXPO_PUBLIC_*` variables are embedded in the client. The only one this app uses is `EXPO_PUBLIC_ASSISTANT_URL`, which is a URL, not a secret. Do not rename the key so that it starts with `EXPO_PUBLIC_`.
 
