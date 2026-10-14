@@ -220,6 +220,20 @@ export interface CurriculumNode {
   inProgress: boolean;
 }
 
+export interface CampusStudy {
+  studyId: number;
+  name: string;
+  intendedDegree: string;
+  versionIdentifier: string;
+  studyStatus: string;
+  identifier: string;
+  curriculumVersionId: number | null;
+  curriculumId: number | null;
+  color: string;
+  lastAccessed: boolean;
+  elementId: number | null;
+}
+
 export interface PersistedState {
   locale: Locale;
   sessionAccount: string | null;
@@ -229,6 +243,7 @@ export interface PersistedState {
   sessionSubject: string | null;
   oidcSessionId: string | null;
   curriculumNodes: CurriculumNode[];
+  campusStudies: CampusStudy[];
   syncAt: Partial<Record<PlatformId, string>>;
   downloadedIds: string[];
   imports: ImportedDocument[];

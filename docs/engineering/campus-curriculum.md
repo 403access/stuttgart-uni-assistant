@@ -2,7 +2,7 @@
 
 One authenticated read from the C@MPUS portal, observed in a signed-in browser session. Types live in `src/campus/curriculum.ts`. A reduced fixture is `src/campus/curriculum.sample.ts`. The assistant server calls this URL for `POST /v1/campus/login` and `POST /v1/campus/structure`. The app stores the mapped nodes, not the raw portal body.
 
-The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service. This file records the one operation that was returned, not a full catalog of C@MPUS.
+The two ids in the path are discovered by the study chooser in [campus-studies.md](campus-studies.md). The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service. This file records the one structure operation that was returned, not a full catalog of C@MPUS.
 
 ## Request
 
@@ -51,6 +51,7 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 | `GET` | `/v1/oidc/config` | Yes. No client secret |
 | `POST` | `/v1/campus/login` | Yes. Root structure, then a campus session |
 | `POST` | `/v1/campus/structure` | Yes. Optional `elementId` |
+| `GET` | `/v1/campus/studies` | Yes. The study chooser, see [campus-studies.md](campus-studies.md) |
 | `POST` | `/v1/assist` | Yes. A fixed short question, so the button does not invent a prompt |
 | `POST` | `/v1/oidc/start` | No |
 | `POST` | `/v1/oidc/exchange` | No |
@@ -85,7 +86,7 @@ The signed-in browser on `https://campus.uni-stuttgart.de` shows these cookie na
 
 Put only the `PSESSIONID` value into `CAMPUS_SESSION_COOKIE`, without the name `PSESSIONID=`, and restart `npm run assistant`. The other four cookies are not sent. `CAMPUS_STUDY_ID` and `CAMPUS_CURRICULUM_ID` select the node. The defaults are the observed ids `339485` and `278343`.
 
-How `{studyId}` and the root `{elementId}` are discovered is not part of this response. The body only describes the node that was requested and the nodes directly under it.
+How `{studyId}` and the root `{elementId}` are discovered is the chooser call in [campus-studies.md](campus-studies.md). The body only describes the node that was requested and the nodes directly under it.
 
 ## Response
 

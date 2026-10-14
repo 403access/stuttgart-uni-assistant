@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 
 import { documents } from '@/src/data';
 import type {
+  CampusStudy,
   ChatMessage,
   CurriculumNode,
   ImportedDocument,
@@ -25,6 +26,7 @@ const empty: PersistedState = {
   sessionSubject: null,
   oidcSessionId: null,
   curriculumNodes: [],
+  campusStudies: [],
   syncAt: {},
   downloadedIds: [],
   imports: [],
@@ -40,6 +42,7 @@ type AppContextValue = PersistedState & {
   signInLocal: (account: string) => void;
   signInCampus: (profile: { account: string; name: string; nodes?: CurriculumNode[] }) => void;
   setCurriculum: (nodes: CurriculumNode[]) => void;
+  setStudies: (studies: CampusStudy[]) => void;
   signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
@@ -79,6 +82,30 @@ function sanitizeNodes(value: unknown): CurriculumNode[] {
   });
 }
 
+function sanitizeStudies(value: unknown): CampusStudy[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const study = item as Partial<CampusStudy>;
+    if (typeof study.studyId !== 'number' || typeof study.name !== 'string') return [];
+    return [
+      {
+        studyId: study.studyId,
+        name: study.name,
+        intendedDegree: typeof study.intendedDegree === 'string' ? study.intendedDegree : '',
+        versionIdentifier: typeof study.versionIdentifier === 'string' ? study.versionIdentifier : '',
+        studyStatus: typeof study.studyStatus === 'string' ? study.studyStatus : '',
+        identifier: typeof study.identifier === 'string' ? study.identifier : '',
+        curriculumVersionId: typeof study.curriculumVersionId === 'number' ? study.curriculumVersionId : null,
+        curriculumId: typeof study.curriculumId === 'number' ? study.curriculumId : null,
+        color: typeof study.color === 'string' ? study.color : '',
+        lastAccessed: Boolean(study.lastAccessed),
+        elementId: typeof study.elementId === 'number' ? study.elementId : null,
+      },
+    ];
+  });
+}
+
 function sanitize(value: Partial<PersistedState> | null): PersistedState {
   if (!value) return empty;
   return {
@@ -90,6 +117,7 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
     sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
     oidcSessionId: typeof value.oidcSessionId === 'string' ? value.oidcSessionId : null,
     curriculumNodes: sanitizeNodes(value.curriculumNodes),
+    campusStudies: sanitizeStudies(value.campusStudies),
     syncAt: value.syncAt ?? {},
     downloadedIds: Array.isArray(value.downloadedIds) ? value.downloadedIds.filter((id) => typeof id === 'string') : [],
     imports: Array.isArray(value.imports) ? value.imports : [],
@@ -139,6 +167,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionSubject: null,
           oidcSessionId: null,
           curriculumNodes: [],
+          campusStudies: [],
         })),
       signInLocal: (account) =>
         setState((current) => ({
@@ -150,6 +179,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionSubject: null,
           oidcSessionId: null,
           curriculumNodes: [],
+          campusStudies: [],
         })),
       signInCampus: (profile) =>
         setState((current) => ({
@@ -161,6 +191,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionSubject: null,
           oidcSessionId: null,
           curriculumNodes: profile.nodes ?? current.curriculumNodes,
+          campusStudies: current.campusStudies,
           syncAt: { ...current.syncAt, campus: new Date().toISOString() },
         })),
       setCurriculum: (nodes) =>
@@ -169,6 +200,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           for (const node of nodes) map.set(node.id, node);
           return { ...current, curriculumNodes: [...map.values()] };
         }),
+      setStudies: (studies) => setState((current) => ({ ...current, campusStudies: studies })),
       signInOidc: (profile) =>
         setState((current) => ({
           ...current,
@@ -179,6 +211,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionSubject: profile.subject,
           oidcSessionId: profile.sessionId,
           curriculumNodes: [],
+          campusStudies: [],
           syncAt: { ...current.syncAt, siam: new Date().toISOString() },
         })),
       signOut: () =>
@@ -191,6 +224,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionSubject: null,
           oidcSessionId: null,
           curriculumNodes: [],
+          campusStudies: [],
         })),
       setLocale: (locale) => setState((current) => ({ ...current, locale })),
       syncPlatform: (platform) =>
@@ -241,6 +275,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionSubject: current.sessionSubject,
           oidcSessionId: current.oidcSessionId,
           curriculumNodes: current.sessionMode === 'campus' ? current.curriculumNodes : [],
+          campusStudies: current.sessionMode === 'campus' ? current.campusStudies : [],
           syncAt:
             current.sessionMode === 'oidc'
               ? { siam: current.syncAt.siam }

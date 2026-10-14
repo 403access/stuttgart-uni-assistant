@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
-import { asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
+import { asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -15,6 +15,7 @@ function summary(locale: 'de' | 'en', id: string): string {
     'oidc-config': ['Ob der Identity Provider vorbereitet ist.', 'Whether the identity provider is prepared.'],
     'campus-login': ['Lädt die Curriculum-Wurzel und meldet damit an.', 'Loads the curriculum root and signs in with it.'],
     'campus-structure': ['Dieselbe Struktur, optional für eine Kind-Id.', 'The same structure, optionally for a child id.'],
+    'campus-studies': ['Listet die eingeschriebenen Studiengänge.', 'Lists the enrolled degree programs.'],
     assist: ['Kurze Testfrage an das Modell.', 'A short test question to the model.'],
     'oidc-start': ['Startet den Browser-Login. Nicht von hier.', 'Starts the browser login. Not from here.'],
     'oidc-exchange': ['Tauscht den Code. Nicht von hier.', 'Exchanges the code. Not from here.'],
@@ -30,7 +31,7 @@ function preview(value: unknown): string {
 }
 
 export default function ApiScreen() {
-  const { locale, curriculumNodes, setCurriculum, signInCampus } = useApp();
+  const { locale, curriculumNodes, campusStudies, setCurriculum, setStudies, signInCampus } = useApp();
   const [operations, setOperations] = useState<ApiOperation[]>([]);
   const [live, setLive] = useState(true);
   const [elementId, setElementId] = useState('');
@@ -89,6 +90,11 @@ export default function ApiScreen() {
         const nodes = asCurriculumNodes((next.body as { nodes?: unknown }).nodes);
         if (nodes.length) setCurriculum(nodes);
         setNotice(tx(locale, `${nodes.length} Knoten übernommen.`, `Stored ${nodes.length} nodes.`));
+      }
+      if (operation.id === 'campus-studies' && next.status === 200) {
+        const studies = asCampusStudies((next.body as { studies?: unknown }).studies);
+        if (studies.length) setStudies(studies);
+        setNotice(tx(locale, `${studies.length} Studiengänge übernommen.`, `Stored ${studies.length} degree programs.`));
       }
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -159,6 +165,26 @@ export default function ApiScreen() {
           <Text style={styles.preview}>{preview(result.body)}</Text>
         </Card>
       ) : null}
+      <Section title={tx(locale, 'Studiengänge', 'Degree programs')} />
+      {campusStudies.length === 0 ? (
+        <Muted>{tx(locale, 'Noch keine Studiengänge. Sende die Chooser-Abfrage.', 'No degree programs yet. Send the chooser call.')}</Muted>
+      ) : (
+        campusStudies.map((study) => (
+          <InfoRow
+            key={study.studyId}
+            title={study.name}
+            meta={study.intendedDegree || String(study.studyId)}
+            detail={[
+              study.studyStatus,
+              study.versionIdentifier,
+              study.lastAccessed ? tx(locale, 'zuletzt geöffnet', 'last opened') : '',
+              study.elementId ? `element ${study.elementId}` : '',
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          />
+        ))
+      )}
       <Section title={tx(locale, 'Curriculum', 'Curriculum')} />
       {curriculumNodes.length === 0 ? (
         <Muted>{tx(locale, 'Noch keine Knoten. Sende die Curriculum-Struktur.', 'No nodes yet. Send the curriculum structure.')}</Muted>

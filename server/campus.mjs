@@ -60,6 +60,10 @@ export function curriculumRequestUrl(studyId, elementId) {
   return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/structure?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
 }
 
+export function studiesRequestUrl() {
+  return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/chooser?$ctx=design=ca;lang=de&$filter=';
+}
+
 /** Positive integer, or null when the caller wants the configured root. Rejects paths and other text. */
 export function parseElementId(value) {
   if (value == null || value === '') return null;
@@ -67,6 +71,15 @@ export function parseElementId(value) {
   const id = typeof value === 'number' ? value : Number(value);
   if (!Number.isInteger(id) || id <= 0 || id > 1_000_000_000) throw httpError(400, 'bad_element_id');
   return id;
+}
+
+/** Root curriculum element id from a `myStudyLink` href, or null when the portal omits it. */
+export function elementIdFromLink(href) {
+  if (typeof href !== 'string') return null;
+  const match = href.match(/\/myCurriculumElements\/(\d{1,10})(?:[/?]|$)/);
+  if (!match) return null;
+  const id = Number(match[1]);
+  return Number.isInteger(id) && id > 0 ? id : null;
 }
 
 export function nodesFromCurriculum(payload) {
@@ -91,6 +104,31 @@ export function nodesFromCurriculum(payload) {
   });
 }
 
+export function studiesFromChooser(payload) {
+  const resources = Array.isArray(payload?.resource) ? payload.resource : [];
+  return resources.flatMap((item) => {
+    const dto = item?.content?.CmStudyInfoDto ?? item?.content?.cmStudyInfoDto;
+    if (!dto || typeof dto.studyId !== 'number' || !Number.isInteger(dto.studyId)) return [];
+    const name = langValue(dto.name);
+    if (!name) return [];
+    return [
+      {
+        studyId: dto.studyId,
+        name,
+        intendedDegree: langValue(dto.intendedDegree),
+        versionIdentifier: typeof dto.versionIdentifier === 'string' ? dto.versionIdentifier : '',
+        studyStatus: typeof dto.studyStatus === 'string' ? dto.studyStatus : '',
+        identifier: typeof dto.identifier === 'string' ? dto.identifier : '',
+        curriculumVersionId: Number.isInteger(dto.curriculumVersionId) ? dto.curriculumVersionId : null,
+        curriculumId: Number.isInteger(dto.curriculumId) ? dto.curriculumId : null,
+        color: typeof dto.customizationDto?.color === 'string' ? dto.customizationDto.color : '',
+        lastAccessed: Boolean(dto.lastAccessed),
+        elementId: elementIdFromLink(dto.myStudyLink?.href),
+      },
+    ];
+  });
+}
+
 export function profileFromCurriculum(payload, studyId, elementId) {
   const nodes = nodesFromCurriculum(payload);
   const root = nodes.find((item) => item.elementType === 'ROOT') || nodes.find((item) => item.id === elementId) || nodes[0];
@@ -104,21 +142,18 @@ export function profileFromCurriculum(payload, studyId, elementId) {
   };
 }
 
-async function readCurriculum(studyId, elementId, fetchImpl) {
+async function readCampus(url, label, fetchImpl) {
   if (!campusBearerToken()) throw httpError(503, 'token_missing');
-  const url = curriculumRequestUrl(studyId, elementId);
   let response;
   try {
     response = await fetchImpl(url, { headers: campusRequestHeaders(), signal: AbortSignal.timeout(20_000) });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
-    console.log(`[campus] structure request failed ${reason}`);
+    console.log(`[campus] ${label} request failed ${reason}`);
     throw httpError(502, 'campus_failed');
   }
   const payload = await response.json().catch(() => ({}));
-  console.log(
-    `[campus] structure study=${studyId} element=${elementId} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status}`,
-  );
+  console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status}`);
   if (!response.ok) {
     const message = payload?.resource?.[0]?.content?.coErrorDto?.message || '';
     if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie');
@@ -127,6 +162,10 @@ async function readCurriculum(studyId, elementId, fetchImpl) {
     throw httpError(502, 'campus_failed');
   }
   return payload;
+}
+
+function readCurriculum(studyId, elementId, fetchImpl) {
+  return readCampus(curriculumRequestUrl(studyId, elementId), `structure study=${studyId} element=${elementId}`, fetchImpl);
 }
 
 export async function loginWithCampusToken(fetchImpl = fetch) {
@@ -144,4 +183,11 @@ export async function loadCurriculumStructure(elementIdOverride, fetchImpl = fet
   const nodes = nodesFromCurriculum(payload);
   if (!nodes.length) throw httpError(502, 'campus_unexpected');
   return { studyId: target.studyId, elementId, nodes };
+}
+
+export async function loadCampusStudies(fetchImpl = fetch) {
+  const payload = await readCampus(studiesRequestUrl(), 'studies', fetchImpl);
+  const studies = studiesFromChooser(payload);
+  if (!studies.length) throw httpError(502, 'campus_unexpected');
+  return { studies };
 }

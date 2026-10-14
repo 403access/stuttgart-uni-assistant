@@ -1,6 +1,6 @@
 # Feature catalog
 
-Each row is a capability from the product description, the screen that carries it in this build, and what the screen does. Timetable, grades, ILIAS, and SDG Campus are still the demonstration record. The C@MPUS curriculum structure is a live read, documented in [campus-curriculum.md](../engineering/campus-curriculum.md). SIAM sign-in opens the university identity provider. The URLs are in [oidc-login.md](../engineering/oidc-login.md).
+Each row is a capability from the product description, the screen that carries it in this build, and what the screen does. Timetable, grades, ILIAS, and SDG Campus are still the demonstration record. The C@MPUS curriculum structure and the study chooser are live reads, documented in [campus-curriculum.md](../engineering/campus-curriculum.md) and [campus-studies.md](../engineering/campus-studies.md). SIAM sign-in opens the university identity provider. The URLs are in [oidc-login.md](../engineering/oidc-login.md).
 
 Status words:
 
@@ -16,7 +16,7 @@ Status words:
 | ILIAS materials, slides, homework, forum notices | `/dokumente`, `/plattformen` | In this build | Sync marks every bundled ILIAS document as downloaded and stamps `syncAt.ilias`. Forum-style text lives in the news feed. |
 | SDG Campus and FÜSQ courses | `/plattformen`, Nachhaltigkeit module, Tutorien | In this build | The enrolled key-competency module, its tutorial, and SDG news items stand in for the platform. Sync stamps `syncAt.sdg`. |
 | SIAM single sign-on | `/login` | Several paths | **Mit C@MPUS-Token anmelden** asks the local server to read the curriculum root. The token and `PSESSIONID` stay in `.env`. **C@MPUS öffnen** uses the existing account on the official site. No client registration. The password stays on that page. **Mit dieser Nutzerkennung weiter** stores the account id locally and does not check a password. **Mit SIAM anmelden** is the registered OIDC client. **Demonstrationsprofil öffnen** loads Lena Hartmann. |
-| Assistant API overview | `/api` | In this build | Lists the server routes and sends the replayable ones. A structure response is stored as curriculum nodes. OIDC browser steps are listed and not sent from here. |
+| Assistant API overview | `/api` | In this build | Lists the server routes and sends the replayable ones. A structure response is stored as curriculum nodes, and a study-chooser response as the study list. OIDC browser steps are listed and not sent from here. |
 
 ## 2. Modules (Module)
 

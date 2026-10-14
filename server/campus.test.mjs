@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 
 import { apiCatalog } from './catalog.mjs';
-import { campusAuthorizationHeader, campusRequestHeaders, parseElementId, profileFromCurriculum, publicCampusStatus } from './campus.mjs';
+import { campusAuthorizationHeader, campusRequestHeaders, elementIdFromLink, parseElementId, profileFromCurriculum, publicCampusStatus, studiesFromChooser } from './campus.mjs';
 
 afterEach(() => {
   delete process.env.CAMPUS_BEARER_TOKEN;
@@ -101,6 +101,48 @@ test('element ids stay positive integers', () => {
   }
 });
 
+test('the study chooser maps the German name and the root element link', () => {
+  const studies = studiesFromChooser({ resource: [
+    {
+      content: {
+        type: 'model-slc.cm.cs.student.cmStudyInfoDto',
+        CmStudyInfoDto: {
+          studyId: 339484,
+          curriculumVersionId: 1151,
+          curriculumId: 43,
+          name: { value: 'Linguistik', translations: { translation: [{ lang: 'de', value: 'Linguistik' }, { lang: 'en', value: 'Linguistics' }] } },
+          intendedDegree: { value: 'Bachelor of Arts' },
+          versionIdentifier: '84-152-23',
+          studyStatus: 'STUDYING_ALLOWED',
+          identifier: '1590 84 152 1',
+          customizationDto: { color: '#e6e76d', icon: '' },
+          myStudyLink: { rel: 'related', href: 'https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/339484/myCurriculumElements/2496981', name: 'curriculumElement' },
+          lastAccessed: true,
+        },
+      },
+    },
+  ] });
+  assert.equal(studies.length, 1);
+  assert.equal(studies[0].studyId, 339484);
+  assert.equal(studies[0].name, 'Linguistik');
+  assert.equal(studies[0].intendedDegree, 'Bachelor of Arts');
+  assert.equal(studies[0].elementId, 2496981);
+  assert.equal(studies[0].lastAccessed, true);
+  assert.equal(studies[0].color, '#e6e76d');
+});
+
+test('chooser rows without a studyId or a name are dropped', () => {
+  const studies = studiesFromChooser({ resource: [{ content: { CmStudyInfoDto: { name: { value: 'Ohne Id' } } } }, { content: { CmStudyInfoDto: { studyId: 1 } } }] });
+  assert.deepEqual(studies, []);
+});
+
+test('root element ids are read only from a myCurriculumElements link', () => {
+  assert.equal(elementIdFromLink('https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/339485/myCurriculumElements/278343'), 278343);
+  assert.equal(elementIdFromLink('https://campus.uni-stuttgart.de/other/1'), null);
+  assert.equal(elementIdFromLink(''), null);
+  assert.equal(elementIdFromLink(undefined), null);
+});
+
 test('api catalog only names known paths', () => {
   const { operations } = apiCatalog();
   const paths = operations.map((item) => item.path);
@@ -110,6 +152,7 @@ test('api catalog only names known paths', () => {
     '/v1/oidc/config',
     '/v1/campus/login',
     '/v1/campus/structure',
+    '/v1/campus/studies',
     '/v1/assist',
     '/v1/oidc/start',
     '/v1/oidc/exchange',

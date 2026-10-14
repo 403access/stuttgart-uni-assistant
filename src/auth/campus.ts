@@ -1,5 +1,5 @@
 import { assistantUrl } from '@/src/assistant/remote';
-import type { CurriculumNode } from '@/src/types';
+import type { CampusStudy, CurriculumNode } from '@/src/types';
 
 export interface CampusLogin {
   account: string;
@@ -13,6 +13,10 @@ export interface CurriculumLoad {
   studyId: number;
   elementId: number;
   nodes: CurriculumNode[];
+}
+
+export interface StudiesLoad {
+  studies: CampusStudy[];
 }
 
 export interface CampusStatus {
@@ -75,6 +79,49 @@ export async function loadCampusCurriculum(elementId?: number): Promise<Curricul
   const nodes = asCurriculumNodes(payload.nodes);
   if (!nodes.length || typeof payload.studyId !== 'number' || typeof payload.elementId !== 'number') throw new Error('campus_unexpected');
   return { studyId: payload.studyId, elementId: payload.elementId, nodes };
+}
+
+export async function loadCampusStudies(): Promise<StudiesLoad> {
+  const url = endpoint('/v1/campus/studies');
+  console.info('[campus-studies] GET', url);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (caught) {
+    const reason = caught instanceof Error ? caught.message : 'network';
+    console.info('[campus-studies] unreachable', reason);
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as StudiesLoad & { error?: string };
+  console.info('[campus-studies] status', response.status, payload.error ?? payload.studies?.length ?? 'ok');
+  if (!response.ok) throw new Error(payload.error || `http_${response.status}`);
+  const studies = asCampusStudies(payload.studies);
+  if (!studies.length) throw new Error('campus_unexpected');
+  return { studies };
+}
+
+export function asCampusStudies(value: unknown): CampusStudy[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const study = item as Partial<CampusStudy>;
+    if (typeof study.studyId !== 'number' || typeof study.name !== 'string' || !study.name) return [];
+    return [
+      {
+        studyId: study.studyId,
+        name: study.name,
+        intendedDegree: typeof study.intendedDegree === 'string' ? study.intendedDegree : '',
+        versionIdentifier: typeof study.versionIdentifier === 'string' ? study.versionIdentifier : '',
+        studyStatus: typeof study.studyStatus === 'string' ? study.studyStatus : '',
+        identifier: typeof study.identifier === 'string' ? study.identifier : '',
+        curriculumVersionId: typeof study.curriculumVersionId === 'number' ? study.curriculumVersionId : null,
+        curriculumId: typeof study.curriculumId === 'number' ? study.curriculumId : null,
+        color: typeof study.color === 'string' ? study.color : '',
+        lastAccessed: Boolean(study.lastAccessed),
+        elementId: typeof study.elementId === 'number' ? study.elementId : null,
+      },
+    ];
+  });
 }
 
 export function asCurriculumNodes(value: unknown): CurriculumNode[] {

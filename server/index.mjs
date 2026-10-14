@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
-import { loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
+import { loadCampusStudies, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
 import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
 
@@ -127,6 +127,19 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       const code = error.message || 'campus_failed';
       console.log(`[campus] structure failed ${code}`);
+      send(response, Number(error.status) || 500, { error: code });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/campus/studies') {
+    console.log('[campus] GET /v1/campus/studies');
+    try {
+      const result = await loadCampusStudies();
+      console.log(`[campus] studies ok count=${result.studies.length}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus] studies failed ${code}`);
       send(response, Number(error.status) || 500, { error: code });
     }
     return;

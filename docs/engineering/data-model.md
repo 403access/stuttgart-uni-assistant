@@ -128,6 +128,7 @@ interface PersistedState {
   sessionSubject: string | null;
   oidcSessionId: string | null;
   curriculumNodes: CurriculumNode[];
+  campusStudies: CampusStudy[];
   syncAt: Partial<Record<'campus' | 'ilias' | 'sdg' | 'siam', string>>;
   downloadedIds: string[];
   imports: ImportedDocument[];
@@ -140,6 +141,8 @@ interface PersistedState {
 
 `CurriculumNode` is one level of the C@MPUS structure: `id`, `designation`, `elementType`, `name`, `parentId`, `completed`, `inProgress`. It is not a grade and not a timetable row. The mapping is documented in [campus-curriculum.md](campus-curriculum.md).
 
+`CampusStudy` is one row from the C@MPUS study chooser: `studyId`, `name`, `intendedDegree`, `versionIdentifier`, `studyStatus`, `identifier`, `curriculumVersionId`, `curriculumId`, `color`, `lastAccessed`, and the root `elementId`. It is a study, not a module. The mapping is documented in [campus-studies.md](campus-studies.md).
+
 `sanitize` keeps only well-typed fields. Unknown JSON is ignored. ILIAS sync unions every `source: 'ilias'` document id into `downloadedIds` and sets `syncAt.ilias`. Other platforms only set their timestamp.
 
-Not stored: the password, the OIDC client secret, the C@MPUS bearer token, `PSESSIONID`, the API key, grades, the Informatik catalog, GPS, or anyone else's account. `oidcSessionId` only names a record in the server's memory. `curriculumNodes` is cleared on sign-out.
+Not stored: the password, the OIDC client secret, the C@MPUS bearer token, `PSESSIONID`, the API key, grades, the Informatik catalog, GPS, or anyone else's account. `oidcSessionId` only names a record in the server's memory. `curriculumNodes` and `campusStudies` are cleared on sign-out.
