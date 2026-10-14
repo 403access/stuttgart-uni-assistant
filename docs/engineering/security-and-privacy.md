@@ -4,7 +4,7 @@ This build is a demonstration on one device. The rules below are what the code d
 
 ## Credentials
 
-There is no password field. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize`. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Async Storage keeps the account, name, email, subject, and a local session id used only to ask this server to revoke that memory entry.
+There is no password field. **C@MPUS öffnen** sends the student to `https://campus.uni-stuttgart.de/`, where they use the account they already have. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` once a client is registered. The app does not submit a SIAM password to either host. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Async Storage keeps the account, name, email, subject, and a local session id used only to ask this server to revoke that memory entry.
 
 `OIDC_LOGIN_HINT` may hold the account id so the identity provider can prefill its form. It is not accepted as a password. Environment variables named `OIDC_PASSWORD`, `PASSWORD`, `CAMPUS_PASSWORD`, `SIAM_PASSWORD`, and `UNI_PASSWORD` are ignored.
 
@@ -14,7 +14,7 @@ The flow, the discovery URLs, and the TIK registration step are in [oidc-login.m
 
 ## API key
 
-`XAI_API_KEY` is read by `server/index.mjs` from the environment or from a git-ignored `.env`. `.gitignore` lists `.env` and `.env*.local`. `.env.example` has an empty key and must stay empty.
+`XAI_API_KEY` and `CAMPUS_BEARER_TOKEN` are read by `server/index.mjs` from the environment or from a git-ignored `.env`. `.gitignore` lists `.env` and `.env*.local`. `.env.example` leaves both empty and must stay empty. The campus token is not an `EXPO_PUBLIC_` variable. `/health` reports only `campus.tokenConfigured`.
 
 `EXPO_PUBLIC_*` variables are embedded in the client. The only one this app uses is `EXPO_PUBLIC_ASSISTANT_URL`, which is a URL, not a secret. Do not rename the key so that it starts with `EXPO_PUBLIC_`.
 

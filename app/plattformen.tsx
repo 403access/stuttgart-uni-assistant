@@ -1,5 +1,6 @@
 import { Text } from 'react-native';
 
+import { openOfficialCampus } from '@/src/auth/oidc';
 import { Button, Card, Screen } from '@/src/components/ui';
 import { platformName } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
@@ -46,6 +47,9 @@ export default function PlatformsScreen() {
                 ? tx(locale, `Zuletzt markiert ${new Date(syncAt[id] as string).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB')}`, `Last marked ${new Date(syncAt[id] as string).toLocaleString('en-GB')}`)
                 : tx(locale, 'Noch nicht synchronisiert', 'Not synced yet')}
           </Text>
+          {id === 'campus' ? (
+            <Button label={tx(locale, 'C@MPUS öffnen', 'Open C@MPUS')} onPress={() => openOfficialCampus().catch(() => undefined)} secondary />
+          ) : null}
           {id === 'siam' ? null : <Button label={tx(locale, 'Jetzt synchronisieren', 'Sync now')} onPress={() => syncPlatform(id)} secondary />}
         </Card>
       ))}

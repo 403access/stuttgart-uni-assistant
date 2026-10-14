@@ -22,7 +22,7 @@ npm run ios
 npm run android
 ```
 
-On the sign-in screen, **Mit SIAM anmelden** opens the university identity provider. That needs `npm run assistant` and a client id and secret from TIK in `.env`. The values and every URL are documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** skips the identity provider and loads Lena Hartmann (`st123456`). There is no password field.
+On the sign-in screen, **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann.
 
 ## Run the assistant server
 
@@ -34,9 +34,9 @@ cp .env.example .env
 npm run assistant
 ```
 
-The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`.
+The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`. `GET /health` is on that assistant server, for example `http://127.0.0.1:8787/health`. The Expo app on port 8081 does not serve `/health`.
 
-`GET /health` reports whether an xAI key is configured and whether `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are set. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
+`GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` is set. It does not return the token. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
 ## Checks
 

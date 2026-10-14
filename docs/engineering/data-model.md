@@ -122,7 +122,7 @@ Key: `stuttgart-uni-assistant/v1`.
 interface PersistedState {
   locale: 'de' | 'en';
   sessionAccount: string | null;
-  sessionMode: 'oidc' | 'demo' | null;
+  sessionMode: 'oidc' | 'demo' | 'local' | 'campus' | null;
   sessionName: string | null;
   sessionEmail: string | null;
   sessionSubject: string | null;

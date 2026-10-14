@@ -68,7 +68,7 @@ The password never enters this object.
 
 | Route | Behavior |
 | --- | --- |
-| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc }` |
+| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc, campus }` with `campus.tokenConfigured` only |
 | `GET /v1/oidc/config` | Public OIDC status. No secret, no login hint |
 | `POST /v1/oidc/start` | Authorize URL for a redirect this server allows |
 | `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims, not tokens |

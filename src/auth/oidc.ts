@@ -95,6 +95,10 @@ export async function signInWithUniversity(): Promise<OidcProfile> {
   return { ...exchanged.profile, sessionId: exchanged.sessionId };
 }
 
+export async function openOfficialCampus(): Promise<void> {
+  await WebBrowser.openBrowserAsync(universityUrls.campus);
+}
+
 export async function endUniversitySession(sessionId: string | null): Promise<void> {
   if (!sessionId) return;
   try {

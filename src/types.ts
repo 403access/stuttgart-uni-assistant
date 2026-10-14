@@ -208,7 +208,7 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-export type SessionMode = 'oidc' | 'demo';
+export type SessionMode = 'oidc' | 'demo' | 'local' | 'campus';
 
 export interface PersistedState {
   locale: Locale;

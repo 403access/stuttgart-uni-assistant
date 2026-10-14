@@ -35,6 +35,8 @@ const empty: PersistedState = {
 type AppContextValue = PersistedState & {
   ready: boolean;
   signInDemo: (account: string) => void;
+  signInLocal: (account: string) => void;
+  signInCampus: (profile: { account: string; name: string }) => void;
   signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
@@ -59,7 +61,7 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
   return {
     locale: value.locale === 'en' ? 'en' : 'de',
     sessionAccount: typeof value.sessionAccount === 'string' ? value.sessionAccount : null,
-    sessionMode: value.sessionMode === 'oidc' || value.sessionMode === 'demo' ? value.sessionMode : null,
+    sessionMode: value.sessionMode === 'oidc' || value.sessionMode === 'demo' || value.sessionMode === 'local' || value.sessionMode === 'campus' ? value.sessionMode : null,
     sessionName: typeof value.sessionName === 'string' ? value.sessionName : null,
     sessionEmail: typeof value.sessionEmail === 'string' ? value.sessionEmail : null,
     sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
@@ -112,6 +114,27 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: null,
           sessionSubject: null,
           oidcSessionId: null,
+        })),
+      signInLocal: (account) =>
+        setState((current) => ({
+          ...current,
+          sessionAccount: account.trim(),
+          sessionMode: 'local',
+          sessionName: null,
+          sessionEmail: null,
+          sessionSubject: null,
+          oidcSessionId: null,
+        })),
+      signInCampus: (profile) =>
+        setState((current) => ({
+          ...current,
+          sessionAccount: profile.account,
+          sessionMode: 'campus',
+          sessionName: profile.name,
+          sessionEmail: null,
+          sessionSubject: null,
+          oidcSessionId: null,
+          syncAt: { ...current.syncAt, campus: new Date().toISOString() },
         })),
       signInOidc: (profile) =>
         setState((current) => ({

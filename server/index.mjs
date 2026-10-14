@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
+import { loginWithCampusToken, publicCampusStatus } from './campus.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
 
 loadEnv(new URL('../.env', import.meta.url));
@@ -79,7 +80,30 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (request.method === 'GET' && url.pathname === '/health') {
-    send(response, 200, { ok: true, model, configured: Boolean(process.env.XAI_API_KEY), oidc: publicOidcStatus() });
+    send(response, 200, {
+      ok: true,
+      model,
+      configured: Boolean(process.env.XAI_API_KEY),
+      oidc: publicOidcStatus(),
+      campus: publicCampusStatus(),
+    });
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/campus/config') {
+    send(response, 200, publicCampusStatus());
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/campus/login') {
+    console.log('[campus] POST /v1/campus/login');
+    try {
+      const profile = await loginWithCampusToken();
+      console.log(`[campus] login ok name=${profile.name} account=${profile.account}`);
+      send(response, 200, profile);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus] login failed ${code}`);
+      send(response, Number(error.status) || 500, { error: code });
+    }
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/oidc/config') {

@@ -66,6 +66,18 @@ The university access token and the refresh token stay in the server process mem
 
 `login_hint` is sent only when `OIDC_LOGIN_HINT` is set. That value is the account id, for example `st123456`, so the IdP can prefill its own form. It is not a credential this server can use by itself.
 
+## Existing account, without registering the app
+
+The identity provider does not offer the password grant. `grant_types_supported` in the discovery document is `authorization_code`, `implicit`, and `refresh_token`. An unregistered app cannot check a SIAM password, and this project does not post the password to the login form.
+
+The alternate path opens the official C@MPUS site in the system browser:
+
+[https://campus.uni-stuttgart.de/](https://campus.uni-stuttgart.de/)
+
+C@MPUS then redirects to the identity provider. The student types the account and password they already have, on that page. No client id is required, because the student is signing in to C@MPUS itself, not to this app. The password is not read by this app and is not written to `.env`.
+
+On the sign-in screen, **Mit dieser Nutzerkennung weiter** stores the typed account id on the device (`sessionMode: local`). That label is not a verified login. The timetable and grades stay the demonstration record. **C@MPUS öffnen** is also on the platforms screen.
+
 ## What has to be registered before the button succeeds
 
 TIK does not hand a client id to an unregistered app. The public registration endpoint is listed in discovery, and this project does not call it. The published path is an email to shibboleth-support@tik.uni-stuttgart.de with:

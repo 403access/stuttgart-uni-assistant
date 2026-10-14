@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { fetchOidcStatus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
+import { fetchCampusStatus, signInWithCampusToken, type CampusStatus } from '@/src/auth/campus';
+import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
 import { student } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
@@ -11,10 +12,13 @@ import { tx } from '@/src/text';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const { locale, setLocale, signInDemo, signInOidc } = useApp();
+  const { locale, setLocale, signInCampus, signInDemo, signInLocal, signInOidc } = useApp();
   const [status, setStatus] = useState<OidcStatus | null>(null);
+  const [campusStatus, setCampusStatus] = useState<CampusStatus | null>(null);
+  const [account, setAccount] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [campusLog, setCampusLog] = useState('');
   const redirectUri = universityRedirectUri();
 
   useEffect(() => {
@@ -22,10 +26,33 @@ export default function LoginScreen() {
     fetchOidcStatus().then((next) => {
       if (active) setStatus(next);
     });
+    fetchCampusStatus().then((next) => {
+      if (active) setCampusStatus(next);
+    });
     return () => {
       active = false;
     };
   }, []);
+
+  async function enterWithCampusToken() {
+    if (busy) return;
+    setError('');
+    const url = `${process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787'}/v1/campus/login`;
+    setCampusLog(tx(locale, `Rufe ${url} auf …`, `Calling ${url} …`));
+    setBusy(true);
+    try {
+      const profile = await signInWithCampusToken();
+      setCampusLog(tx(locale, `Angemeldet als ${profile.name} (${profile.account}).`, `Signed in as ${profile.name} (${profile.account}).`));
+      signInCampus(profile);
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      const message = campusMessage(locale, code);
+      setCampusLog(message);
+      setError(message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function enterWithSiam() {
     if (busy) return;
@@ -58,11 +85,69 @@ export default function LoginScreen() {
             <Text style={[styles.langText, locale === 'en' && styles.langTextOn]}>English</Text>
           </Pressable>
         </View>
+        <Text style={styles.section}>{tx(locale, 'Bestehendes Konto, ohne Registrierung', 'Existing account, no registration')}</Text>
         <Text style={styles.notice}>
           {tx(
             locale,
-            'SIAM ist das Nutzerkonto. Die Anmeldung selbst läuft über den Identity Provider des TIK, denselben, den C@MPUS öffnet. Das Passwort wird nur auf der Seite der Universität eingegeben und nicht in dieser App gespeichert.',
-            'SIAM is the user account. Sign-in itself runs through the TIK identity provider, the same one C@MPUS opens. The password is entered only on the university page and is not stored in this app.',
+            'Dein st-Konto und dein Passwort gelten auf der Anmeldeseite von C@MPUS. Die App muss dafür nicht beim TIK registriert sein. Das Passwort wird dort eingegeben, nicht in dieses Formular. Der Identity Provider nimmt ein Passwort von einer unregistrierten App nicht entgegen.',
+            'Your st-account and password work on the C@MPUS sign-in page. This app does not need to be registered with TIK for that. The password is entered there, not in this form. The identity provider does not accept a password from an unregistered app.',
+          )}
+        </Text>
+        <Button
+          label={busy ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Mit C@MPUS-Token anmelden', 'Sign in with C@MPUS token')}
+          onPress={enterWithCampusToken}
+        />
+        {campusLog ? <Text style={error ? styles.error : styles.footer}>{campusLog}</Text> : null}
+        <Text style={styles.footer}>
+          {campusStatus === null
+            ? tx(locale, 'Der lokale Server antwortet noch nicht. Starte npm run assistant.', 'The local server is not answering yet. Start npm run assistant.')
+            : campusStatus.tokenConfigured
+              ? tx(
+                  locale,
+                  `Token ist gesetzt${campusStatus.sessionCookieConfigured ? ', Sitzungs-Cookie auch' : ''}. Der Server liest CAMPUS_BEARER_TOKEN und fragt die Curriculum-Struktur ab.`,
+                  `Token is set${campusStatus.sessionCookieConfigured ? ', and so is the session cookie' : ''}. The server reads CAMPUS_BEARER_TOKEN and requests the curriculum structure.`,
+                )
+              : tx(
+                  locale,
+                  'CAMPUS_BEARER_TOKEN fehlt in der .env des Servers.',
+                  'CAMPUS_BEARER_TOKEN is missing from the server .env.',
+                )}
+        </Text>
+        <Button label={tx(locale, 'C@MPUS öffnen und anmelden', 'Open C@MPUS and sign in')} onPress={() => openOfficialCampus().catch(() => undefined)} secondary />
+        <Text style={styles.label}>{tx(locale, 'Nutzerkennung für diese App', 'Account id for this app')}</Text>
+        <TextInput
+          value={account}
+          onChangeText={setAccount}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={styles.input}
+          placeholder="st123456"
+          placeholderTextColor={colors.mute}
+        />
+        <Button
+          secondary
+          label={tx(locale, 'Mit dieser Nutzerkennung weiter', 'Continue with this account')}
+          onPress={() => {
+            if (account.trim().length < 3) {
+              setError(tx(locale, 'Bitte die Nutzerkennung eintragen, zum Beispiel st123456.', 'Enter the account id, for example st123456.'));
+              return;
+            }
+            signInLocal(account);
+          }}
+        />
+        <Text style={styles.footer}>
+          {tx(
+            locale,
+            `Die Nutzerkennung steht dann im Profil. Stundenplan und Noten bleiben der Demonstrationsstand von ${student.name}, bis ein registrierter Client C@MPUS lesen darf.`,
+            `The account id then shows on the profile. The timetable and grades stay the demonstration record of ${student.name}, until a registered client is allowed to read C@MPUS.`,
+          )}
+        </Text>
+        <Text style={styles.section}>{tx(locale, 'Registrierter SIAM-Client', 'Registered SIAM client')}</Text>
+        <Text style={styles.notice}>
+          {tx(
+            locale,
+            'Wenn das TIK eine Client-ID vergeben hat, läuft die Anmeldung über den Identity Provider. Das Passwort bleibt auch dann auf der Seite der Universität.',
+            'Once TIK has issued a client id, sign-in runs through the identity provider. The password still stays on the university page.',
           )}
         </Text>
         <Text style={styles.meta}>{universityUrls.campus}</Text>
@@ -113,6 +198,30 @@ export default function LoginScreen() {
   );
 }
 
+function campusMessage(locale: 'de' | 'en', code: string): string {
+  if (code === 'server_unreachable') {
+    return tx(
+      locale,
+      'Der Assistenz-Server auf http://127.0.0.1:8787 antwortet nicht. Port 8081 ist nur die App. Starte im Projektordner: npm run assistant',
+      'The assistant server at http://127.0.0.1:8787 is not answering. Port 8081 is only the app. In the project directory run: npm run assistant',
+    );
+  }
+  if (code === 'token_missing') {
+    return tx(locale, 'In der .env fehlt CAMPUS_BEARER_TOKEN. Server neu starten, nachdem der Wert gesetzt ist.', 'CAMPUS_BEARER_TOKEN is missing from .env. Restart the server after setting it.');
+  }
+  if (code === 'missing_session_cookie') {
+    return tx(
+      locale,
+      'C@MPUS hat den Token erhalten und verlangt zusätzlich das Cookie PSESSIONID derselben Anmeldung. Setze nur diesen Wert als CAMPUS_SESSION_COOKIE in der .env und starte den Server neu.',
+      'C@MPUS received the token and also requires the PSESSIONID cookie from that same login. Set only that value as CAMPUS_SESSION_COOKIE in .env and restart the server.',
+    );
+  }
+  if (code === 'campus_unauthorized') {
+    return tx(locale, 'C@MPUS hat den Token abgelehnt.', 'C@MPUS rejected the token.');
+  }
+  return tx(locale, `C@MPUS-Anmeldung nicht abgeschlossen (${code}).`, `C@MPUS sign-in did not finish (${code}).`);
+}
+
 function messageFor(locale: 'de' | 'en', code: string, status: OidcStatus | null): string {
   if (code === 'cancelled') return tx(locale, 'Anmeldung abgebrochen.', 'Sign-in cancelled.');
   if (code === 'oidc_unconfigured') {
@@ -143,7 +252,18 @@ const styles = StyleSheet.create({
   langOn: { backgroundColor: colors.blue, borderColor: colors.blue },
   langText: { color: colors.anthracite, fontWeight: '700' },
   langTextOn: { color: '#FFFFFF' },
+  section: { color: colors.anthracite, fontSize: 18, fontWeight: '700', marginTop: 8 },
   notice: { backgroundColor: colors.lightSoft, color: colors.anthracite, borderRadius: 14, padding: 12, lineHeight: 20 },
+  label: { color: colors.inkSoft, fontSize: 13, fontWeight: '700', marginTop: 4 },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.anthracite,
+  },
   meta: { color: colors.inkSoft, fontSize: 12, lineHeight: 18 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   footer: { color: colors.inkSoft, fontSize: 13, lineHeight: 19 },

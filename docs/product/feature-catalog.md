@@ -15,7 +15,7 @@ Status words:
 | C@MPUS schedule, exams, handbook, grades, announcements | `/plattformen`, Heute, Fristen, module list | In this build | Reads the bundled timetable, deadlines, modules, and grades. Sync writes a timestamp in `syncAt.campus`. |
 | ILIAS materials, slides, homework, forum notices | `/dokumente`, `/plattformen` | In this build | Sync marks every bundled ILIAS document as downloaded and stamps `syncAt.ilias`. Forum-style text lives in the news feed. |
 | SDG Campus and FÜSQ courses | `/plattformen`, Nachhaltigkeit module, Tutorien | In this build | The enrolled key-competency module, its tutorial, and SDG news items stand in for the platform. Sync stamps `syncAt.sdg`. |
-| SIAM single sign-on | `/login` | In this build, once TIK has registered a client | **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` in the system browser. The server exchanges the code with the client secret. The password is not collected. Without a client id the button explains the gap. **Demonstrationsprofil öffnen** still loads Lena Hartmann. |
+| SIAM single sign-on | `/login` | Two paths | **C@MPUS öffnen** uses the existing account on the official site. No client registration. The password stays on that page. **Mit dieser Nutzerkennung weiter** stores the account id locally and does not check a password. **Mit SIAM anmelden** is the registered OIDC client. **Demonstrationsprofil öffnen** loads Lena Hartmann. |
 
 ## 2. Modules (Module)
 

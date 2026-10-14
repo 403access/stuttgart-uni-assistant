@@ -23,11 +23,14 @@ export default function MoreScreen() {
     <Screen kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Mehr', 'More')}>
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>
-          {sessionMode === 'oidc' ? sessionName || sessionAccount : student.name}
+          {sessionMode === 'oidc' || sessionMode === 'campus' ? sessionName || sessionAccount : sessionMode === 'local' ? sessionAccount : student.name}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
-          {sessionAccount}
-          {sessionEmail ? ` · ${sessionEmail}` : ` · ${student.matriculation}`}
+          {sessionMode === 'local'
+            ? tx(locale, 'Lokal eingetragen', 'Entered on this device')
+            : sessionMode === 'campus'
+              ? sessionAccount
+              : `${sessionAccount ?? ''}${sessionEmail ? ` · ${sessionEmail}` : ` · ${student.matriculation}`}`}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
           {sessionMode === 'oidc'
@@ -36,7 +39,19 @@ export default function MoreScreen() {
                 `Angemeldet über den Identity Provider. Stundenplan und Noten sind weiter der Demonstrationsstand von ${student.name}.`,
                 `Signed in through the identity provider. The timetable and grades are still the demonstration record of ${student.name}.`,
               )
-            : pick(student.faculty, locale)}
+            : sessionMode === 'campus'
+              ? tx(
+                  locale,
+                  'Angemeldet mit dem C@MPUS-Token. Der Name kommt aus der Curriculum-Struktur.',
+                  'Signed in with the C@MPUS token. The name comes from the curriculum structure.',
+                )
+              : sessionMode === 'local'
+              ? tx(
+                  locale,
+                  `Nutzerkennung nur lokal eingetragen. Das Passwort wurde nicht geprüft. C@MPUS öffnest du über Plattformen. Der Studienstand ist weiter ${student.name}.`,
+                  `Account id stored only on this device. The password was not checked. Open C@MPUS from Platforms. The study record is still ${student.name}.`,
+                )
+              : pick(student.faculty, locale)}
         </Text>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
           {pick(program.degree, locale)} {pick(program.title, locale)}
