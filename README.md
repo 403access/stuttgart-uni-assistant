@@ -47,7 +47,7 @@ npm run typecheck
 npm run check
 ```
 
-`npm run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary).
+`npm run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary). It also runs the server tests and the secrets CLI tests (`scripts/set-campus-secret.test.mjs`), which exercise the token and session updater against a throwaway `.env` copy and assert the real one is never touched.
 
 ## Where things live
 

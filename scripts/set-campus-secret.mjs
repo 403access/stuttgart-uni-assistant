@@ -11,12 +11,13 @@
  * is never printed back; only a masked confirmation is shown.
  */
 
-import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const envPath = new URL('../.env', import.meta.url);
 const examplePath = new URL('../.env.example', import.meta.url);
 
-const aliases = {
+export const aliases = {
   token: { key: 'CAMPUS_BEARER_TOKEN', label: 'C@MPUS bearer token', kind: 'token' },
   bearer: { key: 'CAMPUS_BEARER_TOKEN', label: 'C@MPUS bearer token', kind: 'token' },
   session: { key: 'CAMPUS_SESSION_COOKIE', label: 'PSESSIONID cookie value', kind: 'cookie' },
@@ -38,7 +39,7 @@ Omit the value to type it without echoing, or pipe it in:
 }
 
 /** Strip the shape a person copies out of the browser or DevTools. */
-function normalize(kind, raw) {
+export function normalize(kind, raw) {
   let value = raw.replace(/\r?\n/g, '').trim();
   if (kind === 'token') {
     value = value
@@ -99,7 +100,7 @@ function readHidden(prompt) {
   });
 }
 
-function mask(value) {
+export function mask(value) {
   if (!value) return '(empty)';
   if (value.length <= 8) return `…(${value.length} chars)`;
   return `${value.slice(0, 4)}…${value.slice(-2)} (${value.length} chars)`;
@@ -114,7 +115,7 @@ function readEnvLines() {
   return { text: '', created: true };
 }
 
-function writeKey(text, key, value) {
+export function writeKey(text, key, value) {
   const eol = text.includes('\r\n') ? '\r\n' : '\n';
   const lines = text.length ? text.split(/\r?\n/) : [];
   const pattern = new RegExp(`^\\s*${key}\\s*=`);
@@ -129,7 +130,7 @@ function writeKey(text, key, value) {
   return joined.endsWith(eol) ? joined : `${joined}${eol}`;
 }
 
-function readValue(text, key) {
+export function readValue(text, key) {
   const line = text.split(/\r?\n/).find((item) => new RegExp(`^\\s*${key}\\s*=`).test(item));
   return line ? line.slice(line.indexOf('=') + 1).replace(/^['"]|['"]$/g, '').trim() : '';
 }
@@ -191,7 +192,12 @@ async function main() {
   console.log('Restart the server for the change to take effect: npm run assistant');
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+// Run the CLI only when executed directly. Tests import the helpers above.
+// argv[1] is compared through realpath because /tmp is a symlink on macOS.
+if (realpathSync(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}
+

@@ -20,7 +20,7 @@ Catch a wrong credit total or a fabricated answer before a screen redesign hides
 | "Kann ich Maschinelles Lernen jetzt belegen?" | Names M-INF-640 and says it is not yet open |
 | Summary of the week-3 slides | Keeps the token A* |
 
-`npm run check` also runs `node --test server/oidc.test.mjs`. That test checks the authorize URL, the redirect allowlist, and that a password variable is not copied into the request. It does not sign in to the identity provider.
+`npm run check` also runs `node --test server/oidc.test.mjs server/campus.test.mjs scripts/set-campus-secret.test.mjs`. The OIDC test checks the authorize URL, the redirect allowlist, and that a password variable is not copied into the request. It does not sign in to the identity provider. The campus test pins the curriculum mapping, the study-chooser mapping, and the catalog of replayable routes. The secrets test pins the CLI that writes `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE`: header and cookie normalization, `.env` line replacement, the masked `list` output, and refusal cases (`--help` as a value, unknown flags, whitespace, empty input). The CLI runs are executed against a copy of the script in a temporary directory, so the real `.env` is never touched.
 
 `npm run typecheck` runs `tsc --noEmit` over the app, the domain, and the check script.
 

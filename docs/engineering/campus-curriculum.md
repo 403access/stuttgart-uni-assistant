@@ -84,7 +84,7 @@ The signed-in browser on `https://campus.uni-stuttgart.de` shows these cookie na
 | `PROFILE_CHOOSER_ENABLED` | Profile-chooser preference. |
 | `SESSION_MODIFICATION_DEBUG` | Debug flag. |
 
-Put only the `PSESSIONID` value into `CAMPUS_SESSION_COOKIE`, without the name `PSESSIONID=`, and restart `npm run assistant`. `npm run campus:session -- <value>` writes it; paste the whole cookie string and the script keeps just the `PSESSIONID`. The other four cookies are not sent. `CAMPUS_STUDY_ID` and `CAMPUS_CURRICULUM_ID` select the node. The defaults are the observed ids `339485` and `278343`.
+Put only the `PSESSIONID` value into `CAMPUS_SESSION_COOKIE`, without the name `PSESSIONID=`, and restart `npm run assistant`. `npm run campus:session -- <value>` writes it; paste the whole cookie string and the script keeps just the `PSESSIONID`. The other four cookies are not sent. `CAMPUS_STUDY_ID` and `CAMPUS_CURRICULUM_ID` select the node. The defaults are the observed ids `339485` and `278343`. The normalization, the masked output, and the refusal cases of both updater commands are pinned by `scripts/set-campus-secret.test.mjs`, which `npm run check` runs.
 
 How `{studyId}` and the root `{elementId}` are discovered is the chooser call in [campus-studies.md](campus-studies.md). The body only describes the node that was requested and the nodes directly under it.
 

@@ -22,8 +22,10 @@ Scripts in `package.json`:
 | `web` | `expo start --web` | Browser |
 | `ios` / `android` | `expo start --ios` / `--android` | Simulator or emulator |
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
-| `check` | `tsx scripts/check-assistant.ts` | Catalog totals and German answers |
+| `check` | `tsx scripts/check-assistant.ts` + `node --test` | Catalog totals, German answers, the OIDC and campus server tests, the secrets CLI tests |
 | `assistant` | `node server/index.mjs` | Local Grok proxy on port 8787 |
+| `campus:token` / `campus:session` | `node scripts/set-campus-secret.mjs` | Write `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` into git-ignored `.env` |
+| `campus:secret` | `node scripts/set-campus-secret.mjs` | `list` shows which secrets are set, masked; `--help` shows usage |
 
 Sign in with **Mit SIAM anmelden** when `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are in `.env`, or open the demonstration profile. There is no password field. The URLs and the TIK registration step are in [oidc-login.md](../engineering/oidc-login.md).
 
@@ -35,6 +37,8 @@ cp .env.example .env
 npm run assistant
 curl -s http://127.0.0.1:8787/health
 ```
+
+Rotate the C@MPUS secrets without editing the file by hand: `npm run campus:token -- <token>` and `npm run campus:session -- <PSESSIONID>`. A pasted `Bearer` header or a full cookie string is reduced to the bare value, the value can be piped or typed without echoing, and `npm run campus:secret -- list` reports masked status. Restart `npm run assistant` after a change.
 
 Healthy and unconfigured:
 
