@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { InfoRow, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Pill, Screen } from '@/src/components/ui';
 import { places } from '@/src/data';
 import { campusName, placeKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
@@ -10,10 +11,92 @@ import { colors } from '@/src/theme';
 import { hay, pick, tx } from '@/src/text';
 import type { Campus } from '@/src/types';
 
+const UNI_MAPS_URL = 'https://maps.uni-stuttgart.de/';
+
+let UniMapsView: typeof import('react-native-webview').WebView | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  UniMapsView = require('react-native-webview').WebView;
+} catch {
+  UniMapsView = null;
+}
+
+type MapView = 'uni' | 'overview';
+
 export default function CampusScreen() {
   const { locale } = useApp();
+  const [view, setView] = useState<MapView>('uni');
   const [campus, setCampus] = useState<Campus>('vaihingen');
   const [query, setQuery] = useState('');
+
+  return (
+    <Screen
+      kicker={tx(locale, 'Orientierung', 'Orientation')}
+      title="Map"
+      subtitle={
+        view === 'uni'
+          ? tx(locale, 'Lageplan der Universität. Quelle: maps.uni-stuttgart.de.', 'University map. Source: maps.uni-stuttgart.de.')
+          : tx(locale, 'Schematischer Plan für Vaihingen und Stadtmitte. Kein vermessener Lageplan und kein Standort.', 'A schematic for Vaihingen and Stadtmitte. Not a surveyed map and not your location.')
+      }
+      scroll={view === 'overview'}>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Pressable onPress={() => setView('uni')}>
+          <Pill label={tx(locale, 'Uni-Karte', 'Uni map')} active={view === 'uni'} />
+        </Pressable>
+        <Pressable onPress={() => setView('overview')}>
+          <Pill label={tx(locale, 'Übersicht', 'Overview')} active={view === 'overview'} />
+        </Pressable>
+      </View>
+      {view === 'uni' ? <UniMap locale={locale} /> : <Overview campus={campus} setCampus={setCampus} query={query} setQuery={setQuery} locale={locale} />}
+    </Screen>
+  );
+}
+
+function UniMap({ locale }: { locale: 'de' | 'en' }) {
+  const [failed, setFailed] = useState(false);
+  if (!UniMapsView || failed) {
+    return (
+      <Card>
+        <Muted>
+          {tx(
+            locale,
+            'Die Karte kann hier nicht eingebettet werden. Öffne sie im Browser.',
+            'The map cannot be embedded here. Open it in the browser.',
+          )}
+        </Muted>
+        <Button
+          label={tx(locale, 'maps.uni-stuttgart.de öffnen', 'Open maps.uni-stuttgart.de')}
+          onPress={() => WebBrowser.openBrowserAsync(UNI_MAPS_URL).catch(() => undefined)}
+        />
+      </Card>
+    );
+  }
+  const WebView = UniMapsView;
+  return (
+    <View style={styles.webWrap}>
+      <WebView
+        source={{ uri: UNI_MAPS_URL }}
+        style={styles.web}
+        onError={() => setFailed(true)}
+        onHttpError={() => setFailed(true)}
+      />
+    </View>
+  );
+}
+
+function Overview({
+  campus,
+  setCampus,
+  query,
+  setQuery,
+  locale,
+}: {
+  campus: Campus;
+  setCampus: (value: Campus) => void;
+  query: string;
+  setQuery: (value: string) => void;
+  locale: 'de' | 'en';
+}) {
   const onCampus = places.filter((place) => place.campus === campus);
   const needle = hay(query.trim());
   const visible = onCampus.filter((place) => {
@@ -22,10 +105,7 @@ export default function CampusScreen() {
   });
 
   return (
-    <Screen
-      kicker={tx(locale, 'Orientierung', 'Orientation')}
-      title="Campus"
-      subtitle={tx(locale, 'Schematischer Plan für Vaihingen und Stadtmitte. Kein vermessener Lageplan und kein Standort.', 'A schematic for Vaihingen and Stadtmitte. Not a surveyed map and not your location.')}>
+    <>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {(['vaihingen', 'stadtmitte'] as Campus[]).map((item) => (
           <Pressable key={item} onPress={() => setCampus(item)}>
@@ -63,9 +143,14 @@ export default function CampusScreen() {
           onPress={() => router.push({ pathname: '/raum/[id]', params: { id: place.id } })}
         />
       ))}
-    </Screen>
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  webWrap: { flex: 1, minHeight: 520, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
+  web: { flex: 1 },
+});
 
 const mapStyle = {
   height: 280,

@@ -47,11 +47,12 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | Student comments | `/kommilitonen`, module detail | Local only | The student can add a review. It is stored on this device and shown with the seed reviews. |
 | Past exams (Altklausuren) | `/altklausuren`, `/pruefung/[id]` | In this build | Topics, focus, and a study hint. No exam PDF. |
 
-## 5. Campus (Ort)
+## 5. Map (Ort)
 
 | Capability | Screen | Status | What this build does |
 | --- | --- | --- | --- |
-| Vaihingen and Stadtmitte | `/campus` | In this build | Campus switch and a schematic of dots. The screen says it is not a live location. |
+| University map | `/campus` (Map tab) | In this build | Embedded `https://maps.uni-stuttgart.de/`, active by default. Falls back to opening the browser when embedding fails. |
+| Vaihingen and Stadtmitte | `/campus` (Übersicht) | In this build | Campus switch and a schematic of dots. The screen says it is not a live location. |
 | Room and building finder | `/campus`, `/raum/[id]`, Chat | In this build | Lecture halls (including K I, K II, K1, K2), offices, study space, libraries, Mensa. "Mensa Vaihingen" resolves to Pfaffenwaldring 45. A room screen lists the address and the sessions held there. |
 
 ## 6. Documents (Document Hub)

@@ -62,7 +62,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="campus"
         options={{
-          title: 'Campus',
+          title: 'Map',
           tabBarIcon: ({ color }) => (
             <View style={{ width: 10, height: 10, borderWidth: 1.5, borderColor: color, transform: [{ rotate: '45deg' }] }} />
           ),
