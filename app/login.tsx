@@ -42,7 +42,13 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const profile = await signInWithCampusToken();
-      setCampusLog(tx(locale, `Angemeldet als ${profile.name} (${profile.account}).`, `Signed in as ${profile.name} (${profile.account}).`));
+      setCampusLog(
+        tx(
+          locale,
+          `Angemeldet als ${profile.name} (${profile.account}). ${profile.nodes.length} Knoten geladen.`,
+          `Signed in as ${profile.name} (${profile.account}). Loaded ${profile.nodes.length} nodes.`,
+        ),
+      );
       signInCampus(profile);
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -214,6 +220,13 @@ function campusMessage(locale: 'de' | 'en', code: string): string {
       locale,
       'C@MPUS hat den Token erhalten und verlangt zusätzlich das Cookie PSESSIONID derselben Anmeldung. Setze nur diesen Wert als CAMPUS_SESSION_COOKIE in der .env und starte den Server neu.',
       'C@MPUS received the token and also requires the PSESSIONID cookie from that same login. Set only that value as CAMPUS_SESSION_COOKIE in .env and restart the server.',
+    );
+  }
+  if (code === 'invalid_token') {
+    return tx(
+      locale,
+      'C@MPUS meldet invalid_token. CAMPUS_BEARER_TOKEN ist abgelaufen oder gehört nicht zu diesem PSESSIONID. Setze einen neuen Token aus derselben Anmeldung und starte den Server neu.',
+      'C@MPUS reports invalid_token. CAMPUS_BEARER_TOKEN has expired or does not belong to this PSESSIONID. Set a new token from the same login and restart the server.',
     );
   }
   if (code === 'campus_unauthorized') {

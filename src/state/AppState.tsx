@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import { documents } from '@/src/data';
 import type {
   ChatMessage,
+  CurriculumNode,
   ImportedDocument,
   Locale,
   PersistedState,
@@ -23,6 +24,7 @@ const empty: PersistedState = {
   sessionEmail: null,
   sessionSubject: null,
   oidcSessionId: null,
+  curriculumNodes: [],
   syncAt: {},
   downloadedIds: [],
   imports: [],
@@ -36,7 +38,8 @@ type AppContextValue = PersistedState & {
   ready: boolean;
   signInDemo: (account: string) => void;
   signInLocal: (account: string) => void;
-  signInCampus: (profile: { account: string; name: string }) => void;
+  signInCampus: (profile: { account: string; name: string; nodes?: CurriculumNode[] }) => void;
+  setCurriculum: (nodes: CurriculumNode[]) => void;
   signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
@@ -56,6 +59,26 @@ type AppContextValue = PersistedState & {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+function sanitizeNodes(value: unknown): CurriculumNode[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const node = item as Partial<CurriculumNode>;
+    if (typeof node.id !== 'number' || typeof node.name !== 'string') return [];
+    return [
+      {
+        id: node.id,
+        designation: typeof node.designation === 'string' ? node.designation : '',
+        elementType: typeof node.elementType === 'string' ? node.elementType : '',
+        name: node.name,
+        parentId: typeof node.parentId === 'number' ? node.parentId : null,
+        completed: Boolean(node.completed),
+        inProgress: Boolean(node.inProgress),
+      },
+    ];
+  });
+}
+
 function sanitize(value: Partial<PersistedState> | null): PersistedState {
   if (!value) return empty;
   return {
@@ -66,6 +89,7 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
     sessionEmail: typeof value.sessionEmail === 'string' ? value.sessionEmail : null,
     sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
     oidcSessionId: typeof value.oidcSessionId === 'string' ? value.oidcSessionId : null,
+    curriculumNodes: sanitizeNodes(value.curriculumNodes),
     syncAt: value.syncAt ?? {},
     downloadedIds: Array.isArray(value.downloadedIds) ? value.downloadedIds.filter((id) => typeof id === 'string') : [],
     imports: Array.isArray(value.imports) ? value.imports : [],
@@ -114,6 +138,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: null,
           sessionSubject: null,
           oidcSessionId: null,
+          curriculumNodes: [],
         })),
       signInLocal: (account) =>
         setState((current) => ({
@@ -124,6 +149,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: null,
           sessionSubject: null,
           oidcSessionId: null,
+          curriculumNodes: [],
         })),
       signInCampus: (profile) =>
         setState((current) => ({
@@ -134,8 +160,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: null,
           sessionSubject: null,
           oidcSessionId: null,
+          curriculumNodes: profile.nodes ?? current.curriculumNodes,
           syncAt: { ...current.syncAt, campus: new Date().toISOString() },
         })),
+      setCurriculum: (nodes) =>
+        setState((current) => {
+          const map = new Map(current.curriculumNodes.map((node) => [node.id, node]));
+          for (const node of nodes) map.set(node.id, node);
+          return { ...current, curriculumNodes: [...map.values()] };
+        }),
       signInOidc: (profile) =>
         setState((current) => ({
           ...current,
@@ -145,6 +178,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: profile.email,
           sessionSubject: profile.subject,
           oidcSessionId: profile.sessionId,
+          curriculumNodes: [],
           syncAt: { ...current.syncAt, siam: new Date().toISOString() },
         })),
       signOut: () =>
@@ -156,6 +190,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: null,
           sessionSubject: null,
           oidcSessionId: null,
+          curriculumNodes: [],
         })),
       setLocale: (locale) => setState((current) => ({ ...current, locale })),
       syncPlatform: (platform) =>
@@ -205,7 +240,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionEmail: current.sessionEmail,
           sessionSubject: current.sessionSubject,
           oidcSessionId: current.oidcSessionId,
-          syncAt: current.sessionMode === 'oidc' ? { siam: current.syncAt.siam } : {},
+          curriculumNodes: current.sessionMode === 'campus' ? current.curriculumNodes : [],
+          syncAt:
+            current.sessionMode === 'oidc'
+              ? { siam: current.syncAt.siam }
+              : current.sessionMode === 'campus'
+                ? { campus: current.syncAt.campus }
+                : {},
         })),
     }),
     [ready, state],

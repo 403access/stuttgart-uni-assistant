@@ -39,7 +39,7 @@ curl -s http://127.0.0.1:8787/health
 Healthy and unconfigured:
 
 ```json
-{"ok":true,"model":"grok-4.7","configured":false,"oidc":{"configured":false},"campus":{"tokenConfigured":false}}
+{"ok":true,"model":"grok-4.7","configured":false,"oidc":{"configured":false},"campus":{"tokenConfigured":false,"sessionCookieConfigured":false,"studyId":339485,"elementId":278343}}
 ```
 
 `POST /v1/assist` without a key returns 503 `{ "error": "missing_key" }`. The app then keeps the local answer.

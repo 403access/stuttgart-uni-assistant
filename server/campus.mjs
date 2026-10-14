@@ -56,17 +56,43 @@ function langValue(data) {
   return german || data?.value || '';
 }
 
-export function profileFromCurriculum(payload, studyId, elementId) {
+export function curriculumRequestUrl(studyId, elementId) {
+  return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/structure?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
+}
+
+/** Positive integer, or null when the caller wants the configured root. Rejects paths and other text. */
+export function parseElementId(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'string' && !/^[1-9]\d{0,9}$/.test(value)) throw httpError(400, 'bad_element_id');
+  const id = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(id) || id <= 0 || id > 1_000_000_000) throw httpError(400, 'bad_element_id');
+  return id;
+}
+
+export function nodesFromCurriculum(payload) {
   const resources = Array.isArray(payload?.resource) ? payload.resource : [];
-  const nodes = resources
-    .map((item) => item?.content?.curriculumStructureElementDto)
-    .filter((item) => item && typeof item.id === 'number')
-    .map((item) => ({
-      id: item.id,
-      designation: typeof item.designation === 'string' ? item.designation : '',
-      elementType: typeof item.elementType === 'string' ? item.elementType : '',
-      name: langValue(item.name),
-    }));
+  return resources.flatMap((item) => {
+    const dto = item?.content?.curriculumStructureElementDto;
+    if (!dto || typeof dto.id !== 'number' || !Number.isInteger(dto.id)) return [];
+    const name = langValue(dto.name);
+    if (!name) return [];
+    const tags = Array.isArray(dto.tags) ? dto.tags : [];
+    return [
+      {
+        id: dto.id,
+        designation: typeof dto.designation === 'string' ? dto.designation : '',
+        elementType: typeof dto.elementType === 'string' ? dto.elementType : '',
+        name,
+        parentId: typeof dto.parentId === 'number' ? dto.parentId : null,
+        completed: Boolean(dto.enabledInfo?.completed),
+        inProgress: tags.some((tag) => tag?.tagType === 'IN_PROGRESS'),
+      },
+    ];
+  });
+}
+
+export function profileFromCurriculum(payload, studyId, elementId) {
+  const nodes = nodesFromCurriculum(payload);
   const root = nodes.find((item) => item.elementType === 'ROOT') || nodes.find((item) => item.id === elementId) || nodes[0];
   if (!root?.name) return null;
   return {
@@ -74,13 +100,13 @@ export function profileFromCurriculum(payload, studyId, elementId) {
     account: root.designation || `Studium ${studyId}`,
     studyId,
     elementId,
+    nodes,
   };
 }
 
-export async function loginWithCampusToken(fetchImpl = fetch) {
+async function readCurriculum(studyId, elementId, fetchImpl) {
   if (!campusBearerToken()) throw httpError(503, 'token_missing');
-  const { studyId, elementId } = campusStudyTarget();
-  const url = `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/structure?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
+  const url = curriculumRequestUrl(studyId, elementId);
   let response;
   try {
     response = await fetchImpl(url, { headers: campusRequestHeaders(), signal: AbortSignal.timeout(20_000) });
@@ -96,10 +122,26 @@ export async function loginWithCampusToken(fetchImpl = fetch) {
   if (!response.ok) {
     const message = payload?.resource?.[0]?.content?.coErrorDto?.message || '';
     if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie');
+    if (message.includes('invalid_token')) throw httpError(401, 'invalid_token');
     if (response.status === 401) throw httpError(401, 'campus_unauthorized');
     throw httpError(502, 'campus_failed');
   }
+  return payload;
+}
+
+export async function loginWithCampusToken(fetchImpl = fetch) {
+  const { studyId, elementId } = campusStudyTarget();
+  const payload = await readCurriculum(studyId, elementId, fetchImpl);
   const profile = profileFromCurriculum(payload, studyId, elementId);
   if (!profile) throw httpError(502, 'campus_unexpected');
   return profile;
+}
+
+export async function loadCurriculumStructure(elementIdOverride, fetchImpl = fetch) {
+  const target = campusStudyTarget();
+  const elementId = parseElementId(elementIdOverride) ?? target.elementId;
+  const payload = await readCurriculum(target.studyId, elementId, fetchImpl);
+  const nodes = nodesFromCurriculum(payload);
+  if (!nodes.length) throw httpError(502, 'campus_unexpected');
+  return { studyId: target.studyId, elementId, nodes };
 }

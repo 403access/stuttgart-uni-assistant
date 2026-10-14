@@ -68,7 +68,11 @@ The password never enters this object.
 
 | Route | Behavior |
 | --- | --- |
-| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc, campus }` with `campus.tokenConfigured` only |
+| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc, campus }`. `campus` is `tokenConfigured`, `sessionCookieConfigured`, `studyId`, and `elementId` |
+| `GET /v1/api` | The operation list in `server/catalog.mjs`. No secrets |
+| `GET /v1/campus/config` | The same public campus fields as `/health` |
+| `POST /v1/campus/login` | Reads the configured curriculum root and returns the name, designation, and mapped nodes |
+| `POST /v1/campus/structure` | Same read for an optional positive integer `elementId` |
 | `GET /v1/oidc/config` | Public OIDC status. No secret, no login hint |
 | `POST /v1/oidc/start` | Authorize URL for a redirect this server allows |
 | `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims, not tokens |
@@ -80,4 +84,4 @@ The body is capped at 200 KB. The question is sliced to 4,000 characters, the fa
 
 ## What is intentionally not a layer
 
-There is no API client for C@MPUS, ILIAS, or SDG Campus. SIAM sign-in is the identity-provider flow in [oidc-login.md](oidc-login.md): the screen opens the browser, and `server/oidc.mjs` holds the client secret. A later connector for timetable and grades belongs behind that same server, replacing `src/data` for the signed-in student.
+ILIAS and SDG Campus still have no client. C@MPUS has one read, the curriculum structure in [campus-curriculum.md](campus-curriculum.md). `server/campus.mjs` holds `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` and will not forward an arbitrary URL. SIAM sign-in is the identity-provider flow in [oidc-login.md](oidc-login.md): the screen opens the browser, and `server/oidc.mjs` holds the client secret. A later connector for timetable and grades belongs behind that same server, replacing `src/data` for the signed-in student. The Schnittstelle screen at `/api` only replays the routes in the table above.

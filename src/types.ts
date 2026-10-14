@@ -210,6 +210,16 @@ export interface ChatMessage {
 
 export type SessionMode = 'oidc' | 'demo' | 'local' | 'campus';
 
+export interface CurriculumNode {
+  id: number;
+  designation: string;
+  elementType: string;
+  name: string;
+  parentId: number | null;
+  completed: boolean;
+  inProgress: boolean;
+}
+
 export interface PersistedState {
   locale: Locale;
   sessionAccount: string | null;
@@ -218,6 +228,7 @@ export interface PersistedState {
   sessionEmail: string | null;
   sessionSubject: string | null;
   oidcSessionId: string | null;
+  curriculumNodes: CurriculumNode[];
   syncAt: Partial<Record<PlatformId, string>>;
   downloadedIds: string[];
   imports: ImportedDocument[];

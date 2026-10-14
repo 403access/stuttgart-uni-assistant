@@ -1,6 +1,6 @@
 # C@MPUS curriculum structure
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session. The app does not call this URL yet. Types live in `src/campus/curriculum.ts`. A reduced fixture is `src/campus/curriculum.sample.ts`.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session. Types live in `src/campus/curriculum.ts`. A reduced fixture is `src/campus/curriculum.sample.ts`. The assistant server calls this URL for `POST /v1/campus/login` and `POST /v1/campus/structure`. The app stores the mapped nodes, not the raw portal body.
 
 The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service. This file records the one operation that was returned, not a full catalog of C@MPUS.
 
@@ -36,7 +36,40 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 
 ## Sign-in button
 
-**Mit C@MPUS-Token anmelden** on the login screen calls `POST /v1/campus/login`. The server sends the token to the structure URL above and, when the call succeeds, opens a session named with the German root node. The token is not returned to the app.
+**Mit C@MPUS-Token anmelden** on the login screen calls `POST /v1/campus/login`. The server sends the token and `PSESSIONID` to the structure URL above. On success it returns the German root name, the designation, and the nodes on that level (`id`, `designation`, `elementType`, `name`, `parentId`, `completed`, `inProgress`). The app stores those nodes with the session. The token and cookie are not returned.
+
+**Schnittstelle** (`app/api.tsx`, linked from Mehr) lists the routes from `GET /v1/api` and can send the ones marked for replay. `POST /v1/campus/structure` accepts an optional positive integer `elementId` and calls the same path for that node. It does not accept a URL. A tap on a loaded node sends that node’s id. OIDC start, exchange, and logout stay in the browser sign-in flow and are not replayed from this screen.
+
+## Server routes
+
+`server/catalog.mjs` is the list. The screen refuses any other path.
+
+| Method | Path | Replay from Schnittstelle |
+| --- | --- | --- |
+| `GET` | `/health` | Yes. Status only |
+| `GET` | `/v1/campus/config` | Yes. `tokenConfigured`, `sessionCookieConfigured`, `studyId`, `elementId` |
+| `GET` | `/v1/oidc/config` | Yes. No client secret |
+| `POST` | `/v1/campus/login` | Yes. Root structure, then a campus session |
+| `POST` | `/v1/campus/structure` | Yes. Optional `elementId` |
+| `POST` | `/v1/assist` | Yes. A fixed short question, so the button does not invent a prompt |
+| `POST` | `/v1/oidc/start` | No |
+| `POST` | `/v1/oidc/exchange` | No |
+| `POST` | `/v1/oidc/logout` | No |
+
+The client types are `src/auth/campus.ts` and `src/auth/api.ts`. `nodesFromCurriculum` in `server/campus.mjs` maps each `curriculumStructureElementDto` to `CurriculumNode`: `id`, `designation`, `elementType`, `name` (German, then `value`), `parentId`, `completed` from `enabledInfo.completed`, and `inProgress` when a tag has `tagType` `IN_PROGRESS`. The raw portal body is not stored.
+
+`curriculumNodes` lives on the device record. Sign-out, and a switch to the demo, local, or OIDC session, clears it. Reset keeps it while the campus session stays. A later structure call merges nodes by id, so loading a child does not drop the root.
+
+Known portal failures, mapped to short codes and never logged with the token or cookie:
+
+| Portal signal | App code |
+| --- | --- |
+| `missing_session_cookie` | `missing_session_cookie` |
+| `invalid_token` | `invalid_token` |
+| Any other 401 | `campus_unauthorized` |
+| Token unset | `token_missing` |
+| Other failure, or a body with no named node | `campus_failed` or `campus_unexpected` |
+| `elementId` that is not a positive integer | `bad_element_id` |
 
 A call from this server with only the bearer token was answered `401` and `$core.lib.authn.missing_session_cookie`. A call with only a guessed `JSESSIONID` was answered `401` and `Authorization missing`. C@MPUS expects the bearer token and the portal session cookie together when the request does not come from the already signed-in browser.
 
@@ -128,10 +161,10 @@ The root was `Philosophie` (`ROOT`, id `278343`, designation `84-127-14`). The g
 | 560867 | OP | Orientierungsprüfung |
 | 287775 | 400 | Schlüsselqualifikationen fachaffin |
 
-`Basismodule` and `Schlüsselqualifikationen fachübergreifend` carried the in-progress tag for semester `2026 W`. This is one student's tree, not the Informatik demonstration record in `src/data/modules.ts`.
+In the first captured body, `Basismodule` and `Schlüsselqualifikationen fachübergreifend` carried the in-progress tag for semester `2026 W`. A later read through `POST /v1/campus/structure` on 14 October 2026 returned the same 13 nodes and marked only `Basismodule` in progress. This is one student's tree, not the Informatik demonstration record in `src/data/modules.ts`.
 
 ## What this call does not return
 
 No grades, no timetable, no ECTS totals, no lecturer, no room. Those would be other resources linked from a node. This document does not invent their paths.
 
-Error bodies, paging, and the token audience were not in the observed response. A later call should record the status and the JSON when the token is missing or expired, and should keep the token on the server.
+Paging and the token audience were not in the observed response. The error codes above are the ones this server has mapped. The token and `PSESSIONID` stay in the server environment.

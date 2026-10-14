@@ -1,7 +1,8 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
-import { loginWithCampusToken, publicCampusStatus } from './campus.mjs';
+import { loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
+import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
 
 loadEnv(new URL('../.env', import.meta.url));
@@ -89,6 +90,10 @@ const server = createServer(async (request, response) => {
     });
     return;
   }
+  if (request.method === 'GET' && url.pathname === '/v1/api') {
+    send(response, 200, apiCatalog());
+    return;
+  }
   if (request.method === 'GET' && url.pathname === '/v1/campus/config') {
     send(response, 200, publicCampusStatus());
     return;
@@ -97,11 +102,31 @@ const server = createServer(async (request, response) => {
     console.log('[campus] POST /v1/campus/login');
     try {
       const profile = await loginWithCampusToken();
-      console.log(`[campus] login ok name=${profile.name} account=${profile.account}`);
+      console.log(`[campus] login ok name=${profile.name} account=${profile.account} nodes=${profile.nodes.length}`);
       send(response, 200, profile);
     } catch (error) {
       const code = error.message || 'campus_failed';
       console.log(`[campus] login failed ${code}`);
+      send(response, Number(error.status) || 500, { error: code });
+    }
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/campus/structure') {
+    console.log('[campus] POST /v1/campus/structure');
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      const result = await loadCurriculumStructure(body?.elementId);
+      console.log(`[campus] structure ok element=${result.elementId} nodes=${result.nodes.length}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus] structure failed ${code}`);
       send(response, Number(error.status) || 500, { error: code });
     }
     return;

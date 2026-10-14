@@ -33,7 +33,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/architecture.md](engineering/architecture.md) | Client, local record, assistant server |
 | [engineering/data-model.md](engineering/data-model.md) | Program, modules, places, and what is stored on the device |
 | [engineering/integrations.md](engineering/integrations.md) | SIAM, C@MPUS, ILIAS, SDG Campus, and which of them are live |
-| [engineering/campus-curriculum.md](engineering/campus-curriculum.md) | Observed C@MPUS curriculum-structure request and response |
+| [engineering/campus-curriculum.md](engineering/campus-curriculum.md) | C@MPUS curriculum-structure request, stored nodes, and the API screen |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |

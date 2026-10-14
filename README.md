@@ -22,7 +22,7 @@ npm run ios
 npm run android
 ```
 
-On the sign-in screen, **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann.
+On the sign-in screen, **Mit C@MPUS-Token anmelden** loads the curriculum structure through the assistant server. The bearer token and the `PSESSIONID` cookie stay in `.env`. **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann. **Mehr → Schnittstelle** lists the server routes and can send them again. The request and the stored nodes are documented in [docs/engineering/campus-curriculum.md](docs/engineering/campus-curriculum.md).
 
 ## Run the assistant server
 
@@ -36,7 +36,7 @@ npm run assistant
 
 The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`. `GET /health` is on that assistant server, for example `http://127.0.0.1:8787/health`. The Expo app on port 8081 does not serve `/health`.
 
-`GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` is set. It does not return the token. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
+`GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
 ## Checks
 
@@ -56,7 +56,8 @@ npm run check
 | `src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
 | `src/assistant/` | Local answers, fact sheet, optional Grok call |
 | `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
-| `server/index.mjs` | SpaceXAI proxy. Holds `XAI_API_KEY` |
+| `app/api.tsx` | API overview. Replays known server routes |
+| `server/index.mjs` | Assistant server. Holds the xAI key and the C@MPUS secrets |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |
 
 ## Documentation
