@@ -6,6 +6,7 @@ import { activeStudy } from '@/src/auth/campus';
 import { fetchAllCourses, type BulkCourse } from '@/src/campus/courses-bulk';
 import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCachedNodes, loadCoursesFetchedIds, saveCourses, type CoursesSyncInfo } from '@/src/campus/db';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -100,6 +101,13 @@ export default function KurseScreen() {
       await saveCourses(study.studyId, all, allFetched, complete).catch(() => undefined);
       setCoursesSync(await getCoursesSyncInfo(study.studyId).catch(() => null));
       setFailedIds(result.failedIds);
+      if (result.failedIds.length > 0) {
+        showFetchAlert(locale, {
+          title: tx(locale, `${result.failedIds.length} Elemente übersprungen`, `${result.failedIds.length} elements skipped`),
+          code: 'campus_failed',
+          onRetry: loadAll,
+        });
+      }
     } finally {
       setRunning(false);
     }

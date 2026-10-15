@@ -41,6 +41,10 @@ The study switcher (`src/components/study-selector.tsx`) shows the newest entrie
 
 A `detail` of `http <status> vom Assistenz-Server ohne Detail` means the assistant server answers in the old `{ error }` shape without `detail`. The running process predates the logging change: stop it and restart with `npm run assistant`. The switcher states this explicitly. Absent `[campus #N]` lines in the server terminal confirm the same thing.
 
+## Error alerts
+
+Fetch failures surface twice: inline red text where they happened (always, including background loads) and a toast with a retry action for user-initiated loads. `showToast` in `src/components/toast.tsx` renders bottom-stacked dark cards (accent bar per tone, action pill, dismiss, auto-expire) through `<ToastHost />` at the root; `showFetchAlert` in `src/components/fetch-alert.ts` builds the error variant and re-invokes the same loader on retry, so study switches, structure/node/course loads, bulk syncs, and the C@MPUS sign-in all resume with one tap. Auto and silent loads (tab hydration, first paint) stay inline-only and never pop up unasked.
+
 ## Diagnosing a failed study switch
 
 1. Restart the assistant server so the code matches this repository.

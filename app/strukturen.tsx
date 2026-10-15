@@ -7,6 +7,7 @@ import { loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/sr
 import { clearApiLog, clearCachedStudy, getSyncInfo, loadCachedNodes, loadExpandedIds, readApiLog, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
 import { syncFullStructure } from '@/src/campus/full-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
 import { JsonTree } from '@/src/components/json-tree';
 import { useApp } from '@/src/state/AppState';
@@ -179,13 +180,17 @@ export default function StrukturenScreen() {
       setInfos((current) => ({ ...current, [study.studyId]: info }));
       if (study.studyId === activeStudyId) setCurriculum(all, { studyId: study.studyId, replace: true });
       if (result.failedIds.length > 0) {
-        setFetchError(
-          tx(
-            locale,
-            `${result.failedIds.length} Knoten übersprungen (3 Versuche je Knoten) — Weiter laden versucht nur den Rest.`,
-            `${result.failedIds.length} nodes skipped (3 attempts each) — continue loads only the rest.`,
-          ),
+        const text = tx(
+          locale,
+          `${result.failedIds.length} Knoten übersprungen (3 Versuche je Knoten) — Weiter laden versucht nur den Rest.`,
+          `${result.failedIds.length} nodes skipped (3 attempts each) — continue loads only the rest.`,
         );
+        setFetchError(text);
+        showFetchAlert(locale, {
+          title: tx(locale, `${result.failedIds.length} Knoten übersprungen`, `${result.failedIds.length} nodes skipped`),
+          code: 'campus_failed',
+          onRetry: () => fetchStudy(study),
+        });
       }
     } finally {
       setFetching((current) => {

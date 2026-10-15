@@ -8,6 +8,7 @@ import { View } from 'react-native';
 WebBrowser.maybeCompleteAuthSession();
 
 import { AppStateProvider, useApp } from '@/src/state/AppState';
+import { ToastHost } from '@/src/components/toast';
 import { colors } from '@/src/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -23,6 +24,7 @@ export default function RootLayout() {
     <AppStateProvider>
       <StatusBar style="dark" />
       <Gate />
+      <ToastHost />
     </AppStateProvider>
   );
 }

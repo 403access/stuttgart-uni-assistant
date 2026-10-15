@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { activeStudy, campusDetail, loadCampusCurriculum } from '@/src/auth/campus';
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
+import { showFetchAlert } from '@/src/components/fetch-alert';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -51,6 +52,12 @@ export function StudySelector() {
           `Study not switched (${code}${detail ? `, ${detail}` : ''}).${staleServer ? " The assistant server answers in the old format — stop it and restart with 'npm run assistant', then the portal response shows up here." : ''}`,
         ),
       );
+      showFetchAlert(locale, {
+        title: tx(locale, 'Studium nicht gewechselt', 'Study not switched'),
+        code,
+        detail: detail || undefined,
+        onRetry: () => select(studyId, elementId),
+      });
     } finally {
       setBusyId(null);
     }

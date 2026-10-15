@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { campusDetail, fetchCampusStatus, signInWithCampusToken, type CampusStatus } from '@/src/auth/campus';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
+import { showFetchAlert } from '@/src/components/fetch-alert';
 import { student } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -56,6 +57,12 @@ export default function LoginScreen() {
       const message = campusMessage(locale, code, campusDetail(caught));
       setCampusLog(message);
       setError(message);
+      showFetchAlert(locale, {
+        title: tx(locale, 'C@MPUS-Anmeldung fehlgeschlagen', 'C@MPUS sign-in failed'),
+        code,
+        detail: campusDetail(caught) || undefined,
+        onRetry: enterWithCampusToken,
+      });
     } finally {
       setBusy(false);
     }

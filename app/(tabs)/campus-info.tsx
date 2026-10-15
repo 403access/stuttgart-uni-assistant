@@ -6,6 +6,7 @@ import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadC
 import { clearCachedStudy, getCoursesSyncInfo, getSyncInfo, loadCachedCourses, loadCachedCoursesByElement, loadCachedNodes, loadCoursesFetchedIds, loadExpandedIds, saveCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
 import { syncFullStructure, type FullSyncProgress } from '@/src/campus/full-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
 import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
@@ -50,13 +51,20 @@ export default function CampusInfoScreen() {
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const detail = campusDetail(caught);
-      setError(
-        tx(
-          locale,
-          `Struktur nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
-          `Structure not loaded (${code}${detail ? `, ${detail}` : ''}).`,
-        ),
+      const text = tx(
+        locale,
+        `Struktur nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
+        `Structure not loaded (${code}${detail ? `, ${detail}` : ''}).`,
       );
+      setError(text);
+      if (!silent) {
+        showFetchAlert(locale, {
+          title: tx(locale, 'Struktur nicht geladen', 'Structure not loaded'),
+          code,
+          detail: detail || undefined,
+          onRetry: () => loadRoot(target),
+        });
+      }
     } finally {
       if (!silent) setBusy(false);
     }
@@ -79,6 +87,12 @@ export default function CampusInfoScreen() {
           `Node not loaded (${code}${detail ? `, ${detail}` : ''}).`,
         ),
       );
+      showFetchAlert(locale, {
+        title: tx(locale, 'Knoten nicht geladen', 'Node not loaded'),
+        code,
+        detail: detail || undefined,
+        onRetry: () => loadChildren(target, nodeId),
+      });
     } finally {
       setBusyNode(null);
     }
@@ -149,6 +163,13 @@ export default function CampusInfoScreen() {
       setSyncInfo(await getSyncInfo(studyId).catch(() => null));
       setSyncFailed(result.failedIds);
       setSyncCancelled(result.cancelled);
+      if (result.failedIds.length > 0) {
+        showFetchAlert(locale, {
+          title: tx(locale, `${result.failedIds.length} Knoten übersprungen`, `${result.failedIds.length} nodes skipped`),
+          code: 'campus_failed',
+          onRetry: syncAll,
+        });
+      }
     } finally {
       setSyncing(false);
     }
@@ -422,6 +443,12 @@ function NodeCourses({ studyId, elementId, locale }: { studyId: number; elementI
           `Courses not loaded (${code}${detail ? `, ${detail}` : ''}).`,
         ),
       );
+      showFetchAlert(locale, {
+        title: tx(locale, 'Kurse nicht geladen', 'Courses not loaded'),
+        code,
+        detail: detail || undefined,
+        onRetry: toggle,
+      });
     } finally {
       setBusy(false);
     }
