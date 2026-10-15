@@ -102,7 +102,7 @@ The mapped `CampusCourse` keeps `id`, `courseNumber`, the German `title`, `cours
 | `course_elements` | Which elements each course was seen on (a course can appear under several) |
 | `courses_sync` | Fetched element ids (JSON, for resume), course count, finish time, `complete` flag |
 
-`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's cache drops its structures and its courses together; the courses view additionally offers a courses-only clear.
+`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's structure cache leaves its courses alone (and vice versa via `clearCachedCourses`); only the global `Alle Caches leeren` drops both. Round-trips on both backends are pinned by `scripts/check-campus-db.ts` (real SQLite via node:sqlite, AsyncStorage faked), wired into `npm run check`.
 
 ## What this call does not return
 

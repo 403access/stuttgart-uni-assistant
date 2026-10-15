@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
 
 import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum } from '@/src/auth/campus';
-import { clearCachedStudy, getCoursesSyncInfo, getSyncInfo, loadCachedCourses, loadCachedCoursesByElement, loadCachedNodes, loadCoursesFetchedIds, loadExpandedIds, saveCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
+import { clearCachedStudy, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, loadExpandedIds, appendElementCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
 import { syncFullStructure, type FullSyncProgress } from '@/src/campus/full-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
@@ -374,7 +374,7 @@ function TreeNode({
         onPress={() => onNode(node.id)}
         depth={depth}
       />
-      <NodeCourses studyId={studyId} elementId={node.id} locale={locale} />
+      <NodeCourses studyId={studyId} elementId={node.id} elementName={node.name} locale={locale} />
       {kids.length > 0 ? (
         <TreeChildren>
           {kids.map((kid) => (
@@ -390,7 +390,7 @@ function compactTime(value: string): string {
   return value.length >= 16 ? value.slice(0, 16).replace('T', ' ') : value;
 }
 
-function NodeCourses({ studyId, elementId, locale }: { studyId: number; elementId: number; locale: 'de' | 'en' }) {
+function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: number; elementId: number; elementName: string; locale: 'de' | 'en' }) {
   const [open, setOpen] = useState(false);
   const [courses, setCourses] = useState<CampusCourse[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -420,19 +420,7 @@ function NodeCourses({ studyId, elementId, locale }: { studyId: number; elementI
       const loaded = await loadCampusCourses(elementId, studyId);
       setCourses(loaded.courses);
       setOpen(true);
-      const stored = await loadCachedCourses(studyId).catch(() => []);
-      const map = new Map(stored.map((course) => [course.id, course]));
-      for (const course of loaded.courses) {
-        if (!map.has(course.id)) {
-          map.set(course.id, { ...course, elementIds: [elementId], elementNames: [] });
-        } else {
-          const known = map.get(course.id);
-          if (known && !known.elementIds.includes(elementId)) known.elementIds.push(elementId);
-        }
-      }
-      const fetched = await loadCoursesFetchedIds(studyId).catch(() => []);
-      const complete = (await getCoursesSyncInfo(studyId).catch(() => null))?.complete ?? false;
-      await saveCourses(studyId, [...map.values()], [...new Set([...fetched, elementId])], complete).catch(() => undefined);
+      await appendElementCourses(studyId, elementId, elementName, loaded.courses).catch(() => undefined);
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const detail = campusDetail(caught);

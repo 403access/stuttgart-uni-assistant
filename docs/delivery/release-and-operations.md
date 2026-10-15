@@ -22,7 +22,7 @@ Scripts in `package.json`:
 | `web` | `expo start --web` | Browser |
 | `ios` / `android` | `expo start --ios` / `--android` | Simulator or emulator |
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
-| `check` | `tsx scripts/check-assistant.ts` + `node --test` | Catalog totals, German answers, the OIDC and campus server tests, the secrets CLI tests |
+| `check` | `tsx scripts/check-assistant.ts` + `tsx scripts/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests |
 | `assistant` | `node server/index.mjs` | Local Grok proxy on port 8787 |
 | `campus:token` / `campus:session` | `node scripts/set-campus-secret.mjs` | Write `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` into git-ignored `.env` |
 | `campus:secret` | `node scripts/set-campus-secret.mjs` | `list` shows which secrets are set, masked; `--help` shows usage |

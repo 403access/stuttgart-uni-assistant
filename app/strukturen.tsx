@@ -3,8 +3,8 @@ import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { router } from 'expo-router';
 
 import { clearSessionLog, useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
-import { loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/src/auth/campus';
-import { clearApiLog, clearCachedStudy, getSyncInfo, loadCachedNodes, loadExpandedIds, readApiLog, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
+import { cacheCampusCourses, loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/src/auth/campus';
+import { appendElementCourses, clearApiLog, clearCachedCourses, clearCachedStudy, getCoursesSyncInfo, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, loadCoursesFetchedIds, loadExpandedIds, readApiLog, saveFullStructure, type CoursesSyncInfo, type CurriculumSyncInfo } from '@/src/campus/db';
 import { syncFullStructure } from '@/src/campus/full-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
@@ -147,6 +147,7 @@ export default function StrukturenScreen() {
     if (Object.keys(fetching).length > 0) return;
     for (const study of campusStudies) {
       await clearCachedStudy(study.studyId).catch(() => undefined);
+      await clearCachedCourses(study.studyId).catch(() => undefined);
     }
     setTrees({});
     setInfos({});
@@ -1035,8 +1036,30 @@ function NodeDetail({
   const [courses, setCourses] = useState<CampusCourse[] | null>(null);
   const [coursesBusy, setCoursesBusy] = useState(false);
   const [coursesError, setCoursesError] = useState('');
+  const [coursesSync, setCoursesSync] = useState<CoursesSyncInfo | null>(null);
   const parent = node.parentId !== null ? nodes.find((item) => item.id === node.parentId) ?? null : null;
   const kids = nodes.filter((item) => item.parentId === node.id);
+
+  // Cache first: courses loaded via /kurse show up instantly, no refetch.
+  useEffect(() => {
+    let active = true;
+    loadCachedCoursesByElement(study.studyId, node.id)
+      .then((cached) => {
+        if (active && cached.length > 0) {
+          cacheCampusCourses(cached);
+          setCourses(cached);
+        }
+      })
+      .catch(() => undefined);
+    getCoursesSyncInfo(study.studyId)
+      .then((info) => {
+        if (active) setCoursesSync(info);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [study.studyId, node.id]);
 
   async function loadNodeCourses(): Promise<void> {
     if (coursesBusy) return;
@@ -1045,6 +1068,8 @@ function NodeDetail({
     try {
       const loaded = await loadCampusCourses(node.id, study.studyId);
       setCourses(loaded.courses);
+      await appendElementCourses(study.studyId, node.id, node.name, loaded.courses).catch(() => undefined);
+      setCoursesSync(await getCoursesSyncInfo(study.studyId).catch(() => null));
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       setCoursesError(tx(locale, `Kurse nicht geladen (${code}).`, `Courses not loaded (${code}).`));
@@ -1090,11 +1115,22 @@ function NodeDetail({
       ) : null}
       <Section title={tx(locale, 'Kurse', 'Courses')} />
       {courses === null && !coursesError ? (
-        <Button
-          secondary
-          label={coursesBusy ? '…' : tx(locale, 'Kurse laden', 'Load courses')}
-          onPress={loadNodeCourses}
-        />
+        <>
+          {coursesSync ? (
+            <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
+              {tx(
+                locale,
+                `Kurs-Cache: ${coursesSync.courseCount} Kurse aus ${coursesSync.elementsFetched} Elementen — dieses Element fehlt noch.`,
+                `Course cache: ${coursesSync.courseCount} courses from ${coursesSync.elementsFetched} elements — this element is still missing.`,
+              )}
+            </Text>
+          ) : null}
+          <Button
+            secondary
+            label={coursesBusy ? '…' : tx(locale, 'Kurse laden', 'Load courses')}
+            onPress={loadNodeCourses}
+          />
+        </>
       ) : null}
       {coursesError ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{coursesError}</Text> : null}
       {courses && courses.length === 0 ? (

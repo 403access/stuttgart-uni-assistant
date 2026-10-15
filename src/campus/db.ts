@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 
 import type { CampusLogEntry, PersistedApiCall } from '@/src/auth/campus-log';
-import type { CurriculumNode } from '@/src/types';
+import type { CampusCourse, CurriculumNode } from '@/src/types';
+import type { BulkCourse } from '@/src/campus/courses-bulk';
 
 const DATABASE_NAME = 'campus-cache.db';
 const FALLBACK_PREFIX = 'campus-cache/sqlite-fallback/';
@@ -301,15 +302,11 @@ export async function clearCachedStudy(studyId: number): Promise<void> {
   const db = await getDbOrNull();
   if (!db) {
     await AsyncStorage.removeItem(fallbackKey(studyId)).catch(() => undefined);
-    await AsyncStorage.removeItem(fallbackCoursesKey(studyId)).catch(() => undefined);
     return;
   }
   await db.withTransactionAsync(async () => {
     await db.runAsync('DELETE FROM curriculum_nodes WHERE study_id = ?', studyId);
     await db.runAsync('DELETE FROM curriculum_sync WHERE study_id = ?', studyId);
-    await db.runAsync('DELETE FROM courses WHERE study_id = ?', studyId);
-    await db.runAsync('DELETE FROM course_elements WHERE study_id = ?', studyId);
-    await db.runAsync('DELETE FROM courses_sync WHERE study_id = ?', studyId);
   });
 }
 
@@ -339,7 +336,7 @@ function fallbackCoursesKey(studyId: number): string {
 }
 
 interface CoursesFallback {
-  courses: import('@/src/campus/courses-bulk').BulkCourse[];
+  courses: BulkCourse[];
   fetched: number[];
   sync: { courseCount: number; elementsFetched: number; finishedAt: string; complete: boolean } | null;
 }
@@ -373,7 +370,7 @@ function parseLecturers(value: unknown): string[] {
 /** Replace the cached courses of one study, keeping every element each course was seen on. */
 export async function saveCourses(
   studyId: number,
-  courses: import('@/src/campus/courses-bulk').BulkCourse[],
+  courses: BulkCourse[],
   fetchedElementIds: number[],
   complete: boolean,
 ): Promise<void> {
@@ -467,7 +464,7 @@ async function elementsByCourse(studyId: number): Promise<Map<number, Array<{ el
   return map;
 }
 
-function rowToBulkCourse(row: CourseRow, links: Array<{ elementId: number; elementName: string }>): import('@/src/campus/courses-bulk').BulkCourse {
+function rowToBulkCourse(row: CourseRow, links: Array<{ elementId: number; elementName: string }>): BulkCourse {
   return {
     id: row.id,
     courseNumber: row.course_number ?? '',
@@ -490,7 +487,7 @@ function rowToBulkCourse(row: CourseRow, links: Array<{ elementId: number; eleme
   };
 }
 
-export async function loadCachedCourses(studyId: number): Promise<import('@/src/campus/courses-bulk').BulkCourse[]> {
+export async function loadCachedCourses(studyId: number): Promise<BulkCourse[]> {
   const db = await getDbOrNull();
   if (!db) return (await readCoursesFallback(studyId)).courses;
   const rows = await db.getAllAsync<CourseRow>(`SELECT ${COURSE_COLUMNS} FROM courses WHERE study_id = ? ORDER BY title`, studyId);
@@ -498,7 +495,7 @@ export async function loadCachedCourses(studyId: number): Promise<import('@/src/
   return rows.map((row) => rowToBulkCourse(row, links.get(row.id) ?? []));
 }
 
-export async function loadCachedCoursesByElement(studyId: number, elementId: number): Promise<import('@/src/campus/courses-bulk').BulkCourse[]> {
+export async function loadCachedCoursesByElement(studyId: number, elementId: number): Promise<BulkCourse[]> {
   const db = await getDbOrNull();
   if (!db) {
     const fallback = await readCoursesFallback(studyId);
@@ -553,7 +550,7 @@ export async function getCoursesSyncInfo(studyId: number): Promise<CoursesSyncIn
 }
 
 /** One cached course across all studies, for the detail screen after a restart. */
-export async function findCachedCourse(id: number): Promise<import('@/src/campus/courses-bulk').BulkCourse | null> {
+export async function findCachedCourse(id: number): Promise<BulkCourse | null> {
   const db = await getDbOrNull();
   if (!db) return null;
   const row = await db.getFirstAsync<CourseRow & { study_id: number }>(`SELECT ${COURSE_COLUMNS}, study_id FROM courses WHERE id = ? LIMIT 1`, id);
@@ -644,4 +641,25 @@ export async function clearApiLog(): Promise<void> {
     return;
   }
   await db.runAsync('DELETE FROM api_calls').catch(() => undefined);
+}
+
+/**
+ * Merge one freshly loaded element into the stored course cache
+ * (single toggles). Keeps the previous `complete` flag.
+ */
+export async function appendElementCourses(studyId: number, elementId: number, elementName: string, fresh: CampusCourse[]): Promise<void> {
+  const stored = await loadCachedCourses(studyId).catch(() => []);
+  const map = new Map(stored.map((course) => [course.id, course]));
+  for (const course of fresh) {
+    const known = map.get(course.id);
+    if (!known) {
+      map.set(course.id, { ...course, elementIds: [elementId], elementNames: [elementName] });
+    } else if (!known.elementIds.includes(elementId)) {
+      known.elementIds.push(elementId);
+      if (!known.elementNames.includes(elementName)) known.elementNames.push(elementName);
+    }
+  }
+  const fetched = await loadCoursesFetchedIds(studyId).catch(() => []);
+  const complete = (await getCoursesSyncInfo(studyId).catch(() => null))?.complete ?? false;
+  await saveCourses(studyId, [...map.values()], [...new Set([...fetched, elementId])], complete);
 }

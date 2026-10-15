@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { CampusLogEntry, PersistedApiCall } from '@/src/auth/campus-log';
-import type { CurriculumNode } from '@/src/types';
+import type { BulkCourse } from '@/src/campus/courses-bulk';
+import type { CampusCourse, CurriculumNode } from '@/src/types';
 
 /**
  * Web implementation of the curriculum cache (`src/campus/db.ts` is the
@@ -93,7 +94,6 @@ export async function getSyncInfo(studyId: number): Promise<CurriculumSyncInfo |
 
 export async function clearCachedStudy(studyId: number): Promise<void> {
   await AsyncStorage.removeItem(key(studyId)).catch(() => undefined);
-  await AsyncStorage.removeItem(coursesKey(studyId)).catch(() => undefined);
 }
 
 export async function clearCachedCourses(studyId: number): Promise<void> {
@@ -105,7 +105,7 @@ export async function clearApiLog(): Promise<void> {
 }
 
 interface CoursesWebEntry {
-  courses: import('@/src/campus/courses-bulk').BulkCourse[];
+  courses: BulkCourse[];
   fetched: number[];
   sync: { courseCount: number; elementsFetched: number; finishedAt: string; complete: boolean } | null;
 }
@@ -133,7 +133,7 @@ async function readCoursesEntry(studyId: number): Promise<CoursesWebEntry> {
 /** Replace the cached courses of one study, keeping every element each course was seen on. */
 export async function saveCourses(
   studyId: number,
-  courses: import('@/src/campus/courses-bulk').BulkCourse[],
+  courses: BulkCourse[],
   fetchedElementIds: number[],
   complete: boolean,
 ): Promise<void> {
@@ -148,11 +148,11 @@ export async function saveCourses(
   ).catch(() => undefined);
 }
 
-export async function loadCachedCourses(studyId: number): Promise<import('@/src/campus/courses-bulk').BulkCourse[]> {
+export async function loadCachedCourses(studyId: number): Promise<BulkCourse[]> {
   return (await readCoursesEntry(studyId)).courses;
 }
 
-export async function loadCachedCoursesByElement(studyId: number, elementId: number): Promise<import('@/src/campus/courses-bulk').BulkCourse[]> {
+export async function loadCachedCoursesByElement(studyId: number, elementId: number): Promise<BulkCourse[]> {
   const entry = await readCoursesEntry(studyId);
   return entry.courses.filter((course) => course.elementIds.includes(elementId));
 }
@@ -168,7 +168,7 @@ export async function getCoursesSyncInfo(studyId: number): Promise<CoursesSyncIn
 }
 
 /** One cached course across all studies, for the detail screen after a restart. */
-export async function findCachedCourse(id: number): Promise<import('@/src/campus/courses-bulk').BulkCourse | null> {
+export async function findCachedCourse(id: number): Promise<BulkCourse | null> {
   try {
     const keys = await AsyncStorage.getAllKeys();
     for (const storageKey of keys) {
@@ -233,4 +233,25 @@ export async function readApiLog(limit = 500): Promise<CampusLogEntry[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * Merge one freshly loaded element into the stored course cache
+ * (single toggles). Keeps the previous `complete` flag.
+ */
+export async function appendElementCourses(studyId: number, elementId: number, elementName: string, fresh: CampusCourse[]): Promise<void> {
+  const entry = await readCoursesEntry(studyId);
+  const map = new Map(entry.courses.map((course) => [course.id, course]));
+  for (const course of fresh) {
+    const known = map.get(course.id);
+    if (!known) {
+      map.set(course.id, { ...course, elementIds: [elementId], elementNames: [elementName] });
+    } else if (!known.elementIds.includes(elementId)) {
+      known.elementIds.push(elementId);
+      if (!known.elementNames.includes(elementName)) known.elementNames.push(elementName);
+    }
+  }
+  const fetched = [...new Set([...entry.fetched, elementId])];
+  const complete = entry.sync?.complete ?? false;
+  await saveCourses(studyId, [...map.values()], fetched, complete);
 }
