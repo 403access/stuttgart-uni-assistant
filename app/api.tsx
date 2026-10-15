@@ -85,7 +85,8 @@ export default function ApiScreen() {
         const body = next.body as Partial<CampusLogin>;
         const nodes = asCurriculumNodes(body.nodes);
         const studies = asCampusStudies(body.studies);
-        if (body.account && body.name) signInCampus({ account: body.account, name: body.name, nodes, studies: studies.length ? studies : undefined });
+        if (body.account && body.name)
+          signInCampus({ account: body.account, name: body.name, nodes, studyId: typeof body.studyId === 'number' ? body.studyId : null, studies: studies.length ? studies : undefined });
         setNotice(
           tx(
             locale,

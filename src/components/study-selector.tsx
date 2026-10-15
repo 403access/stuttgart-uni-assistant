@@ -39,7 +39,7 @@ export function StudySelector() {
       const loaded = await loadCampusCurriculum(elementId, studyId);
       // Commit only after the portal answered, so header and curriculum stay consistent.
       setActiveStudy(studyId);
-      setCurriculum(loaded.nodes);
+      setCurriculum(loaded.nodes, { studyId: loaded.studyId, replace: true });
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const detail = campusDetail(caught);

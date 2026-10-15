@@ -60,6 +60,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="campus-info"
+        options={{
+          title: 'C@MPUS',
+          tabBarIcon: ({ color }) => (
+            <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 1.5, borderColor: color }} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="campus"
         options={{
           title: 'Map',

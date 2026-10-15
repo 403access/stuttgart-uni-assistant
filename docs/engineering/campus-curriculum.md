@@ -59,7 +59,7 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 
 The client types are `src/auth/campus.ts` and `src/auth/api.ts`. `nodesFromCurriculum` in `server/campus.mjs` maps each `curriculumStructureElementDto` to `CurriculumNode`: `id`, `designation`, `elementType`, `name` (German, then `value`), `parentId`, `completed` from `enabledInfo.completed`, and `inProgress` when a tag has `tagType` `IN_PROGRESS`. The raw portal body is not stored.
 
-`curriculumNodes` lives on the device record. Sign-out, and a switch to the demo, local, or OIDC session, clears it. Reset keeps it while the campus session stays. A later structure call merges nodes by id, so loading a child does not drop the root.
+`curriculumNodes` lives on the device record, with `curriculumStudyId` naming the study the tree belongs to. Sign-out, and a switch to the demo, local, or OIDC session, clears both. Reset keeps them while the campus session stays. A later structure call merges nodes by id, so loading a child does not drop the root; a study switch or a fresh login replaces the whole tree instead, so nodes from another study never linger.
 
 Known portal failures, mapped to short codes and never logged with the token or cookie. Every failure carries a `detail` string with the upstream status and the portal message, shown in the app and in the logs as documented in [campus-logging.md](campus-logging.md):
 
@@ -143,6 +143,10 @@ Each resource:
 | `text` | `$slc_cm_my_study_in_progress_tag` |
 | `tagType` | `IN_PROGRESS` |
 | `replacementData` | `{ "key": "SEMESTER", "value": "2026 W" }` |
+
+## C@MPUS tab
+
+The `C@MPUS` tab (`app/(tabs)/campus-info.tsx`) renders the stored tree for the active study: the study switcher on top, the root and its groups as an indented tree, and a reload button. Tapping a node loads its children through `POST /v1/campus/structure` with that study's id. When the stored nodes belong to another study (`curriculumStudyId` differs from the selection), the tab says so and offers to load the matching structure.
 
 ## Nodes in the observed body
 

@@ -243,6 +243,7 @@ export interface PersistedState {
   sessionSubject: string | null;
   oidcSessionId: string | null;
   curriculumNodes: CurriculumNode[];
+  curriculumStudyId: number | null;
   campusStudies: CampusStudy[];
   activeStudyId: number | null;
   syncAt: Partial<Record<PlatformId, string>>;

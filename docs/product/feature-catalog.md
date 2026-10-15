@@ -54,6 +54,7 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | University map | `/campus` (Map tab) | In this build | Embedded `https://maps.uni-stuttgart.de/`, active by default. Falls back to opening the browser when embedding fails. |
 | Vaihingen and Stadtmitte | `/campus` (Übersicht) | In this build | Campus switch and a schematic of dots. The screen says it is not a live location. |
 | Room and building finder | `/campus`, `/raum/[id]`, Chat | In this build | Lecture halls (including K I, K II, K1, K2), offices, study space, libraries, Mensa. "Mensa Vaihingen" resolves to Pfaffenwaldring 45. A room screen lists the address and the sessions held there. |
+| Live curriculum structure | `/campus-info` (C@MPUS tab) | In this build | Root and groups from `POST /v1/campus/structure` for the selected study, tappable down to children. Follows study switches; reload button included. |
 
 ## 6. Documents (Document Hub)
 
