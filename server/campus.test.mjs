@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 
 import { apiCatalog } from './catalog.mjs';
-import { campusAuthorizationHeader, campusRequestHeaders, elementIdFromLink, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, publicCampusStatus, studiesFromChooser } from './campus.mjs';
+import { campusAuthorizationHeader, campusRequestHeaders, coursesFromPayload, coursesRequestUrl, elementIdFromLink, loadCurriculumCourses, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, publicCampusStatus, studiesFromChooser } from './campus.mjs';
 
 afterEach(() => {
   delete process.env.CAMPUS_BEARER_TOKEN;
@@ -191,6 +191,79 @@ test('an empty portal error body still reports the upstream status', async () =>
   });
 });
 
+test('courses url names the study and the curriculum element', () => {
+  assert.equal(
+    coursesRequestUrl(339485, 287785),
+    'https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/339485/myCurriculumElements/287785/courses?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true',
+  );
+});
+
+test('courses map the German title, lecturer, room, and registration state', () => {
+  const courses = coursesFromPayload({ resource: [
+    {
+      content: {
+        type: 'model-slc.cm.mystudy.CmCurriculumElementCourseGroupingsListDto',
+        CmCurriculumElementCourseGroupingsListDto: {
+          courseGroupings: [
+            {
+              courseList: [
+                {
+                  id: 461346,
+                  courseNumber: { courseNumber: '127262002' },
+                  courseTitle: { value: 'Einführung in die Geschichte der Philosophie', translations: { translation: [{ lang: 'de', value: 'Einführung in die Geschichte der Philosophie' }] } },
+                  courseTypeName: { value: 'Seminar' },
+                  courseTypeShortName: { value: 'SE' },
+                  semester: { value: '2026 W' },
+                  semesterId: 216,
+                  duration: 2,
+                  lectureships: [{ id: 1578891, courseId: 461346, identityLibDto: { firstName: 'Christian', lastName: 'Martin' } }],
+                  roomName: 'Breitscheid 02A - M 2.00 (BS02AEGM 2.00)',
+                  startTime: '2026-10-19T14:00',
+                  endTime: '2026-10-19T15:30',
+                  detailPageLink: { href: 'https://campus.uni-stuttgart.de/cusonline/pages/slc.tm.cp/course/461346' },
+                  courseRegistrationData: {
+                    action: { text: { value: 'LV-Anmeldung bearbeiten' }, url: { href: 'https://campus.uni-stuttgart.de/registration/461346' } },
+                    textAbove: { textInfo: { value: 'Fixplatz zugewiesen' } },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    },
+  ] });
+  assert.equal(courses.length, 1);
+  assert.equal(courses[0].id, 461346);
+  assert.equal(courses[0].courseNumber, '127262002');
+  assert.equal(courses[0].title, 'Einführung in die Geschichte der Philosophie');
+  assert.deepEqual(courses[0].lecturers, ['Martin, Christian']);
+  assert.equal(courses[0].roomName, 'Breitscheid 02A - M 2.00 (BS02AEGM 2.00)');
+  assert.equal(courses[0].registrationStatus, 'Fixplatz zugewiesen');
+  assert.equal(courses[0].registrationAction, 'LV-Anmeldung bearbeiten');
+  assert.equal(courses[0].semester, '2026 W');
+});
+
+test('course rows without an id or a title are dropped', () => {
+  const courses = coursesFromPayload({ resource: [
+    { content: { CmCurriculumElementCourseGroupingsListDto: { courseGroupings: [{ courseList: [{ title: { value: 'Ohne Id' } }] }] } } },
+    { content: { CmCurriculumElementCourseGroupingsListDto: { courseGroupings: [{ courseList: [{ id: 7 }] }] } } },
+    { content: { cmCurriculumElementCourseGroupingsListDto: { courseGroupings: [{ courseList: [{ id: 8, courseTitle: { value: 'Kleinbuchstabe' } }] }] } } },
+  ] });
+  assert.equal(courses.length, 1);
+  assert.equal(courses[0].id, 8);
+});
+
+test('courses need an element id and an empty list is a valid answer', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'test-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'test-cookie';
+  await assert.rejects(() => loadCurriculumCourses(339485, null, async () => ({})), (error) => error.message === 'bad_element_id');
+  const empty = await loadCurriculumCourses(339485, 287785, async () => ({ ok: true, status: 200, json: async () => ({ link: [], resource: [] }) }));
+  assert.deepEqual(empty.courses, []);
+  assert.equal(empty.studyId, 339485);
+  assert.equal(empty.elementId, 287785);
+});
+
 test('api catalog only names known paths', () => {
   const { operations } = apiCatalog();
   const paths = operations.map((item) => item.path);
@@ -200,6 +273,7 @@ test('api catalog only names known paths', () => {
     '/v1/oidc/config',
     '/v1/campus/login',
     '/v1/campus/structure',
+    '/v1/campus/courses',
     '/v1/campus/studies',
     '/v1/assist',
     '/v1/oidc/start',

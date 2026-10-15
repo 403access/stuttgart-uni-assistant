@@ -1,6 +1,6 @@
 import { assistantUrl } from '@/src/assistant/remote';
 import { recordCampusCall, type CampusOp } from '@/src/auth/campus-log';
-import type { CampusStudy, CurriculumNode } from '@/src/types';
+import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 
 export interface CampusLogin {
   account: string;
@@ -21,6 +21,12 @@ export interface CurriculumLoad {
 export interface StudiesLoad {
   studies: CampusStudy[];
   activeStudyId: number | null;
+}
+
+export interface CoursesLoad {
+  studyId: number;
+  elementId: number;
+  courses: CampusCourse[];
 }
 
 export interface CampusStatus {
@@ -218,6 +224,89 @@ export async function loadCampusStudies(): Promise<StudiesLoad> {
   const requested = typeof payload.activeStudyId === 'number' ? payload.activeStudyId : null;
   logCall('studies', started, {}, { ok: true, httpStatus: response.status });
   return { studies, activeStudyId: pickActiveStudyId(studies, requested) };
+}
+
+export async function loadCampusCourses(elementId: number, studyId?: number): Promise<CoursesLoad> {
+  const url = endpoint('/v1/campus/courses');
+  const started = Date.now();
+  const ids = { studyId, elementId };
+  console.info('[campus-courses] POST', url, elementId, studyId ?? '');
+  const body: Record<string, number> = { elementId };
+  if (studyId) body.studyId = studyId;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch (caught) {
+    const reason = caught instanceof Error ? caught.message : 'network';
+    console.info('[campus-courses] unreachable', reason);
+    const error = new Error('server_unreachable');
+    logCall('courses', started, ids, { ok: false, error });
+    throw error;
+  }
+  const payload = (await response.json().catch(() => ({}))) as CoursesLoad & CampusFailure;
+  console.info('[campus-courses] status', response.status, payload.error ?? payload.courses?.length ?? 'ok');
+  if (!response.ok) {
+    const error = campusFailure(payload, `http_${response.status}`, response.status);
+    logCall('courses', started, ids, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
+  if (typeof payload.studyId !== 'number' || typeof payload.elementId !== 'number') {
+    const error = campusFailure(
+      { error: 'campus_unexpected', detail: `Antwort ohne Studien- oder Element-Id (element=${elementId})` },
+      'campus_unexpected',
+      response.status,
+    );
+    logCall('courses', started, ids, { ok: false, httpStatus: response.status, error });
+    throw error;
+  }
+  const courses = asCampusCourses(payload.courses);
+  logCall('courses', started, ids, { ok: true, httpStatus: response.status });
+  cacheCampusCourses(courses);
+  return { studyId: payload.studyId, elementId: payload.elementId, courses };
+}
+
+/** In-memory course lookup for the detail screen. Courses are session data, not persisted. */
+const courseCache = new Map<number, CampusCourse>();
+
+export function cacheCampusCourses(courses: CampusCourse[]): void {
+  for (const course of courses) courseCache.set(course.id, course);
+}
+
+export function getCachedCourse(id: number): CampusCourse | null {
+  return courseCache.get(id) ?? null;
+}
+
+export function asCampusCourses(value: unknown): CampusCourse[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const course = item as Partial<CampusCourse>;
+    if (typeof course.id !== 'number' || typeof course.title !== 'string' || !course.title) return [];
+    return [
+      {
+        id: course.id,
+        courseNumber: typeof course.courseNumber === 'string' ? course.courseNumber : '',
+        title: course.title,
+        courseType: typeof course.courseType === 'string' ? course.courseType : '',
+        courseTypeShort: typeof course.courseTypeShort === 'string' ? course.courseTypeShort : '',
+        semester: typeof course.semester === 'string' ? course.semester : '',
+        semesterId: typeof course.semesterId === 'number' ? course.semesterId : null,
+        duration: typeof course.duration === 'number' ? course.duration : null,
+        lecturers: Array.isArray(course.lecturers) ? course.lecturers.filter((name): name is string => typeof name === 'string') : [],
+        roomName: typeof course.roomName === 'string' ? course.roomName : '',
+        startTime: typeof course.startTime === 'string' ? course.startTime : '',
+        endTime: typeof course.endTime === 'string' ? course.endTime : '',
+        detailUrl: typeof course.detailUrl === 'string' ? course.detailUrl : '',
+        registrationStatus: typeof course.registrationStatus === 'string' ? course.registrationStatus : '',
+        registrationAction: typeof course.registrationAction === 'string' ? course.registrationAction : '',
+        registrationUrl: typeof course.registrationUrl === 'string' ? course.registrationUrl : '',
+      },
+    ];
+  });
 }
 
 export function asCampusStudies(value: unknown): CampusStudy[] {

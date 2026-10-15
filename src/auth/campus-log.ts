@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-export type CampusOp = 'login' | 'structure' | 'studies';
+export type CampusOp = 'login' | 'structure' | 'studies' | 'courses';
 
 export interface CampusLogEntry {
   id: number;

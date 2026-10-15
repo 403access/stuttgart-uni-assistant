@@ -146,7 +146,7 @@ Each resource:
 
 ## C@MPUS tab
 
-The `C@MPUS` tab (`app/(tabs)/campus-info.tsx`) renders the stored tree for the active study: the study switcher on top, the root and its groups as an indented tree, and a reload button. Tapping a node loads its children through `POST /v1/campus/structure` with that study's id. When the stored nodes belong to another study (`curriculumStudyId` differs from the selection), the tab says so and offers to load the matching structure.
+The `C@MPUS` tab (`app/(tabs)/campus-info.tsx`) renders the stored tree for the active study: the study switcher on top, the root and its groups as an indented tree, and a reload button. Tapping a node loads its children through `POST /v1/campus/structure` with that study's id. A `Kurse` toggle under every node loads that node's courses through `POST /v1/campus/courses`, documented in [campus-courses.md](campus-courses.md). When the stored nodes belong to another study (`curriculumStudyId` differs from the selection), the tab says so and offers to load the matching structure.
 
 ## Nodes in the observed body
 

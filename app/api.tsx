@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
-import { asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
+import { asCampusCourses, asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
+import type { CampusCourse } from '@/src/types';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -16,6 +17,7 @@ function summary(locale: 'de' | 'en', id: string): string {
     'campus-login': ['Lädt die Curriculum-Wurzel und meldet damit an.', 'Loads the curriculum root and signs in with it.'],
     'campus-structure': ['Dieselbe Struktur, optional für eine Kind-Id.', 'The same structure, optionally for a child id.'],
     'campus-studies': ['Listet die eingeschriebenen Studiengänge.', 'Lists the enrolled degree programs.'],
+    'campus-courses': ['Lehrveranstaltungen eines Curriculum-Knotens.', 'Courses of a curriculum node.'],
     assist: ['Kurze Testfrage an das Modell.', 'A short test question to the model.'],
     'oidc-start': ['Startet den Browser-Login. Nicht von hier.', 'Starts the browser login. Not from here.'],
     'oidc-exchange': ['Tauscht den Code. Nicht von hier.', 'Exchanges the code. Not from here.'],
@@ -38,6 +40,7 @@ export default function ApiScreen() {
   const [busyId, setBusyId] = useState('');
   const [result, setResult] = useState<ApiCallResult | null>(null);
   const [notice, setNotice] = useState('');
+  const [coursesPreview, setCoursesPreview] = useState<CampusCourse[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -58,10 +61,12 @@ export default function ApiScreen() {
       setNotice(tx(locale, 'Die Element-Id muss eine positive Ganzzahl sein.', 'The element id must be a positive integer.'));
       return;
     }
+    // Courses belong to one study: replay with the selected study when set.
+    const payload = operation.id === 'campus-courses' && typeof typed === 'number' && activeStudyId !== null ? { elementId: typed, studyId: activeStudyId } : typed;
     setNotice('');
     setBusyId(operation.id);
     try {
-      const next = await sendApiOperation(operation, typed, locale);
+      const next = await sendApiOperation(operation, payload, locale);
       setResult(next);
       const failure = (next.body ?? {}) as { error?: unknown; detail?: unknown };
       const error = typeof failure.error === 'string' ? failure.error : '';
@@ -104,6 +109,17 @@ export default function ApiScreen() {
         const studies = asCampusStudies((next.body as { studies?: unknown }).studies);
         if (studies.length) setStudies(studies);
         setNotice(tx(locale, `${studies.length} Studiengänge übernommen.`, `Stored ${studies.length} degree programs.`));
+      }
+      if (operation.id === 'campus-courses' && next.status === 200) {
+        const courses = asCampusCourses((next.body as { courses?: unknown }).courses);
+        setCoursesPreview(courses);
+        setNotice(
+          tx(
+            locale,
+            courses.length ? `${courses.length} Lehrveranstaltungen.` : 'Keine Lehrveranstaltungen an diesem Knoten.',
+            courses.length ? `${courses.length} courses.` : 'No courses on this node.',
+          ),
+        );
       }
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -192,6 +208,19 @@ export default function ApiScreen() {
               .filter(Boolean)
               .join(' · ')}
             onPress={() => setActiveStudy(study.studyId)}
+          />
+        ))
+      )}
+      <Section title={tx(locale, 'Lehrveranstaltungen', 'Courses')} />
+      {coursesPreview.length === 0 ? (
+        <Muted>{tx(locale, 'Noch keine Kurse. Sende die Courses-Abfrage mit einer Element-Id.', 'No courses yet. Send the courses call with an element id.')}</Muted>
+      ) : (
+        coursesPreview.map((course) => (
+          <InfoRow
+            key={course.id}
+            title={course.title}
+            meta={[course.courseTypeShort || course.courseType, course.semester].filter(Boolean).join(' · ') || String(course.id)}
+            detail={[course.lecturers.join(', '), course.roomName, course.registrationStatus].filter(Boolean).join(' · ')}
           />
         ))
       )}

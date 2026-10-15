@@ -66,7 +66,7 @@ export async function sendApiOperation(
   const started = Date.now();
   const headers: Record<string, string> = {};
   let body: string | undefined;
-  if (operation.id === 'campus-structure') {
+  if (operation.id === 'campus-structure' || operation.id === 'campus-courses') {
     headers['Content-Type'] = 'application/json';
     const requested = typeof elementId === 'object' && elementId !== null ? elementId : { elementId: typeof elementId === 'number' ? elementId : undefined };
     const payload: Record<string, number> = {};

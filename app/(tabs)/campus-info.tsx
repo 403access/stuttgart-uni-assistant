@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Pressable, Text, View } from 'react-native';
 
-import { activeStudy, campusDetail, loadCampusCurriculum } from '@/src/auth/campus';
+import { activeStudy, campusDetail, loadCampusCourses, loadCampusCurriculum } from '@/src/auth/campus';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
-import type { CampusStudy, CurriculumNode } from '@/src/types';
+import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export default function CampusInfoScreen() {
@@ -142,6 +143,7 @@ export default function CampusInfoScreen() {
               <Section title={tx(locale, 'Struktur', 'Structure')} />
               <CurriculumTree
                 nodes={curriculumNodes}
+                studyId={study.studyId}
                 locale={locale}
                 busyNode={busyNode}
                 onNode={(nodeId) => loadChildren(study, nodeId)}
@@ -156,11 +158,13 @@ export default function CampusInfoScreen() {
 
 function CurriculumTree({
   nodes,
+  studyId,
   locale,
   busyNode,
   onNode,
 }: {
   nodes: CurriculumNode[];
+  studyId: number;
   locale: 'de' | 'en';
   busyNode: number | null;
   onNode: (nodeId: number) => void;
@@ -180,7 +184,7 @@ function CurriculumTree({
   return (
     <>
       {roots.map((node) => (
-        <TreeNode key={node.id} node={node} children={children} depth={0} locale={locale} busyNode={busyNode} onNode={onNode} />
+        <TreeNode key={node.id} node={node} children={children} depth={0} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
       ))}
     </>
   );
@@ -190,6 +194,7 @@ function TreeNode({
   node,
   children,
   depth,
+  studyId,
   locale,
   busyNode,
   onNode,
@@ -197,6 +202,7 @@ function TreeNode({
   node: CurriculumNode;
   children: Map<number, CurriculumNode[]>;
   depth: number;
+  studyId: number;
   locale: 'de' | 'en';
   busyNode: number | null;
   onNode: (nodeId: number) => void;
@@ -217,9 +223,92 @@ function TreeNode({
         detail={[node.elementType, status].filter(Boolean).join(' · ') || undefined}
         onPress={() => onNode(node.id)}
       />
+      <NodeCourses studyId={studyId} elementId={node.id} locale={locale} />
       {kids.map((kid) => (
-        <TreeNode key={kid.id} node={kid} children={children} depth={depth + 1} locale={locale} busyNode={busyNode} onNode={onNode} />
+        <TreeNode key={kid.id} node={kid} children={children} depth={depth + 1} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
       ))}
+    </View>
+  );
+}
+
+function compactTime(value: string): string {
+  return value.length >= 16 ? value.slice(0, 16).replace('T', ' ') : value;
+}
+
+function NodeCourses({ studyId, elementId, locale }: { studyId: number; elementId: number; locale: 'de' | 'en' }) {
+  const [open, setOpen] = useState(false);
+  const [courses, setCourses] = useState<CampusCourse[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function toggle(): Promise<void> {
+    if (busy) return;
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    if (courses) {
+      setOpen(true);
+      return;
+    }
+    setError('');
+    setBusy(true);
+    try {
+      const loaded = await loadCampusCourses(elementId, studyId);
+      setCourses(loaded.courses);
+      setOpen(true);
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      const detail = campusDetail(caught);
+      setError(
+        tx(
+          locale,
+          `Kurse nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
+          `Courses not loaded (${code}${detail ? `, ${detail}` : ''}).`,
+        ),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <View style={{ marginLeft: 8, marginBottom: 4 }}>
+      <Pressable onPress={toggle} hitSlop={8}>
+        <Text style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>
+          {busy
+            ? '…'
+            : courses
+              ? `${courses.length} ${tx(locale, courses.length === 1 ? 'Kurs' : 'Kurse', courses.length === 1 ? 'course' : 'courses')}`
+              : tx(locale, 'Kurse', 'Courses')}
+        </Text>
+      </Pressable>
+      {error ? <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 18 }}>{error}</Text> : null}
+      {open && courses && courses.length === 0 ? (
+        <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
+          {tx(locale, 'Keine Lehrveranstaltungen an diesem Knoten.', 'No courses on this node.')}
+        </Text>
+      ) : null}
+      {open &&
+        courses?.map((course) => (
+          <InfoRow
+            key={course.id}
+            title={course.title}
+            meta={[course.courseTypeShort || course.courseType, course.semester].filter(Boolean).join(' · ') || String(course.id)}
+            detail={[
+              course.courseNumber ? `LV ${course.courseNumber}` : '',
+              course.lecturers.join(', '),
+              course.startTime && course.endTime
+                ? `${compactTime(course.startTime)}–${compactTime(course.endTime).slice(11) || compactTime(course.endTime)}`
+                : compactTime(course.startTime),
+              course.roomName,
+              course.registrationStatus,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })}
+          />
+        ))}
     </View>
   );
 }

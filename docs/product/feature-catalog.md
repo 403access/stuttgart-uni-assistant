@@ -55,6 +55,7 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | Vaihingen and Stadtmitte | `/campus` (Übersicht) | In this build | Campus switch and a schematic of dots. The screen says it is not a live location. |
 | Room and building finder | `/campus`, `/raum/[id]`, Chat | In this build | Lecture halls (including K I, K II, K1, K2), offices, study space, libraries, Mensa. "Mensa Vaihingen" resolves to Pfaffenwaldring 45. A room screen lists the address and the sessions held there. |
 | Live curriculum structure | `/campus-info` (C@MPUS tab) | In this build | Root and groups from `POST /v1/campus/structure` for the selected study, tappable down to children. Follows study switches; reload button included. |
+| Live course lists | `/campus-info` (Kurse toggle), `/kurs/[id]`, `/api` | In this build | Courses of a curriculum node from `POST /v1/campus/courses`: title, type, semester, lecturers, time, room, registration state. The detail screen adds number, SWS, next appointment, and portal links. Empty list is a valid answer. |
 
 ## 6. Documents (Document Hub)
 

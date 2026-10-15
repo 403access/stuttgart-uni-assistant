@@ -234,6 +234,25 @@ export interface CampusStudy {
   elementId: number | null;
 }
 
+export interface CampusCourse {
+  id: number;
+  courseNumber: string;
+  title: string;
+  courseType: string;
+  courseTypeShort: string;
+  semester: string;
+  semesterId: number | null;
+  duration: number | null;
+  lecturers: string[];
+  roomName: string;
+  startTime: string;
+  endTime: string;
+  detailUrl: string;
+  registrationStatus: string;
+  registrationAction: string;
+  registrationUrl: string;
+}
+
 export interface PersistedState {
   locale: Locale;
   sessionAccount: string | null;

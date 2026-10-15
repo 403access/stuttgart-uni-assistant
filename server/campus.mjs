@@ -82,6 +82,10 @@ export function studiesRequestUrl() {
   return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/chooser?$ctx=design=ca;lang=de&$filter=';
 }
 
+export function coursesRequestUrl(studyId, elementId) {
+  return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/courses?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
+}
+
 /** Positive integer, or null when the caller wants the configured root. Rejects paths and other text. */
 export function parseElementId(value) {
   if (value == null || value === '') return null;
@@ -161,6 +165,48 @@ export function studiesFromChooser(payload) {
         elementId: elementIdFromLink(dto.myStudyLink?.href),
       },
     ];
+  });
+}
+
+export function coursesFromPayload(payload) {
+  const resources = Array.isArray(payload?.resource) ? payload.resource : [];
+  return resources.flatMap((item) => {
+    const dto = item?.content?.CmCurriculumElementCourseGroupingsListDto ?? item?.content?.cmCurriculumElementCourseGroupingsListDto;
+    const groupings = Array.isArray(dto?.courseGroupings) ? dto.courseGroupings : [];
+    return groupings.flatMap((grouping) => {
+      const list = Array.isArray(grouping?.courseList) ? grouping.courseList : [];
+      return list.flatMap((course) => {
+        if (!course || typeof course.id !== 'number' || !Number.isInteger(course.id)) return [];
+        const title = langValue(course.courseTitle);
+        if (!title) return [];
+        const lecturers = (Array.isArray(course.lectureships) ? course.lectureships : []).flatMap((slot) => {
+          const first = slot?.identityLibDto?.firstName?.trim() || '';
+          const last = slot?.identityLibDto?.lastName?.trim() || '';
+          const name = last && first ? `${last}, ${first}` : last || first;
+          return name ? [name] : [];
+        });
+        return [
+          {
+            id: course.id,
+            courseNumber: typeof course.courseNumber?.courseNumber === 'string' ? course.courseNumber.courseNumber : '',
+            title,
+            courseType: langValue(course.courseTypeName),
+            courseTypeShort: langValue(course.courseTypeShortName),
+            semester: langValue(course.semester),
+            semesterId: Number.isInteger(course.semesterId) ? course.semesterId : null,
+            duration: typeof course.duration === 'number' ? course.duration : null,
+            lecturers,
+            roomName: typeof course.roomName === 'string' ? course.roomName : '',
+            startTime: typeof course.startTime === 'string' ? course.startTime : '',
+            endTime: typeof course.endTime === 'string' ? course.endTime : '',
+            detailUrl: typeof course.detailPageLink?.href === 'string' ? course.detailPageLink.href : '',
+            registrationStatus: langValue(course.courseRegistrationData?.textAbove?.textInfo),
+            registrationAction: langValue(course.courseRegistrationData?.action?.text),
+            registrationUrl: typeof course.courseRegistrationData?.action?.url?.href === 'string' ? course.courseRegistrationData.action.url.href : '',
+          },
+        ];
+      });
+    });
   });
 }
 
@@ -248,4 +294,24 @@ export async function loadCampusStudies(fetchImpl = fetch) {
   const studies = studiesFromChooser(payload);
   if (!studies.length) throw httpError(502, 'campus_unexpected');
   return { studies, activeStudyId: pickActiveStudyId(studies, null) };
+}
+
+export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, fetchImpl = fetch) {
+  if (typeof elementIdOverride === 'function') {
+    fetchImpl = elementIdOverride;
+    elementIdOverride = undefined;
+  }
+  if (typeof studyIdOverride === 'function') {
+    fetchImpl = studyIdOverride;
+    studyIdOverride = undefined;
+  }
+  const target = campusStudyTarget();
+  const studyId = parseStudyId(studyIdOverride) ?? target.studyId;
+  // Courses always belong to one curriculum element: there is no useful default.
+  const elementId = parseElementId(elementIdOverride);
+  if (elementId == null) throw httpError(400, 'bad_element_id');
+  const payload = await readCampus(coursesRequestUrl(studyId, elementId), `courses study=${studyId} element=${elementId}`, fetchImpl);
+  const courses = coursesFromPayload(payload);
+  // An element without courses is a valid answer, not an error.
+  return { studyId, elementId, courses };
 }

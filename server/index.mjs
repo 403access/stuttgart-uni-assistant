@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
-import { loadCampusStudies, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
+import { loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
 import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
 
@@ -151,6 +151,26 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       const code = error.message || 'campus_failed';
       console.log(`[campus #${reqId}] structure failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
+    }
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/campus/courses') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    const reqId = campusReq('POST /v1/campus/courses', `body=${previewBody(body)}`);
+    try {
+      const result = await loadCurriculumCourses(body?.studyId, body?.elementId);
+      console.log(`[campus #${reqId}] courses ok study=${result.studyId} element=${result.elementId} count=${result.courses.length}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus #${reqId}] courses failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, Number(error.status) || 500, campusFailure(error));
     }
     return;
