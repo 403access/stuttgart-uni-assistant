@@ -19,6 +19,10 @@ Campus calls fail at two hops: app to assistant server, assistant server to port
 
 Each entry is also printed to the Metro console as `[campus-log]`, next to the existing `[campus-login]`, `[campus-studies]`, and `[campus-structure]` lines. `useCampusLog` re-renders a component on every new entry; `lastCampusLog(n)` reads without subscribing.
 
+Every call is also persisted: `appendApiCall` writes it fire-and-forget into the `api_calls` table (SQLite on native, AsyncStorage on web — same platform split as the structure cache), capped at the newest 1000 rows and keyed by a stable `uid`. `readApiLog(limit)` reads newest-first. The structure browser merges the live session log with the stored log by `uid`, so the history survives reloads and keeps growing across sessions. Its `Verlauf löschen` button empties both the session log and the store. Logging never throws into the call it records.
+
+Each entry carries more than metadata: `request` names what was asked (`element=… study=…`) and `response` summarizes what came back (`30 Knoten · Philosophie, Basismodule, …`, capped at 300 characters). The mapped payload additionally lands in `responseJson` (compact JSON, arrays clipped to fit ~8000 characters so it always parses) — never the raw portal body. The detail panel renders the payload as a count with name pills, as raw JSON, or as a collapsible syntax-highlighted tree (`JsonTree` in `src/components/json-tree.tsx`) behind a Text/JSON/Pretty toggle, and the history search covers the summary fields.
+
 The study switcher (`src/components/study-selector.tsx`) shows the newest entries under a switch error, so the failing request is visible where it happened:
 
 ```text

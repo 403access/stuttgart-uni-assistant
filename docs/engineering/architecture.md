@@ -43,6 +43,7 @@ Stack headers are off. Each screen draws its own title with the shared `Screen` 
 | `src/domain/plan.ts` | Pure functions over that catalog |
 | `src/assistant` | Turn a question into an answer, then optionally ask the server to rewrite it |
 | `src/documents/io.ts` | Pick a file and export text. `expo-file-system` is imported only on the native branch |
+| `src/campus/db.ts` + `db.web.ts` | Curriculum, course, and API-call cache. SQLite (`expo-sqlite`) on native, AsyncStorage on web — the web module never imports the native one, following the same platform split |
 
 ## Data flow for a question
 
@@ -62,6 +63,8 @@ One Async Storage key, `stuttgart-uni-assistant/v1`. The shape is `PersistedStat
 
 The password never enters this object.
 
+The curriculum, course, and API-call caches live outside that key in `campus-cache.db` (`expo-sqlite`, with the plugin in `app.json`), or in AsyncStorage on web where the native module is not bundled. The API log keeps the newest 1000 calls. Clearing a study drops its structures and courses; the call history has its own clear.
+
 ## Assistant server
 
 `server/index.mjs` has no npm dependencies. It reads `../.env` if present, without adding those values over variables that are already set.
@@ -72,8 +75,9 @@ The password never enters this object.
 | `GET /v1/api` | The operation list in `server/catalog.mjs`. No secrets |
 | `GET /v1/campus/config` | The same public campus fields as `/health` |
 | `GET /v1/campus/studies` | The study chooser. Name, degree, status, and the root element id per study |
-| `POST /v1/campus/login` | Reads the configured curriculum root and returns the name, designation, and mapped nodes |
-| `POST /v1/campus/structure` | Same read for an optional positive integer `elementId` |
+| `POST /v1/campus/login` | Reads the configured curriculum root, then the chooser list. Returns the name, designation, mapped nodes, studies, and the active study |
+| `POST /v1/campus/structure` | Same read for an optional positive integer `elementId` and `studyId`; a bare `studyId` resolves the root through the chooser |
+| `POST /v1/campus/courses` | Courses of one curriculum element (`studyId`, required `elementId`). An empty list is valid |
 | `GET /v1/oidc/config` | Public OIDC status. No secret, no login hint |
 | `POST /v1/oidc/start` | Authorize URL for a redirect this server allows |
 | `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims, not tokens |

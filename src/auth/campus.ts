@@ -70,10 +70,22 @@ function logCall(
   op: CampusOp,
   started: number,
   ids: { studyId?: number; elementId?: number },
-  outcome: { ok: true; httpStatus: number } | { ok: false; httpStatus?: number; error: unknown },
+  outcome:
+    | { ok: true; httpStatus: number; request?: string; response?: string; responseJson?: string }
+    | { ok: false; httpStatus?: number; error: unknown; request?: string },
 ): void {
   if (outcome.ok) {
-    recordCampusCall({ op, studyId: ids.studyId, elementId: ids.elementId, ok: true, httpStatus: outcome.httpStatus, elapsedMs: Date.now() - started });
+    recordCampusCall({
+      op,
+      studyId: ids.studyId,
+      elementId: ids.elementId,
+      ok: true,
+      httpStatus: outcome.httpStatus,
+      request: outcome.request,
+      response: outcome.response,
+      responseJson: outcome.responseJson,
+      elapsedMs: Date.now() - started,
+    });
   } else {
     recordCampusCall({
       op,
@@ -83,9 +95,40 @@ function logCall(
       httpStatus: outcome.httpStatus,
       code: outcome.error instanceof Error ? outcome.error.message : 'campus_failed',
       detail: campusDetail(outcome.error) || undefined,
+      request: outcome.request,
       elapsedMs: Date.now() - started,
     });
   }
+}
+
+/** `30 nodes · Philosophie, Basismodule, …` — capped content summary, never the raw body. */
+function summarize(kind: string, names: string[], maxNames = 6, maxLength = 300): string {
+  const head = names.slice(0, maxNames).join(', ');
+  const rest = names.length > maxNames ? ', …' : '';
+  return `${names.length} ${kind} · ${head}${rest}`.slice(0, maxLength);
+}
+
+/** Mapped response data as compact JSON. Arrays are clipped to fit the cap, so the stored string always parses. */
+function jsonPreview(value: unknown, maxLength = 8000): string {
+  try {
+    let maxItems = 200;
+    let json = JSON.stringify(clipArrays(value, maxItems));
+    while (json.length > maxLength && maxItems > 5) {
+      maxItems = Math.floor(maxItems / 2);
+      json = JSON.stringify(clipArrays(value, maxItems));
+    }
+    return json.length > maxLength ? json.slice(0, maxLength) : json;
+  } catch {
+    return '';
+  }
+}
+
+function clipArrays(value: unknown, maxItems: number): unknown {
+  if (Array.isArray(value)) return value.slice(0, maxItems).map((item) => clipArrays(item, maxItems));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, clipArrays(item, maxItems)]));
+  }
+  return value;
 }
 
 export async function fetchCampusStatus(): Promise<CampusStatus | null> {
@@ -147,7 +190,7 @@ export async function signInWithCampusToken(): Promise<CampusLogin> {
     });
     studies = loaded.studies;
   }
-  logCall('login', started, {}, { ok: true, httpStatus: response.status });
+  logCall('login', started, {}, { ok: true, httpStatus: response.status, response: `${summarize('Knoten', nodes.map((node) => node.name))}; ${summarize('Studiengänge', studies.map((study) => study.name))}`, responseJson: jsonPreview({ nodes, studies }) });
   return { ...payload, nodes, studies, activeStudyId: pickActiveStudyId(studies, null) };
 }
 
@@ -177,7 +220,7 @@ export async function loadCampusCurriculum(elementId?: number, studyId?: number)
   console.info('[campus-structure] status', response.status, payload.error ?? payload.nodes?.length ?? 'ok');
   if (!response.ok) {
     const error = campusFailure(payload, `http_${response.status}`, response.status);
-    logCall('structure', started, ids, { ok: false, httpStatus: response.status, error });
+    logCall('structure', started, ids, { ok: false, httpStatus: response.status, error, request: `element=${elementId ?? 'root'} study=${studyId ?? 'Standard'}` });
     throw error;
   }
   const nodes = asCurriculumNodes(payload.nodes);
@@ -187,10 +230,16 @@ export async function loadCampusCurriculum(elementId?: number, studyId?: number)
       'campus_unexpected',
       response.status,
     );
-    logCall('structure', started, ids, { ok: false, httpStatus: response.status, error });
+    logCall('structure', started, ids, { ok: false, httpStatus: response.status, error, request: `element=${elementId ?? 'root'} study=${studyId ?? 'Standard'}` });
     throw error;
   }
-  logCall('structure', started, ids, { ok: true, httpStatus: response.status });
+  logCall('structure', started, ids, {
+    ok: true,
+    httpStatus: response.status,
+    request: `element=${elementId ?? 'root'} study=${studyId ?? 'Standard'}`,
+    response: summarize('Knoten', nodes.map((node) => node.name)),
+    responseJson: jsonPreview(nodes),
+  });
   return { studyId: payload.studyId, elementId: payload.elementId, nodes };
 }
 
@@ -222,7 +271,7 @@ export async function loadCampusStudies(): Promise<StudiesLoad> {
     throw error;
   }
   const requested = typeof payload.activeStudyId === 'number' ? payload.activeStudyId : null;
-  logCall('studies', started, {}, { ok: true, httpStatus: response.status });
+  logCall('studies', started, {}, { ok: true, httpStatus: response.status, response: summarize('Studiengänge', studies.map((study) => study.name)), responseJson: jsonPreview(studies) });
   return { studies, activeStudyId: pickActiveStudyId(studies, requested) };
 }
 
@@ -251,7 +300,7 @@ export async function loadCampusCourses(elementId: number, studyId?: number): Pr
   console.info('[campus-courses] status', response.status, payload.error ?? payload.courses?.length ?? 'ok');
   if (!response.ok) {
     const error = campusFailure(payload, `http_${response.status}`, response.status);
-    logCall('courses', started, ids, { ok: false, httpStatus: response.status, error });
+    logCall('courses', started, ids, { ok: false, httpStatus: response.status, error, request: `element=${elementId} study=${studyId ?? 'Standard'}` });
     throw error;
   }
   if (typeof payload.studyId !== 'number' || typeof payload.elementId !== 'number') {
@@ -260,11 +309,17 @@ export async function loadCampusCourses(elementId: number, studyId?: number): Pr
       'campus_unexpected',
       response.status,
     );
-    logCall('courses', started, ids, { ok: false, httpStatus: response.status, error });
+    logCall('courses', started, ids, { ok: false, httpStatus: response.status, error, request: `element=${elementId} study=${studyId ?? 'Standard'}` });
     throw error;
   }
   const courses = asCampusCourses(payload.courses);
-  logCall('courses', started, ids, { ok: true, httpStatus: response.status });
+  logCall('courses', started, ids, {
+    ok: true,
+    httpStatus: response.status,
+    request: `element=${elementId} study=${studyId ?? 'Standard'}`,
+    response: summarize('Kurse', courses.map((course) => course.title)),
+    responseJson: jsonPreview(courses),
+  });
   cacheCampusCourses(courses);
   return { studyId: payload.studyId, elementId: payload.elementId, courses };
 }

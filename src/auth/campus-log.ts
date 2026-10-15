@@ -1,9 +1,13 @@
 import { useSyncExternalStore } from 'react';
 
+import { appendApiCall } from '@/src/campus/db';
+
 export type CampusOp = 'login' | 'structure' | 'studies' | 'courses';
 
 export interface CampusLogEntry {
   id: number;
+  /** Stable across restarts; used to merge the session log with the stored log. */
+  uid: string;
   /** HH:MM:SS local time for on-screen display. */
   time: string;
   op: CampusOp;
@@ -14,6 +18,29 @@ export interface CampusLogEntry {
   code?: string;
   detail?: string;
   elapsedMs: number;
+  /** What was asked (ids, filters) — short human-readable summary. */
+  request?: string;
+  /** What came back (counts plus leading names/titles) — capped summary, not the raw body. */
+  response?: string;
+  /** Mapped response data as compact JSON (capped) for the JSON view. */
+  responseJson?: string;
+}
+
+/** Stored shape of one call (SQLite on native, AsyncStorage on web). */
+export interface PersistedApiCall {
+  uid: string;
+  time: string;
+  op: CampusOp;
+  studyId?: number;
+  elementId?: number;
+  ok: boolean;
+  httpStatus?: number;
+  code?: string;
+  detail?: string;
+  elapsedMs: number;
+  request?: string;
+  response?: string;
+  responseJson?: string;
 }
 
 const MAX_ENTRIES = 30;
@@ -28,10 +55,12 @@ function timeNow(): string {
   return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 }
 
-export function recordCampusCall(entry: Omit<CampusLogEntry, 'id' | 'time'>): CampusLogEntry {
-  const full: CampusLogEntry = { ...entry, id: ++seq, time: timeNow() };
+export function recordCampusCall(entry: Omit<CampusLogEntry, 'id' | 'uid' | 'time'>): CampusLogEntry {
+  const full: CampusLogEntry = { ...entry, id: ++seq, uid: `${Date.now().toString(36)}-${seq}`, time: timeNow() };
   snapshot = [full, ...snapshot].slice(0, MAX_ENTRIES);
   listeners.forEach((notify) => notify());
+  // Persisted for the history page; never blocks or throws into the caller.
+  appendApiCall(full).catch(() => undefined);
   // Metro/Expo console keeps the same line for `adb logcat` and devtools.
   console.info(
     `[campus-log] ${full.op} study=${full.studyId ?? '-'} element=${full.elementId ?? '-'} ` +
@@ -59,4 +88,10 @@ export function useCampusLog(): CampusLogEntry[] {
 
 export function lastCampusLog(count = 3): CampusLogEntry[] {
   return snapshot.slice(0, count);
+}
+
+/** Empty the in-memory session log (the stored log is cleared separately). */
+export function clearSessionLog(): void {
+  snapshot = [];
+  listeners.forEach((notify) => notify());
 }

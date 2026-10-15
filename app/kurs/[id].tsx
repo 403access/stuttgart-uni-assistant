@@ -1,21 +1,40 @@
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
+import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 
-import { getCachedCourse } from '@/src/auth/campus';
+import { cacheCampusCourses, getCachedCourse } from '@/src/auth/campus';
+import { findCachedCourse } from '@/src/campus/db';
 import { Button, Card, InfoRow, Muted, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
+import type { CampusCourse } from '@/src/types';
 
 function one(value: string | string[] | undefined): string {
   return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
 }
 
-/** One live C@MPUS course (`POST /v1/campus/courses` row), read from the session cache. */
+/** One C@MPUS course: session cache first, persisted course cache after a restart. */
 export default function CourseScreen() {
   const { locale } = useApp();
-  const course = getCachedCourse(Number(one(useLocalSearchParams<{ id: string }>().id)));
+  const id = Number(one(useLocalSearchParams<{ id: string }>().id));
+  const [course, setCourse] = useState<CampusCourse | null>(() => getCachedCourse(id));
+  useEffect(() => {
+    if (getCachedCourse(id)) return;
+    let active = true;
+    findCachedCourse(id)
+      .then((found) => {
+        if (active && found) {
+          cacheCampusCourses([found]);
+          setCourse(found);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [id]);
   if (!course) {
     return (
       <Screen back kicker="C@MPUS" title={tx(locale, 'Kurs fehlt', 'Course missing')}>

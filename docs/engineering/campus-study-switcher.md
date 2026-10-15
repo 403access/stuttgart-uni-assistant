@@ -7,7 +7,7 @@ After a C@MPUS sign-in the app starts from production data, not the demonstratio
 1. `signInWithCampusToken` in `src/auth/campus.ts` calls `POST /v1/campus/login` and then `GET /v1/campus/studies`. The login response may already carry the chooser list (current server); otherwise the client fetches it. Without the studies list there is no sign-in — the app would otherwise fall back to mockup data silently.
 2. The studies are stored as `campusStudies` on the device record, next to `curriculumNodes`. See [data-model.md](data-model.md).
 3. `activeStudyId` names the selected study. `pickActiveStudyId` in `src/state/AppState.tsx` resolves it: a single study is auto-selected; otherwise the stored choice wins if it is still enrolled, then `lastAccessed`, then the first row. `setStudies` re-resolves it on every chooser refresh; `setActiveStudy` only accepts an enrolled id.
-4. `StudySelector` in `src/components/study-selector.tsx` renders at the top of Today (`app/(tabs)/index.tsx`) and on the More and C@MPUS screens. It returns nothing outside a campus session or without studies.
+4. `StudySelector` in `src/components/study-selector.tsx` renders at the top of Today (`app/(tabs)/index.tsx`) and on the More, C@MPUS, and Kurse screens. It returns nothing outside a campus session or without studies.
 
 ## Switching studies
 

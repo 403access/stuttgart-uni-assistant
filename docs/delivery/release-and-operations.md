@@ -80,6 +80,7 @@ There is no staging server in this repository.
 | Display name, scheme `stuttgartuniassistant`, light mode, splash `#004191` | `app.json` |
 | Bundle id `dev.demo.stuttgartuniassistant` | `app.json`, iOS and Android |
 | File sharing and opening documents in place | `expo-file-system` plugin in `app.json` |
+| On-device curriculum, course, and call cache | `expo-sqlite` plugin in `app.json`. Included in Expo Go; on web the cache falls back to AsyncStorage |
 | Secrets | `.env`, git-ignored |
 | Public assistant URL | `EXPO_PUBLIC_ASSISTANT_URL` |
 

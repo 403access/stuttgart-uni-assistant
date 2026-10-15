@@ -148,6 +148,23 @@ Each resource:
 
 The `C@MPUS` tab (`app/(tabs)/campus-info.tsx`) renders the stored tree for the active study: the study switcher on top, the root and its groups as an indented tree, and a reload button. Tapping a node loads its children through `POST /v1/campus/structure` with that study's id. A `Kurse` toggle under every node loads that node's courses through `POST /v1/campus/courses`, documented in [campus-courses.md](campus-courses.md). When the stored nodes belong to another study (`curriculumStudyId` differs from the selection), the tab says so and offers to load the matching structure.
 
+## Full sync and SQLite cache
+
+One structure call returns a node and the level below it, so the whole tree needs one call per node. `syncFullStructure` in `src/campus/full-sync.ts` walks the tree breadth-first from the root (three calls in flight), queues every unseen id exactly once, and retries a failing element up to three times — back of the queue with a short pause, so transient `fetch failed` blips usually pass while the others continue. Only after the third failure does the id land in `failedIds`, staying resumable later. Every call goes through `loadCampusCurriculum`, so each attempt is logged as documented in [campus-logging.md](campus-logging.md).
+
+`src/campus/db.ts` stores the result in the on-device SQLite database `campus-cache.db` (`expo-sqlite`):
+
+| Table / column | Contents |
+| --- | --- |
+| `curriculum_nodes` | One row per `(study_id, id)`: designation, type, German name, parent, completion flags, fetch time, plus `expanded` — whether that node's own structure call already succeeded |
+| `curriculum_sync` | One row per study: root element, node count, finish time, `complete` flag |
+
+Replacing per study keeps trees apart; partial walks (cancelled or with skipped nodes) are stored with `complete` false. Interrupting and continuing is the normal case, not a retry from scratch: the next run seeds `visited` with the `expanded` ids and queues only the cached-but-unexpanded remainder, so already-fetched levels are never requested again. The tab hydrates from the cache on open — switching to a cached study shows its tree instantly — and offers `Alles laden` / `Weiter laden`, cancel, and cache clearing per study. Courses stay session-only and are not cached.
+
+The web-only structure browser (`app/strukturen.tsx`, linked from the C@MPUS tab) reads all cached studies side by side: per-study fetch buttons with resume, per-study and global cache clearing, search across names and designations, type and completion filters, name/code/id sort, an expandable tree per study, and the session API history in the right column — itself searchable, filterable by status and operation, and sortable by time or duration, with failures in red. Tapping a search hit reveals it in the tree: ancestors expand, the node selects, and the column scrolls to it. The root element stays hidden by default (the header line already carries the study name plus element id, section and node counts); a `Wurzel` toggle restores the classic view. Only the arrow toggles a branch; tapping the row itself opens a node detail panel (designation, status, study, parent, children, courses on demand) in place of the call detail. Clicking a history entry opens a detail panel with the full call data and a reload button for that exact call. Expanding, searching, filtering, and sorting touch only cached rows — the page issues no structure calls itself.
+
+`expo-sqlite` is intentionally absent from the web bundle: its web worker breaks Metro bundling without a wasm/`SharedArrayBuffer` setup, so on web `src/campus/db.web.ts` (AsyncStorage in `localStorage`) implements the same API instead of `src/campus/db.ts`. Syncing, resuming, and hydrating work identically — the rows just live in `localStorage` instead of SQLite on web.
+
 ## Nodes in the observed body
 
 The root was `Philosophie` (`ROOT`, id `278343`, designation `84-127-14`). The groups under it, in response order:

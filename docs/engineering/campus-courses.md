@@ -87,9 +87,22 @@ The mapped `CampusCourse` keeps `id`, `courseNumber`, the German `title`, `cours
 
 ## App usage
 
-- The C@MPUS tab (`app/(tabs)/campus-info.tsx`) shows a `Kurse` toggle under every structure node. It loads `POST /v1/campus/courses` for that node and the selected study, then lists title, type, semester, lecturers, time, room, and registration state inline. Switching studies reloads the tree, so the toggles always query the selected study.
-- Tapping a course opens `/kurs/[id]`: number, type and short name, `SWS` from `duration`, semester, lecturers, registration state with a link into the portal registration, the next appointment (`Nächster Termin`, rendered from `startTime`/`endTime` via `formatDay`/`formatTime` in `src/text.ts`), the room, and the C@MPUS detail page. Loaded courses live in a session cache (`cacheCampusCourses` in `src/auth/campus.ts`) and are not persisted.
+- The C@MPUS tab (`app/(tabs)/campus-info.tsx`) shows a `Kurse` toggle under every structure node. It reads the course cache first (instant, offline) and only then the network with write-through. Switching studies reloads the tree, so the toggles always query the selected study.
+- Tapping a course opens `/kurs/[id]`: number, type and short name, `SWS` from `duration`, semester, lecturers, registration state with a link into the portal registration, the next appointment (`Nächster Termin`, rendered from `startTime`/`endTime` via `formatDay`/`formatTime` in `src/text.ts`), the room, and the C@MPUS detail page. It reads the session cache (`cacheCampusCourses` in `src/auth/campus.ts`) and, after a restart, the persisted course cache.
+- The courses view (`app/kurse.tsx`) bulk-loads every cached structure element of the selected study (`fetchAllCourses` in `src/campus/courses-bulk.ts`, three calls in flight, skips failures into a resumable remainder) and merges rows by course id, keeping every element a course was seen on. It hydrates from the course cache on open, so `Weiter laden` continues the remainder. Dynamic type pills come from the returned `courseTypeName` values — Seminar, Vorlesung, Übung, or whatever else the portal returns — plus search across title, lecturers, number, and room, and title/type/appointment sort.
 - The Schnittstelle screen (`app/api.tsx`) replays the call and lists the mapped courses for inspection.
+
+## Course cache
+
+`src/campus/db.ts` persists courses per study in the same `campus-cache.db` (AsyncStorage on web):
+
+| Table | Contents |
+| --- | --- |
+| `courses` | One row per `(study_id, id)` with all mapped fields; lecturers as JSON |
+| `course_elements` | Which elements each course was seen on (a course can appear under several) |
+| `courses_sync` | Fetched element ids (JSON, for resume), course count, finish time, `complete` flag |
+
+`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's cache drops its structures and its courses together; the courses view additionally offers a courses-only clear.
 
 ## What this call does not return
 
