@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
 import { loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
+import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls } from './db.mjs';
+import { cancelSyncJob, getSyncJob, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
 
@@ -172,6 +174,88 @@ const server = createServer(async (request, response) => {
       const code = error.message || 'campus_failed';
       console.log(`[campus #${reqId}] courses failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, Number(error.status) || 500, campusFailure(error));
+    }
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/campus/sync') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    const reqId = campusReq('POST /v1/campus/sync', `body=${previewBody(body)}`);
+    try {
+      const job = await startSyncJob({ studyId: body?.studyId, elementId: body?.elementId, includeCourses: body?.includeCourses });
+      console.log(`[campus #${reqId}] sync started job=${job.jobId} study=${job.studyId}`);
+      send(response, 200, job);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus #${reqId}] sync failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
+    }
+    return;
+  }
+  if ((request.method === 'GET' || request.method === 'DELETE') && url.pathname.startsWith('/v1/campus/sync/')) {
+    const id = url.pathname.slice('/v1/campus/sync/'.length);
+    if (!/^[1-9]\d{0,9}$/.test(id)) {
+      send(response, 400, { error: 'bad_job_id' });
+      return;
+    }
+    const job = request.method === 'DELETE' ? cancelSyncJob(id) : getSyncJob(id);
+    if (!job) {
+      send(response, 404, { error: 'unknown_job' });
+      return;
+    }
+    send(response, 200, job);
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/campus/tree') {
+    const studyId = Number(url.searchParams.get('studyId'));
+    if (!Number.isInteger(studyId) || studyId <= 0) {
+      send(response, 400, { error: 'bad_study_id' });
+      return;
+    }
+    try {
+      const stored = loadStructure(studyId);
+      send(response, 200, {
+        studyId,
+        nodes: stored.nodes,
+        expandedIds: stored.expandedIds,
+        sync: stored.sync
+          ? { nodeCount: stored.sync.nodeCount, finishedAt: stored.sync.finishedAt, complete: stored.sync.complete }
+          : null,
+      });
+    } catch (error) {
+      send(response, 500, { error: error.message || 'campus_failed' });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/campus/courses/all') {
+    const studyId = Number(url.searchParams.get('studyId'));
+    if (!Number.isInteger(studyId) || studyId <= 0) {
+      send(response, 400, { error: 'bad_study_id' });
+      return;
+    }
+    try {
+      const sync = getCoursesSync(studyId);
+      send(response, 200, {
+        studyId,
+        courses: loadCourses(studyId),
+        fetchedElementIds: loadCoursesFetchedIds(studyId),
+        sync: sync ? { courseCount: sync.courseCount, finishedAt: sync.finishedAt, complete: sync.complete } : null,
+      });
+    } catch (error) {
+      send(response, 500, { error: error.message || 'campus_failed' });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/campus/calls') {
+    try {
+      send(response, 200, { calls: readPortalCalls(url.searchParams.get('limit')) });
+    } catch (error) {
+      send(response, 500, { error: error.message || 'campus_failed' });
     }
     return;
   }

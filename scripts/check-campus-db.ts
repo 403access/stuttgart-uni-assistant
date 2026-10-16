@@ -33,7 +33,7 @@ import {
   saveCourses as saveWebCourses,
   saveFullStructure as saveWebStructure,
 } from '../src/campus/db.web';
-import type { BulkCourse } from '../src/campus/courses-bulk';
+import type { BulkCourse } from '../src/types';
 import type { CurriculumNode } from '../src/types';
 
 // Runs under tsx with the resolve hooks from scripts/testing, which redirect

@@ -1,5 +1,5 @@
 import { assistantUrl } from '@/src/assistant/remote';
-import { recordCampusCall, type CampusOp } from '@/src/auth/campus-log';
+import { recordCampusCall, type CampusLogEntry, type CampusOp } from '@/src/auth/campus-log';
 import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 
 export interface CampusLogin {
@@ -27,6 +27,37 @@ export interface CoursesLoad {
   studyId: number;
   elementId: number;
   courses: CampusCourse[];
+}
+
+export type ServerSyncState = 'running' | 'cancelling' | 'cancelled' | 'done' | 'failed';
+
+export interface CampusSyncJob {
+  jobId: number;
+  state: ServerSyncState;
+  studyId: number;
+  includeCourses: boolean;
+  fetched: number;
+  nodeCount: number;
+  courseCount: number;
+  retries: number;
+  failedIds: number[];
+  startedAt: string;
+  finishedAt: string | null;
+  error: string | null;
+}
+
+export interface ServerTree {
+  studyId: number;
+  nodes: CurriculumNode[];
+  expandedIds: number[];
+  sync: { nodeCount: number; finishedAt: string | null; complete: boolean } | null;
+}
+
+export interface ServerCourses {
+  studyId: number;
+  courses: Array<CampusCourse & { elementIds: number[]; elementNames: string[] }>;
+  fetchedElementIds: number[];
+  sync: { courseCount: number; finishedAt: string | null; complete: boolean } | null;
 }
 
 export interface CampusStatus {
@@ -404,6 +435,138 @@ export function asCurriculumNodes(value: unknown): CurriculumNode[] {
         completed: Boolean(node.completed),
         inProgress: Boolean(node.inProgress),
       },
+    ];
+  });
+}
+
+/** Start a server-side full sync (structures plus, by default, courses). Poll with `getServerSync`. */
+export async function startServerSync(studyId: number, options: { elementId?: number; includeCourses?: boolean } = {}): Promise<CampusSyncJob> {
+  const url = endpoint('/v1/campus/sync');
+  console.info('[campus-sync] POST', url, studyId);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studyId, elementId: options.elementId, includeCourses: options.includeCourses ?? true }),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as CampusSyncJob & CampusFailure;
+  if (!response.ok || typeof payload.jobId !== 'number') throw campusFailure(payload, `http_${response.status}`, response.status);
+  return payload;
+}
+
+export async function getServerSync(jobId: number): Promise<CampusSyncJob> {
+  const url = endpoint(`/v1/campus/sync/${jobId}`);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as CampusSyncJob & CampusFailure;
+  if (!response.ok || typeof payload.jobId !== 'number') throw campusFailure(payload, `http_${response.status}`, response.status);
+  return payload;
+}
+
+export async function cancelServerSync(jobId: number): Promise<CampusSyncJob> {
+  const url = endpoint(`/v1/campus/sync/${jobId}`);
+  let response: Response;
+  try {
+    response = await fetch(url, { method: 'DELETE' });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as CampusSyncJob & CampusFailure;
+  if (!response.ok || typeof payload.jobId !== 'number') throw campusFailure(payload, `http_${response.status}`, response.status);
+  return payload;
+}
+
+/** Cached structure snapshot from the server store (no portal call). */
+export async function loadServerTree(studyId: number): Promise<ServerTree> {
+  const url = endpoint(`/v1/campus/tree?studyId=${studyId}`);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as ServerTree & CampusFailure;
+  if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
+  return {
+    studyId: typeof payload.studyId === 'number' ? payload.studyId : studyId,
+    nodes: asCurriculumNodes(payload.nodes),
+    expandedIds: Array.isArray(payload.expandedIds) ? payload.expandedIds.filter((id): id is number => typeof id === 'number') : [],
+    sync: payload.sync ?? null,
+  };
+}
+
+/** Cached courses snapshot from the server store (no portal call). */
+export async function loadServerCourses(studyId: number): Promise<ServerCourses> {
+  const url = endpoint(`/v1/campus/courses/all?studyId=${studyId}`);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as { courses?: unknown } & CampusFailure;
+  if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
+  const raw = Array.isArray(payload.courses) ? payload.courses : [];
+  const courses = raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const course = item as Partial<CampusCourse> & { elementIds?: unknown; elementNames?: unknown };
+    const mapped = asCampusCourses([course]);
+    if (!mapped.length) return [];
+    return [
+      {
+        ...mapped[0],
+        elementIds: Array.isArray(course.elementIds) ? course.elementIds.filter((id): id is number => typeof id === 'number') : [],
+        elementNames: Array.isArray(course.elementNames) ? course.elementNames.filter((name): name is string => typeof name === 'string') : [],
+      },
+    ];
+  });
+  return {
+    studyId: typeof (payload as { studyId?: unknown }).studyId === 'number' ? (payload as { studyId: number }).studyId : studyId,
+    courses,
+    fetchedElementIds: Array.isArray((payload as { fetchedElementIds?: unknown }).fetchedElementIds)
+      ? ((payload as { fetchedElementIds: unknown[] }).fetchedElementIds.filter((id): id is number => typeof id === 'number'))
+      : [],
+    sync: (payload as { sync?: ServerCourses['sync'] }).sync ?? null,
+  };
+}
+
+/** Portal-call history persisted by the server, newest first. */
+export async function loadServerCalls(limit = 200): Promise<CampusLogEntry[]> {
+  const url = endpoint(`/v1/campus/calls?limit=${limit}`);
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as { calls?: unknown } & CampusFailure;
+  if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
+  if (!Array.isArray(payload.calls)) return [];
+  return (payload.calls as Partial<CampusLogEntry>[]).flatMap((item, index) => {
+    if (!item || typeof item !== 'object' || typeof item.uid !== 'string' || typeof item.op !== 'string') return [];
+    return [
+      {
+        id: -(index + 1),
+        uid: item.uid,
+        time: typeof item.time === 'string' ? item.time : '',
+        createdAt: typeof item.createdAt === 'string' ? item.createdAt : new Date(0).toISOString(),
+        op: item.op as CampusLogEntry['op'],
+        studyId: typeof item.studyId === 'number' ? item.studyId : undefined,
+        elementId: typeof item.elementId === 'number' ? item.elementId : undefined,
+        ok: item.ok !== false,
+        httpStatus: typeof item.httpStatus === 'number' ? item.httpStatus : undefined,
+        code: typeof item.code === 'string' ? item.code : undefined,
+        detail: typeof item.detail === 'string' ? item.detail : undefined,
+        elapsedMs: typeof item.elapsedMs === 'number' ? item.elapsedMs : 0,
+      } satisfies CampusLogEntry,
     ];
   });
 }

@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { appendApiCall } from '@/src/campus/db';
 
-export type CampusOp = 'login' | 'structure' | 'studies' | 'courses';
+export type CampusOp = 'login' | 'structure' | 'studies' | 'courses' | 'sync';
 
 export interface CampusLogEntry {
   id: number;
@@ -10,6 +10,8 @@ export interface CampusLogEntry {
   uid: string;
   /** HH:MM:SS local time for on-screen display. */
   time: string;
+  /** Full ISO timestamp for cross-source ordering. */
+  createdAt: string;
   op: CampusOp;
   studyId?: number;
   elementId?: number;
@@ -41,6 +43,7 @@ export interface PersistedApiCall {
   request?: string;
   response?: string;
   responseJson?: string;
+  createdAt?: string;
 }
 
 const MAX_ENTRIES = 30;
@@ -55,8 +58,8 @@ function timeNow(): string {
   return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 }
 
-export function recordCampusCall(entry: Omit<CampusLogEntry, 'id' | 'uid' | 'time'>): CampusLogEntry {
-  const full: CampusLogEntry = { ...entry, id: ++seq, uid: `${Date.now().toString(36)}-${seq}`, time: timeNow() };
+export function recordCampusCall(entry: Omit<CampusLogEntry, 'id' | 'uid' | 'time' | 'createdAt'>): CampusLogEntry {
+  const full: CampusLogEntry = { ...entry, id: ++seq, uid: `${Date.now().toString(36)}-${seq}`, time: timeNow(), createdAt: new Date().toISOString() };
   snapshot = [full, ...snapshot].slice(0, MAX_ENTRIES);
   listeners.forEach((notify) => notify());
   // Persisted for the history page; never blocks or throws into the caller.

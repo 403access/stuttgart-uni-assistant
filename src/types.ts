@@ -253,6 +253,11 @@ export interface CampusCourse {
   registrationUrl: string;
 }
 
+export interface BulkCourse extends CampusCourse {
+  elementIds: number[];
+  elementNames: string[];
+}
+
 export interface PersistedState {
   locale: Locale;
   sessionAccount: string | null;

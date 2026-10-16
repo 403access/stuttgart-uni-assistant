@@ -83,6 +83,12 @@ The curriculum, course, and API-call caches live outside that key in `campus-cac
 | `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims, not tokens |
 | `POST /v1/oidc/logout` | Revokes the server-side token and drops the session |
 | `POST /v1/assist` | 503 `missing_key` when `XAI_API_KEY` is absent. Otherwise forwards to `https://api.x.ai/v1/responses` with `store: false` and a 50 second timeout. |
+
+## Server store
+
+The assistant server keeps its own SQLite database, `server/campus-server.db` (`node:sqlite`, requires Node 22.5 or newer, git-ignored, overridable with `CAMPUS_DB_PATH`). It is the source of truth for portal data; the app keeps its own copy for offline use. Tables mirror the client cache — `curriculum_nodes` with per-element `expanded` flags, `curriculum_sync`, `courses` plus `course_elements` links, `courses_sync` with fetched element ids — plus a `studies_snapshot` row and a `portal_calls` log (newest 2000 portal hops).
+
+Every portal read persists into the store as it arrives. Reads are live-first: on portal failure the server answers from the store when the requested element was expanded before, marked `cached: true`. Sync jobs (`server/sync.mjs`, `POST /v1/campus/sync`, polled via `GET /v1/campus/sync/<id>`, cancelled via `DELETE`) walk a whole study in the background with the same 3-attempt retry as the app and persist as they go, so cancelling keeps partial progress and the next job resumes. Cancelling also aborts in-flight portal calls instead of waiting out their timeouts, and aborted hops stay out of the call history. Jobs live in memory — a server restart drops them, the stored rows stay. Snapshots (`GET /v1/campus/tree`, `GET /v1/campus/courses/all`) and the portal history (`GET /v1/campus/calls`) serve the store without touching the portal.
 | Anything else | 404 |
 
 The body is capped at 200 KB. The question is sliced to 4,000 characters, the fact sheet to 24,000, and history to the last six turns. CORS allows any origin so Expo web on another port can call a local server. That is acceptable for a local demo and too open for a public host. See [security and privacy](security-and-privacy.md).

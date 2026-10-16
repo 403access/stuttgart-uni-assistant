@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
 
-import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum } from '@/src/auth/campus';
-import { clearCachedStudy, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, loadExpandedIds, appendElementCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
-import { syncFullStructure, type FullSyncProgress } from '@/src/campus/full-sync';
+import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum, loadServerTree } from '@/src/auth/campus';
+import { clearCachedStudy, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, appendElementCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
+import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
@@ -21,7 +21,7 @@ export default function CampusInfoScreen() {
   const [busyNode, setBusyNode] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [syncing, setSyncing] = useState(false);
-  const [progress, setProgress] = useState<FullSyncProgress | null>(null);
+  const [progress, setProgress] = useState<{ fetched: number; queued: number; nodeCount: number; retries: number; failedIds: number[] } | null>(null);
   const [syncFailed, setSyncFailed] = useState<number[]>([]);
   const [syncCancelled, setSyncCancelled] = useState(false);
   const [syncInfo, setSyncInfo] = useState<CurriculumSyncInfo | null>(null);
@@ -135,41 +135,57 @@ export default function CampusInfoScreen() {
 
   async function syncAll(): Promise<void> {
     if (!study || study.elementId == null || syncing) return;
+    const studyId = study.studyId;
+    const rootElementId = study.elementId;
     cancelSync.current = false;
     setSyncing(true);
     setSyncFailed([]);
     setSyncCancelled(false);
-    // Resume from the cache: expanded nodes are skipped, the rest is queued.
-    const studyId = study.studyId;
-    const rootElementId = study.elementId;
-    const cached = await loadCachedNodes(studyId).catch(() => []);
-    const expandedSeed = await loadExpandedIds(studyId).catch(() => []);
-    const expandedSet = new Set(expandedSeed);
-    const pending = cached.map((node) => node.id).filter((id) => !expandedSet.has(id));
-    setProgress({ fetched: 0, queued: pending.length + 1, nodeCount: cached.length, retries: 0, failedIds: [] });
+    setProgress({ fetched: 0, queued: 1, nodeCount: 0, retries: 0, failedIds: [] });
     try {
-      const result = await syncFullStructure(studyId, rootElementId, {
-        onProgress: setProgress,
+      const job = await runServerSync(studyId, {
+        elementId: rootElementId,
+        includeCourses: false,
+        onProgress: (update) =>
+          setProgress({ fetched: update.fetched, queued: 0, nodeCount: update.nodeCount, retries: update.retries, failedIds: update.failedIds }),
         isCancelled: () => cancelSync.current,
-        resume: { expanded: expandedSeed, pending },
       });
-      const merged = new Map(cached.map((node) => [node.id, node] as const));
-      for (const node of result.nodes) merged.set(node.id, node);
-      const all = [...merged.values()];
-      const expanded = [...new Set([...expandedSeed, ...result.expandedIds])];
-      setCurriculum(all, { studyId, replace: true });
-      const complete = !result.cancelled && result.failedIds.length === 0;
-      await saveFullStructure(studyId, rootElementId, all, expanded, complete).catch(() => undefined);
-      setSyncInfo(await getSyncInfo(studyId).catch(() => null));
-      setSyncFailed(result.failedIds);
-      setSyncCancelled(result.cancelled);
-      if (result.failedIds.length > 0) {
+      setSyncCancelled(job.state === 'cancelled');
+      setSyncFailed(job.failedIds);
+      // Hydrate the local sync cache and the view from the server snapshot.
+      const tree = await loadServerTree(studyId).catch(() => null);
+      if (tree && tree.nodes.length > 0) {
+        setCurriculum(tree.nodes, { studyId, replace: true });
+        await saveFullStructure(studyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
+        setSyncInfo(await getSyncInfo(studyId).catch(() => null));
+      }
+      if (job.state === 'failed' || job.failedIds.length > 0) {
+        const code = job.state === 'failed' ? (job.error ?? 'sync_failed') : 'campus_failed';
         showFetchAlert(locale, {
-          title: tx(locale, `${result.failedIds.length} Knoten übersprungen`, `${result.failedIds.length} nodes skipped`),
-          code: 'campus_failed',
+          title:
+            job.state === 'failed'
+              ? tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed')
+              : tx(locale, `${job.failedIds.length} Knoten übersprungen`, `${job.failedIds.length} nodes skipped`),
+          code,
           onRetry: syncAll,
         });
       }
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'sync_failed';
+      const detail = campusDetail(caught);
+      setError(
+        tx(
+          locale,
+          `Struktur-Sync nicht gestartet (${code}${detail ? `, ${detail}` : ''}).`,
+          `Structure sync did not start (${code}${detail ? `, ${detail}` : ''}).`,
+        ),
+      );
+      showFetchAlert(locale, {
+        title: tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed'),
+        code,
+        detail: detail || undefined,
+        onRetry: syncAll,
+      });
     } finally {
       setSyncing(false);
     }

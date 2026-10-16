@@ -2,10 +2,9 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { activeStudy } from '@/src/auth/campus';
-import { fetchAllCourses, type BulkCourse } from '@/src/campus/courses-bulk';
-import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCachedNodes, loadCoursesFetchedIds, loadExpandedIds, saveCourses, saveFullStructure, type CoursesSyncInfo } from '@/src/campus/db';
-import { syncFullStructure } from '@/src/campus/full-sync';
+import { activeStudy, campusDetail, loadServerCourses, loadServerTree } from '@/src/auth/campus';
+import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCachedNodes, loadCoursesFetchedIds, saveCourses, saveFullStructure, type CoursesSyncInfo } from '@/src/campus/db';
+import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
@@ -13,6 +12,7 @@ import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
+import type { BulkCourse } from '@/src/types';
 
 type CourseSort = 'title' | 'type' | 'time';
 
@@ -29,7 +29,6 @@ export default function KurseScreen() {
   const [failedIds, setFailedIds] = useState<number[]>([]);
   const [coursesSync, setCoursesSync] = useState<CoursesSyncInfo | null>(null);
   const [saveError, setSaveError] = useState('');
-  const [phase, setPhase] = useState<'structures' | 'courses'>('courses');
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ fetched: 0, total: 0, courseCount: 0 });
   const [query, setQuery] = useState('');
@@ -80,6 +79,26 @@ export default function KurseScreen() {
         if (loadSeq.current === seq) setCoursesSync(info);
       })
       .catch(() => undefined);
+    // Server snapshot second: cross-device catch-up merged into the local store.
+    loadServerCourses(studyId)
+      .then(async (remote) => {
+        if (loadSeq.current !== seq || remote.courses.length === 0) return;
+        const stored = await loadCachedCourses(studyId).catch(() => []);
+        const map = new Map(stored.map((course) => [course.id, course]));
+        for (const course of remote.courses) {
+          if (!map.has(course.id)) map.set(course.id, { ...course });
+        }
+        const all = [...map.values()];
+        const storedFetched = await loadCoursesFetchedIds(studyId).catch(() => []);
+        const allFetched = [...new Set([...storedFetched, ...remote.fetchedElementIds])];
+        const prevComplete = (await getCoursesSyncInfo(studyId).catch(() => null))?.complete ?? false;
+        await saveCourses(studyId, all, allFetched, prevComplete).catch(() => undefined);
+        if (loadSeq.current !== seq) return;
+        setCourses(all);
+        setFetchedIds(allFetched);
+        setCoursesSync(await getCoursesSyncInfo(studyId).catch(() => null));
+      })
+      .catch(() => undefined);
   }, [study?.studyId]);
 
   async function loadAll(): Promise<void> {
@@ -87,73 +106,48 @@ export default function KurseScreen() {
     loadSeq.current += 1;
     const seq = loadSeq.current;
     const myStudyId = study.studyId;
+    const rootElementId = study.elementId;
     const current = () => loadSeq.current === seq;
     cancelRun.current = false;
     setRunning(true);
     setFailedIds([]);
     setSaveError('');
+    setProgress({ fetched: 0, total: 0, courseCount: 0 });
     try {
-      // Phase 1: without cached structures there is nothing to iterate —
-      // sync them first (with resume), then read the courses.
-      let nodes = await loadCachedNodes(myStudyId).catch(() => []);
-      if (!nodes.length) {
-        if (study.elementId == null) return;
-        setPhase('structures');
-        const expandedSeed = await loadExpandedIds(myStudyId).catch(() => []);
-        const cached = nodes;
-        const pending: number[] = [];
-        const struct = await syncFullStructure(myStudyId, study.elementId, {
-          onProgress: (update) => {
-            if (current()) setProgress({ fetched: update.fetched, total: update.fetched + update.queued, courseCount: update.nodeCount });
-          },
-          isCancelled: () => cancelRun.current,
-          resume: { expanded: expandedSeed, pending },
-        });
-        const mergedNodes = new Map(cached.map((node) => [node.id, node] as const));
-        for (const node of struct.nodes) mergedNodes.set(node.id, node);
-        nodes = [...mergedNodes.values()];
-        if (current()) {
-          setCurriculum(nodes, { studyId: myStudyId, replace: true });
-          setElementCount(nodes.length);
-        }
-        const structExpanded = [...new Set([...expandedSeed, ...struct.expandedIds])];
-        await saveFullStructure(myStudyId, study.elementId, nodes, structExpanded, !struct.cancelled && struct.failedIds.length === 0).catch(() => undefined);
-        if (!nodes.length) return;
-        if (current() && struct.failedIds.length > 0) setFailedIds(struct.failedIds);
+      // One server job walks structures and courses; the app only polls.
+      // Resume happens server-side from stored expanded/fetched ids.
+      const job = await runServerSync(myStudyId, {
+        elementId: rootElementId ?? undefined,
+        includeCourses: true,
+        onProgress: (update) => {
+          if (current()) setProgress({ fetched: update.fetched, total: update.fetched, courseCount: update.courseCount });
+        },
+        isCancelled: () => cancelRun.current,
+      });
+      if (job.state === 'failed') {
+        throw new Error(job.error ?? 'sync_failed');
       }
-      if (cancelRun.current) return;
-      setPhase('courses');
-      // Read the stored state fresh: component state may predate hydration.
+      // Hydrate the local sync cache and the view from the server snapshots.
+      const [tree, remote] = await Promise.all([
+        loadServerTree(myStudyId).catch(() => null),
+        loadServerCourses(myStudyId).catch(() => null),
+      ]);
+      if (tree && tree.nodes.length > 0) {
+        if (current()) {
+          setCurriculum(tree.nodes, { studyId: myStudyId, replace: true });
+          setElementCount(tree.nodes.length);
+        }
+        await saveFullStructure(myStudyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
+      }
       const storedCourses = await loadCachedCourses(myStudyId).catch(() => []);
       const storedFetched = await loadCoursesFetchedIds(myStudyId).catch(() => []);
-      const result = await fetchAllCourses(
-        myStudyId,
-        nodes.map((node) => ({ id: node.id, name: node.name })),
-        {
-          skipIds: storedFetched,
-          onProgress: (update) => {
-            if (current()) setProgress({ fetched: update.fetched, total: update.total, courseCount: update.courseCount });
-          },
-          isCancelled: () => cancelRun.current,
-        },
-      );
       const merged = new Map(storedCourses.map((course) => [course.id, course]));
-      for (const course of result.courses) {
-        const known = merged.get(course.id);
-        if (known) {
-          for (const elementId of course.elementIds) {
-            if (!known.elementIds.includes(elementId)) {
-              known.elementIds.push(elementId);
-              known.elementNames.push(...course.elementNames.filter((name) => !known.elementNames.includes(name)));
-            }
-          }
-        } else {
-          merged.set(course.id, course);
-        }
+      for (const course of remote?.courses ?? []) {
+        if (!merged.has(course.id)) merged.set(course.id, { ...course });
       }
       const all = [...merged.values()];
-      const allFetched = [...new Set([...storedFetched, ...result.fetchedIds])];
-      const complete = !result.cancelled && result.failedIds.length === 0;
+      const allFetched = [...new Set([...storedFetched, ...(remote?.fetchedElementIds ?? [])])];
+      const complete = job.state === 'done' && job.failedIds.length === 0 && (remote?.sync?.complete ?? false);
       try {
         await saveCourses(myStudyId, all, allFetched, complete);
       } catch (caught) {
@@ -167,14 +161,29 @@ export default function KurseScreen() {
       setCourses(all);
       setFetchedIds(allFetched);
       setCoursesSync(await getCoursesSyncInfo(myStudyId).catch(() => null));
-      setFailedIds((currentFailed) => [...new Set([...currentFailed, ...result.failedIds])]);
-      if (result.failedIds.length > 0) {
+      setFailedIds(job.failedIds);
+      if (job.state === 'cancelled') {
+        setSaveError(tx(locale, 'Abgebrochen — Teilergebnisse sind gespeichert.', 'Cancelled — partial results are stored.'));
+      } else if (job.failedIds.length > 0) {
         showFetchAlert(locale, {
-          title: tx(locale, `${result.failedIds.length} Elemente übersprungen`, `${result.failedIds.length} elements skipped`),
+          title: tx(locale, `${job.failedIds.length} Elemente übersprungen`, `${job.failedIds.length} elements skipped`),
           code: 'campus_failed',
           onRetry: loadAll,
         });
       }
+    } catch (caught) {
+      if (!current()) return;
+      const code = caught instanceof Error ? caught.message : 'sync_failed';
+      const detail = campusDetail(caught);
+      setSaveError(
+        tx(locale, `Kurs-Sync fehlgeschlagen (${code}${detail ? `, ${detail}` : ''}).`, `Course sync failed (${code}${detail ? `, ${detail}` : ''}).`),
+      );
+      showFetchAlert(locale, {
+        title: tx(locale, 'Kurs-Sync fehlgeschlagen', 'Course sync failed'),
+        code,
+        detail: detail || undefined,
+        onRetry: loadAll,
+      });
     } finally {
       if (current()) setRunning(false);
     }
@@ -262,9 +271,7 @@ export default function KurseScreen() {
             ) : null}
             {running ? (
               <Text style={{ color: colors.blue, fontWeight: '700' }}>
-                {phase === 'structures'
-                  ? tx(locale, `Struktur ${progress.fetched}/${progress.total}`, `Structure ${progress.fetched}/${progress.total}`)
-                  : tx(locale, `${progress.fetched}/${progress.total} Elemente · ${progress.courseCount} Kurse`, `${progress.fetched}/${progress.total} elements · ${progress.courseCount} courses`)}
+                {tx(locale, `${progress.fetched} Abfragen · ${progress.courseCount} Kurse`, `${progress.fetched} calls · ${progress.courseCount} courses`)}
               </Text>
             ) : null}
             {failedIds.length > 0 ? (

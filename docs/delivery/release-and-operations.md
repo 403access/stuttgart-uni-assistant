@@ -42,6 +42,8 @@ Rotate the C@MPUS secrets without editing the file by hand: `npm run campus:toke
 
 Restart the assistant server after every server code change as well, not only after secret changes. An old process answers new calls in the old error shape (no `detail`), which the app reports as `… ohne Detail` — the absence of `[campus #N]` request lines in the server terminal confirms the staleness. The campus logs and the diagnosis steps are in [campus-logging.md](../engineering/campus-logging.md).
 
+The server keeps its portal mirror in `server/campus-server.db` (git-ignored, `CAMPUS_DB_PATH` overrides the path, Node 22.5+ for `node:sqlite`). It survives restarts; delete the file to start from an empty store. Background sync jobs do not survive restarts, but their stored rows do, so the next run resumes.
+
 Healthy and unconfigured:
 
 ```json

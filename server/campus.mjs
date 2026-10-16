@@ -1,5 +1,7 @@
 /** Server-only C@MPUS access token. Never sent to the Expo bundle. */
 
+import { getCoursesSync, isExpanded, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveStudiesSnapshot, saveStructure } from './db.mjs';
+
 export function campusBearerToken() {
   const raw = (process.env.CAMPUS_BEARER_TOKEN || '').trim();
   if (!raw) return '';
@@ -223,16 +225,22 @@ export function profileFromCurriculum(payload, studyId, elementId) {
   };
 }
 
-async function readCampus(url, label, fetchImpl) {
+async function readCampus(url, label, op, fetchImpl, context = {}) {
   if (!campusBearerToken()) throw httpError(503, 'token_missing');
   const started = Date.now();
+  const signal = context.signal ? AbortSignal.any([AbortSignal.timeout(20_000), context.signal]) : AbortSignal.timeout(20_000);
   let response;
   try {
-    response = await fetchImpl(url, { headers: campusRequestHeaders(), signal: AbortSignal.timeout(20_000) });
+    response = await fetchImpl(url, { headers: campusRequestHeaders(), signal });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.log(`[campus] ${label} request failed ${reason} ${Date.now() - started}ms`);
-    throw httpError(502, 'campus_failed', `request failed: ${String(reason).slice(0, 200)}`);
+    const detail = `request failed: ${String(reason).slice(0, 200)}`;
+    // A user-cancelled call is not a portal failure; keep it out of the history.
+    if (!context.signal?.aborted) {
+      logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: false, detail, elapsedMs: Date.now() - started });
+    }
+    throw httpError(502, 'campus_failed', detail);
   }
   const payload = await response.json().catch(() => ({}));
   const elapsed = Date.now() - started;
@@ -240,24 +248,110 @@ async function readCampus(url, label, fetchImpl) {
     const message = portalMessage(payload);
     const detail = `upstream ${response.status}${message ? `: ${message}` : ''}`;
     console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} message=${message || '-'} ${elapsed}ms`);
+    logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: false, httpStatus: response.status, message: detail, elapsedMs: elapsed });
     if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie', detail);
     if (message.includes('invalid_token')) throw httpError(401, 'invalid_token', detail);
     if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
     throw httpError(502, 'campus_failed', detail);
   }
   console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} ${elapsed}ms`);
+  logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: true, httpStatus: response.status, elapsedMs: elapsed });
   return payload;
 }
 
-function readCurriculum(studyId, elementId, fetchImpl) {
-  return readCampus(curriculumRequestUrl(studyId, elementId), `structure study=${studyId} element=${elementId}`, fetchImpl);
+function readCurriculum(studyId, elementId, fetchImpl, signal) {
+  return readCampus(curriculumRequestUrl(studyId, elementId), `structure study=${studyId} element=${elementId}`, 'structure', fetchImpl, { studyId, elementId, signal });
+}
+
+/** Merge freshly read nodes into the server store. Best-effort; never breaks the call. */
+function storeStructure(studyId, elementId, nodes) {
+  try {
+    const known = loadStructure(studyId);
+    const map = new Map(known.nodes.map((node) => [node.id, node]));
+    for (const node of nodes) map.set(node.id, node);
+    const expanded = [...new Set([...known.expandedIds, elementId])];
+    saveStructure(studyId, known.sync?.rootElementId ?? null, [...map.values()], expanded, known.sync?.complete ?? false);
+  } catch {
+    // The store is best-effort; the portal answer still goes out.
+  }
+}
+
+/** Cached answer when the portal cannot be reached. Null when nothing usable is stored. */
+function storedStructure(studyId, elementId) {
+  try {
+    if (!isExpanded(studyId, elementId)) return null;
+    const known = loadStructure(studyId);
+    if (!known.nodes.length) return null;
+    console.log(`[campus] structure study=${studyId} element=${elementId} served from server store`);
+    return { studyId, elementId, nodes: known.nodes, cached: true };
+  } catch {
+    return null;
+  }
+}
+
+/** Merge freshly read courses into the server store. Best-effort; never breaks the call. */
+function storeCourses(studyId, elementId, elementName, courses) {
+  try {
+    const known = loadCourses(studyId);
+    const map = new Map(known.map((course) => [course.id, course]));
+    for (const course of courses) {
+      const existing = map.get(course.id);
+      if (!existing) {
+        map.set(course.id, { ...course, elementIds: [elementId], elementNames: [elementName] });
+      } else if (!existing.elementIds.includes(elementId)) {
+        existing.elementIds.push(elementId);
+        if (!existing.elementNames.includes(elementName)) existing.elementNames.push(elementName);
+      }
+    }
+    const fetched = [...new Set([...loadCoursesFetchedIds(studyId), elementId])];
+    const sync = getCoursesSync(studyId);
+    saveCourses(studyId, [...map.values()], fetched, sync?.complete ?? false);
+  } catch {
+    // The store is best-effort; the portal answer still goes out.
+  }
+}
+
+/** Cached courses when the portal cannot be reached. Null when nothing usable is stored. */
+function storedCourses(studyId, elementId) {
+  try {
+    const fetched = loadCoursesFetchedIds(studyId);
+    if (!fetched.includes(elementId)) return null;
+    const courses = loadCourses(studyId, elementId);
+    console.log(`[campus] courses study=${studyId} element=${elementId} served from server store`);
+    return { studyId, elementId, courses, cached: true };
+  } catch {
+    return null;
+  }
 }
 
 export async function loginWithCampusToken(fetchImpl = fetch) {
   const { studyId, elementId } = campusStudyTarget();
-  const payload = await readCurriculum(studyId, elementId, fetchImpl);
+  let payload;
+  try {
+    payload = await readCurriculum(studyId, elementId, fetchImpl);
+  } catch (error) {
+    const cached = storedStructure(studyId, elementId);
+    if (!cached) throw error;
+    const root = cached.nodes.find((item) => item.elementType === 'ROOT') || cached.nodes.find((item) => item.id === elementId) || cached.nodes[0];
+    if (!root?.name) throw error;
+    const offline = {
+      name: root.name,
+      account: root.designation || `Studium ${studyId}`,
+      studyId,
+      elementId,
+      nodes: cached.nodes,
+      cached: true,
+    };
+    try {
+      const { studies } = await loadCampusStudies(fetchImpl);
+      return { ...offline, studies, activeStudyId: pickActiveStudyId(studies, null), cached: true };
+    } catch {
+      return { ...offline, studies: [], activeStudyId: null, cached: true };
+    }
+  }
   const profile = profileFromCurriculum(payload, studyId, elementId);
   if (!profile) throw httpError(502, 'campus_unexpected');
+  storeStructure(studyId, elementId, profile.nodes);
   // Attach the enrolled studies so the app starts from production data, not mockup data.
   try {
     const { studies } = await loadCampusStudies(fetchImpl);
@@ -267,7 +361,7 @@ export async function loginWithCampusToken(fetchImpl = fetch) {
   }
 }
 
-export async function loadCurriculumStructure(elementIdOverride, studyIdOverride, fetchImpl = fetch) {
+export async function loadCurriculumStructure(elementIdOverride, studyIdOverride, fetchImpl = fetch, signal) {
   if (typeof studyIdOverride === 'function') {
     fetchImpl = studyIdOverride;
     studyIdOverride = undefined;
@@ -283,20 +377,44 @@ export async function loadCurriculumStructure(elementIdOverride, studyIdOverride
     elementId = match.elementId;
   }
   elementId ??= target.elementId;
-  const payload = await readCurriculum(studyId, elementId, fetchImpl);
-  const nodes = nodesFromCurriculum(payload);
-  if (!nodes.length) throw httpError(502, 'campus_unexpected', `empty structure study=${studyId} element=${elementId}`);
-  return { studyId, elementId, nodes };
+  try {
+    const payload = await readCurriculum(studyId, elementId, fetchImpl, signal);
+    const nodes = nodesFromCurriculum(payload);
+    if (!nodes.length) throw httpError(502, 'campus_unexpected', `empty structure study=${studyId} element=${elementId}`);
+    storeStructure(studyId, elementId, nodes);
+    return { studyId, elementId, nodes };
+  } catch (error) {
+    const cached = storedStructure(studyId, elementId);
+    if (!cached) throw error;
+    return cached;
+  }
 }
 
 export async function loadCampusStudies(fetchImpl = fetch) {
-  const payload = await readCampus(studiesRequestUrl(), 'studies', fetchImpl);
-  const studies = studiesFromChooser(payload);
-  if (!studies.length) throw httpError(502, 'campus_unexpected');
-  return { studies, activeStudyId: pickActiveStudyId(studies, null) };
+  try {
+    const payload = await readCampus(studiesRequestUrl(), 'studies', 'studies', fetchImpl);
+    const studies = studiesFromChooser(payload);
+    if (!studies.length) throw httpError(502, 'campus_unexpected');
+    try {
+      saveStudiesSnapshot(studies);
+    } catch {
+      // The store is best-effort; the portal answer still goes out.
+    }
+    return { studies, activeStudyId: pickActiveStudyId(studies, null) };
+  } catch (error) {
+    let snapshot = null;
+    try {
+      snapshot = loadStudiesSnapshot();
+    } catch {
+      snapshot = null;
+    }
+    if (!snapshot) throw error;
+    console.log('[campus] studies served from server store');
+    return { studies: snapshot.studies, activeStudyId: pickActiveStudyId(snapshot.studies, null), cached: true };
+  }
 }
 
-export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, fetchImpl = fetch) {
+export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, fetchImpl = fetch, signal) {
   if (typeof elementIdOverride === 'function') {
     fetchImpl = elementIdOverride;
     elementIdOverride = undefined;
@@ -310,8 +428,23 @@ export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, 
   // Courses always belong to one curriculum element: there is no useful default.
   const elementId = parseElementId(elementIdOverride);
   if (elementId == null) throw httpError(400, 'bad_element_id');
-  const payload = await readCampus(coursesRequestUrl(studyId, elementId), `courses study=${studyId} element=${elementId}`, fetchImpl);
-  const courses = coursesFromPayload(payload);
-  // An element without courses is a valid answer, not an error.
-  return { studyId, elementId, courses };
+  try {
+    const payload = await readCampus(coursesRequestUrl(studyId, elementId), `courses study=${studyId} element=${elementId}`, 'courses', fetchImpl, { studyId, elementId, signal });
+    const courses = coursesFromPayload(payload);
+    // An element without courses is a valid answer, not an error.
+    // The element name for the link table comes from the stored tree when known.
+    let elementName = String(elementId);
+    try {
+      const known = loadStructure(studyId).nodes.find((node) => node.id === elementId);
+      if (known?.name) elementName = known.name;
+    } catch {
+      // Name lookup is best-effort.
+    }
+    storeCourses(studyId, elementId, elementName, courses);
+    return { studyId, elementId, courses };
+  } catch (error) {
+    const cached = storedCourses(studyId, elementId);
+    if (!cached) throw error;
+    return cached;
+  }
 }

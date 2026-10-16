@@ -2,8 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 
 import type { CampusLogEntry, PersistedApiCall } from '@/src/auth/campus-log';
-import type { CampusCourse, CurriculumNode } from '@/src/types';
-import type { BulkCourse } from '@/src/campus/courses-bulk';
+import type { BulkCourse, CampusCourse, CurriculumNode } from '@/src/types';
 
 const DATABASE_NAME = 'campus-cache.db';
 const FALLBACK_PREFIX = 'campus-cache/sqlite-fallback/';
@@ -598,7 +597,7 @@ export async function readApiLog(limit = 500): Promise<CampusLogEntry[]> {
   const db = await getDbOrNull();
   if (!db) {
     const fallback = await readFallbackApiLog();
-    return fallback.slice(0, limit).map((call, index) => ({ ...call, id: -(index + 1) }) satisfies CampusLogEntry);
+    return fallback.slice(0, limit).map((call, index) => ({ ...call, id: -(index + 1), createdAt: call.createdAt ?? new Date(0).toISOString() }) satisfies CampusLogEntry);
   }
   const rows = await db.getAllAsync<{
     id: number;
@@ -615,7 +614,8 @@ export async function readApiLog(limit = 500): Promise<CampusLogEntry[]> {
     request: string | null;
     response: string | null;
     response_json: string | null;
-  }>('SELECT id, uid, time, op, study_id, element_id, ok, http_status, code, detail, elapsed_ms, request, response, response_json FROM api_calls ORDER BY id DESC LIMIT ?', limit);
+    created_at: string | null;
+  }>('SELECT id, uid, time, op, study_id, element_id, ok, http_status, code, detail, elapsed_ms, request, response, response_json, created_at FROM api_calls ORDER BY id DESC LIMIT ?', limit);
   return rows.map((row) => ({
     id: row.id,
     uid: row.uid,
@@ -631,6 +631,7 @@ export async function readApiLog(limit = 500): Promise<CampusLogEntry[]> {
     request: typeof row.request === 'string' ? row.request : undefined,
     response: typeof row.response === 'string' ? row.response : undefined,
     responseJson: typeof row.response_json === 'string' ? row.response_json : undefined,
+    createdAt: typeof row.created_at === 'string' ? row.created_at : new Date(0).toISOString(),
   }));
 }
 

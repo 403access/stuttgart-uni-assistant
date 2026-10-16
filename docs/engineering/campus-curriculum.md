@@ -150,18 +150,22 @@ The `C@MPUS` tab (`app/(tabs)/campus-info.tsx`) renders the stored tree for the 
 
 ## Full sync and SQLite cache
 
-One structure call returns a node and the level below it, so the whole tree needs one call per node. `syncFullStructure` in `src/campus/full-sync.ts` walks the tree breadth-first from the root (three calls in flight), queues every unseen id exactly once, and retries a failing element up to three times — back of the queue with a short pause, so transient `fetch failed` blips usually pass while the others continue. Only after the third failure does the id land in `failedIds`, staying resumable later. Every call goes through `loadCampusCurriculum`, so each attempt is logged as documented in [campus-logging.md](campus-logging.md).
+One structure call returns a node and the level below it, so the whole tree needs one call per node. The walk runs on the assistant server as a background job (`POST /v1/campus/sync`, `server/sync.mjs`): breadth-first from the root, three calls in flight, every unseen id queued exactly once, a failing element retried up to three times before it lands in `failedIds`. The app only starts, polls (`runServerSync` in `src/campus/server-sync.ts`), and cancels — progress persists server-side as it is fetched, so cancelling keeps partials and the next job resumes where the last stopped. Each job completion lands in the call history as a `sync` entry.
 
-`src/campus/db.ts` stores the result in the on-device SQLite database `campus-cache.db` (`expo-sqlite`):
+`src/campus/db.ts` keeps the client's own copy in the on-device SQLite database `campus-cache.db` (`expo-sqlite`):
 
 | Table / column | Contents |
 | --- | --- |
 | `curriculum_nodes` | One row per `(study_id, id)`: designation, type, German name, parent, completion flags, fetch time, plus `expanded` — whether that node's own structure call already succeeded |
 | `curriculum_sync` | One row per study: root element, node count, finish time, `complete` flag |
 
-Replacing per study keeps trees apart; partial walks (cancelled or with skipped nodes) are stored with `complete` false. Interrupting and continuing is the normal case, not a retry from scratch: the next run seeds `visited` with the `expanded` ids and queues only the cached-but-unexpanded remainder, so already-fetched levels are never requested again. The tab hydrates from the cache on open — switching to a cached study shows its tree instantly — and offers `Alles laden` / `Weiter laden`, cancel, and cache clearing per study. Courses have their own per-study cache, documented in [campus-courses.md](campus-courses.md).
+Replacing per study keeps trees apart; partial walks (cancelled or with skipped nodes) are stored with `complete` false. The tab hydrates from the cache on open — switching to a cached study shows its tree instantly — and offers `Alles laden` / `Weiter laden`, cancel, and cache clearing per study; each button run hydrates the local copy from the server snapshot when the job finishes. Courses have their own per-study cache, documented in [campus-courses.md](campus-courses.md).
 
 Native and web caches are separate devices stores: SQLite lives in the app's files, the web fallback in that browser's `localStorage`. A bulk load in Expo Go does not appear in the browser and vice versa — each needs its own run.
+
+## Server as source of truth
+
+The assistant server keeps the same tables in `server/campus-server.db` and fills them from every portal read; the client cache is the offline copy. Reads are live-first with store fallback (`cached: true` in the response), and `POST /v1/campus/sync` walks whole studies in background jobs so the app no longer has to hammer the portal itself. Details in [architecture.md](architecture.md).
 
 The web-only structure browser (`app/strukturen.tsx`, linked from the C@MPUS tab) reads all cached studies side by side: per-study fetch buttons with resume, per-study and global cache clearing, search across names and designations, type and completion filters, name/code/id sort, an expandable tree per study, and the session API history in the right column — itself searchable, filterable by status and operation, and sortable by time or duration, with failures in red. Tapping a search hit reveals it in the tree: ancestors expand, the node selects, and the column scrolls to it. The root element stays hidden by default (the header line already carries the study name plus element id, section and node counts); a `Wurzel` toggle restores the classic view. Only the arrow toggles a branch; tapping the row itself opens a node detail panel (designation, status, study, parent, children, courses — cached courses show instantly, otherwise a load button fetches once) in place of the call detail. Clicking a history entry opens a detail panel with the full call data and a reload button for that exact call. Expanding, searching, filtering, and sorting touch only cached rows — the page issues no structure calls itself.
 

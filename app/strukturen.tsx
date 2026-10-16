@@ -3,9 +3,9 @@ import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { router } from 'expo-router';
 
 import { clearSessionLog, useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
-import { cacheCampusCourses, loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/src/auth/campus';
-import { appendElementCourses, clearApiLog, clearCachedCourses, clearCachedStudy, getCoursesSyncInfo, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, loadCoursesFetchedIds, loadExpandedIds, readApiLog, saveFullStructure, type CoursesSyncInfo, type CurriculumSyncInfo } from '@/src/campus/db';
-import { syncFullStructure } from '@/src/campus/full-sync';
+import { cacheCampusCourses, loadCampusCourses, loadCampusCurriculum, loadCampusStudies, loadServerCalls, loadServerTree } from '@/src/auth/campus';
+import { appendElementCourses, clearApiLog, clearCachedCourses, clearCachedStudy, getCoursesSyncInfo, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, readApiLog, saveFullStructure, type CoursesSyncInfo, type CurriculumSyncInfo } from '@/src/campus/db';
+import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
@@ -40,7 +40,9 @@ export default function StrukturenScreen() {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [fetching, setFetching] = useState<Record<number, { fetched: number; nodeCount: number; retries: number }>>({});
   const [fetchError, setFetchError] = useState('');
+  const [syncNote, setSyncNote] = useState('');
   const [storedLog, setStoredLog] = useState<CampusLogEntry[]>([]);
+  const [serverCalls, setServerCalls] = useState<CampusLogEntry[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
   const [showRoot, setShowRoot] = useState(false);
@@ -79,14 +81,35 @@ export default function StrukturenScreen() {
 
   const history = useMemo(() => {
     const seen = new Set(log.map((entry) => entry.uid));
-    return [...log, ...storedLog.filter((entry) => !seen.has(entry.uid))];
-  }, [log, storedLog]);
+    const merged = [...log, ...storedLog.filter((entry) => !seen.has(entry.uid))];
+    for (const entry of serverCalls) {
+      if (!seen.has(entry.uid)) {
+        seen.add(entry.uid);
+        merged.push(entry);
+      }
+    }
+    merged.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    return merged;
+  }, [log, storedLog, serverCalls]);
 
   useEffect(() => {
     let active = true;
     readApiLog(500)
       .then((rows) => {
         if (active) setStoredLog(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [log]);
+
+  // Server portal hops (one row per attempt, including retries).
+  useEffect(() => {
+    let active = true;
+    loadServerCalls(300)
+      .then((rows) => {
+        if (active) setServerCalls(rows);
       })
       .catch(() => undefined);
     return () => {
@@ -156,47 +179,68 @@ export default function StrukturenScreen() {
 
   async function fetchStudy(study: CampusStudy): Promise<void> {
     if (study.elementId == null || fetching[study.studyId]) return;
-    cancelFetch.current[study.studyId] = false;
+    const studyId = study.studyId;
+    const rootElementId = study.elementId;
+    cancelFetch.current[studyId] = false;
     setFetchError('');
-    setFetching((current) => ({ ...current, [study.studyId]: { fetched: 0, nodeCount: 0, retries: 0 } }));
+    setSyncNote('');
+    setFetching((current) => ({ ...current, [studyId]: { fetched: 0, nodeCount: 0, retries: 0 } }));
     try {
-      const cached = await loadCachedNodes(study.studyId).catch(() => []);
-      const expandedSeed = await loadExpandedIds(study.studyId).catch(() => []);
-      const expandedSet = new Set(expandedSeed);
-      const pending = cached.map((node) => node.id).filter((id) => !expandedSet.has(id));
-      const result = await syncFullStructure(study.studyId, study.elementId, {
-        onProgress: (progress) =>
-          setFetching((current) => ({ ...current, [study.studyId]: { fetched: progress.fetched, nodeCount: progress.nodeCount, retries: progress.retries } })),
-        isCancelled: () => cancelFetch.current[study.studyId] ?? false,
-        resume: { expanded: expandedSeed, pending },
+      const job = await runServerSync(studyId, {
+        elementId: rootElementId,
+        includeCourses: false,
+        onProgress: (update) =>
+          setFetching((current) => ({ ...current, [studyId]: { fetched: update.fetched, nodeCount: update.nodeCount, retries: update.retries } })),
+        isCancelled: () => cancelFetch.current[studyId] ?? false,
       });
-      const merged = new Map(cached.map((node) => [node.id, node] as const));
-      for (const node of result.nodes) merged.set(node.id, node);
-      const all = [...merged.values()];
-      const expanded = [...new Set([...expandedSeed, ...result.expandedIds])];
-      const complete = !result.cancelled && result.failedIds.length === 0;
-      await saveFullStructure(study.studyId, study.elementId, all, expanded, complete).catch(() => undefined);
-      const info = await getSyncInfo(study.studyId).catch(() => null);
-      setTrees((current) => ({ ...current, [study.studyId]: all }));
-      setInfos((current) => ({ ...current, [study.studyId]: info }));
-      if (study.studyId === activeStudyId) setCurriculum(all, { studyId: study.studyId, replace: true });
-      if (result.failedIds.length > 0) {
+      // Hydrate the local sync cache and the browser from the server snapshot.
+      const tree = await loadServerTree(studyId).catch(() => null);
+      if (tree && tree.nodes.length > 0) {
+        await saveFullStructure(studyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
+        const info = await getSyncInfo(studyId).catch(() => null);
+        setTrees((current) => ({ ...current, [studyId]: tree.nodes }));
+        setInfos((current) => ({ ...current, [studyId]: info }));
+        if (studyId === activeStudyId) setCurriculum(tree.nodes, { studyId, replace: true });
+      }
+      if (job.state === 'failed' || job.failedIds.length > 0) {
+        const code = job.state === 'failed' ? (job.error ?? 'sync_failed') : 'campus_failed';
+        if (job.state === 'done' && job.failedIds.length === 0 && job.fetched === 0) {
+          setSyncNote(
+            tx(
+              locale,
+              'Keine neuen Abfragen — alles aus dem Server-Cache.',
+              'No new calls — everything from the server cache.',
+            ),
+          );
+        }
         const text = tx(
           locale,
-          `${result.failedIds.length} Knoten übersprungen (3 Versuche je Knoten) — Weiter laden versucht nur den Rest.`,
-          `${result.failedIds.length} nodes skipped (3 attempts each) — continue loads only the rest.`,
+          job.state === 'failed'
+            ? `Struktur-Sync fehlgeschlagen (${code}).`
+            : `${job.failedIds.length} Knoten übersprungen (3 Versuche je Knoten) — Weiter laden versucht nur den Rest.`,
+          job.state === 'failed'
+            ? `Structure sync failed (${code}).`
+            : `${job.failedIds.length} nodes skipped (3 attempts each) — continue loads only the rest.`,
         );
         setFetchError(text);
         showFetchAlert(locale, {
-          title: tx(locale, `${result.failedIds.length} Knoten übersprungen`, `${result.failedIds.length} nodes skipped`),
-          code: 'campus_failed',
+          title: job.state === 'failed' ? tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed') : tx(locale, `${job.failedIds.length} Knoten übersprungen`, `${job.failedIds.length} nodes skipped`),
+          code,
           onRetry: () => fetchStudy(study),
         });
       }
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'sync_failed';
+      setFetchError(tx(locale, `Struktur-Sync nicht gestartet (${code}).`, `Structure sync did not start (${code}).`));
+      showFetchAlert(locale, {
+        title: tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed'),
+        code,
+        onRetry: () => fetchStudy(study),
+      });
     } finally {
       setFetching((current) => {
         const next = { ...current };
-        delete next[study.studyId];
+        delete next[studyId];
         return next;
       });
     }
@@ -340,6 +384,7 @@ export default function StrukturenScreen() {
             );
           })}
           {fetchError ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{fetchError}</Text> : null}
+          {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
           {selectedStudy ? (
             <>
               {showRoot || !studyMeta ? (
@@ -745,8 +790,10 @@ function ApiHistory({ entries, locale, selectedUid, onSelect }: { entries: Campu
       return true;
     });
     const sorted = [...filtered];
-    if (sort === 'new') sorted.sort((a, b) => b.id - a.id);
-    if (sort === 'old') sorted.sort((a, b) => a.id - b.id);
+    const byTime = (a: CampusLogEntry, b: CampusLogEntry): number =>
+      (b.createdAt ?? '').localeCompare(a.createdAt ?? '') || b.id - a.id;
+    if (sort === 'new') sorted.sort(byTime);
+    if (sort === 'old') sorted.sort((a, b) => -byTime(a, b));
     if (sort === 'slow') sorted.sort((a, b) => b.elapsedMs - a.elapsedMs);
     return sorted;
   }, [entries, query, status, op, sort]);
