@@ -157,45 +157,18 @@ export default function KalenderScreen() {
               </Pressable>
             ))}
           </View>
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={tx(locale, 'Suchen …', 'Search …')}
-              placeholderTextColor={colors.mute}
-              style={[inputStyle, { flex: 1, paddingVertical: 8 }]}
-            />
-            <Pressable onPress={() => setSort(sort === 'time' ? 'title' : 'time')}>
-              <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
-            </Pressable>
-          </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <Pressable onPress={() => setTypeFilter('all')}>
-              <Pill label={tx(locale, 'Alle Typen', 'All types')} active={typeFilter === 'all'} />
-            </Pressable>
-            {types.map((type) => {
-              const palette = paletteFor(type);
-              return (
-                <Pressable key={type} onPress={() => setTypeFilter(typeFilter === type ? 'all' : type)}>
-                  <Pill label={type} active={typeFilter === type} />
-                </Pressable>
-              );
-            })}
-            {(['all', 'fixed', 'notfixed'] as AssignFilter[]).map((item) => (
-              <Pressable key={`assign-${item}`} onPress={() => setAssignFilter(item)}>
-                <Pill
-                  label={
-                    item === 'all'
-                      ? tx(locale, 'Alle Plätze', 'All places')
-                      : item === 'fixed'
-                        ? tx(locale, 'Fixplatz', 'Fixed place')
-                        : tx(locale, 'Kein Fixplatz', 'No fixed place')
-                  }
-                  active={assignFilter === item}
-                />
-              </Pressable>
-            ))}
-          </View>
+          <CalToolbar
+            locale={locale}
+            query={query}
+            setQuery={setQuery}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+            types={types}
+            assignFilter={assignFilter}
+            setAssignFilter={setAssignFilter}
+            sort={sort}
+            setSort={setSort}
+          />
           {view === 'agenda' ? (
             <AgendaView days={byDay} locale={locale} />
           ) : view === 'week' ? (
@@ -233,6 +206,108 @@ function shiftDay(iso: string, delta: number): string {
 
 function weekdayOf(iso: string, locale: 'de' | 'en'): string {
   return weekdays[locale][new Date(`${iso}T12:00:00`).getDay()] ?? '';
+}
+
+function CalToolbar({
+  locale,
+  query,
+  setQuery,
+  typeFilter,
+  setTypeFilter,
+  types,
+  assignFilter,
+  setAssignFilter,
+  sort,
+  setSort,
+}: {
+  locale: 'de' | 'en';
+  query: string;
+  setQuery: (value: string) => void;
+  typeFilter: string;
+  setTypeFilter: (value: string) => void;
+  types: string[];
+  assignFilter: AssignFilter;
+  setAssignFilter: (value: AssignFilter) => void;
+  sort: CalSort;
+  setSort: (value: CalSort) => void;
+}) {
+  const [filtersOpen, setFiltersOpen] = useState<'type' | 'place' | null>(null);
+  const typeActive = typeFilter !== 'all';
+  const placeActive = assignFilter !== 'all';
+  const toggle = (panel: 'type' | 'place'): void => setFiltersOpen((open) => (open === panel ? null : panel));
+  return (
+    <View style={{ gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder={tx(locale, 'Suchen …', 'Search …')}
+          placeholderTextColor={colors.mute}
+          style={[inputStyle, { flex: 1, minWidth: 140, paddingVertical: 8 }]}
+        />
+        <Pressable onPress={() => setSort(sort === 'time' ? 'title' : 'time')}>
+          <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
+        </Pressable>
+        <Pressable onPress={() => toggle('type')}>
+          <Pill label={typeActive ? `${tx(locale, 'Typ', 'Type')} · ${typeFilter}` : `${tx(locale, 'Typ', 'Type')} ▾`} active={filtersOpen === 'type' || typeActive} />
+        </Pressable>
+        <Pressable onPress={() => toggle('place')}>
+          <Pill
+            label={
+              placeActive
+                ? `${tx(locale, 'Platz', 'Place')} · ${assignFilter === 'fixed' ? tx(locale, 'Fixplatz', 'Fixed place') : tx(locale, 'Kein Fixplatz', 'No fixed place')}`
+                : `${tx(locale, 'Platz', 'Place')} ▾`
+            }
+            active={filtersOpen === 'place' || placeActive}
+          />
+        </Pressable>
+      </View>
+      {filtersOpen === 'type' ? (
+        <View style={toolbarStyles.filterPanel}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <Pressable onPress={() => setTypeFilter('all')}>
+              <Pill label={tx(locale, 'Alle', 'All')} active={typeFilter === 'all'} />
+            </Pressable>
+            {types.map((type) => (
+              <Pressable key={type} onPress={() => setTypeFilter(typeFilter === type ? 'all' : type)}>
+                <Pill label={type} active={typeFilter === type} />
+              </Pressable>
+            ))}
+          </View>
+          {typeActive ? (
+            <Pressable onPress={() => setTypeFilter('all')}>
+              <Text style={toolbarStyles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+      {filtersOpen === 'place' ? (
+        <View style={toolbarStyles.filterPanel}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {(['all', 'fixed', 'notfixed'] as AssignFilter[]).map((item) => (
+              <Pressable key={`assign-${item}`} onPress={() => setAssignFilter(item)}>
+                <Pill
+                  label={
+                    item === 'all'
+                      ? tx(locale, 'Alle Plätze', 'All places')
+                      : item === 'fixed'
+                        ? tx(locale, 'Fixplatz', 'Fixed place')
+                        : tx(locale, 'Kein Fixplatz', 'No fixed place')
+                  }
+                  active={assignFilter === item}
+                />
+              </Pressable>
+            ))}
+          </View>
+          {placeActive ? (
+            <Pressable onPress={() => setAssignFilter('all')}>
+              <Text style={toolbarStyles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 function CourseRow({ course, locale }: { course: BulkCourse; locale: 'de' | 'en' }) {
@@ -506,6 +581,12 @@ const inputStyle = {
   fontSize: 16,
   color: colors.anthracite,
 };
+
+const toolbarStyles = StyleSheet.create({
+  filterPanel: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 10, gap: 8 },
+  filterTitle: { color: colors.blue, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  filterReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
+});
 
 const styles = StyleSheet.create({
   hero: {
