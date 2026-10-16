@@ -5,7 +5,7 @@ process.env.CAMPUS_DB_PATH = ':memory:';
 
 import { apiCatalog } from './catalog.mjs';
 import { resetDbForTests } from './db.mjs';
-import { campusAuthorizationHeader, campusRequestHeaders, coursesFromPayload, coursesRequestUrl, elementIdFromLink, loadCurriculumCourses, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, publicCampusStatus, studiesFromChooser } from './campus.mjs';
+import { campusAuthorizationHeader, campusRequestHeaders, clearRuntimeToken, coursesFromPayload, coursesRequestUrl, elementIdFromLink, extractRefreshedToken, loadCurriculumCourses, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, publicCampusStatus, refreshCampusToken, refreshRequestUrl, studiesFromChooser } from './campus.mjs';
 
 beforeEach(() => {
   resetDbForTests();
@@ -14,6 +14,7 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env.CAMPUS_BEARER_TOKEN;
   delete process.env.CAMPUS_SESSION_COOKIE;
+  clearRuntimeToken();
 });
 
 test('missing campus token is reported without a header', () => {
@@ -269,6 +270,72 @@ test('courses need an element id and an empty list is a valid answer', async () 
   assert.deepEqual(empty.courses, []);
   assert.equal(empty.studyId, 339485);
   assert.equal(empty.elementId, 287785);
+});
+
+test('refresh uses the portal endpoint without an Authorization header', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'old-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  let seenHeaders = null;
+  const fetchImpl = async (url, options = {}) => {
+    seenHeaders = options.headers;
+    assert.equal(url, refreshRequestUrl());
+    return { ok: true, status: 201, json: async () => ({ access_token: 'new-token' }) };
+  };
+  assert.equal(await refreshCampusToken(fetchImpl), true);
+  assert.equal(campusAuthorizationHeader(), 'Bearer new-token');
+  assert.equal(seenHeaders.Authorization, undefined);
+  assert.equal(seenHeaders.Cookie, 'PSESSIONID=session-value');
+  assert.equal(publicCampusStatus().tokenRefreshed, true);
+});
+
+test('refresh reads common token field spellings', () => {
+  assert.equal(extractRefreshedToken({ accessToken: 'a' }), 'a');
+  assert.equal(extractRefreshedToken({ data: { token: 'Bearer b' } }), 'b');
+  assert.equal(extractRefreshedToken({}), '');
+  assert.equal(extractRefreshedToken(null), '');
+});
+
+test('an expired token is refreshed once and the call retried', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'old-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  const calls = [];
+  const structure = {
+    resource: [{ content: { curriculumStructureElementDto: { id: 10, designation: 'R', elementType: 'ROOT', name: { value: 'N' } } } }],
+  };
+  const fetchImpl = async (url, options = {}) => {
+    calls.push(url);
+    if (url.includes('/auth/token/refresh')) return { ok: true, status: 201, json: async () => ({ access_token: 'new-token' }) };
+    if ((options.headers?.Authorization ?? '').includes('new-token')) {
+      return { ok: true, status: 200, json: async () => structure };
+    }
+    return { ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token: expired' } } }] }) };
+  };
+  const result = await loadCurriculumStructure(10, 99, fetchImpl);
+  assert.equal(result.nodes[0].name, 'N');
+  assert.equal(calls.filter((url) => url.includes('/auth/token/refresh')).length, 1);
+  assert.equal(calls.length, 3);
+});
+
+test('a failed refresh surfaces the original rejection', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'old-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  const fetchImpl = async (url) => {
+    if (url.includes('/auth/token/refresh')) return { ok: false, status: 401, json: async () => ({}) };
+    return { ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token' } } }] }) };
+  };
+  await assert.rejects(() => loadCurriculumStructure(10, 99, fetchImpl), (error) => error.message === 'invalid_token');
+  assert.equal(campusAuthorizationHeader(), 'Bearer old-token');
+});
+
+test('without a session cookie no refresh is attempted', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'old-token';
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return { ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token' } } }] }) };
+  };
+  await assert.rejects(() => loadCurriculumStructure(10, 99, fetchImpl), (error) => error.message === 'invalid_token');
+  assert.equal(calls, 1);
 });
 
 test('api catalog only names known paths', () => {

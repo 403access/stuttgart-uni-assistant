@@ -30,6 +30,8 @@ The observed call sent `Authorization: Bearer` and no other credential. A browse
 
 The server reads `CAMPUS_BEARER_TOKEN` from `.env` or the environment. Copy the empty line from `.env.example`. Paste the token, or the whole header value `Bearer <token>`. The server strips a leading `Bearer `. `npm run campus:token -- <token>` writes the value for you and never prints it back; omit the value to type it without echoing. `npm run campus:secret -- list` shows which secrets are set, masked.
 
+An expired bearer no longer means a manual rotation round: on `invalid_token` (or any other 401) the server renews the token once through `POST .../ee/rest/auth/token/refresh` — an empty POST carrying only the `PSESSIONID` cookie, exactly like the signed-in browser — and retries the failed call with the fresh token. The renewed token lives in the process (`tokenRefreshed: true` in the public status); a server restart falls back to `.env`, so persist a fresh value with `npm run campus:token` when the log line says it was refreshed. Renewal needs a valid `PSESSIONID`: with a dead cookie the original `invalid_token` (or `missing_session_cookie`) still reaches the app.
+
 The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the app bundle. This token stays in the Node process. `.env` is git-ignored. Do not commit a filled-in value.
 
 `GET /health` and `GET /v1/campus/config` include `campus.tokenConfigured` and do not include the token. That server is `http://127.0.0.1:8787` after `npm run assistant`. `http://localhost:8081` is the Expo app and has no `/health` route. The login button writes the call and the result under itself, and the server prints `[campus]` lines without the token.

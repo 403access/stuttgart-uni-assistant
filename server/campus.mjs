@@ -2,7 +2,15 @@
 
 import { getCoursesSync, isExpanded, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveStudiesSnapshot, saveStructure } from './db.mjs';
 
+/** Refreshed bearer token for this process. Memory only: a restart falls back to `CAMPUS_BEARER_TOKEN`. */
+let runtimeBearerToken = null;
+
+export function clearRuntimeToken() {
+  runtimeBearerToken = null;
+}
+
 export function campusBearerToken() {
+  if (runtimeBearerToken) return runtimeBearerToken;
   const raw = (process.env.CAMPUS_BEARER_TOKEN || '').trim();
   if (!raw) return '';
   return raw.replace(/^Bearer\s+/i, '');
@@ -41,6 +49,7 @@ export function publicCampusStatus() {
   const { studyId, elementId } = campusStudyTarget();
   return {
     tokenConfigured: Boolean(campusBearerToken()),
+    tokenRefreshed: Boolean(runtimeBearerToken),
     sessionCookieConfigured: Boolean(campusSessionCookie()),
     studyId,
     elementId,
@@ -86,6 +95,56 @@ export function studiesRequestUrl() {
 
 export function coursesRequestUrl(studyId, elementId) {
   return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/courses?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
+}
+
+export function refreshRequestUrl() {
+  return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/auth/token/refresh';
+}
+
+/** Bearer token from a refresh answer. The observed shape is not pinned; accept the common field names. */
+export function extractRefreshedToken(payload) {
+  const candidates = [payload, payload?.data];
+  for (const obj of candidates) {
+    if (!obj || typeof obj !== 'object') continue;
+    for (const key of ['access_token', 'accessToken', 'token', 'bearerToken', 'bearer_token']) {
+      const value = obj[key];
+      if (typeof value === 'string' && value.trim()) return value.trim().replace(/^Bearer\s+/i, '');
+    }
+  }
+  return '';
+}
+
+/**
+ * Renew the bearer token through the portal session cookie (empty POST,
+ * no Authorization header — the observed browser call sends only cookies).
+ * On success the process uses the new token; a restart still needs
+ * `CAMPUS_BEARER_TOKEN` (persist with `npm run campus:token`).
+ */
+export async function refreshCampusToken(fetchImpl = fetch) {
+  const cookie = campusSessionCookie();
+  if (!cookie) throw httpError(401, 'missing_session_cookie');
+  let response;
+  try {
+    response = await fetchImpl(refreshRequestUrl(), {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Cookie: `PSESSIONID=${cookie}` },
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (caught) {
+    const reason = caught instanceof Error ? caught.message : 'network';
+    console.log(`[campus] refresh request failed ${reason}`);
+    throw httpError(502, 'campus_failed', `refresh request failed: ${String(reason).slice(0, 200)}`);
+  }
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = portalMessage(payload);
+    throw httpError(401, 'invalid_token', `refresh upstream ${response.status}${message ? `: ${message}` : ''}`);
+  }
+  const token = extractRefreshedToken(payload);
+  if (!token) throw httpError(502, 'refresh_failed', `refresh answered ${response.status} without a token`);
+  runtimeBearerToken = token;
+  console.log('[campus] bearer token refreshed (memory only — persist with npm run campus:token)');
+  return true;
 }
 
 /** Positive integer, or null when the caller wants the configured root. Rejects paths and other text. */
@@ -249,6 +308,18 @@ async function readCampus(url, label, op, fetchImpl, context = {}) {
     const detail = `upstream ${response.status}${message ? `: ${message}` : ''}`;
     console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} message=${message || '-'} ${elapsed}ms`);
     logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: false, httpStatus: response.status, message: detail, elapsedMs: elapsed });
+    // Expired bearer, valid session: renew once through the refresh endpoint and retry the same call.
+    const authFailed = message.includes('invalid_token') || response.status === 401;
+    if (authFailed && !context.refreshed && campusSessionCookie()) {
+      console.log(`[campus] ${label} token rejected, trying refresh`);
+      try {
+        await refreshCampusToken(fetchImpl);
+        console.log(`[campus] ${label} retrying after refresh`);
+        return readCampus(url, label, op, fetchImpl, { ...context, refreshed: true });
+      } catch (refreshError) {
+        console.log(`[campus] ${label} refresh failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
+      }
+    }
     if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie', detail);
     if (message.includes('invalid_token')) throw httpError(401, 'invalid_token', detail);
     if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
