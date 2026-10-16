@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
-import { exportCampusCalendar, loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus } from './campus.mjs';
+import { exportCampusCalendar, loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus, syncExportedCalendar } from './campus.mjs';
 import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls } from './db.mjs';
 import { cancelSyncJob, getSyncJob, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
@@ -267,6 +267,26 @@ const server = createServer(async (request, response) => {
     } catch (error) {
       const code = error.message || 'campus_failed';
       console.log(`[campus #${reqId}] calendar export failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
+    }
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/campus/calendar-sync') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    const reqId = campusReq('POST /v1/campus/calendar-sync', `body=${previewBody(body)}`);
+    try {
+      const result = await syncExportedCalendar(body, undefined);
+      console.log(`[campus #${reqId}] calendar sync ok ${result.imported} new, ${result.skipped} duplicates`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus #${reqId}] calendar sync failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, Number(error.status) || 500, campusFailure(error));
     }
     return;

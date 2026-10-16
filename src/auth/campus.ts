@@ -609,3 +609,39 @@ export async function exportCampusCalendar(options: { dateFrom: string; dateTo: 
   });
   return { filename: payload.filename, contentType: payload.contentType || 'application/octet-stream', bytes: payload.bytes ?? 0, base64: payload.base64 };
 }
+
+export interface CalendarSync {
+  filename: string;
+  imported: number;
+  skipped: number;
+  total: number;
+}
+
+/** Import the official ICS export into the server store (dedupe by UID). */
+export async function syncExportedCalendar(options: { dateFrom: string; dateTo: string }): Promise<CalendarSync> {
+  const url = endpoint('/v1/campus/calendar-sync');
+  console.info('[campus-sync] POST', url, options.dateFrom, options.dateTo);
+  const started = Date.now();
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dateFrom: options.dateFrom, dateTo: options.dateTo }),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as CalendarSync & CampusFailure;
+  console.info('[campus-sync] status', response.status, payload.error ?? `${payload.imported ?? 0} new`);
+  if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
+  recordCampusCall({
+    op: 'export',
+    ok: true,
+    httpStatus: response.status,
+    request: `sync ${options.dateFrom}–${options.dateTo}`,
+    response: `${payload.imported ?? 0} neu · ${payload.skipped ?? 0} Duplikate`,
+    elapsedMs: Date.now() - started,
+  });
+  return { filename: payload.filename ?? '', imported: payload.imported ?? 0, skipped: payload.skipped ?? 0, total: payload.total ?? 0 };
+}

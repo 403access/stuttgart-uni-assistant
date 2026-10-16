@@ -98,6 +98,15 @@ export function getDb() {
       payload TEXT NOT NULL DEFAULT '[]',
       fetched_at TEXT
     );
+    CREATE TABLE IF NOT EXISTS exported_events (
+      uid TEXT PRIMARY KEY,
+      summary TEXT NOT NULL DEFAULT '',
+      location TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      dtstart TEXT NOT NULL DEFAULT '',
+      dtend TEXT NOT NULL DEFAULT '',
+      fetched_at TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS portal_calls (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       time TEXT NOT NULL DEFAULT '',
@@ -371,4 +380,40 @@ export function readPortalCalls(limit = 500) {
     elapsedMs: row.elapsed_ms,
     createdAt: row.created_at,
   }));
+}
+
+export function saveExportedEvents(events) {
+  const db = getDb();
+  const fetchedAt = new Date().toISOString();
+  const insert = db.prepare(
+    'INSERT OR IGNORE INTO exported_events (uid, summary, location, description, dtstart, dtend, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+  );
+  let imported = 0;
+  db.exec('BEGIN');
+  try {
+    for (const event of events) {
+      const result = insert.run(event.uid, event.summary ?? '', event.location ?? '', event.description ?? '', event.dtstart ?? '', event.dtend ?? '', fetchedAt);
+      imported += Number(result.changes ?? 0);
+    }
+    db.exec('COMMIT');
+  } catch (error) {
+    try {
+      db.exec('ROLLBACK');
+    } catch {
+      // Already rolled back; surface the original error.
+    }
+    throw error;
+  }
+  return { imported, skipped: events.length - imported };
+}
+
+export function loadExportedEvents(limit = 1000) {
+  const db = getDb();
+  const capped = Math.max(1, Math.min(5000, Number(limit) || 1000));
+  return db.prepare('SELECT uid, summary, location, description, dtstart, dtend, fetched_at FROM exported_events ORDER BY dtstart LIMIT ?').all(capped);
+}
+
+export function clearExportedEvents() {
+  const db = getDb();
+  db.prepare('DELETE FROM exported_events').run();
 }

@@ -1,6 +1,6 @@
 /** Server-only C@MPUS access token. Never sent to the Expo bundle. */
 
-import { getCoursesSync, isExpanded, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveStudiesSnapshot, saveStructure } from './db.mjs';
+import { getCoursesSync, isExpanded, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveExportedEvents, saveStudiesSnapshot, saveStructure } from './db.mjs';
 
 /** Refreshed bearer token for this process. Memory only: a restart falls back to `CAMPUS_BEARER_TOKEN`. */
 let runtimeBearerToken = null;
@@ -616,4 +616,74 @@ export async function exportCampusCalendar({ dateFrom, dateTo, format = 99, char
   const filename = exportFilename(response.headers?.get?.('content-disposition'), outputFormat);
   console.log(`[campus] calendar export ok ${filename} ${buffer.length} bytes`);
   return { filename, contentType, bytes: buffer.length, base64: buffer.toString('base64') };
+}
+
+/** Unfold ICS lines: continuations start with a space or tab. */
+function unfoldIcs(text) {
+  return text.replace(/\r\n/g, '\n').split('\n').reduce((lines, line) => {
+    if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) {
+      lines[lines.length - 1] += line.slice(1);
+    } else {
+      lines.push(line);
+    }
+    return lines;
+  }, []);
+}
+
+function unescapeIcs(value) {
+  return value.replace(/\\n/gi, '\n').replace(/\\;/g, ';').replace(/\\,/g, ',').replace(/\\\\/g, '\\');
+}
+
+/**
+ * VEVENTs of an ICS export. The dedupe key is the UID plus the recurrence id
+ * when the same UID repeats for recurring instances.
+ */
+export function parseIcsEvents(ics) {
+  const events = [];
+  let current = null;
+  for (const line of unfoldIcs(ics)) {
+    if (line === 'BEGIN:VEVENT') {
+      current = {};
+      continue;
+    }
+    if (line === 'END:VEVENT') {
+      if (current && current.uid && current.dtstart) events.push(current);
+      current = null;
+      continue;
+    }
+    if (!current) continue;
+    const splitAt = line.indexOf(':');
+    if (splitAt < 1) continue;
+    const name = line.slice(0, splitAt).split(';')[0];
+    const value = unescapeIcs(line.slice(splitAt + 1));
+    if (name === 'UID') current.uid = value;
+    else if (name === 'RECURRENCE-ID') current.recurrenceId = value;
+    else if (name === 'DTSTART') current.dtstart = value;
+    else if (name === 'DTEND') current.dtend = value;
+    else if (name === 'SUMMARY') current.summary = value;
+    else if (name === 'LOCATION') current.location = value;
+    else if (name === 'DESCRIPTION') current.description = value;
+  }
+  return events.map((event) => ({
+    uid: event.recurrenceId ? `${event.uid}#${event.recurrenceId}` : event.uid,
+    summary: event.summary ?? '',
+    location: event.location ?? '',
+    description: event.description ?? '',
+    dtstart: event.dtstart ?? '',
+    dtend: event.dtend ?? '',
+  }));
+}
+
+
+/**
+ * Download the personal calendar as ICS and upsert its events into the
+ * server store. Re-running imports only new UIDs; repeats are skipped.
+ */
+export async function syncExportedCalendar({ dateFrom, dateTo } = {}, fetchImpl = fetch) {
+  const downloaded = await exportCampusCalendar({ dateFrom, dateTo, format: 99, charset: 'UTF8' }, fetchImpl);
+  const text = Buffer.from(downloaded.base64, 'base64').toString('utf-8');
+  const events = parseIcsEvents(text);
+  const { imported, skipped } = saveExportedEvents(events);
+  console.log(`[campus] calendar sync ok ${downloaded.filename}: ${imported} new, ${skipped} duplicates`);
+  return { filename: downloaded.filename, imported, skipped, total: events.length };
 }

@@ -15,6 +15,7 @@ export function apiCatalog() {
       { id: 'campus-courses-all', method: 'GET', path: '/v1/campus/courses/all', replay: false },
       { id: 'campus-calls', method: 'GET', path: '/v1/campus/calls', replay: false },
       { id: 'campus-export', method: 'POST', path: '/v1/campus/calendar-export', replay: true },
+      { id: 'campus-export-sync', method: 'POST', path: '/v1/campus/calendar-sync', replay: false },
       { id: 'assist', method: 'POST', path: '/v1/assist', replay: true },
       { id: 'oidc-start', method: 'POST', path: '/v1/oidc/start', replay: false },
       { id: 'oidc-exchange', method: 'POST', path: '/v1/oidc/exchange', replay: false },

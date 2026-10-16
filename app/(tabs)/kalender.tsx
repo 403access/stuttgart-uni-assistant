@@ -3,7 +3,7 @@ import * as Sharing from 'expo-sharing';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { activeStudy, exportCampusCalendar, loadServerCourses, type CalendarExportFormat } from '@/src/auth/campus';
+import { activeStudy, exportCampusCalendar, loadServerCourses, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
 import { loadCachedCourses } from '@/src/campus/db';
 import { Button, Card, Muted, Pill, Screen } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
@@ -733,19 +733,26 @@ function germanDate(date: Date): string {
 function ExportCard({ locale }: { locale: 'de' | 'en' }) {
   const [format, setFormat] = useState<CalendarExportFormat>(99);
   const [busy, setBusy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
+  const [syncNote, setSyncNote] = useState('');
+
+function exportRange(): { dateFrom: string; dateTo: string } {
+  const from = new Date();
+  const to = new Date(from);
+  to.setFullYear(to.getFullYear() + 1);
+  return { dateFrom: germanDate(from), dateTo: germanDate(to) };
+}
 
   async function download(): Promise<void> {
     if (busy) return;
     setError('');
     setBusy(true);
     try {
-      const from = new Date();
-      const to = new Date(from);
-      to.setFullYear(to.getFullYear() + 1);
+      const { dateFrom, dateTo } = exportRange();
       const result = await exportCampusCalendar({
-        dateFrom: germanDate(from),
-        dateTo: germanDate(to),
+        dateFrom,
+        dateTo,
         format,
         charset: format === 99 ? 'UTF8' : 'WE8ISO8859P1',
       });
@@ -778,6 +785,29 @@ function ExportCard({ locale }: { locale: 'de' | 'en' }) {
     }
   }
 
+  async function syncIntoDatabase(): Promise<void> {
+    if (syncing) return;
+    setError('');
+    setSyncNote('');
+    setSyncing(true);
+    try {
+      const { dateFrom, dateTo } = exportRange();
+      const result = await syncExportedCalendar({ dateFrom, dateTo });
+      setSyncNote(
+        tx(
+          locale,
+          `${result.imported} neu · ${result.skipped} Duplikate übersprungen (${result.total} Termine).`,
+          `${result.imported} new · ${result.skipped} duplicates skipped (${result.total} events).`,
+        ),
+      );
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      setError(tx(locale, `Sync fehlgeschlagen (${code}).`, `Sync failed (${code}).`));
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <Card>
       <Text style={{ color: colors.anthracite, fontWeight: '700' }}>
@@ -797,7 +827,9 @@ function ExportCard({ locale }: { locale: 'de' | 'en' }) {
           </Pressable>
         ))}
         <Button label={busy ? '…' : tx(locale, 'Exportieren', 'Export')} onPress={download} />
+        <Button secondary label={syncing ? '…' : tx(locale, 'In Datenbank syncen', 'Sync into database')} onPress={syncIntoDatabase} />
       </View>
+      {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
       {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
     </Card>
   );

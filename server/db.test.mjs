@@ -219,3 +219,61 @@ test('calendar export validates its inputs', async () => {
   assert.equal(campus.exportFilename("attachment;filename*=utf-8''kalender%202026.ics", 99), 'kalender 2026.ics');
   assert.equal(campus.exportFilename(null, 1), 'kalender-export.xml');
 });
+
+const SAMPLE_ICS = [
+  'BEGIN:VCALENDAR',
+  'BEGIN:VEVENT',
+  'UID:evt-1@campus',
+  'DTSTART:20261019T140000',
+  'DTEND:20261019T153000',
+  'SUMMARY:Einführung in die Geschichte der Philosophie',
+  'LOCATION:Breitscheid 02A - M 2.00',
+  'DESCRIPTION:Langbeschreibung\\, mit Komma und Fortsetzung',
+  ' weiter im Text',
+  'END:VEVENT',
+  'BEGIN:VEVENT',
+  'UID:evt-1@campus',
+  'RECURRENCE-ID:20261026T140000',
+  'DTSTART:20261026T140000',
+  'DTEND:20261026T153000',
+  'SUMMARY:Wiederholung',
+  'END:VEVENT',
+  'BEGIN:VEVENT',
+  'UID:evt-2@campus',
+  'DTSTART:20261022T113000',
+  'SUMMARY:Ohne Ende',
+  'END:VEVENT',
+  'BEGIN:VEVENT',
+  'UID:ohne-termin',
+  'SUMMARY:Kein Termin',
+  'END:VEVENT',
+  'END:VCALENDAR',
+].join('\r\n');
+
+test('ics events unfold lines, unescape, and key recurrences separately', () => {
+  const events = campus.parseIcsEvents(SAMPLE_ICS);
+  assert.equal(events.length, 3);
+  assert.equal(events[0].uid, 'evt-1@campus');
+  assert.equal(events[0].description, 'Langbeschreibung, mit Komma und Fortsetzungweiter im Text');
+  assert.equal(events[1].uid, 'evt-1@campus#20261026T140000');
+  assert.equal(events[2].dtend, '');
+});
+
+test('calendar sync imports once and skips duplicates on repeat', async () => {
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  const bytes = Buffer.from(Buffer.from(SAMPLE_ICS, 'utf-8').toString('base64'), 'base64');
+  const fetchImpl = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => null },
+    arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+  });
+  const first = await campus.syncExportedCalendar({ dateFrom: '16.10.2026', dateTo: '16.10.2027' }, fetchImpl);
+  assert.equal(first.total, 3);
+  assert.equal(first.imported, 3);
+  assert.equal(first.skipped, 0);
+  const second = await campus.syncExportedCalendar({ dateFrom: '16.10.2026', dateTo: '16.10.2027' }, fetchImpl);
+  assert.equal(second.imported, 0);
+  assert.equal(second.skipped, 3);
+  delete process.env.CAMPUS_SESSION_COOKIE;
+});
