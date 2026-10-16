@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, InfoRow, Muted, Pill, Screen } from '@/src/components/ui';
+import { UniMapView } from '@/src/components/uni-map-view';
 import { places } from '@/src/data';
 import { campusName, placeKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
@@ -12,14 +13,6 @@ import { hay, pick, tx } from '@/src/text';
 import type { Campus } from '@/src/types';
 
 const UNI_MAPS_URL = 'https://maps.uni-stuttgart.de/';
-
-let UniMapsView: typeof import('react-native-webview').WebView | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  UniMapsView = require('react-native-webview').WebView;
-} catch {
-  UniMapsView = null;
-}
 
 type MapView = 'uni' | 'overview';
 
@@ -54,7 +47,7 @@ export default function CampusScreen() {
 
 function UniMap({ locale }: { locale: 'de' | 'en' }) {
   const [failed, setFailed] = useState(false);
-  if (!UniMapsView || failed) {
+  if (failed) {
     return (
       <Card>
         <Muted>
@@ -71,17 +64,7 @@ function UniMap({ locale }: { locale: 'de' | 'en' }) {
       </Card>
     );
   }
-  const WebView = UniMapsView;
-  return (
-    <View style={styles.webWrap}>
-      <WebView
-        source={{ uri: UNI_MAPS_URL }}
-        style={styles.web}
-        onError={() => setFailed(true)}
-        onHttpError={() => setFailed(true)}
-      />
-    </View>
-  );
+  return <UniMapView url={UNI_MAPS_URL} onError={() => setFailed(true)} />;
 }
 
 function Overview({
@@ -146,11 +129,6 @@ function Overview({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  webWrap: { flex: 1, minHeight: 520, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
-  web: { flex: 1 },
-});
 
 const mapStyle = {
   height: 280,
