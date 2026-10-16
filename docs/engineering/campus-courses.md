@@ -72,7 +72,7 @@ Each `courseList` entry:
 | `roomName` | For example `Breitscheid 02A - M 2.00 (BS02AEGM 2.00)`; `roomLink` points at the room UI |
 | `startTime` / `endTime` | For example `2026-10-19T14:00` / `2026-10-19T15:30` |
 | `detailPageLink.href` | Course page, e.g. `.../pages/slc.tm.cp/course/461346` |
-| `courseRegistrationData.textAbove.textInfo` | Registration state, e.g. `Fixplatz zugewiesen` |
+| `courseRegistrationData.textAbove.textInfo` | Registration state, e.g. `Fixplatz zugewiesen` — the calendar treats a `Fixplatz` status as assigned to the student |
 | `courseRegistrationData.action` | Text (e.g. `LV-Anmeldung bearbeiten`) plus a registration URL carrying `cStudyId` |
 
 The mapped `CampusCourse` keeps `id`, `courseNumber`, the German `title`, `courseType`, `courseTypeShort`, `semester`, `semesterId`, `duration`, the lecturer names, `roomName`, `startTime`, `endTime`, `detailUrl`, `registrationStatus`, `registrationAction`, and `registrationUrl`. Rows without a numeric `id` or a title are dropped. The raw body is not stored.

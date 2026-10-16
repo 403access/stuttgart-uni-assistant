@@ -69,6 +69,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="kalender"
+        options={{
+          title: tx(locale, 'Kalender', 'Calendar'),
+          tabBarIcon: ({ color }) => (
+            <View style={{ width: 12, height: 12, borderRadius: 3, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="campus"
         options={{
           title: 'Map',
