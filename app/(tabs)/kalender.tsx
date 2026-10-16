@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import * as Sharing from 'expo-sharing';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { activeStudy, exportCampusCalendar, loadServerCourses, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
 import { loadCachedCourses } from '@/src/campus/db';
-import { Button, Card, Muted, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -53,6 +54,8 @@ export default function KalenderScreen() {
   const [assignFilter, setAssignFilter] = useState<AssignFilter>('all');
   const [sort, setSort] = useState<CalSort>('time');
   const [exportOpen, setExportOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const isWeb = Platform.OS === 'web';
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
 
   useEffect(() => {
@@ -74,6 +77,10 @@ export default function KalenderScreen() {
     return () => {
       active = false;
     };
+  }, [study?.studyId]);
+
+  useEffect(() => {
+    setSelectedId(null);
   }, [study?.studyId]);
 
   const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'Ohne Typ', 'No type')))].sort(), [courses, locale]);
@@ -109,6 +116,12 @@ export default function KalenderScreen() {
 
   const today = todayLocal();
   const upcomingCount = visible.filter((course) => course.startTime.slice(0, 10) >= today).length;
+  const selected = selectedId !== null ? (courses.find((course) => course.id === selectedId) ?? null) : null;
+
+  function handleCoursePress(course: BulkCourse): void {
+    if (isWeb) setSelectedId(course.id);
+    else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
+  }
   const nowStamp = (() => {
     const now = new Date();
     return `${today}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
@@ -153,7 +166,7 @@ export default function KalenderScreen() {
               {nextUp ? (
                 <Pressable
                   style={styles.heroNext}
-                  onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(nextUp.id) } })}>
+                  onPress={() => handleCoursePress(nextUp)}>
                   <Text style={styles.heroNextKicker}>{tx(locale, 'Als Nächstes', 'Up next')}</Text>
                   <Text style={styles.heroNextTitle} numberOfLines={2}>
                     {nextUp.title}
@@ -205,14 +218,38 @@ export default function KalenderScreen() {
             onToggleExport={() => setExportOpen((open) => !open)}
           />
           {exportOpen ? <ExportCard locale={locale} /> : null}
-          {view === 'agenda' ? (
-            <AgendaView days={byDay} locale={locale} />
-          ) : view === 'week' ? (
-            <WeekView days={byDay} anchor={anchor} setAnchor={setAnchor} setView={setView} locale={locale} />
-          ) : view === 'day' ? (
-            <DayView days={byDay} anchor={anchor} setAnchor={setAnchor} locale={locale} />
+          {isWeb && selected ? (
+            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <View style={{ flex: 2, minWidth: 280, gap: 14 }}>
+                <CalViews
+                  view={view}
+                  byDay={byDay}
+                  anchor={anchor}
+                  setAnchor={setAnchor}
+                  setView={setView}
+                  locale={locale}
+                  onCoursePress={handleCoursePress}
+                />
+              </View>
+              <View style={{ flex: 1, minWidth: 280 }}>
+                <CourseDetailPanel
+                  key={selected.id}
+                  course={selected}
+                  locale={locale}
+                  onClose={() => setSelectedId(null)}
+                />
+              </View>
+            </View>
           ) : (
-            <MonthView days={byDay} anchor={anchor} setAnchor={setAnchor} setView={setView} locale={locale} />
+            <CalViews
+              view={view}
+              byDay={byDay}
+              anchor={anchor}
+              setAnchor={setAnchor}
+              setView={setView}
+              locale={locale}
+              onCoursePress={handleCoursePress}
+            />
           )}
         </>
       )}
@@ -353,10 +390,33 @@ function CalToolbar({
   );
 }
 
-function CourseRow({ course, locale }: { course: BulkCourse; locale: 'de' | 'en' }) {
+function CalViews({
+  view,
+  byDay,
+  anchor,
+  setAnchor,
+  setView,
+  locale,
+  onCoursePress,
+}: {
+  view: CalView;
+  byDay: Map<string, BulkCourse[]>;
+  anchor: string;
+  setAnchor: (day: string) => void;
+  setView: (view: CalView) => void;
+  locale: 'de' | 'en';
+  onCoursePress: (course: BulkCourse) => void;
+}) {
+  if (view === 'agenda') return <AgendaView days={byDay} locale={locale} onCoursePress={onCoursePress} />;
+  if (view === 'week') return <WeekView days={byDay} anchor={anchor} setAnchor={setAnchor} setView={setView} locale={locale} />;
+  if (view === 'day') return <DayView days={byDay} anchor={anchor} setAnchor={setAnchor} locale={locale} onCoursePress={onCoursePress} />;
+  return <MonthView days={byDay} anchor={anchor} setAnchor={setAnchor} setView={setView} locale={locale} />;
+}
+
+function CourseRow({ course, locale, onPress }: { course: BulkCourse; locale: 'de' | 'en'; onPress: (course: BulkCourse) => void }) {
   const palette = paletteFor(course.courseType || '?');
   return (
-    <Pressable onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })}>
+    <Pressable onPress={() => onPress(course)}>
       <View style={[rowCard, { borderLeftColor: palette.bar }]}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={rowTitle} numberOfLines={2}>
@@ -381,7 +441,7 @@ function CourseRow({ course, locale }: { course: BulkCourse; locale: 'de' | 'en'
   );
 }
 
-function AgendaView({ days, locale }: { days: Map<string, BulkCourse[]>; locale: 'de' | 'en' }) {
+function AgendaView({ days, locale, onCoursePress }: { days: Map<string, BulkCourse[]>; locale: 'de' | 'en'; onCoursePress: (course: BulkCourse) => void }) {
   const entries = [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(0, 60);
   if (!entries.length) return <Muted>{tx(locale, 'Keine Termine für diese Auswahl.', 'No appointments for this selection.')}</Muted>;
   return (
@@ -395,7 +455,7 @@ function AgendaView({ days, locale }: { days: Map<string, BulkCourse[]>; locale:
           </View>
           <View style={{ flex: 1, gap: 8 }}>
             {items.map((course) => (
-              <CourseRow key={`${day}-${course.id}`} course={course} locale={locale} />
+              <CourseRow key={`${day}-${course.id}`} course={course} locale={locale} onPress={onCoursePress} />
             ))}
           </View>
         </View>
@@ -481,7 +541,7 @@ const DAY_START = 7 * 60;
 const DAY_END = 21 * 60;
 const PX_PER_MIN = 1;
 
-function DayView({ days, anchor, setAnchor, locale }: { days: Map<string, BulkCourse[]>; anchor: string; setAnchor: (day: string) => void; locale: 'de' | 'en' }) {
+function DayView({ days, anchor, setAnchor, locale, onCoursePress }: { days: Map<string, BulkCourse[]>; anchor: string; setAnchor: (day: string) => void; locale: 'de' | 'en'; onCoursePress: (course: BulkCourse) => void }) {
   const items = (days.get(anchor) ?? []).filter((course) => minutesOf(course.startTime) !== null);
   const timeless = (days.get(anchor) ?? []).filter((course) => minutesOf(course.startTime) === null);
   const hours = Array.from({ length: (DAY_END - DAY_START) / 60 + 1 }, (_, index) => DAY_START + index * 60);
@@ -514,7 +574,7 @@ function DayView({ days, anchor, setAnchor, locale }: { days: Map<string, BulkCo
                 <Pressable
                   key={course.id}
                   style={[block, { top, height, backgroundColor: palette.bg, borderLeftColor: palette.bar }]}
-                  onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })}>
+                  onPress={() => onCoursePress(course)}>
                   <Text style={[blockTime, { color: palette.fg }]} numberOfLines={1}>
                     {formatTime(course.startTime)}
                     {course.endTime ? `–${formatTime(course.endTime)}` : ''} · {course.title}
@@ -531,7 +591,7 @@ function DayView({ days, anchor, setAnchor, locale }: { days: Map<string, BulkCo
         </View>
       ) : null}
       {timeless.map((course) => (
-        <CourseRow key={course.id} course={course} locale={locale} />
+        <CourseRow key={course.id} course={course} locale={locale} onPress={onCoursePress} />
       ))}
     </View>
   );
@@ -886,5 +946,59 @@ function exportRange(): { dateFrom: string; dateTo: string } {
       {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
       {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
     </Card>
+  );
+}
+
+function CourseDetailPanel({ course, locale, onClose }: { course: BulkCourse; locale: 'de' | 'en'; onClose: () => void }) {
+  const palette = paletteFor(course.courseType || '?');
+  const when =
+    course.startTime && course.endTime
+      ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)}–${formatTime(course.endTime)} ${tx(locale, 'Uhr', "o'clock")}`
+      : course.startTime
+        ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)} ${tx(locale, 'Uhr', "o'clock")}`
+        : '';
+  const rows: Array<[string, string]> = [
+    [tx(locale, 'Nummer', 'Number'), course.courseNumber || '–'],
+    [
+      tx(locale, 'Umfang', 'Size'),
+      [course.courseTypeShort || course.courseType, course.duration !== null ? `${course.duration} SWS` : '', course.semester].filter(Boolean).join(' · ') || '–',
+    ],
+    [tx(locale, course.lecturers.length === 1 ? 'Dozent*in' : 'Dozierende', course.lecturers.length === 1 ? 'Lecturer' : 'Lecturers'), course.lecturers.join(', ') || '–'],
+    [tx(locale, 'Anmeldung', 'Registration'), course.registrationStatus || '–'],
+  ];
+  return (
+    <View style={{ gap: 10 }}>
+      <Section
+        title={course.courseType || tx(locale, 'Kurs', 'Course')}
+        action={tx(locale, 'Schließen', 'Close')}
+        onAction={onClose}
+      />
+      <Card>
+        <Text style={{ color: colors.anthracite, fontSize: 17, fontWeight: '700' }}>{course.title}</Text>
+        {rows.map(([label, value]) => (
+          <View key={label} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+            <Text style={{ color: colors.inkSoft, fontSize: 14 }}>{label}</Text>
+            <Text style={{ color: colors.anthracite, fontSize: 14, fontWeight: '600', textAlign: 'right', flex: 1 }}>{value}</Text>
+          </View>
+        ))}
+        {when ? (
+          <Text style={[rowTime, { color: palette.fg }]}>
+            {tx(locale, 'Nächster Termin: ', 'Next appointment: ')}
+            {when}
+          </Text>
+        ) : null}
+        {course.roomName ? <Text style={rowMeta}>{course.roomName}</Text> : null}
+      </Card>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Button secondary label={tx(locale, 'Vollansicht', 'Full view')} onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })} />
+        {course.registrationUrl ? (
+          <Button
+            secondary
+            label={course.registrationAction || tx(locale, 'Anmeldung', 'Registration')}
+            onPress={() => WebBrowser.openBrowserAsync(course.registrationUrl).catch(() => undefined)}
+          />
+        ) : null}
+      </View>
+    </View>
   );
 }
