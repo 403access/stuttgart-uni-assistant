@@ -570,3 +570,42 @@ export async function loadServerCalls(limit = 200): Promise<CampusLogEntry[]> {
     ];
   });
 }
+
+export interface CalendarExport {
+  filename: string;
+  contentType: string;
+  bytes: number;
+  base64: string;
+}
+
+export type CalendarExportFormat = 1 | 2 | 3 | 99;
+
+/** Personal calendar download through the portal export mask (binary attachment as base64). */
+export async function exportCampusCalendar(options: { dateFrom: string; dateTo: string; format?: CalendarExportFormat; charset?: string }): Promise<CalendarExport> {
+  const url = endpoint('/v1/campus/calendar-export');
+  console.info('[campus-export] POST', url, options.dateFrom, options.dateTo, options.format ?? 99);
+  const started = Date.now();
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dateFrom: options.dateFrom, dateTo: options.dateTo, format: options.format ?? 99, charset: options.charset ?? 'UTF8' }),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as CalendarExport & CampusFailure;
+  console.info('[campus-export] status', response.status, payload.error ?? payload.filename ?? 'ok');
+  if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
+  if (!payload.base64 || !payload.filename) throw campusFailure({ error: 'campus_unexpected' }, 'campus_unexpected', response.status);
+  recordCampusCall({
+    op: 'export',
+    ok: true,
+    httpStatus: response.status,
+    request: `export ${options.dateFrom}–${options.dateTo} format=${options.format ?? 99}`,
+    response: `${payload.filename} · ${payload.bytes ?? 0} bytes`,
+    elapsedMs: Date.now() - started,
+  });
+  return { filename: payload.filename, contentType: payload.contentType || 'application/octet-stream', bytes: payload.bytes ?? 0, base64: payload.base64 };
+}

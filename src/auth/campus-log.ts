@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 
 import { appendApiCall } from '@/src/campus/db';
 
-export type CampusOp = 'login' | 'structure' | 'studies' | 'courses' | 'sync';
+export type CampusOp = 'login' | 'structure' | 'studies' | 'courses' | 'sync' | 'export';
 
 export interface CampusLogEntry {
   id: number;

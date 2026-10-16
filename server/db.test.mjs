@@ -185,3 +185,37 @@ async function pollJob(jobId) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
 }
+
+test('calendar export posts the mask fields and returns the attachment', async () => {
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  let seen = null;
+  const bytes = new Uint8Array([65, 66, 67]);
+  const fetchImpl = async (url, options = {}) => {
+    seen = { url, contentType: options.headers?.['Content-Type'], cookie: options.headers?.Cookie, body: options.body };
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: (name) => (name === 'content-disposition' ? 'attachment;filename=personal_20261016.csv' : 'text/csv; charset=utf-8') },
+      arrayBuffer: async () => bytes.buffer,
+    };
+  };
+  const result = await campus.exportCampusCalendar({ dateFrom: '16.10.2026', dateTo: '16.10.2027', format: 2, charset: 'WE8ISO8859P1' }, fetchImpl);
+  assert.equal(seen.url, 'https://campus.uni-stuttgart.de/cusonline/wbKalender.wbExport');
+  assert.equal(seen.contentType, 'application/x-www-form-urlencoded');
+  assert.equal(seen.cookie, 'PSESSIONID=session-value');
+  assert.ok(seen.body.includes('pMaskAction=DOWNLOAD') && seen.body.includes('pOutputFormat=2'));
+  assert.equal(result.filename, 'personal_20261016.csv');
+  assert.equal(result.base64, Buffer.from(bytes).toString('base64'));
+  delete process.env.CAMPUS_SESSION_COOKIE;
+});
+
+test('calendar export validates its inputs', async () => {
+  const unreachable = async () => {
+    throw new Error('must not be called');
+  };
+  await assert.rejects(() => campus.exportCampusCalendar({ dateFrom: '2026-10-16', dateTo: '16.10.2027' }, unreachable), (error) => error.message === 'bad_export_date');
+  await assert.rejects(() => campus.exportCampusCalendar({ dateFrom: '16.10.2026', dateTo: '16.10.2027', format: 7 }, unreachable), (error) => error.message === 'bad_export_format');
+  await assert.rejects(() => campus.exportCampusCalendar({ dateFrom: '16.10.2026', dateTo: '16.10.2027', charset: 'X' }, unreachable), (error) => error.message === 'bad_export_charset');
+  assert.equal(campus.exportFilename("attachment;filename*=utf-8''kalender%202026.ics", 99), 'kalender 2026.ics');
+  assert.equal(campus.exportFilename(null, 1), 'kalender-export.xml');
+});

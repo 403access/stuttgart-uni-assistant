@@ -353,6 +353,7 @@ test('api catalog only names known paths', () => {
     '/v1/campus/tree',
     '/v1/campus/courses/all',
     '/v1/campus/calls',
+    '/v1/campus/calendar-export',
     '/v1/assist',
     '/v1/oidc/start',
     '/v1/oidc/exchange',

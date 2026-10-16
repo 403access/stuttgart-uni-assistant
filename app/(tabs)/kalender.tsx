@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { activeStudy, loadServerCourses } from '@/src/auth/campus';
+import { activeStudy, exportCampusCalendar, loadServerCourses, type CalendarExportFormat } from '@/src/auth/campus';
 import { loadCachedCourses } from '@/src/campus/db';
 import { Button, Card, Muted, Pill, Screen } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
@@ -169,6 +170,7 @@ export default function KalenderScreen() {
             sort={sort}
             setSort={setSort}
           />
+          <ExportCard locale={locale} />
           {view === 'agenda' ? (
             <AgendaView days={byDay} locale={locale} />
           ) : view === 'week' ? (
@@ -723,3 +725,80 @@ const monthToday = { backgroundColor: colors.blue, borderColor: colors.blue };
 const monthDateToday = { color: '#FFFFFF' };
 const monthAnchor = { borderColor: colors.blue, borderWidth: 2 };
 const monthDot = { width: 5, height: 5, borderRadius: 99 };
+
+function germanDate(date: Date): string {
+  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
+}
+
+function ExportCard({ locale }: { locale: 'de' | 'en' }) {
+  const [format, setFormat] = useState<CalendarExportFormat>(99);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function download(): Promise<void> {
+    if (busy) return;
+    setError('');
+    setBusy(true);
+    try {
+      const from = new Date();
+      const to = new Date(from);
+      to.setFullYear(to.getFullYear() + 1);
+      const result = await exportCampusCalendar({
+        dateFrom: germanDate(from),
+        dateTo: germanDate(to),
+        format,
+        charset: format === 99 ? 'UTF8' : 'WE8ISO8859P1',
+      });
+      const safeName = result.filename.replace(/[^\w.\-]+/g, '_');
+      if (Platform.OS === 'web') {
+        const documentRef = globalThis.document;
+        if (!documentRef) throw new Error('download_unavailable');
+        const binary = Uint8Array.from(globalThis.atob(result.base64), (char) => char.charCodeAt(0));
+        const blob = new Blob([binary], { type: result.contentType });
+        const url = URL.createObjectURL(blob);
+        const link = documentRef.createElement('a');
+        link.href = url;
+        link.download = result.filename;
+        link.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+      const { File, Paths } = await import('expo-file-system');
+      const file = new File(Paths.cache, safeName);
+      if (file.exists) file.delete();
+      file.create();
+      file.write(result.base64, { encoding: 'base64' });
+      if (!(await Sharing.isAvailableAsync())) throw new Error('share_unavailable');
+      await Sharing.shareAsync(file.uri, { mimeType: result.contentType, dialogTitle: result.filename });
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      setError(tx(locale, `Export fehlgeschlagen (${code}).`, `Export failed (${code}).`));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <Text style={{ color: colors.anthracite, fontWeight: '700' }}>
+        {tx(locale, 'Offizieller Kalender-Export', 'Official calendar export')}
+      </Text>
+      <Muted>
+        {tx(
+          locale,
+          'Lädt den persönlichen Kalender über die Exportmaske von C@MPUS (ein Jahr ab heute).',
+          'Downloads the personal calendar through the C@MPUS export mask (one year from today).',
+        )}
+      </Muted>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {([99, 2] as CalendarExportFormat[]).map((item) => (
+          <Pressable key={item} onPress={() => setFormat(item)}>
+            <Pill label={item === 99 ? 'ICS' : 'CSV'} active={format === item} />
+          </Pressable>
+        ))}
+        <Button label={busy ? '…' : tx(locale, 'Exportieren', 'Export')} onPress={download} />
+      </View>
+      {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
+    </Card>
+  );
+}

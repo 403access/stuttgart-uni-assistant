@@ -37,6 +37,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/campus-studies.md](engineering/campus-studies.md) | C@MPUS study-chooser request, the mapped study list, and the route |
 | [engineering/campus-study-switcher.md](engineering/campus-study-switcher.md) | Enrolled studies at the top of Today: selection, per-study structure load, failure UX |
 | [engineering/campus-courses.md](engineering/campus-courses.md) | C@MPUS courses of a curriculum node: request, mapped course list, and the route |
+| [engineering/campus-calendar-export.md](engineering/campus-calendar-export.md) | C@MPUS calendar export mask: observed form fields, formats, and the download route |
 | [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |

@@ -101,6 +101,47 @@ export function refreshRequestUrl() {
   return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/auth/token/refresh';
 }
 
+export function calendarExportUrl() {
+  return 'https://campus.uni-stuttgart.de/cusonline/wbKalender.wbExport';
+}
+
+/** `TT.MM.JJJJ` as the export mask requires it. */
+export function parseExportDate(value) {
+  if (typeof value !== 'string' || !/^\d{2}\.\d{2}\.\d{4}$/.test(value)) throw httpError(400, 'bad_export_date');
+  const day = Number(value.slice(0, 2));
+  const month = Number(value.slice(3, 5));
+  const year = Number(value.slice(6, 10));
+  if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2000 || year > 2100) throw httpError(400, 'bad_export_date');
+  return value;
+}
+
+/** 1 = XML, 2 = CSV, 3 = CSV für Excel, 99 = ICS (iCalendar). */
+export function parseExportFormat(value) {
+  const format = typeof value === 'number' ? value : Number(value);
+  if (![1, 2, 3, 99].includes(format)) throw httpError(400, 'bad_export_format');
+  return format;
+}
+
+export function parseExportCharset(value) {
+  if (value === 'UTF8' || value === 'WE8ISO8859P1') return value;
+  throw httpError(400, 'bad_export_charset');
+}
+
+export function exportExtension(format) {
+  return format === 99 ? 'ics' : format === 1 ? 'xml' : 'csv';
+}
+
+/** Filename from `attachment;filename=a.csv;filename*=utf-8''a.csv`, with a fallback. */
+export function exportFilename(contentDisposition, format) {
+  if (typeof contentDisposition === 'string') {
+    const utf8 = contentDisposition.match(/filename\*=utf-8''([^;]+)/i);
+    if (utf8?.[1]) return decodeURIComponent(utf8[1].trim().replace(/^"|"$/g, ''));
+    const plain = contentDisposition.match(/filename=([^;]+)/i);
+    if (plain?.[1]) return plain[1].trim().replace(/^"|"$/g, '');
+  }
+  return `kalender-export.${exportExtension(format)}`;
+}
+
 /** Bearer token from a refresh answer. The observed shape is not pinned; accept the common field names. */
 export function extractRefreshedToken(payload) {
   const candidates = [payload, payload?.data];
@@ -518,4 +559,61 @@ export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, 
     if (!cached) throw error;
     return cached;
   }
+}
+
+/**
+ * Download the personal calendar through the portal export mask
+ * (`wbKalender.wbExport`, observed 16 October 2026): form POST with the
+ * session cookie, binary attachment back (CSV/ICS/XML). No bearer token —
+ * the browser sends only cookies here.
+ */
+export async function exportCampusCalendar({ dateFrom, dateTo, format = 99, charset = 'UTF8' } = {}, fetchImpl = fetch) {
+  const from = parseExportDate(dateFrom);
+  const to = parseExportDate(dateTo);
+  const outputFormat = parseExportFormat(format);
+  const outputCharset = parseExportCharset(charset);
+  const cookie = campusSessionCookie();
+  if (!cookie) throw httpError(503, 'token_missing');
+  const form = new URLSearchParams({
+    pMode: 'I',
+    pOrgNr: '',
+    pResNr: '',
+    pInclPruef: 'N',
+    pInclPruefGepl: 'N',
+    pExportBetreff: '',
+    pExportAnsprechpartner: '',
+    pExportOrt: '',
+    pExportTerminTyp: '',
+    pExportPublikumIntern: '',
+    pDateFrom: from,
+    pDateTo: to,
+    pOutputFormat: String(outputFormat),
+    pCharset: outputCharset,
+    pMaskAction: 'DOWNLOAD',
+  });
+  let response;
+  try {
+    response = await fetchImpl(calendarExportUrl(), {
+      method: 'POST',
+      headers: { Accept: '*/*', 'Content-Type': 'application/x-www-form-urlencoded', Cookie: `PSESSIONID=${cookie}` },
+      body: form.toString(),
+      signal: AbortSignal.timeout(60_000),
+    });
+  } catch (caught) {
+    const reason = caught instanceof Error ? caught.message : 'network';
+    console.log(`[campus] calendar export request failed ${reason}`);
+    throw httpError(502, 'campus_failed', `export request failed: ${String(reason).slice(0, 200)}`);
+  }
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    const detail = `export upstream ${response.status}${text ? `: ${text.slice(0, 200)}` : ''}`;
+    console.log(`[campus] calendar export failed ${detail}`);
+    if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
+    throw httpError(502, 'campus_failed', detail);
+  }
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const contentType = response.headers?.get?.('content-type') ?? 'application/octet-stream';
+  const filename = exportFilename(response.headers?.get?.('content-disposition'), outputFormat);
+  console.log(`[campus] calendar export ok ${filename} ${buffer.length} bytes`);
+  return { filename, contentType, bytes: buffer.length, base64: buffer.toString('base64') };
 }

@@ -58,7 +58,7 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | Structure browser (web only) | `/strukturen` | In this build | Cached trees of all enrolled studies with search, type/status filter, and sort, plus the session API history. Browsing never refetches; per-study buttons fetch with resume. |
 | Live course lists | `/campus-info` (Kurse toggle), `/kurs/[id]`, `/api` | In this build | Courses of a curriculum node from `POST /v1/campus/courses`: title, type, semester, lecturers, time, room, registration state. The detail screen adds number, SWS, next appointment, and portal links. Empty list is a valid answer. |
 | All courses of a study | `/kurse` | In this build | One server sync job per study (structures plus courses), local hydrate from the snapshots, dynamic course-type pills, search, and title/type/appointment sort. Cached per study with resume. |
-| Course calendar | `/kalender` (Kalender tab) | In this build | Agenda, week, day, and month views over cached appointments, with search, course-type and Fixplatz filters, and Termin/Titel sort. No portal calls; empty without a course cache. |
+| Course calendar | `/kalender` (Kalender tab) | In this build | Agenda, week, day, and month views over cached appointments, with search, course-type and Fixplatz filters, and Termin/Titel sort. Official ICS/CSV export through the portal mask. No portal calls otherwise; empty without a course cache. |
 
 ## 6. Documents (Document Hub)
 
