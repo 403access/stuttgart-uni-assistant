@@ -52,6 +52,7 @@ export default function KalenderScreen() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [assignFilter, setAssignFilter] = useState<AssignFilter>('all');
   const [sort, setSort] = useState<CalSort>('time');
+  const [exportOpen, setExportOpen] = useState(false);
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
 
   useEffect(() => {
@@ -200,8 +201,10 @@ export default function KalenderScreen() {
             setAssignFilter={setAssignFilter}
             sort={sort}
             setSort={setSort}
+            exportOpen={exportOpen}
+            onToggleExport={() => setExportOpen((open) => !open)}
           />
-          <ExportCard locale={locale} />
+          {exportOpen ? <ExportCard locale={locale} /> : null}
           {view === 'agenda' ? (
             <AgendaView days={byDay} locale={locale} />
           ) : view === 'week' ? (
@@ -252,6 +255,8 @@ function CalToolbar({
   setAssignFilter,
   sort,
   setSort,
+  exportOpen,
+  onToggleExport,
 }: {
   locale: 'de' | 'en';
   query: string;
@@ -263,6 +268,8 @@ function CalToolbar({
   setAssignFilter: (value: AssignFilter) => void;
   sort: CalSort;
   setSort: (value: CalSort) => void;
+  exportOpen: boolean;
+  onToggleExport: () => void;
 }) {
   const [filtersOpen, setFiltersOpen] = useState<'type' | 'place' | null>(null);
   const typeActive = typeFilter !== 'all';
@@ -293,6 +300,9 @@ function CalToolbar({
             }
             active={filtersOpen === 'place' || placeActive}
           />
+        </Pressable>
+        <Pressable onPress={onToggleExport}>
+          <Pill label={`${tx(locale, 'Export', 'Export')} ${exportOpen ? '▾' : '▸'}`} active={exportOpen} />
         </Pressable>
       </View>
       {filtersOpen === 'type' ? (
