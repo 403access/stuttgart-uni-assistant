@@ -178,18 +178,6 @@ export default function KalenderScreen() {
                 <MaterialIcons name="search" size={20} color={searchOpen ? '#FFFFFF' : colors.blue} />
               )}
             </Pressable>
-            <Pressable
-              onPress={() => router.push('/kalender-export')}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={tx(locale, 'Kalender exportieren', 'Export calendar')}
-              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
-              {Platform.OS === 'ios' ? (
-                <SymbolView name="square.and.arrow.up" size={18} tintColor={colors.blue} />
-              ) : (
-                <MaterialIcons name="share" size={20} color={colors.blue} />
-              )}
-            </Pressable>
           </View>
           {searchOpen ? (
             <View style={styles.searchRow}>

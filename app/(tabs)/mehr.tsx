@@ -9,7 +9,7 @@ import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen';
+type CampusHref = '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/kalender-export';
 type CampusEntry = { title: string; detail: string; href: CampusHref };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -36,6 +36,7 @@ export default function MoreScreen() {
     {
       title: tx(locale, 'Studium', 'Studies'),
       entries: [
+        { title: tx(locale, 'Kalender-Import', 'Calendar import'), detail: tx(locale, 'C@MPUS-Kalender in die App laden', 'Load the C@MPUS calendar into the app'), href: '/kalender-export' },
         { title: tx(locale, 'Dokumente', 'Documents'), detail: tx(locale, 'ILIAS, Notizen, Import', 'ILIAS, notes, import'), href: '/dokumente' },
         { title: tx(locale, 'Altklausuren', 'Past exams'), detail: tx(locale, 'Themen und Schwerpunkte, keine PDFs', 'Topics and focus, no PDFs'), href: '/altklausuren' },
         { title: tx(locale, 'Anrechnung', 'Recognition'), detail: tx(locale, 'Anerkennung vorbereiten', 'Prepare a recognition request'), href: '/anrechnung' },

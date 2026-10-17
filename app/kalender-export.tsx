@@ -64,7 +64,7 @@ export default function CalendarExportScreen() {
     onMutate: () => setError(''),
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setError(tx(locale, `Export fehlgeschlagen (${code}).`, `Export failed (${code}).`));
+      setError(tx(locale, `Import fehlgeschlagen (${code}).`, `Import failed (${code}).`));
     },
   });
 
@@ -98,7 +98,7 @@ export default function CalendarExportScreen() {
         'Lädt den persönlichen Kalender über die Exportmaske von C@MPUS (ein Jahr ab heute).',
         'Downloads the personal calendar through the C@MPUS export mask (one year from today).',
       )}>
-      <Stack.Screen options={{ title: tx(locale, 'Kalender-Export', 'Calendar export') }} />
+      <Stack.Screen options={{ title: tx(locale, 'Kalender-Import', 'Calendar import') }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{tx(locale, 'Format', 'Format')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -108,7 +108,7 @@ export default function CalendarExportScreen() {
             </Pressable>
           ))}
         </View>
-        <Button label={downloadMutation.isPending ? '…' : tx(locale, 'Exportieren', 'Export')} onPress={() => downloadMutation.mutate()} />
+        <Button label={downloadMutation.isPending ? '…' : tx(locale, 'Importieren', 'Import')} onPress={() => downloadMutation.mutate()} />
         <Button secondary label={syncMutation.isPending ? '…' : tx(locale, 'In Datenbank syncen', 'Sync into database')} onPress={() => syncMutation.mutate()} />
         {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
         {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
