@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
@@ -40,7 +40,6 @@ export default function LoginScreen() {
   const status = useQuery({ queryKey: keys.oidcStatus(), queryFn: () => fetchOidcStatus() }).data ?? null;
   const campusStatus = useQuery({ queryKey: keys.campusStatus(), queryFn: () => fetchCampusStatus() }).data ?? null;
   const [account, setAccount] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [campusLog, setCampusLog] = useState('');
   const [browserOpen, setBrowserOpen] = useState(false);
@@ -51,14 +50,22 @@ export default function LoginScreen() {
   const webview = useRef<WebView | null>(null);
   const redirectUri = universityRedirectUri();
 
-  async function enterWithCampusToken() {
-    if (busy) return;
-    setError('');
-    const url = `${process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787'}/v1/campus/login`;
-    setCampusLog(tx(locale, `Rufe ${url} auf …`, `Calling ${url} …`));
-    setBusy(true);
-    try {
-      const profile = await signInWithCampusToken();
+  // Sign-ins as mutations: the retry toast targets `mutate`, pending states
+  // come from `isPending`, and the message/toast handling lives in the hooks.
+  const campusSignIn = useMutation({
+    mutationKey: ['campus-sign-in'],
+    mutationFn: signInWithCampusToken,
+    onMutate: () => {
+      setError('');
+      setCampusLog(
+        tx(
+          locale,
+          `Rufe ${(process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787')}/v1/campus/login auf …`,
+          `Calling ${(process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787')}/v1/campus/login …`,
+        ),
+      );
+    },
+    onSuccess: (profile) => {
       const names = profile.studies.map((item) => item.name).join(', ');
       setCampusLog(
         tx(
@@ -68,7 +75,8 @@ export default function LoginScreen() {
         ),
       );
       signInCampus(profile);
-    } catch (caught) {
+    },
+    onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const message = campusMessage(locale, code, campusDetail(caught));
       setCampusLog(message);
@@ -77,27 +85,50 @@ export default function LoginScreen() {
         title: tx(locale, 'C@MPUS-Anmeldung fehlgeschlagen', 'C@MPUS sign-in failed'),
         code,
         detail: campusDetail(caught) || undefined,
-        onRetry: enterWithCampusToken,
+        onRetry: () => campusSignIn.mutate(),
       });
-    } finally {
-      setBusy(false);
-    }
-  }
+    },
+  });
 
-  async function enterWithSiam() {
-    if (busy) return;
-    setError('');
-    setBusy(true);
-    try {
-      const profile = await signInWithUniversity();
-      signInOidc(profile);
-    } catch (caught) {
+  const siamSignIn = useMutation({
+    mutationKey: ['siam-sign-in'],
+    mutationFn: signInWithUniversity,
+    onMutate: () => setError(''),
+    onSuccess: (profile) => signInOidc(profile),
+    onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'oidc_failed';
       setError(messageFor(locale, code, status));
-    } finally {
-      setBusy(false);
-    }
-  }
+    },
+  });
+
+  // Third sign-in path: adopt session/cookies harvested from the C@MPUS web
+  // view, then complete the flow with the regular token sign-in.
+  const browserHarvest = useMutation({
+    mutationKey: ['campus-browser-harvest'],
+    mutationFn: (harvest: { cookies: string; storage: Record<string, string> }) => submitBrowserCredentials(harvest),
+    onMutate: () => setBrowserError(''),
+    onSuccess: (result) => {
+      setBrowserOpen(false);
+      setCampusLog(
+        tx(
+          locale,
+          `Browser-Anmeldung übernommen (${result.studies} Studiengänge). Lade Profil …`,
+          `Browser sign-in adopted (${result.studies} studies). Loading profile …`,
+        ),
+      );
+      campusSignIn.mutate();
+    },
+    onError: (caught) => {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      const message = campusMessage(locale, code, campusDetail(caught));
+      setBrowserError(message);
+      setCampusLog(message);
+      setError(message);
+    },
+    onSettled: () => setHarvestBusy(false),
+  });
+
+  const busy = campusSignIn.isPending || siamSignIn.isPending;
 
   async function onBrowserMessage(event: WebViewMessageEvent) {
     if (harvestBusy) return;
@@ -120,33 +151,13 @@ export default function LoginScreen() {
       return;
     }
     setHarvestBusy(true);
-    setBrowserError('');
-    try {
-      const storage: Record<string, string> = {};
-      if (parsed.storage && typeof parsed.storage === 'object') {
-        for (const [key, value] of Object.entries(parsed.storage as Record<string, unknown>)) {
-          if (typeof value === 'string' && value) storage[String(key).slice(0, 120)] = value.slice(0, 4000);
-        }
+    const storage: Record<string, string> = {};
+    if (parsed.storage && typeof parsed.storage === 'object') {
+      for (const [key, value] of Object.entries(parsed.storage as Record<string, unknown>)) {
+        if (typeof value === 'string' && value) storage[String(key).slice(0, 120)] = value.slice(0, 4000);
       }
-      const result = await submitBrowserCredentials({ cookies: typeof parsed.cookies === 'string' ? parsed.cookies : '', storage });
-      setBrowserOpen(false);
-      setCampusLog(
-        tx(
-          locale,
-          `Browser-Anmeldung übernommen (${result.studies} Studiengänge). Lade Profil …`,
-          `Browser sign-in adopted (${result.studies} studies). Loading profile …`,
-        ),
-      );
-      await enterWithCampusToken();
-    } catch (caught) {
-      const code = caught instanceof Error ? caught.message : 'campus_failed';
-      const message = campusMessage(locale, code, campusDetail(caught));
-      setBrowserError(message);
-      setCampusLog(message);
-      setError(message);
-    } finally {
-      setHarvestBusy(false);
     }
+    browserHarvest.mutate({ cookies: typeof parsed.cookies === 'string' ? parsed.cookies : '', storage });
   }
 
   return (
@@ -175,7 +186,7 @@ export default function LoginScreen() {
         </Text>
         <Button
           label={busy ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Mit C@MPUS-Token anmelden', 'Sign in with C@MPUS token')}
-          onPress={enterWithCampusToken}
+          onPress={() => campusSignIn.mutate()}
         />
         <Button
           secondary
@@ -247,7 +258,7 @@ export default function LoginScreen() {
               ? tx(locale, 'Anmeldung läuft …', 'Signing in …')
               : tx(locale, 'Mit SIAM anmelden', 'Sign in with SIAM')
           }
-          onPress={enterWithSiam}
+          onPress={() => siamSignIn.mutate()}
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Text style={styles.footer}>

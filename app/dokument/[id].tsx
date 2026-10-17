@@ -1,5 +1,6 @@
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Text, View } from 'react-native';
 
 import { askGrok } from '@/src/assistant/remote';
@@ -21,7 +22,31 @@ export default function DocumentScreen() {
   const bundled = documents.find((item) => item.id === id);
   const imported = imports.find((item) => item.id === id);
   const [panel, setPanel] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [seedPanel, setSeedPanel] = useState('');
+  const title = bundled ? pick(bundled.title, locale) : (imported?.title ?? '');
+  const pages = bundled ? bundled.pages[locale] : imported?.text ? [imported.text] : [];
+  const plain = pages.join('\n\n');
+
+  // Refine through a mutation: the local summary shows instantly and Grok's
+  // rewrite replaces it. A rejection keeps the local seed on the panel.
+  const refineMutation = useMutation({
+    mutationKey: ['document-refine'],
+    mutationFn: (vars: { instruction: string; seed: string }) => {
+      setPanel(vars.seed);
+      return askGrok({ locale, question: vars.instruction, facts: `Document: ${title}\n\n${plain}`, history: [] });
+    },
+    onMutate: (vars) => setSeedPanel(vars.seed),
+    onSuccess: (remote) => {
+      if (remote) setPanel(remote);
+    },
+    onError: () => setPanel(seedPanel),
+  });
+  const busy = refineMutation.isPending;
+
+  function refine(instruction: string, seed: string): void {
+    refineMutation.mutate({ instruction, seed });
+  }
+
   if (!bundled && !imported) {
     return (
       <Screen kicker={tx(locale, 'Dokument fehlt', 'Document missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
@@ -30,24 +55,8 @@ export default function DocumentScreen() {
     );
   }
 
-  const title = bundled ? pick(bundled.title, locale) : (imported?.title ?? '');
-  const pages = bundled ? bundled.pages[locale] : imported?.text ? [imported.text] : [];
   const alternate = bundled ? bundled.pages[locale === 'de' ? 'en' : 'de'].join('\n\n') : '';
-  const plain = pages.join('\n\n');
   const offline = bundled ? downloadedIds.includes(bundled.id) : true;
-
-  async function refine(instruction: string, seed: string) {
-    setPanel(seed);
-    setBusy(true);
-    const remote = await askGrok({
-      locale,
-      question: instruction,
-      facts: `Document: ${title}\n\n${plain}`,
-      history: [],
-    });
-    if (remote) setPanel(remote);
-    setBusy(false);
-  }
 
   return (
     <Screen kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'Geteilt', 'Shared')) : tx(locale, 'Eigene Datei', 'Your file')} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>

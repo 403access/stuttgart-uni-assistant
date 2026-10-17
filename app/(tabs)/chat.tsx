@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,7 +21,6 @@ export default function ChatScreen() {
   const docId = one(params.doc);
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState('');
-  const [busy, setBusy] = useState(false);
   const bundled = docId ? bundledDocument(docId, locale) : null;
   const imported = imports.find((item) => item.id === docId);
   const focus = bundled
@@ -36,11 +36,27 @@ export default function ChatScreen() {
     tx(locale, 'Wo ist die Mensa in Vaihingen?', 'Where is the cafeteria in Vaihingen?'),
   ];
 
-  async function send(text: string) {
+  // The local answer posts immediately; the mutation only asks Grok to
+  // rewrite it. Grok failing keeps the local answer (remote returns null).
+  const askRemote = useMutation({
+    mutationKey: ['chat-ask'],
+    mutationFn: (vars: { question: string; userMessageId: string; reply: { id: string; sources: string[]; createdAt: string } }) =>
+      askGrok({
+        locale,
+        question: vars.question,
+        facts: renderFacts(buildAnswerInput({ locale, question: vars.question, focus, imports })),
+        history: [...messages, { id: vars.userMessageId, role: 'user' as const, text: vars.question }].map((item) => ({ role: item.role, text: item.text })),
+      }),
+    onSuccess: (remote, vars) => {
+      if (remote) replaceMessage({ id: vars.reply.id, role: 'assistant' as const, text: remote, sources: vars.reply.sources, engine: 'grok' as const, createdAt: vars.reply.createdAt });
+    },
+  });
+  const busy = askRemote.isPending;
+
+  function send(text: string): void {
     const question = text.trim();
     if (!question || busy) return;
     setDraft('');
-    setBusy(true);
     const userMessage = {
       id: uid('user'),
       role: 'user' as const,
@@ -61,14 +77,7 @@ export default function ChatScreen() {
       createdAt: new Date().toISOString(),
     };
     addMessage(reply);
-    const remote = await askGrok({
-      locale,
-      question,
-      facts: renderFacts(input),
-      history: [...messages, userMessage].map((item) => ({ role: item.role, text: item.text })),
-    });
-    if (remote) replaceMessage({ ...reply, text: remote, engine: 'grok' });
-    setBusy(false);
+    askRemote.mutate({ question, userMessageId: userMessage.id, reply: { id: reply.id, sources: reply.sources, createdAt: reply.createdAt } });
   }
 
   return (

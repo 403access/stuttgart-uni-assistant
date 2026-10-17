@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { activeStudy, campusDetail, loadCampusCurriculum } from '@/src/auth/campus';
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
@@ -15,33 +16,19 @@ import { tx } from '@/src/text';
  */
 export function StudySelector() {
   const { locale, sessionMode, campusStudies, activeStudyId, setActiveStudy, setCurriculum } = useApp();
-  const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState('');
   const log = useCampusLog();
 
-  if (sessionMode !== 'campus' || campusStudies.length === 0) return null;
-  const current = activeStudy(campusStudies, activeStudyId);
-
-  async function select(studyId: number, elementId: number | null) {
-    if (studyId === activeStudyId || busyId !== null) return;
-    setError('');
-    if (elementId == null) {
-      setError(
-        tx(
-          locale,
-          'Für diesen Studiengang fehlt die Verknüpfung aus der Chooser-Antwort. Lade die Studiengänge über die Schnittstelle neu.',
-          'This study has no link from the chooser response. Reload the studies from the interface screen.',
-        ),
-      );
-      return;
-    }
-    setBusyId(studyId);
-    try {
-      const loaded = await loadCampusCurriculum(elementId, studyId);
-      // Commit only after the portal answered, so header and curriculum stay consistent.
-      setActiveStudy(studyId);
+  // Study switch: commit only when the portal answered, so header and
+  // curriculum stay consistent. `variables` holds the pending study.
+  const switchMutation = useMutation({
+    mutationKey: ['campus-study-switch'],
+    mutationFn: (vars: { studyId: number; elementId: number }) => loadCampusCurriculum(vars.elementId, vars.studyId),
+    onSuccess: (loaded, vars) => {
+      setActiveStudy(vars.studyId);
       setCurriculum(loaded.nodes, { studyId: loaded.studyId, replace: true });
-    } catch (caught) {
+    },
+    onError: (caught, vars) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const detail = campusDetail(caught);
       const staleServer = detail.includes('ohne Detail');
@@ -56,11 +43,28 @@ export function StudySelector() {
         title: tx(locale, 'Studium nicht gewechselt', 'Study not switched'),
         code,
         detail: detail || undefined,
-        onRetry: () => select(studyId, elementId),
+        onRetry: () => switchMutation.mutate(vars),
       });
-    } finally {
-      setBusyId(null);
+    },
+  });
+
+  if (sessionMode !== 'campus' || campusStudies.length === 0) return null;
+  const current = activeStudy(campusStudies, activeStudyId);
+
+  function select(studyId: number, elementId: number | null): void {
+    if (studyId === activeStudyId || switchMutation.isPending) return;
+    setError('');
+    if (elementId == null) {
+      setError(
+        tx(
+          locale,
+          'Für diesen Studiengang fehlt die Verknüpfung aus der Chooser-Antwort. Lade die Studiengänge über die Schnittstelle neu.',
+          'This study has no link from the chooser response. Reload the studies from the interface screen.',
+        ),
+      );
+      return;
     }
+    switchMutation.mutate({ studyId, elementId });
   }
 
   if (campusStudies.length === 1 && current) {
@@ -92,7 +96,7 @@ export function StudySelector() {
               accessibilityState={{ selected: isActive }}>
               <Text style={[styles.chipText, isActive && styles.chipTextOn]}>
                 {study.name}
-                {busyId === study.studyId ? ' …' : ''}
+                {switchMutation.isPending && switchMutation.variables?.studyId === study.studyId ? ' …' : ''}
               </Text>
               {study.intendedDegree ? <Text style={[styles.chipMeta, isActive && styles.chipTextOn]}>{study.intendedDegree}</Text> : null}
             </Pressable>

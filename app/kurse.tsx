@@ -1,16 +1,16 @@
 import { Stack, router } from 'expo-router';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { activeStudy, campusDetail, loadServerCourses, loadServerTree } from '@/src/auth/campus';
 import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCoursesFetchedIds, saveCourses, saveFullStructure } from '@/src/campus/db';
-import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
 import { StudySelector } from '@/src/components/study-selector';
 import { keys } from '@/src/query/keys';
+import { campusSyncMutation } from '@/src/query/mutations';
 import { coursesFetchedIdsQuery, coursesSyncQuery, deviceCoursesQuery, deviceNodesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -27,7 +27,6 @@ export default function KurseScreen() {
   const { locale, sessionMode, campusStudies, activeStudyId, setCurriculum } = useApp();
   const [failedIds, setFailedIds] = useState<number[]>([]);
   const [saveError, setSaveError] = useState('');
-  const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ fetched: 0, total: 0, courseCount: 0 });
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -36,6 +35,7 @@ export default function KurseScreen() {
   // Guards the screen-level sync states only: query data is keyed per study,
   // so a late sync completion can safely write another study's rows.
   const loadSeq = useRef(0);
+  const activeSeq = useRef(0);
   const queryClient = useQueryClient();
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
   const studyId = study?.studyId ?? null;
@@ -92,28 +92,33 @@ export default function KurseScreen() {
     if (!study || running) return;
     loadSeq.current += 1;
     const seq = loadSeq.current;
+    activeSeq.current = seq;
     const myStudyId = study.studyId;
     const rootElementId = study.elementId;
     const current = () => loadSeq.current === seq;
     cancelRun.current = false;
-    setRunning(true);
     setFailedIds([]);
     setSaveError('');
     setProgress({ fetched: 0, total: 0, courseCount: 0 });
-    try {
-      // One server job walks structures and courses; the app only polls.
-      // Resume happens server-side from stored expanded/fetched ids.
-      const job = await runServerSync(myStudyId, {
-        elementId: rootElementId ?? undefined,
-        includeCourses: true,
-        onProgress: (update) => {
-          if (current()) setProgress({ fetched: update.fetched, total: update.fetched, courseCount: update.courseCount });
-        },
-        isCancelled: () => cancelRun.current,
-      });
-      if (job.state === 'failed') {
-        throw new Error(job.error ?? 'sync_failed');
-      }
+    loadMutation.mutate({
+      studyId: myStudyId,
+      elementId: rootElementId ?? undefined,
+      includeCourses: true,
+      onProgress: (update) => {
+        if (current()) setProgress({ fetched: update.fetched, total: update.fetched, courseCount: update.courseCount });
+      },
+      isCancelled: () => cancelRun.current,
+    });
+  }
+
+  // Course sync through the shared mutation. The screen-level states stay
+  // local; the store writes go through the device-store query keys, so a
+  // late completion can safely write another study's rows.
+  const loadMutation = useMutation({
+    ...campusSyncMutation(),
+    onSuccess: async (job, vars) => {
+      const myStudyId = vars.studyId;
+      const current = () => loadSeq.current === activeSeq.current;
       // Hydrate the local sync cache from the server snapshots.
       const [tree, remote] = await Promise.all([
         loadServerTree(myStudyId).catch(() => null),
@@ -122,7 +127,7 @@ export default function KurseScreen() {
       if (tree && tree.nodes.length > 0) {
         queryClient.setQueryData(keys.deviceNodes(myStudyId), tree.nodes);
         if (current()) setCurriculum(tree.nodes, { studyId: myStudyId, replace: true });
-        await saveFullStructure(myStudyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
+        await saveFullStructure(myStudyId, vars.elementId ?? null, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
       }
       const storedCourses = await loadCachedCourses(myStudyId).catch(() => []);
       const storedFetched = await loadCoursesFetchedIds(myStudyId).catch(() => []);
@@ -159,8 +164,9 @@ export default function KurseScreen() {
           onRetry: loadAll,
         });
       }
-    } catch (caught) {
-      if (!current()) return;
+    },
+    onError: (caught) => {
+      if (loadSeq.current !== activeSeq.current) return;
       const code = caught instanceof Error ? caught.message : 'sync_failed';
       const detail = campusDetail(caught);
       setSaveError(
@@ -172,10 +178,9 @@ export default function KurseScreen() {
         detail: detail || undefined,
         onRetry: loadAll,
       });
-    } finally {
-      if (current()) setRunning(false);
-    }
-  }
+    },
+  });
+  const running = loadMutation.isPending;
 
   async function clearCourseCache(): Promise<void> {
     if (studyId === null || running) return;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Stack } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
@@ -45,29 +45,22 @@ export default function ApiScreen() {
   const live = catalog.data?.live ?? false;
   const [elementId, setElementId] = useState('');
   const [courseId, setCourseId] = useState('');
-  const [busyId, setBusyId] = useState('');
   const [result, setResult] = useState<ApiCallResult | null>(null);
   const [notice, setNotice] = useState('');
   const [coursesPreview, setCoursesPreview] = useState<CampusCourse[]>([]);
 
-  async function send(operation: ApiOperation, requestedId?: number) {
-    if (busyId) return;
-    // Course groups take a course id instead of an element id.
-    const typed = requestedId ?? (operation.acceptsCourseId ? Number(courseId) || undefined : elementId ? Number(elementId) : undefined);
-    if (operation.acceptsElementId && elementId && !requestedId && !/^[1-9]\d{0,9}$/.test(elementId)) {
-      setNotice(tx(locale, 'Die Element-Id muss eine positive Ganzzahl sein.', 'The element id must be a positive integer.'));
-      return;
-    }
-    if (operation.acceptsCourseId && courseId && !requestedId && !/^[1-9]\d{0,9}$/.test(courseId)) {
-      setNotice(tx(locale, 'Die Kurs-Id muss eine positive Ganzzahl sein.', 'The course id must be a positive integer.'));
-      return;
-    }
-    // Courses belong to one study: replay with the selected study when set.
-    const payload = operation.id === 'campus-courses' && typeof typed === 'number' && activeStudyId !== null ? { elementId: typed, studyId: activeStudyId } : typed;
-    setNotice('');
-    setBusyId(operation.id);
-    try {
-      const next = await sendApiOperation(operation, payload, locale);
+  // Replays as one mutation: the busy flag comes from `isPending`, and the
+  // portal-result handling (adopting nodes, studies, courses) lives in the hook.
+  const sendMutation = useMutation({
+    mutationKey: ['api-replay'],
+    mutationFn: (vars: { operation: ApiOperation; payload: number | { elementId?: number; studyId?: number } | undefined }) =>
+      sendApiOperation(vars.operation, vars.payload, locale),
+    onMutate: () => {
+      setResult(null);
+      setNotice('');
+    },
+    onSuccess: (next, vars) => {
+      const operation = vars.operation;
       setResult(next);
       const failure = (next.body ?? {}) as { error?: unknown; detail?: unknown };
       const error = typeof failure.error === 'string' ? failure.error : '';
@@ -122,7 +115,8 @@ export default function ApiScreen() {
           ),
         );
       }
-    } catch (caught) {
+    },
+    onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       setResult(null);
       setNotice(
@@ -130,9 +124,25 @@ export default function ApiScreen() {
           ? tx(locale, 'Der Server auf Port 8787 antwortet nicht. Starte npm run assistant neu.', 'The server on port 8787 is not answering. Restart npm run assistant.')
           : code,
       );
-    } finally {
-      setBusyId('');
+    },
+  });
+  const busyId = sendMutation.isPending ? (sendMutation.variables?.operation.id ?? '') : '';
+
+  function send(operation: ApiOperation, requestedId?: number) {
+    if (sendMutation.isPending) return;
+    // Course groups take a course id instead of an element id.
+    const typed = requestedId ?? (operation.acceptsCourseId ? Number(courseId) || undefined : elementId ? Number(elementId) : undefined);
+    if (operation.acceptsElementId && elementId && !requestedId && !/^[1-9]\d{0,9}$/.test(elementId)) {
+      setNotice(tx(locale, 'Die Element-Id muss eine positive Ganzzahl sein.', 'The element id must be a positive integer.'));
+      return;
     }
+    if (operation.acceptsCourseId && courseId && !requestedId && !/^[1-9]\d{0,9}$/.test(courseId)) {
+      setNotice(tx(locale, 'Die Kurs-Id muss eine positive Ganzzahl sein.', 'The course id must be a positive integer.'));
+      return;
+    }
+    // Courses belong to one study: replay with the selected study when set.
+    const payload = operation.id === 'campus-courses' && typeof typed === 'number' && activeStudyId !== null ? { elementId: typed, studyId: activeStudyId } : typed;
+    sendMutation.mutate({ operation, payload });
   }
 
   return (

@@ -2,11 +2,11 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import * as Sharing from 'expo-sharing';
 import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { activeStudy, exportCampusCalendar, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
-import { useQuery } from '@tanstack/react-query';
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
@@ -836,23 +836,20 @@ function germanDate(date: Date): string {
 
 function ExportCard({ locale }: { locale: 'de' | 'en' }) {
   const [format, setFormat] = useState<CalendarExportFormat>(99);
-  const [busy, setBusy] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
   const [syncNote, setSyncNote] = useState('');
 
-function exportRange(): { dateFrom: string; dateTo: string } {
-  const from = new Date();
-  const to = new Date(from);
-  to.setFullYear(to.getFullYear() + 1);
-  return { dateFrom: germanDate(from), dateTo: germanDate(to) };
-}
+  function exportRange(): { dateFrom: string; dateTo: string } {
+    const from = new Date();
+    const to = new Date(from);
+    to.setFullYear(to.getFullYear() + 1);
+    return { dateFrom: germanDate(from), dateTo: germanDate(to) };
+  }
 
-  async function download(): Promise<void> {
-    if (busy) return;
-    setError('');
-    setBusy(true);
-    try {
+  // Export and database sync as mutations: pending flags come from the hooks.
+  const downloadMutation = useMutation({
+    mutationKey: ['calendar-export'],
+    mutationFn: async () => {
       const { dateFrom, dateTo } = exportRange();
       const result = await exportCampusCalendar({
         dateFrom,
@@ -881,22 +878,22 @@ function exportRange(): { dateFrom: string; dateTo: string } {
       file.write(result.base64, { encoding: 'base64' });
       if (!(await Sharing.isAvailableAsync())) throw new Error('share_unavailable');
       await Sharing.shareAsync(file.uri, { mimeType: result.contentType, dialogTitle: result.filename });
-    } catch (caught) {
+    },
+    onMutate: () => setError(''),
+    onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       setError(tx(locale, `Export fehlgeschlagen (${code}).`, `Export failed (${code}).`));
-    } finally {
-      setBusy(false);
-    }
-  }
+    },
+  });
 
-  async function syncIntoDatabase(): Promise<void> {
-    if (syncing) return;
-    setError('');
-    setSyncNote('');
-    setSyncing(true);
-    try {
-      const { dateFrom, dateTo } = exportRange();
-      const result = await syncExportedCalendar({ dateFrom, dateTo });
+  const syncMutation = useMutation({
+    mutationKey: ['calendar-sync'],
+    mutationFn: () => syncExportedCalendar(exportRange()),
+    onMutate: () => {
+      setError('');
+      setSyncNote('');
+    },
+    onSuccess: (result) => {
       setSyncNote(
         tx(
           locale,
@@ -904,13 +901,12 @@ function exportRange(): { dateFrom: string; dateTo: string } {
           `${result.imported} new · ${result.skipped} duplicates skipped (${result.total} events).`,
         ),
       );
-    } catch (caught) {
+    },
+    onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       setError(tx(locale, `Sync fehlgeschlagen (${code}).`, `Sync failed (${code}).`));
-    } finally {
-      setSyncing(false);
-    }
-  }
+    },
+  });
 
   return (
     <Card>
@@ -930,8 +926,8 @@ function exportRange(): { dateFrom: string; dateTo: string } {
             <Pill label={item === 99 ? 'ICS' : 'CSV'} active={format === item} />
           </Pressable>
         ))}
-        <Button label={busy ? '…' : tx(locale, 'Exportieren', 'Export')} onPress={download} />
-        <Button secondary label={syncing ? '…' : tx(locale, 'In Datenbank syncen', 'Sync into database')} onPress={syncIntoDatabase} />
+        <Button label={downloadMutation.isPending ? '…' : tx(locale, 'Exportieren', 'Export')} onPress={() => downloadMutation.mutate()} />
+        <Button secondary label={syncMutation.isPending ? '…' : tx(locale, 'In Datenbank syncen', 'Sync into database')} onPress={() => syncMutation.mutate()} />
       </View>
       {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
       {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}

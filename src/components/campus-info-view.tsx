@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum, loadServerTree } from '@/src/auth/campus';
 import { appendElementCourses, clearCachedStudy, loadCachedCoursesByElement, saveFullStructure } from '@/src/campus/db';
-import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
 import { StudySelector } from '@/src/components/study-selector';
+import { campusSyncMutation } from '@/src/query/mutations';
 import { keys } from '@/src/query/keys';
 import { deviceNodesQuery, syncInfoQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
@@ -24,7 +24,6 @@ export function CampusInfoView() {
   const [busy, setBusy] = useState(false);
   const [busyNode, setBusyNode] = useState<number | null>(null);
   const [error, setError] = useState('');
-  const [syncing, setSyncing] = useState(false);
   const [progress, setProgress] = useState<{ fetched: number; queued: number; nodeCount: number; retries: number; failedIds: number[] } | null>(null);
   const [syncFailed, setSyncFailed] = useState<number[]>([]);
   const [syncCancelled, setSyncCancelled] = useState(false);
@@ -124,43 +123,34 @@ export function CampusInfoView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [study?.studyId, stale, curriculumNodes.length, cachedNodesQ.data]);
 
-  async function syncAll(): Promise<void> {
-    if (!study || study.elementId == null || syncing) return;
-    const studyId = study.studyId;
-    const rootElementId = study.elementId;
-    cancelSync.current = false;
-    setSyncing(true);
-    setSyncFailed([]);
-    setSyncCancelled(false);
-    setProgress({ fetched: 0, queued: 1, nodeCount: 0, retries: 0, failedIds: [] });
-    try {
-      const job = await runServerSync(studyId, {
-        elementId: rootElementId,
-        includeCourses: false,
-        onProgress: (update) =>
-          setProgress({ fetched: update.fetched, queued: 0, nodeCount: update.nodeCount, retries: update.retries, failedIds: update.failedIds }),
-        isCancelled: () => cancelSync.current,
-      });
+  // Structure sync through the shared mutation; progress and cancel state
+  // stay screen-local, the polling loop runs inside the mutation function.
+  const syncMutation = useMutation({
+    ...campusSyncMutation(),
+    onMutate: () => {
+      cancelSync.current = false;
+      setSyncFailed([]);
+      setSyncCancelled(false);
+      setProgress({ fetched: 0, queued: 1, nodeCount: 0, retries: 0, failedIds: [] });
+    },
+    onSuccess: async (job, vars) => {
       setSyncCancelled(job.state === 'cancelled');
       setSyncFailed(job.failedIds);
       // Hydrate the local sync cache and the view from the server snapshot.
-      const tree = await loadServerTree(studyId).catch(() => null);
+      const tree = await loadServerTree(vars.studyId).catch(() => null);
       if (tree && tree.nodes.length > 0) {
-        setCurriculum(tree.nodes, { studyId, replace: true });
-        await saveFullStructure(studyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
+        setCurriculum(tree.nodes, { studyId: vars.studyId, replace: true });
+        await saveFullStructure(vars.studyId, vars.elementId ?? null, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
       }
-      if (job.state === 'failed' || job.failedIds.length > 0) {
-        const code = job.state === 'failed' ? (job.error ?? 'sync_failed') : 'campus_failed';
+      if (job.failedIds.length > 0) {
         showFetchAlert(locale, {
-          title:
-            job.state === 'failed'
-              ? tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed')
-              : tx(locale, `${job.failedIds.length} Knoten übersprungen`, `${job.failedIds.length} nodes skipped`),
-          code,
+          title: tx(locale, `${job.failedIds.length} Knoten übersprungen`, `${job.failedIds.length} nodes skipped`),
+          code: 'campus_failed',
           onRetry: syncAll,
         });
       }
-    } catch (caught) {
+    },
+    onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'sync_failed';
       const detail = campusDetail(caught);
       setError(
@@ -176,11 +166,24 @@ export function CampusInfoView() {
         detail: detail || undefined,
         onRetry: syncAll,
       });
-    } finally {
-      setSyncing(false);
+    },
+    onSettled: (_result, _error, vars) => {
       // The store changed under the queries — refresh the cache metadata.
-      queryClient.invalidateQueries({ queryKey: keys.syncInfo(studyId) });
-    }
+      queryClient.invalidateQueries({ queryKey: keys.syncInfo(vars.studyId) });
+    },
+  });
+  const syncing = syncMutation.isPending;
+
+  function syncAll(): void {
+    if (!study || study.elementId == null || syncMutation.isPending) return;
+    syncMutation.mutate({
+      studyId: study.studyId,
+      elementId: study.elementId,
+      includeCourses: false,
+      onProgress: (update) =>
+        setProgress({ fetched: update.fetched, queued: 0, nodeCount: update.nodeCount, retries: update.retries, failedIds: update.failedIds }),
+      isCancelled: () => cancelSync.current,
+    });
   }
 
   async function clearCache(): Promise<void> {
