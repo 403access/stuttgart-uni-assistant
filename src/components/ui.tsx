@@ -40,6 +40,7 @@ export function Screen({
   subtitle,
   scroll = true,
   footer,
+  stickyHeader,
 }: {
   children: ReactNode;
   kicker?: string;
@@ -47,6 +48,7 @@ export function Screen({
   subtitle?: string;
   scroll?: boolean;
   footer?: ReactNode;
+  stickyHeader?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const header = (
@@ -65,7 +67,12 @@ export function Screen({
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          stickyHeaderIndices={stickyHeader ? [0] : undefined}
+        >
+          {stickyHeader ?? null}
           {body}
         </ScrollView>
       ) : (

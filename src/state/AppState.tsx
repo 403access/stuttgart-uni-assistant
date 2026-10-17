@@ -24,6 +24,7 @@ const empty: PersistedState = {
   sessionName: null,
   sessionEmail: null,
   sessionSubject: null,
+  mailAccount: null,
   oidcSessionId: null,
   curriculumNodes: [],
   curriculumStudyId: null,
@@ -47,6 +48,7 @@ type AppContextValue = PersistedState & {
   setStudies: (studies: CampusStudy[]) => void;
   setActiveStudy: (studyId: number) => void;
   signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
+  setMailAccount: (account: string | null) => void;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
   syncPlatform: (platform: PlatformId) => void;
@@ -131,6 +133,7 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
     sessionName: typeof value.sessionName === 'string' ? value.sessionName : null,
     sessionEmail: typeof value.sessionEmail === 'string' ? value.sessionEmail : null,
     sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
+    mailAccount: typeof value.mailAccount === 'string' ? value.mailAccount : null,
     oidcSessionId: typeof value.oidcSessionId === 'string' ? value.oidcSessionId : null,
     curriculumNodes: sanitizeNodes(value.curriculumNodes),
     curriculumStudyId: typeof value.curriculumStudyId === 'number' ? value.curriculumStudyId : null,
@@ -257,6 +260,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           activeStudyId: null,
           syncAt: { ...current.syncAt, siam: new Date().toISOString() },
         })),
+      setMailAccount: (account) => setState((current) => (current.mailAccount === account ? current : { ...current, mailAccount: account })),
       signOut: () =>
         setState((current) => ({
           ...current,
@@ -265,6 +269,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionName: null,
           sessionEmail: null,
           sessionSubject: null,
+          mailAccount: null,
           oidcSessionId: null,
           curriculumNodes: [],
           curriculumStudyId: null,
@@ -318,6 +323,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           sessionName: current.sessionName,
           sessionEmail: current.sessionEmail,
           sessionSubject: current.sessionSubject,
+          mailAccount: current.mailAccount,
           oidcSessionId: current.oidcSessionId,
           curriculumNodes: current.sessionMode === 'campus' ? current.curriculumNodes : [],
           curriculumStudyId: current.sessionMode === 'campus' ? current.curriculumStudyId : null,

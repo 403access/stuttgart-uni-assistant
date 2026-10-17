@@ -253,6 +253,45 @@ export interface CampusCourse {
   registrationUrl: string;
 }
 
+/** UniMail status of the assistant server: connection flag, never the secret. */
+export interface MailStatus {
+  configured: boolean;
+  account: string | null;
+  address: string | null;
+  webmail: string;
+  imap: string;
+}
+
+/** One mailbox folder as listed by the IMAP server (INBOX, sent, drafts, …). */
+export interface MailFolder {
+  /** Raw modified-UTF-7 name, sent back to the server for `SELECT`. */
+  name: string;
+  /** Decoded human-readable name (`&APY-` → `ö`); falls back to `name`. */
+  display?: string;
+  selectable: boolean;
+}
+
+/** One INBOX row as fetched through the assistant server over IMAP. */
+export interface MailMessage {
+  uid: number;
+  seen: boolean;
+  date: string;
+  from: string;
+  to: string;
+  subject: string;
+  preview: string;
+}
+
+/**
+ * Full body of one message. Plain text always; `html` holds the *sanitized* markup and is
+ * only rendered when the user explicitly asks for the HTML view.
+ */
+export interface MailBody {
+  text: string;
+  html: string | null;
+  truncated: boolean;
+}
+
 export interface BulkCourse extends CampusCourse {
   elementIds: number[];
   elementNames: string[];
@@ -265,6 +304,7 @@ export interface PersistedState {
   sessionName: string | null;
   sessionEmail: string | null;
   sessionSubject: string | null;
+  mailAccount: string | null;
   oidcSessionId: string | null;
   curriculumNodes: CurriculumNode[];
   curriculumStudyId: number | null;

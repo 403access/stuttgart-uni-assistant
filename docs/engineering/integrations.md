@@ -2,11 +2,17 @@
 
 The product description names four university systems. C@MPUS, ILIAS, and SDG Campus are not called. SIAM sign-in is a real OpenID Connect authorization-code flow against the TIK identity provider, documented with every URL in [oidc-login.md](oidc-login.md).
 
-The app never stores or sends the university password. The student types it on `https://idp.uni-stuttgart.de`. Client id and client secret, issued by TIK, stay in the server `.env`.
+For SIAM and C@MPUS the app never stores or sends the university password. The student types it on `https://idp.uni-stuttgart.de`. Client id and client secret, issued by TIK, stay in the server `.env`. UniMail is the deliberate exception, documented in [mail.md](mail.md): the TIK publishes IMAP as the interface for mail clients, so the password goes from the app to the local assistant server (which proves and holds it in memory) and on to the TIK IMAP host — never to any other endpoint, never persisted.
 
 ## What sync does today
 
 `syncPlatform` in `src/state/AppState.tsx` writes an ISO timestamp on `syncAt[platform]`. For ILIAS it also marks the bundled ILIAS document ids as downloaded. The handbook, grades, deadlines, and news do not change, because they already are the record.
+
+**UniMail is the one real personal-data connector besides C@MPUS.** The student enters the
+st-account and password in the app, the assistant server proofs the pair against the TIK
+IMAP service (`imap.uni-stuttgart.de:993`, officially published for mail clients) and
+reads the inbox server-side. The password never touches the app storage, the device keeps
+only the account id. Details: [mail.md](mail.md).
 
 | Platform id | Screen copy | Local effect |
 | --- | --- | --- |

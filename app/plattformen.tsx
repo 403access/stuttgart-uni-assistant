@@ -1,13 +1,15 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
 
 import { openOfficialCampus } from '@/src/auth/oidc';
+import { fetchMailStatus } from '@/src/auth/mail';
 import { Button, Card, Screen } from '@/src/components/ui';
 import { platformName } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
-import type { PlatformId } from '@/src/types';
+import type { MailStatus, PlatformId } from '@/src/types';
 
 const copy: Record<PlatformId, { de: string; en: string }> = {
   campus: {
@@ -30,7 +32,17 @@ const copy: Record<PlatformId, { de: string; en: string }> = {
 
 export default function PlatformsScreen() {
   const { locale, syncAt, syncPlatform, sessionAccount, sessionMode } = useApp();
+  const [mail, setMail] = useState<MailStatus | null>(null);
   const ids: PlatformId[] = ['siam', 'campus', 'ilias', 'sdg'];
+  useEffect(() => {
+    let active = true;
+    fetchMailStatus().then((next) => {
+      if (active) setMail(next);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   return (
     <Screen kicker={tx(locale, 'Anbindung', 'Connections')} subtitle={tx(locale, 'C@MPUS, ILIAS und SDG Campus bleiben lokal. SIAM öffnet den Identity Provider im Browser.', 'C@MPUS, ILIAS, and SDG Campus stay local. SIAM opens the identity provider in the browser.')}>
       <Stack.Screen options={{ title: tx(locale, 'Plattformen', 'Platforms') }} />
@@ -55,6 +67,24 @@ export default function PlatformsScreen() {
           {id === 'siam' ? null : <Button label={tx(locale, 'Jetzt synchronisieren', 'Sync now')} onPress={() => syncPlatform(id)} secondary />}
         </Card>
       ))}
+      <Card>
+        <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
+        <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
+          {tx(
+            locale,
+            'Uni-E-Mail über https://mail.uni-stuttgart.de/. Hier Anmeldedaten hinterlegen, dann liest die App den Posteingang über den IMAP-Dienst des TIK.',
+            'University e-mail at https://mail.uni-stuttgart.de/. Store credentials here, then the app reads the inbox over the TIK IMAP service.',
+          )}
+        </Text>
+        <Text style={{ color: colors.blue, fontWeight: '700' }}>
+          {mail === null
+            ? tx(locale, 'Der Assistenz-Server antwortet noch nicht.', 'The assistant server is not answering.')
+            : mail.configured
+              ? tx(locale, `Konto ${mail.account ?? '–'} · IMAP`, `Account ${mail.account ?? '–'} · IMAP`)
+              : tx(locale, 'Noch keine Anmeldedaten hinterlegt', 'No credentials stored yet')}
+        </Text>
+        <Button label={tx(locale, 'UniMail eintragen', 'Set up UniMail')} onPress={() => router.push('/mail')} secondary />
+      </Card>
     </Screen>
   );
 }

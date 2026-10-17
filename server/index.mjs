@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
 import { exportCampusCalendar, loadCampusStudies, loadCourseGroups, loadCurriculumCourses, loadCurriculumStructure, loginWithBrowserCredentials, loginWithCampusToken, publicCampusStatus, startCampusTokenRefresh, syncExportedCalendar } from './campus.mjs';
+import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials } from './mail.mjs';
 import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls } from './db.mjs';
 import { cancelSyncJob, getSyncJob, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
@@ -113,11 +114,86 @@ const server = createServer(async (request, response) => {
       configured: Boolean(process.env.XAI_API_KEY),
       oidc: publicOidcStatus(),
       campus: publicCampusStatus(),
+      mail: publicMailStatus(),
     });
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/api') {
     send(response, 200, apiCatalog());
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/mail/config') {
+    // Status only: whether credentials are held, no secret ever leaves the process.
+    send(response, 200, publicMailStatus());
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/mail/credentials') {
+    console.log('[mail] POST /v1/mail/credentials');
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      // Secrets in, never out: the password is validated against the TIK IMAP server and stays in this process.
+      const result = await saveMailCredentials({ account: body?.account, password: body?.password });
+      console.log(`[mail] credentials ok account=${result.account}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'mail_failed';
+      console.log(`[mail] credentials failed ${code}`);
+      send(response, code === 'mail_auth_failed' ? 401 : 400, { error: code, detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/mail/folders') {
+    const reqId = campusReq('GET /v1/mail/folders');
+    try {
+      const folders = await loadMailFolders();
+      console.log(`[mail #${reqId}] folders ok count=${folders.length}`);
+      send(response, 200, { folders });
+    } catch (error) {
+      const code = error.message || 'mail_failed';
+      console.log(`[mail #${reqId}] folders failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      const status = code === 'mail_not_configured' ? 409 : code === 'mail_auth_failed' ? 401 : 500;
+      send(response, status, { error: code, detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/mail/messages') {
+    const reqId = campusReq('GET /v1/mail/messages');
+    try {
+      const messages = await loadMailMessages(Number(url.searchParams.get('limit')), url.searchParams.get('folder'));
+      console.log(`[mail #${reqId}] messages ok count=${messages.length}`);
+      send(response, 200, { messages });
+    } catch (error) {
+      const code = error.message || 'mail_failed';
+      console.log(`[mail #${reqId}] messages failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      const status = code === 'mail_not_configured' ? 409 : code === 'mail_auth_failed' ? 401 : 500;
+      send(response, status, { error: code, detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/mail/body') {
+    const reqId = campusReq('GET /v1/mail/body');
+    try {
+      const body = await loadMailBody(url.searchParams.get('folder'), url.searchParams.get('uid'));
+      console.log(`[mail #${reqId}] body ok html=${body.html !== null} truncated=${body.truncated}`);
+      send(response, 200, body);
+    } catch (error) {
+      const code = error.message || 'mail_failed';
+      const status = code === 'mail_not_configured' ? 409 : code === 'mail_auth_failed' ? 401 : code === 'bad_uid' ? 400 : 500;
+      console.log(`[mail #${reqId}] body failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, status, { error: code, detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/mail/logout') {
+    console.log('[mail] POST /v1/mail/logout');
+    forgetMailCredentials();
+    send(response, 200, publicMailStatus());
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/config') {

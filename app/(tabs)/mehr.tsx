@@ -12,9 +12,10 @@ import { Text } from 'react-native';
 export default function MoreScreen() {
   const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId } = useApp();
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
-  const entries: Array<{ title: string; detail: string; href: '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' }> = [
+  const entries: Array<{ title: string; detail: string; href: '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' }> = [
     { title: tx(locale, 'Karte', 'Map'), detail: tx(locale, 'Uni-Lageplan und Gebäudesuche', 'University map and building search'), href: '/campus' },
     { title: tx(locale, 'Plattformen', 'Platforms'), detail: 'C@MPUS · ILIAS · SDG · SIAM', href: '/plattformen' },
+    { title: tx(locale, 'E-Mail', 'E-mail'), detail: tx(locale, 'UniMail-Anbindung und Posteingang', 'UniMail connection and inbox'), href: '/mail' },
     { title: tx(locale, 'Dokumente', 'Documents'), detail: tx(locale, 'ILIAS, Notizen, Import', 'ILIAS, notes, import'), href: '/dokumente' },
     { title: tx(locale, 'Kommilitonen', 'Peers'), detail: tx(locale, 'Bewertungen und geteilte Notizen', 'Reviews and shared notes'), href: '/kommilitonen' },
     { title: tx(locale, 'Altklausuren', 'Past exams'), detail: tx(locale, 'Themen und Schwerpunkte, keine PDFs', 'Topics and focus, no PDFs'), href: '/altklausuren' },

@@ -64,6 +64,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="mail"
+        options={{
+          title: tx(locale, 'Nachrichten', 'Messages'),
+          tabBarIcon: ({ color }) => <BarIcon symbol="envelope.fill" material="mail" color={color as string} />,
+        }}
+      />
+      <Tabs.Screen
         name="mehr"
         options={{
           title: tx(locale, 'Campus', 'Campus'),
