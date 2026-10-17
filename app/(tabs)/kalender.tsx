@@ -284,13 +284,15 @@ function CalToolbar({
           <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
         </Pressable>
         <Pressable onPress={() => toggle('type')}>
-          <Pill label={typeActive ? `${tx(locale, 'Typ', 'Type')} · ${typeFilter}` : `${tx(locale, 'Typ', 'Type')} ▾`} active={filtersOpen === 'type' || typeActive} />
+          <Pill label={typeActive ? typeFilter : `${tx(locale, 'Typ', 'Type')} ▾`} active={filtersOpen === 'type' || typeActive} />
         </Pressable>
         <Pressable onPress={() => toggle('place')}>
           <Pill
             label={
               placeActive
-                ? `${tx(locale, 'Platz', 'Place')} · ${assignFilter === 'fixed' ? tx(locale, 'Fixplatz', 'Fixed place') : tx(locale, 'Kein Fixplatz', 'No fixed place')}`
+                ? assignFilter === 'fixed'
+                  ? tx(locale, 'Fixplatz', 'Fixed place')
+                  : tx(locale, 'Kein Fixplatz', 'No fixed place')
                 : `${tx(locale, 'Platz', 'Place')} ▾`
             }
             active={filtersOpen === 'place' || placeActive}
@@ -641,8 +643,8 @@ const inputStyle = {
 };
 
 const toolbarStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 },
-  searchInput: { width: 180, paddingVertical: 9 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4, flexGrow: 1 },
+  searchInput: { flex: 1, minWidth: 160, paddingVertical: 9 },
   filterPanel: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 10, gap: 8 },
   filterTitle: { color: colors.blue, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   filterReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
