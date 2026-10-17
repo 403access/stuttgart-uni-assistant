@@ -94,7 +94,7 @@ export default function DocumentScreen() {
                 : refine(tx(locale, 'Übersetze den Text in die andere Sprache. Erfinde nichts.', 'Translate the text into the other language. Do not invent anything.'), plain)
             }
           />
-          <Button secondary label={tx(locale, 'Im Chat fragen', 'Ask in chat')} onPress={() => router.push({ pathname: '/chat', params: { doc: id } })} />
+          <Button secondary label={tx(locale, 'Im Chat fragen', 'Ask in chat')} onPress={() => router.navigate({ pathname: '/chat', params: { doc: id } })} />
           <Button
             secondary
             label={tx(locale, 'Exportieren', 'Export')}

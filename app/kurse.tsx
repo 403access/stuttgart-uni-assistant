@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { activeStudy, campusDetail, loadServerCourses, loadServerTree } from '@/src/auth/campus';
 import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCachedNodes, loadCoursesFetchedIds, saveCourses, saveFullStructure, type CoursesSyncInfo } from '@/src/campus/db';
@@ -260,11 +260,13 @@ export default function KurseScreen() {
                 </Muted>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   <Button secondary label="C@MPUS" onPress={() => router.push('/campus-info')} />
-                  <Button
-                    secondary
-                    label={tx(locale, 'Struktur-Browser', 'Structure browser')}
-                    onPress={() => router.push('/strukturen')}
-                  />
+                  {Platform.OS === 'web' ? (
+                    <Button
+                      secondary
+                      label={tx(locale, 'Struktur-Browser', 'Structure browser')}
+                      onPress={() => router.push('/strukturen')}
+                    />
+                  ) : null}
                 </View>
               </>
             ) : null}
