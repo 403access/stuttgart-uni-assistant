@@ -76,10 +76,9 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
       Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }),
     ]).start();
   }, [slide, fade]);
-  const accent = toneColor[item.tone];
+  const tone = toneColor[item.tone];
   return (
-    <Animated.View style={[styles.card, { opacity: fade, transform: [{ translateY: slide }] }]}>
-      <View style={[styles.accent, { backgroundColor: accent }]} />
+    <Animated.View style={[styles.card, { backgroundColor: tone, opacity: fade, transform: [{ translateY: slide }] }]}>
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {item.title}
@@ -95,8 +94,8 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
               item.onAction?.();
               onDismiss();
             }}
-            style={({ pressed }) => [styles.action, { borderColor: accent }, pressed && styles.pressed]}>
-            <Text style={[styles.actionText, { color: accent }]}>{item.actionLabel}</Text>
+            style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
+            <Text style={styles.actionText}>{item.actionLabel}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -120,7 +119,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     maxWidth: 480,
     width: '100%',
-    backgroundColor: colors.anthracite,
     borderRadius: 14,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -129,20 +127,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 6,
   },
-  accent: { width: 5 },
   body: { flex: 1, gap: 4, paddingHorizontal: 12, paddingVertical: 10 },
   title: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', lineHeight: 20 },
-  message: { color: '#D7DBDE', fontSize: 13, lineHeight: 18 },
+  message: { color: 'rgba(255,255,255,0.82)', fontSize: 13, lineHeight: 18 },
   action: {
     alignSelf: 'flex-start',
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 5,
     marginTop: 4,
   },
-  actionText: { fontSize: 13, fontWeight: '700' },
+  actionText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
   pressed: { opacity: 0.72 },
   close: { paddingHorizontal: 12, paddingTop: 8, alignSelf: 'flex-start' },
-  closeText: { color: '#9AA1A8', fontSize: 14, fontWeight: '700' },
+  closeText: { color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: '700' },
 });

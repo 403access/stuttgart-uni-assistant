@@ -19,6 +19,7 @@ import {
   type FolderKind,
 } from '@/src/auth/mail';
 import { Button, Card, FieldLabel, Pill, Screen } from '@/src/components/ui';
+import { showToast } from '@/src/components/toast';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -415,7 +416,11 @@ export default function MailScreen() {
       const result = await submitMailCredentials({ account, password });
       setPassword('');
       setMailAccount(result.account);
-      setNote(tx(locale, `Verbunden als ${result.account} (${result.address || 'Uni-Mail'}).`, `Connected as ${result.account} (${result.address || 'university mail'}).`));
+      showToast({
+        tone: 'success',
+        title: tx(locale, `Verbunden als ${result.account}`, `Connected as ${result.account}`),
+        message: result.address || tx(locale, 'Uni-Mail', 'university mail'),
+      });
       fetchMailFolders().catch(() => undefined);
       await refreshMessages({ quiet: true });
     } catch (caught) {
