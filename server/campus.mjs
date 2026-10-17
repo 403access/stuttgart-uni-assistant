@@ -105,6 +105,10 @@ export function coursesRequestUrl(studyId, elementId) {
   return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/courses?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
 }
 
+export function courseGroupsRequestUrl(courseId) {
+  return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.tm.cp/student/courseGroups/firstGroups/${courseId}`;
+}
+
 export function refreshRequestUrl() {
   return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/auth/token/refresh';
 }
@@ -256,6 +260,15 @@ export function parseElementId(value) {
   return id;
 }
 
+/** Course groups belong to one course: the id is required, same shape as the element id. */
+export function parseCourseId(value) {
+  if (value == null || value === '') return null;
+  if (typeof value === 'string' && !/^[1-9]\d{0,9}$/.test(value)) throw httpError(400, 'bad_course_id');
+  const id = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(id) || id <= 0 || id > 1_000_000_000) throw httpError(400, 'bad_course_id');
+  return id;
+}
+
 /** Study id from the chooser, or null when the caller wants the configured study. */
 export function parseStudyId(value) {
   if (value == null || value === '') return null;
@@ -340,12 +353,6 @@ export function coursesFromPayload(payload) {
         if (!course || typeof course.id !== 'number' || !Number.isInteger(course.id)) return [];
         const title = langValue(course.courseTitle);
         if (!title) return [];
-        const lecturers = (Array.isArray(course.lectureships) ? course.lectureships : []).flatMap((slot) => {
-          const first = slot?.identityLibDto?.firstName?.trim() || '';
-          const last = slot?.identityLibDto?.lastName?.trim() || '';
-          const name = last && first ? `${last}, ${first}` : last || first;
-          return name ? [name] : [];
-        });
         return [
           {
             id: course.id,
@@ -356,7 +363,7 @@ export function coursesFromPayload(payload) {
             semester: langValue(course.semester),
             semesterId: Number.isInteger(course.semesterId) ? course.semesterId : null,
             duration: typeof course.duration === 'number' ? course.duration : null,
-            lecturers,
+            lecturers: lecturerNames(course.lectureships),
             roomName: typeof course.roomName === 'string' ? course.roomName : '',
             startTime: typeof course.startTime === 'string' ? course.startTime : '',
             endTime: typeof course.endTime === 'string' ? course.endTime : '',
@@ -368,6 +375,70 @@ export function coursesFromPayload(payload) {
         ];
       });
     });
+  });
+}
+
+/** Lecturer names as `Nachname, Vorname`, dropping empty slots — shared by courses and course groups. */
+export function lecturerNames(slots) {
+  return (Array.isArray(slots) ? slots : []).flatMap((slot) => {
+    const first = slot?.identityLibDto?.firstName?.trim() || '';
+    const last = slot?.identityLibDto?.lastName?.trim() || '';
+    const name = last && first ? `${last}, ${first}` : last || first;
+    return name ? [name] : [];
+  });
+}
+
+/** The portal sends room links as paths like `/app/desktop/#/pl/ui/$ctx/ris.einzelRaum?raumKey=7235`; resolve them. */
+export function portalUrl(href) {
+  if (typeof href !== 'string' || !href.trim()) return '';
+  const value = href.trim();
+  if (/^https?:\/\//i.test(value)) return value;
+  return `https://campus.uni-stuttgart.de${value.startsWith('/') ? '' : '/'}${value}`;
+}
+
+/** One weekly session of a group. Row without an id or a start time is invalid and returns null. */
+export function appointmentFromPayload(dto) {
+  if (!dto || typeof dto.id !== 'number' || !Number.isInteger(dto.id)) return null;
+  const from = typeof dto.timestampFrom?.value === 'string' ? dto.timestampFrom.value : '';
+  if (!from) return null;
+  const to = typeof dto.timestampTo?.value === 'string' ? dto.timestampTo.value : '';
+  return {
+    id: dto.id,
+    weekday: langValue(dto.weekday?.langDataType),
+    weekdayShort: typeof dto.weekday?.key === 'string' ? dto.weekday.key : '',
+    date: from.slice(0, 10),
+    startTime: from.slice(11, 16),
+    endTime: to.slice(11, 16),
+    eventType: langValue(dto.appointmentEventTypeDto?.name),
+    room: typeof dto.resourceName === 'string' ? dto.resourceName : '',
+    roomUrl: portalUrl(dto.resourceUrl),
+    status: typeof dto.appointmentStatusType === 'string' ? dto.appointmentStatusType : '',
+    seriesId: Number.isInteger(dto.appointmentSeriesId) ? dto.appointmentSeriesId : null,
+    lecturers: lecturerNames(dto.appointmentLectureshipDto),
+  };
+}
+
+/**
+ * Groups of one course from `courseGroupDtos` (this endpoint answers at the
+ * top level, not wrapped in `resource`). A group without an id is dropped.
+ */
+export function groupsFromPayload(payload) {
+  const dtos = Array.isArray(payload?.courseGroupDtos) ? payload.courseGroupDtos : [];
+  return dtos.flatMap((dto) => {
+    if (!dto || typeof dto.id !== 'number' || !Number.isInteger(dto.id)) return [];
+    return [
+      {
+        id: dto.id,
+        name: typeof dto.name === 'string' ? dto.name : '',
+        courseId: Number.isInteger(dto.courseId) ? dto.courseId : null,
+        standard: dto.standardgroupFlag === 'J',
+        limitedParticipation: dto.limitedParticipationFlag === 'J',
+        maxParticipants: typeof dto.maxNumberOfParticipants === 'number' ? dto.maxNumberOfParticipants : null,
+        confirmedPlaces: typeof dto.confirmedPlaces === 'number' ? dto.confirmedPlaces : null,
+        lecturers: lecturerNames(dto.lectureshipDtos),
+        appointments: (Array.isArray(dto.appointmentDtos) ? dto.appointmentDtos : []).map(appointmentFromPayload).filter(Boolean),
+      },
+    ];
   });
 }
 
@@ -618,6 +689,24 @@ export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, 
     if (!cached) throw error;
     return cached;
   }
+}
+
+/**
+ * Groups with their appointments for one course (`slc.tm.cp` course-pages
+ * service, observed 18 October 2026). Live read: the answer stays out of
+ * the store, the call itself lands in the portal history.
+ */
+export async function loadCourseGroups(courseIdOverride, fetchImpl = fetch, signal) {
+  if (typeof courseIdOverride === 'function') {
+    fetchImpl = courseIdOverride;
+    courseIdOverride = undefined;
+  }
+  // Groups belong to one course: there is no useful default, like courses to one node.
+  const courseId = parseCourseId(courseIdOverride);
+  if (courseId == null) throw httpError(400, 'bad_course_id');
+  const payload = await readCampus(courseGroupsRequestUrl(courseId), `course groups course=${courseId}`, 'course-groups', fetchImpl, { signal });
+  // A course without groups is a valid answer, not an error.
+  return { courseId, groups: groupsFromPayload(payload) };
 }
 
 /**

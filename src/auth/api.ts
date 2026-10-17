@@ -6,6 +6,7 @@ export interface ApiOperation {
   path: string;
   replay: boolean;
   acceptsElementId?: boolean;
+  acceptsCourseId?: boolean;
 }
 
 export interface ApiCallResult {
@@ -73,6 +74,9 @@ export async function sendApiOperation(
     if (typeof requested.elementId === 'number') payload.elementId = requested.elementId;
     if (typeof requested.studyId === 'number') payload.studyId = requested.studyId;
     body = JSON.stringify(payload);
+  } else if (operation.id === 'campus-course-groups') {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(typeof elementId === 'number' ? { courseId: elementId } : {});
   } else if (operation.id === 'assist') {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify({

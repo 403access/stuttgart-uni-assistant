@@ -5,7 +5,7 @@ process.env.CAMPUS_DB_PATH = ':memory:';
 
 import { apiCatalog } from './catalog.mjs';
 import { resetDbForTests } from './db.mjs';
-import { campusAuthorizationHeader, campusRequestHeaders, clearRuntimeToken, coursesFromPayload, coursesRequestUrl, elementIdFromLink, extractRefreshedToken, loadCurriculumCourses, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, proactiveCampusRefresh, proactiveRefreshMinutes, publicCampusStatus, refreshCampusToken, refreshRequestUrl, startCampusTokenRefresh, stopCampusTokenRefresh, studiesFromChooser } from './campus.mjs';
+import { campusAuthorizationHeader, campusRequestHeaders, clearRuntimeToken, coursesFromPayload, coursesRequestUrl, courseGroupsRequestUrl, elementIdFromLink, extractRefreshedToken, groupsFromPayload, loadCourseGroups, loadCurriculumCourses, loadCurriculumStructure, parseCourseId, parseElementId, parseStudyId, portalMessage, portalUrl, profileFromCurriculum, proactiveCampusRefresh, proactiveRefreshMinutes, publicCampusStatus, refreshCampusToken, refreshRequestUrl, startCampusTokenRefresh, stopCampusTokenRefresh, studiesFromChooser } from './campus.mjs';
 
 beforeEach(() => {
   resetDbForTests();
@@ -109,6 +109,108 @@ test('element ids stay positive integers', () => {
   for (const value of ['1/../x', 0, -1, 1.5, 'PSESSIONID=abc', 'https://campus.uni-stuttgart.de/']) {
     assert.throws(() => parseElementId(value), (error) => error.message === 'bad_element_id');
   }
+});
+
+test('course ids stay positive integers', () => {
+  assert.equal(parseCourseId(''), null);
+  assert.equal(parseCourseId(null), null);
+  assert.equal(parseCourseId(461098), 461098);
+  assert.equal(parseCourseId('461098'), 461098);
+  for (const value of ['../groups', 0, -1, 1.5, 'firstGroups/461098']) {
+    assert.throws(() => parseCourseId(value), (error) => error.message === 'bad_course_id');
+  }
+});
+
+test('course groups url names the course', () => {
+  assert.equal(
+    courseGroupsRequestUrl(461098),
+    'https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.tm.cp/student/courseGroups/firstGroups/461098',
+  );
+});
+
+test('relative portal urls resolve against the portal host', () => {
+  assert.equal(portalUrl('/app/desktop/#/pl/ui/$ctx/ris.einzelRaum?raumKey=7235'), 'https://campus.uni-stuttgart.de/app/desktop/#/pl/ui/$ctx/ris.einzelRaum?raumKey=7235');
+  assert.equal(portalUrl('app/desktop'), 'https://campus.uni-stuttgart.de/app/desktop');
+  assert.equal(portalUrl('https://campus.uni-stuttgart.de/pages/x'), 'https://campus.uni-stuttgart.de/pages/x');
+  assert.equal(portalUrl(''), '');
+  assert.equal(portalUrl(undefined), '');
+});
+
+test('course groups map name, lecturers, places, and dated appointments', () => {
+  const group = {
+    id: 421533,
+    name: 'Standardgruppe',
+    courseId: 461098,
+    standardgroupFlag: 'J',
+    maxNumberOfParticipants: 60,
+    confirmedPlaces: 60,
+    limitedParticipationFlag: 'N',
+    lectureshipDtos: [
+      { identityLibDto: { firstName: 'Yulia', lastName: 'Zuban' } },
+      { identityLibDto: { firstName: '', lastName: '' } },
+    ],
+    appointmentDtos: [
+      {
+        id: 3977982,
+        weekday: {
+          id: 4,
+          key: 'Do.',
+          langDataType: { value: 'Donnerstag', translations: { translation: [{ lang: 'de', value: 'Donnerstag' }, { lang: 'en', value: 'Thursday' }] } },
+        },
+        timestampFrom: { coType: 'datetime', value: '2026-10-15T14:00:00' },
+        timestampTo: { coType: 'datetime', value: '2026-10-15T15:30:00' },
+        appointmentEventTypeDto: { name: { value: 'Abhaltung', translations: { translation: [{ lang: 'de', value: 'Abhaltung' }, { lang: 'en', value: 'regular class' }] } }, key: 'A' },
+        resourceId: 178,
+        resourceName: 'Kepler 11 (K1) - M 11.32 (KP1103M 11.32)',
+        resourceUrl: '/app/desktop/#/pl/ui/$ctx/ris.einzelRaum?raumKey=7235',
+        appointmentStatusType: 'CONFIRMED',
+        appointmentLectureshipDto: [],
+        appointmentSeriesId: 255839,
+      },
+      {
+        id: 3977983,
+        weekday: { key: 'Do.', langDataType: { value: 'Donnerstag' } },
+        timestampFrom: { coType: 'datetime', value: '2026-10-22T14:00:00' },
+        timestampTo: { coType: 'datetime', value: '2026-10-22T15:30:00' },
+        resourceName: 'Kepler 11 (K1) - M 11.32 (KP1103M 11.32)',
+        appointmentStatusType: 'CONFIRMED',
+        appointmentSeriesId: 255839,
+      },
+    ],
+  };
+  const [mapped] = groupsFromPayload({ courseGroupDtos: [group] });
+  assert.equal(mapped.id, 421533);
+  assert.equal(mapped.name, 'Standardgruppe');
+  assert.equal(mapped.courseId, 461098);
+  assert.equal(mapped.standard, true);
+  assert.equal(mapped.limitedParticipation, false);
+  assert.equal(mapped.maxParticipants, 60);
+  assert.equal(mapped.confirmedPlaces, 60);
+  assert.deepEqual(mapped.lecturers, ['Zuban, Yulia']);
+  assert.equal(mapped.appointments.length, 2);
+  assert.deepEqual(mapped.appointments[0], {
+    id: 3977982,
+    weekday: 'Donnerstag',
+    weekdayShort: 'Do.',
+    date: '2026-10-15',
+    startTime: '14:00',
+    endTime: '15:30',
+    eventType: 'Abhaltung',
+    room: 'Kepler 11 (K1) - M 11.32 (KP1103M 11.32)',
+    roomUrl: 'https://campus.uni-stuttgart.de/app/desktop/#/pl/ui/$ctx/ris.einzelRaum?raumKey=7235',
+    status: 'CONFIRMED',
+    seriesId: 255839,
+    lecturers: [],
+  });
+  assert.equal(mapped.appointments[1].eventType, '');
+});
+
+test('groups and appointments without an id or a start time are dropped', () => {
+  assert.deepEqual(groupsFromPayload({ courseGroupDtos: [{ name: 'Ohne Id' }, { nope: true } ]}), []);
+  assert.deepEqual(groupsFromPayload({}), []);
+  assert.deepEqual(groupsFromPayload(null), []);
+  const [one] = groupsFromPayload({ courseGroupDtos: [{ id: 1, name: 'G', appointmentDtos: [{ id: 2 }, { noDate: true }, { id: 3, timestampFrom: { value: '2026-10-15T14:00:00' } }] }] });
+  assert.deepEqual(one.appointments.map((item) => item.id), [3]);
 });
 
 test('the study chooser maps the German name and the root element link', () => {
@@ -274,6 +376,48 @@ test('courses need an element id and an empty list is a valid answer', async () 
   assert.equal(empty.elementId, 287785);
 });
 
+test('course groups need a course id', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'test-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'test-cookie';
+  await assert.rejects(() => loadCourseGroups(undefined, async () => ({})), (error) => error.message === 'bad_course_id');
+  await assert.rejects(() => loadCourseGroups('../groups', async () => ({})), (error) => error.message === 'bad_course_id');
+});
+
+test('course groups read the course-pages endpoint and map the group list', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'test-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'test-cookie';
+  const payload = {
+    courseGroupDtos: [{ id: 421533, name: 'Standardgruppe', courseId: 461098, appointmentDtos: [{ id: 3977982, timestampFrom: { value: '2026-10-15T14:00:00' }, timestampTo: { value: '2026-10-15T15:30:00' } }] }],
+  };
+  let seenUrl = '';
+  let seenHeaders = null;
+  const fetchImpl = async (url, options = {}) => {
+    seenUrl = url;
+    seenHeaders = options.headers;
+    return { ok: true, status: 200, json: async () => payload };
+  };
+  const result = await loadCourseGroups(461098, fetchImpl);
+  assert.equal(seenUrl, courseGroupsRequestUrl(461098));
+  assert.equal(seenHeaders.Authorization, 'Bearer test-token');
+  assert.equal(result.courseId, 461098);
+  assert.equal(result.groups.length, 1);
+  assert.equal(result.groups[0].name, 'Standardgruppe');
+  assert.deepEqual(result.groups[0].appointments.map((item) => item.date), ['2026-10-15']);
+});
+
+test('course groups without groups are a valid answer', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'test-token';
+  process.env.CAMPUS_SESSION_COOKIE = 'test-cookie';
+  const called = [];
+  const fetchImpl = async (url) => {
+    called.push(url);
+    return { ok: true, status: 200, json: async () => ({ courseGroupDtos: [] }) };
+  };
+  const result = await loadCourseGroups(461098, fetchImpl);
+  assert.deepEqual(result.groups, []);
+  assert.equal(called.length, 1);
+});
+
 test('refresh uses the portal endpoint without an Authorization header', async () => {
   process.env.CAMPUS_BEARER_TOKEN = 'old-token';
   process.env.CAMPUS_SESSION_COOKIE = 'session-value';
@@ -430,6 +574,7 @@ test('api catalog only names known paths', () => {
     '/v1/campus/credentials',
     '/v1/campus/structure',
     '/v1/campus/courses',
+    '/v1/campus/course-groups',
     '/v1/campus/studies',
     '/v1/campus/sync',
     '/v1/campus/tree',

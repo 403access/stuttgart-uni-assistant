@@ -18,6 +18,7 @@ function summary(locale: 'de' | 'en', id: string): string {
     'campus-structure': ['Dieselbe Struktur, optional für eine Kind-Id.', 'The same structure, optionally for a child id.'],
     'campus-studies': ['Listet die eingeschriebenen Studiengänge.', 'Lists the enrolled degree programs.'],
     'campus-courses': ['Lehrveranstaltungen eines Curriculum-Knotens.', 'Courses of a curriculum node.'],
+    'campus-course-groups': ['Gruppen und Termine einer Veranstaltung.', 'Groups and appointments of a course.'],
     assist: ['Kurze Testfrage an das Modell.', 'A short test question to the model.'],
     'oidc-start': ['Startet den Browser-Login. Nicht von hier.', 'Starts the browser login. Not from here.'],
     'oidc-exchange': ['Tauscht den Code. Nicht von hier.', 'Exchanges the code. Not from here.'],
@@ -37,6 +38,7 @@ export default function ApiScreen() {
   const [operations, setOperations] = useState<ApiOperation[]>([]);
   const [live, setLive] = useState(true);
   const [elementId, setElementId] = useState('');
+  const [courseId, setCourseId] = useState('');
   const [busyId, setBusyId] = useState('');
   const [result, setResult] = useState<ApiCallResult | null>(null);
   const [notice, setNotice] = useState('');
@@ -56,9 +58,14 @@ export default function ApiScreen() {
 
   async function send(operation: ApiOperation, requestedId?: number) {
     if (busyId) return;
-    const typed = requestedId ?? (elementId ? Number(elementId) : undefined);
+    // Course groups take a course id instead of an element id.
+    const typed = requestedId ?? (operation.acceptsCourseId ? Number(courseId) || undefined : elementId ? Number(elementId) : undefined);
     if (operation.acceptsElementId && elementId && !requestedId && !/^[1-9]\d{0,9}$/.test(elementId)) {
       setNotice(tx(locale, 'Die Element-Id muss eine positive Ganzzahl sein.', 'The element id must be a positive integer.'));
+      return;
+    }
+    if (operation.acceptsCourseId && courseId && !requestedId && !/^[1-9]\d{0,9}$/.test(courseId)) {
+      setNotice(tx(locale, 'Die Kurs-Id muss eine positive Ganzzahl sein.', 'The course id must be a positive integer.'));
       return;
     }
     // Courses belong to one study: replay with the selected study when set.
@@ -167,6 +174,15 @@ export default function ApiScreen() {
               onChangeText={setElementId}
               keyboardType="number-pad"
               placeholder={tx(locale, 'Element-Id, leer = Wurzel', 'Element id, empty = root')}
+              placeholderTextColor={colors.mute}
+              style={styles.input}
+            />
+          ) : operation.acceptsCourseId ? (
+            <TextInput
+              value={courseId}
+              onChangeText={setCourseId}
+              keyboardType="number-pad"
+              placeholder={tx(locale, 'Kurs-Id, z. B. 461098', 'Course id, e.g. 461098')}
               placeholderTextColor={colors.mute}
               style={styles.input}
             />
