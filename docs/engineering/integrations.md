@@ -48,7 +48,7 @@ Until that backend exists, the honest demo is the one in this repository: labele
 
 This one is implemented. The client calls only the project server. The server calls `https://api.x.ai/v1/responses`. Details are in [ai-assistant.md](ai-assistant.md).
 
-`EXPO_PUBLIC_ASSISTANT_URL` defaults to `http://127.0.0.1:8787`. A physical device must use the computer's LAN address, because `127.0.0.1` on the phone is the phone. Setting the variable to `off` disables the remote call and leaves the local answer.
+`EXPO_PUBLIC_ASSISTANT_URL` defaults to `http://127.0.0.1:8787`. A physical device must use the computer's LAN address, because `127.0.0.1` on the phone is the phone. Away from the LAN, the assistant gets a public hostname from `npm run assistant:tunnel` instead — see [assistant-tunnel.md](assistant-tunnel.md). Setting the variable to `off` disables the remote call and leaves the local answer.
 
 ## Files and sharing
 

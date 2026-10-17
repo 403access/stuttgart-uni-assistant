@@ -21,9 +21,11 @@ Scripts in `package.json`:
 | `start` | `expo start` | Dev server, then Expo Go, a simulator, or the web UI |
 | `web` | `expo start --web` | Browser |
 | `ios` / `android` | `expo start --ios` / `--android` | Simulator or emulator |
+| `tunnel` | `expo start --tunnel` | Dev server reachable from another network (Expo's ngrok tunnel) |
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
-| `check` | `tsx scripts/check-assistant.ts` + `tsx scripts/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests |
+| `check` | `tsx scripts/check-assistant.ts` + `tsx scripts/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests, the assistant-tunnel helper tests |
 | `assistant` | `node server/index.mjs` | Local Grok proxy on port 8787 |
+| `assistant:tunnel` | `node scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes the public URL into `EXPO_PUBLIC_ASSISTANT_URL` |
 | `campus:token` / `campus:session` | `node scripts/set-campus-secret.mjs` | Write `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` into git-ignored `.env` |
 | `campus:secret` | `node scripts/set-campus-secret.mjs` | `list` shows which secrets are set, masked; `--help` shows usage |
 
@@ -54,6 +56,16 @@ Healthy and unconfigured:
 
 On a phone, set `EXPO_PUBLIC_ASSISTANT_URL` to `http://<computer-lan-ip>:8787` before starting Expo. Restart Expo after changing it, because public env vars are read at bundle time. Use `off` to force the local engine.
 
+Off the local network, Expo's own tunnel (`npm run tunnel`) does not carry the assistant. Start the assistant, put it behind its own tunnel with `npm run assistant:tunnel` — that writes the `trycloudflare.com` hostname into `EXPO_PUBLIC_ASSISTANT_URL` — and start Expo last:
+
+```bash
+npm run assistant        # terminal 1
+npm run assistant:tunnel # terminal 2, writes .env and holds the tunnel
+npm run tunnel           # terminal 3
+```
+
+The hostname is new on every run, so Expo has to be restarted with it. Every assistant route is public while the tunnel is up; stop it after the demonstration. [assistant-tunnel.md](../engineering/assistant-tunnel.md) has the details.
+
 Stop the assistant process when you are done. It listens on `0.0.0.0`. Leave it running only while you are demonstrating on the LAN.
 
 ### Web export
@@ -70,6 +82,7 @@ This writes a static bundle and renders the routes. It is a build check, not a h
 | --- | --- | --- | --- |
 | Local demo | `npx expo start` or `npm run web` | Bundle + Async Storage | Optional, same machine |
 | Device demo | Expo Go or a dev build | Same | LAN URL in `EXPO_PUBLIC_ASSISTANT_URL` |
+| Device demo, off the LAN | Expo Go | Same | `npm run assistant:tunnel` hostname in `EXPO_PUBLIC_ASSISTANT_URL`, with Expo started through `npm run tunnel` |
 | Later preview binary | EAS, not configured | Still the fictional record | Server host with the key in the environment |
 | Later production | Store build under the demo bundle id only until a real owner exists | Per-student data from a backend | Same proxy pattern, connectors behind the backend |
 
@@ -116,7 +129,7 @@ Install Expo libraries with `npx expo install <package>` from the project direct
 
 - No crash reporter, no analytics, no remote logging.
 - No backup of Async Storage. Reset and uninstall are the recovery tools.
-- No rate limit on the proxy beyond the body cap and the upstream timeout. Do not expose it on the public internet with a key installed.
+- No rate limit on the proxy beyond the body cap and the upstream timeout. Do not leave it on the public internet with a key installed; the Cloudflare quick tunnel in [assistant-tunnel.md](../engineering/assistant-tunnel.md) is meant to be up for one demonstration and stopped afterwards.
 - No on-call rotation. The maintenance rules for changing the record are in [the maintenance note](../sdlc/08-maintenance.md).
 
 ## Support answers that match the product

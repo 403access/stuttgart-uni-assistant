@@ -60,6 +60,7 @@ const sidebars = {
         'engineering/campus-logging',
         'engineering/oidc-login',
         'engineering/ai-assistant',
+        'engineering/assistant-tunnel',
         'engineering/security-and-privacy',
         'engineering/design-system',
       ],

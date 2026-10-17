@@ -20,6 +20,7 @@ Then open the project in Expo Go, an iOS simulator, an Android emulator, or the 
 npm run web
 npm run ios
 npm run android
+npm run tunnel   # from another network; the assistant needs its own tunnel too
 ```
 
 On the sign-in screen, **Mit C@MPUS-Token anmelden** loads the curriculum structure through the assistant server. The bearer token and the `PSESSIONID` cookie stay in `.env`. **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann. **Mehr → Schnittstelle** lists the server routes and can send them again. The request and the stored nodes are documented in [docs/engineering/campus-curriculum.md](docs/engineering/campus-curriculum.md), and the study chooser in [docs/engineering/campus-studies.md](docs/engineering/campus-studies.md).
@@ -37,6 +38,16 @@ npm run assistant
 The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`. `GET /health` is on that assistant server, for example `http://127.0.0.1:8787/health`. The Expo app on port 8081 does not serve `/health`.
 
 `GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
+
+When the phone is not on the local network, Expo's tunnel carries the bundle but not the assistant, so the assistant needs a tunnel of its own. Run the three processes in this order, because `EXPO_PUBLIC_*` is read at bundle time:
+
+```bash
+npm run assistant         # assistant on 127.0.0.1:8787
+npm run assistant:tunnel  # Cloudflare hostname, written into EXPO_PUBLIC_ASSISTANT_URL
+npm run tunnel            # Expo with --tunnel
+```
+
+The `trycloudflare.com` hostname changes on every run, so restart Expo whenever it does. `npm run assistant:tunnel -- --help` prints the options, and [docs/engineering/assistant-tunnel.md](docs/engineering/assistant-tunnel.md) has the details and the security caveats.
 
 Write the C@MPUS secrets without editing the file by hand. `npm run campus:token -- <token>` sets `CAMPUS_BEARER_TOKEN` and `npm run campus:session -- <value>` sets `CAMPUS_SESSION_COOKIE` in the git-ignored `.env`. A pasted `Bearer <token>` header, an `Authorization:` line, or a full `PSESSIONID=...; ...` cookie string is reduced to the bare value. Omit the value to type it without echoing, or pipe it with `echo "$TOKEN" | npm run campus:token`. `npm run campus:secret -- list` shows which values are set, masked. Restart `npm run assistant` after a change.
 
@@ -60,6 +71,7 @@ npm run check
 | `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
 | `app/api.tsx` | API overview. Replays known server routes |
 | `server/index.mjs` | Assistant server. Holds the xAI key and the C@MPUS secrets |
+| `scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_URL` |
 | `scripts/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |
 

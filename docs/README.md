@@ -58,6 +58,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/tanstack-query.md](engineering/tanstack-query.md) | Query client wiring, typed key factory, shared sync mutation, device-cache write-back |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
+| [engineering/assistant-tunnel.md](engineering/assistant-tunnel.md) | Reaching the assistant from a phone off the LAN: the two tunnels, the quick hostname, the `.env` write |
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
 | [engineering/design-system.md](engineering/design-system.md) | Color, type, mark, and screen patterns |
 

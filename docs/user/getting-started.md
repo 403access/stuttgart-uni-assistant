@@ -11,6 +11,8 @@ npx expo start
 
 Open the project in Expo Go, an iOS simulator, an Android emulator, or the browser. On a real phone, scan the QR code from the dev server. The phone and the computer need to be on the same network, because the app talks to the assistant server on the computer.
 
+If you are on mobile data or another network, start Expo with `npm run tunnel` and put the assistant behind a tunnel of its own with `npm run assistant:tunnel`. Expo may start only after that, because the public address is baked into the app. The commands and the caveats are in [assistant-tunnel.md](../engineering/assistant-tunnel.md).
+
 If you also want live C@MPUS data and e-mail, start the assistant server first:
 
 ```bash

@@ -88,7 +88,9 @@ IMAP for ILIAS notifications beyond what the university already forwards to the 
 - The password only travels on the local loopback to the assistant server and over TLS
   to the TIK IMAP host. AsyncStorage is not a vault (see
   [security-and-privacy.md](security-and-privacy.md)), so the app persists nothing but
-  the account id.
+  the account id. Over the assistant tunnel described in
+  [assistant-tunnel.md](assistant-tunnel.md) the first hop is the Cloudflare edge rather
+  than the loopback, so the tunnel is up only for the demonstration it serves.
 - Errors map to stable codes: `mail_auth_failed` (wrong pair, HTTP 401),
   `mail_not_configured` (HTTP 409), `mail_network` / `imap_timeout` /
   `mail_disconnected` / `bad_uid`. Server text arrives only as a capped `detail`, never
