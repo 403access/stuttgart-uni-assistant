@@ -1,0 +1,30 @@
+/**
+ * Docusaurus classic theme overrides — keep this repo's docs readable
+ * and visually neutral so the content stays the focus.
+ */
+:root {
+  --ifm-color-primary: #1f6f43;
+  --ifm-color-primary-dark: #1b623b;
+  --ifm-color-primary-darker: #195c37;
+  --ifm-color-primary-darkest: #144c2e;
+  --ifm-color-primary-light: #268550;
+  --ifm-color-primary-lighter: #2a8b54;
+  --ifm-color-primary-lightest: #3aa664;
+  --ifm-code-font-size: 90%;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #4ec790;
+  --ifm-color-primary-dark: #3fbd82;
+  --ifm-color-primary-darker: #37b67b;
+  --ifm-color-primary-darkest: #2c9a66;
+  --ifm-color-primary-light: #62d3a0;
+  --ifm-color-primary-lighter: #6adaa7;
+  --ifm-color-primary-lightest: #87e6bd;
+}
+
+/* Tighten long-form prose slightly for dense doc tables */
+article table {
+  display: table;
+  width: 100%;
+}

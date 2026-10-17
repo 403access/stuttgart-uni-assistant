@@ -46,7 +46,10 @@
     "campus:secret": "node scripts/set-campus-secret.mjs",
     "campus:token": "node scripts/set-campus-secret.mjs token",
     "campus:session": "node scripts/set-campus-secret.mjs session",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "docs": "cd docs-site && bun run start",
+    "docs:build": "cd docs-site && bun run build",
+    "docs:serve": "cd docs-site && bun run serve"
   },
   "private": true
 }
