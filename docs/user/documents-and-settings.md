@@ -1,5 +1,11 @@
 # Documents, notices, settings, and your data
 
+## The Campus tab
+
+**Campus** is the app's settings and services tab. Its items are grouped into **Campus**, **Studium**, **Austausch**, and **App**, one card per item. A magnifier icon at the top right opens a search field that filters the items as you type; it matches each item's title, its description, and its tags, so `email`, `E-Mail`, and `unimail` all find **E-Mail**. Categories with no match are hidden.
+
+**Studium → Kalender-Import** pulls your personal C@MPUS calendar into the app (ICS or CSV) or syncs it into the device database, and lists a history of past imports (see [campus-calendar-export](../engineering/campus-calendar-export.md)).
+
 ## Documents (Document Hub)
 
 **Campus → Dokumente** opens the document hub over the bundled ILIAS texts and your own notes.
