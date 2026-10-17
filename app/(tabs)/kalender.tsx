@@ -3,21 +3,26 @@ import * as WebBrowser from 'expo-web-browser';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { activeStudy } from '@/src/auth/campus';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
-import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx, weekdays } from '@/src/text';
-import type { BulkCourse } from '@/src/types';
+import type { BulkCourse, CampusStudy } from '@/src/types';
 
 type CalView = 'agenda' | 'week' | 'day' | 'month';
 type CalSort = 'time' | 'title';
 type AssignFilter = 'all' | 'fixed' | 'notfixed';
+type StudyFilter = number | 'all';
+
+/** A cached course tagged with the study it belongs to (the calendar spans all studies). */
+type StudyCourse = BulkCourse & { studyId: number };
+
+const courseKey = (studyId: number, courseId: number): string => `${studyId}-${courseId}`;
+
 
 /** Assigned to the student: the portal marks it with a fixed place (`Fixplatz zugewiesen`). */
 function isAssigned(status: string): boolean {
@@ -47,31 +52,41 @@ function minutesOf(value: string): number | null {
 
 /** Agenda, week, day, and month views over cached course appointments. No portal calls. */
 export default function KalenderScreen() {
-  const { locale, sessionMode, campusStudies, activeStudyId } = useApp();
+  const { locale, sessionMode, campusStudies } = useApp();
   const [view, setView] = useState<CalView>('agenda');
   const [anchor, setAnchor] = useState(todayLocal());
   const [query, setQuery] = useState('');
+  const [studyFilter, setStudyFilter] = useState<StudyFilter>('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [assignFilter, setAssignFilter] = useState<AssignFilter>('fixed');
   const [sort, setSort] = useState<CalSort>('time');
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const isWeb = Platform.OS === 'web';
-  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
+  const isCampus = sessionMode === 'campus' && campusStudies.length > 0;
   // Device store first, server snapshot second — a plain view-read: nothing
-  // is written back; the refetch on revisit comes from the queries.
-  const localQ = useQuery(deviceCoursesQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
-  const snapshotQ = useQuery(serverCoursesQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
-  const courses = useMemo(() => {
-    const map = new Map((localQ.data ?? []).map((course) => [course.id, course]));
-    for (const course of snapshotQ.data?.courses ?? []) {
-      if (!map.has(course.id)) map.set(course.id, { ...course });
-    }
+  // is written back; the refetch on revisit comes from the queries. The study
+  // filter spans every enrolled study, so each one is read and tagged.
+  const localQs = useQueries({ queries: campusStudies.map((item) => deviceCoursesQuery(item.studyId, { enabled: isCampus })) });
+  const snapshotQs = useQueries({ queries: campusStudies.map((item) => serverCoursesQuery(item.studyId, { enabled: isCampus })) });
+  const allCourses = useMemo(() => {
+    const map = new Map<string, StudyCourse>();
+    campusStudies.forEach((item, index) => {
+      for (const course of localQs[index]?.data ?? []) map.set(courseKey(item.studyId, course.id), { ...course, studyId: item.studyId });
+      for (const course of snapshotQs[index]?.data?.courses ?? []) {
+        const key = courseKey(item.studyId, course.id);
+        if (!map.has(key)) map.set(key, { ...course, studyId: item.studyId });
+      }
+    });
     return [...map.values()];
-  }, [localQ.data, snapshotQ.data]);
+  }, [campusStudies, localQs, snapshotQs]);
+  const courses = useMemo(
+    () => (studyFilter === 'all' ? allCourses : allCourses.filter((course) => course.studyId === studyFilter)),
+    [allCourses, studyFilter],
+  );
 
   useEffect(() => {
-    setSelectedId(null);
-  }, [study?.studyId]);
+    setSelectedKey(null);
+  }, [studyFilter]);
 
   const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'Ohne Typ', 'No type')))].sort(), [courses, locale]);
   const visible = useMemo(() => {
@@ -94,7 +109,7 @@ export default function KalenderScreen() {
   }, [courses, query, typeFilter, assignFilter, sort, locale]);
 
   const byDay = useMemo(() => {
-    const map = new Map<string, BulkCourse[]>();
+    const map = new Map<string, StudyCourse[]>();
     for (const course of visible) {
       const day = course.startTime.slice(0, 10);
       const list = map.get(day) ?? [];
@@ -104,21 +119,27 @@ export default function KalenderScreen() {
     return map;
   }, [visible]);
 
-  const selected = selectedId !== null ? (courses.find((course) => course.id === selectedId) ?? null) : null;
+  const selected = selectedKey !== null ? (courses.find((course) => courseKey(course.studyId, course.id) === selectedKey) ?? null) : null;
 
-  function handleCoursePress(course: BulkCourse): void {
-    if (isWeb) setSelectedId(course.id);
+  function handleCoursePress(course: StudyCourse): void {
+    if (isWeb) setSelectedKey(courseKey(course.studyId, course.id));
     else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
   }
+
+  const subtitle = isCampus
+    ? studyFilter === 'all'
+      ? tx(locale, 'Alle Studiengänge', 'All degree programs')
+      : (campusStudies.find((item) => item.studyId === studyFilter)?.name ?? tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.'))
+    : tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.');
 
   return (
     <Screen
       topInset
       kicker="C@MPUS"
       title={tx(locale, 'Kalender', 'Calendar')}
-      subtitle={study ? study.name : tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.')}
+      subtitle={subtitle}
       action={
-        study ? (
+        isCampus ? (
           <Pressable
             onPress={() => router.push('/kalender-export')}
             hitSlop={8}
@@ -133,8 +154,7 @@ export default function KalenderScreen() {
           </Pressable>
         ) : undefined
       }>
-      <StudySelector />
-      {study === null ? (
+      {!isCampus ? (
         <Card>
           <Muted>
             {tx(locale, 'Melden Sie sich mit dem C@MPUS-Token an, um Termine zu sehen.', 'Sign in with the C@MPUS token to see appointments.')}
@@ -168,6 +188,9 @@ export default function KalenderScreen() {
             locale={locale}
             query={query}
             setQuery={setQuery}
+            studies={campusStudies}
+            studyFilter={studyFilter}
+            setStudyFilter={setStudyFilter}
             typeFilter={typeFilter}
             setTypeFilter={setTypeFilter}
             types={types}
@@ -191,10 +214,10 @@ export default function KalenderScreen() {
               </View>
               <View style={{ flex: 1, minWidth: 280 }}>
                 <CourseDetailPanel
-                  key={selected.id}
+                  key={selectedKey ?? selected.id}
                   course={selected}
                   locale={locale}
-                  onClose={() => setSelectedId(null)}
+                  onClose={() => setSelectedKey(null)}
                 />
               </View>
             </View>
@@ -243,6 +266,9 @@ function CalToolbar({
   locale,
   query,
   setQuery,
+  studies,
+  studyFilter,
+  setStudyFilter,
   typeFilter,
   setTypeFilter,
   types,
@@ -254,6 +280,9 @@ function CalToolbar({
   locale: 'de' | 'en';
   query: string;
   setQuery: (value: string) => void;
+  studies: CampusStudy[];
+  studyFilter: StudyFilter;
+  setStudyFilter: (value: StudyFilter) => void;
   typeFilter: string;
   setTypeFilter: (value: string) => void;
   types: string[];
@@ -262,10 +291,11 @@ function CalToolbar({
   sort: CalSort;
   setSort: (value: CalSort) => void;
 }) {
-  const [filtersOpen, setFiltersOpen] = useState<'type' | 'place' | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState<'study' | 'type' | 'place' | null>(null);
+  const studyActive = studyFilter !== 'all';
   const typeActive = typeFilter !== 'all';
   const placeActive = assignFilter !== 'all';
-  const toggle = (panel: 'type' | 'place'): void => setFiltersOpen((open) => (open === panel ? null : panel));
+  const toggle = (panel: 'study' | 'type' | 'place'): void => setFiltersOpen((open) => (open === panel ? null : panel));
   return (
     <View style={{ gap: 8 }}>
       <ScrollView
@@ -283,6 +313,14 @@ function CalToolbar({
         <Pressable onPress={() => setSort(sort === 'time' ? 'title' : 'time')}>
           <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
         </Pressable>
+        {studies.length > 0 ? (
+          <Pressable onPress={() => toggle('study')}>
+            <Pill
+              label={studyActive ? (studies.find((item) => item.studyId === studyFilter)?.name ?? tx(locale, 'Studium', 'Study')) : `${tx(locale, 'Studium', 'Study')} ▾`}
+              active={filtersOpen === 'study' || studyActive}
+            />
+          </Pressable>
+        ) : null}
         <Pressable onPress={() => toggle('type')}>
           <Pill label={typeActive ? typeFilter : `${tx(locale, 'Typ', 'Type')} ▾`} active={filtersOpen === 'type' || typeActive} />
         </Pressable>
@@ -299,6 +337,25 @@ function CalToolbar({
           />
         </Pressable>
       </ScrollView>
+      {filtersOpen === 'study' ? (
+        <View style={toolbarStyles.filterPanel}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <Pressable onPress={() => setStudyFilter('all')}>
+              <Pill label={tx(locale, 'Alle', 'All')} active={studyFilter === 'all'} />
+            </Pressable>
+            {studies.map((study) => (
+              <Pressable key={study.studyId} onPress={() => setStudyFilter(study.studyId)}>
+                <Pill label={study.name} active={studyFilter === study.studyId} />
+              </Pressable>
+            ))}
+          </View>
+          {studyActive ? (
+            <Pressable onPress={() => setStudyFilter('all')}>
+              <Text style={toolbarStyles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
       {filtersOpen === 'type' ? (
         <View style={toolbarStyles.filterPanel}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -357,12 +414,12 @@ function CalViews({
   onCoursePress,
 }: {
   view: CalView;
-  byDay: Map<string, BulkCourse[]>;
+  byDay: Map<string, StudyCourse[]>;
   anchor: string;
   setAnchor: (day: string) => void;
   setView: (view: CalView) => void;
   locale: 'de' | 'en';
-  onCoursePress: (course: BulkCourse) => void;
+  onCoursePress: (course: StudyCourse) => void;
 }) {
   if (view === 'agenda') return <AgendaView days={byDay} locale={locale} onCoursePress={onCoursePress} />;
   if (view === 'week') return <WeekView days={byDay} anchor={anchor} setAnchor={setAnchor} setView={setView} locale={locale} />;
@@ -370,7 +427,7 @@ function CalViews({
   return <MonthView days={byDay} anchor={anchor} setAnchor={setAnchor} setView={setView} locale={locale} />;
 }
 
-function CourseRow({ course, locale, onPress }: { course: BulkCourse; locale: 'de' | 'en'; onPress: (course: BulkCourse) => void }) {
+function CourseRow({ course, locale, onPress }: { course: StudyCourse; locale: 'de' | 'en'; onPress: (course: StudyCourse) => void }) {
   const palette = paletteFor(course.courseType || '?');
   return (
     <Pressable onPress={() => onPress(course)}>
@@ -398,7 +455,7 @@ function CourseRow({ course, locale, onPress }: { course: BulkCourse; locale: 'd
   );
 }
 
-function AgendaView({ days, locale, onCoursePress }: { days: Map<string, BulkCourse[]>; locale: 'de' | 'en'; onCoursePress: (course: BulkCourse) => void }) {
+function AgendaView({ days, locale, onCoursePress }: { days: Map<string, StudyCourse[]>; locale: 'de' | 'en'; onCoursePress: (course: StudyCourse) => void }) {
   const entries = [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(0, 60);
   if (!entries.length) return <Muted>{tx(locale, 'Keine Termine für diese Auswahl.', 'No appointments for this selection.')}</Muted>;
   return (
@@ -427,7 +484,7 @@ function weekDays(anchor: string): string[] {
   return Array.from({ length: 7 }, (_, index) => shiftDay(monday, index));
 }
 
-function WeekView({ days, anchor, setAnchor, setView, locale }: { days: Map<string, BulkCourse[]>; anchor: string; setAnchor: (day: string) => void; setView: (view: CalView) => void; locale: 'de' | 'en' }) {
+function WeekView({ days, anchor, setAnchor, setView, locale }: { days: Map<string, StudyCourse[]>; anchor: string; setAnchor: (day: string) => void; setView: (view: CalView) => void; locale: 'de' | 'en' }) {
   const week = weekDays(anchor);
   const today = todayLocal();
   return (
@@ -498,7 +555,7 @@ const DAY_START = 7 * 60;
 const DAY_END = 21 * 60;
 const PX_PER_MIN = 1;
 
-function DayView({ days, anchor, setAnchor, locale, onCoursePress }: { days: Map<string, BulkCourse[]>; anchor: string; setAnchor: (day: string) => void; locale: 'de' | 'en'; onCoursePress: (course: BulkCourse) => void }) {
+function DayView({ days, anchor, setAnchor, locale, onCoursePress }: { days: Map<string, StudyCourse[]>; anchor: string; setAnchor: (day: string) => void; locale: 'de' | 'en'; onCoursePress: (course: StudyCourse) => void }) {
   const items = (days.get(anchor) ?? []).filter((course) => minutesOf(course.startTime) !== null);
   const timeless = (days.get(anchor) ?? []).filter((course) => minutesOf(course.startTime) === null);
   const hours = Array.from({ length: (DAY_END - DAY_START) / 60 + 1 }, (_, index) => DAY_START + index * 60);
@@ -561,7 +618,7 @@ function MonthView({
   setView,
   locale,
 }: {
-  days: Map<string, BulkCourse[]>;
+  days: Map<string, StudyCourse[]>;
   anchor: string;
   setAnchor: (day: string) => void;
   setView: (view: CalView) => void;
@@ -768,7 +825,7 @@ const monthDateToday = { color: '#FFFFFF' };
 const monthAnchor = { borderColor: colors.blue, borderWidth: 2 };
 const monthDot = { width: 5, height: 5, borderRadius: 99 };
 
-function CourseDetailPanel({ course, locale, onClose }: { course: BulkCourse; locale: 'de' | 'en'; onClose: () => void }) {
+function CourseDetailPanel({ course, locale, onClose }: { course: StudyCourse; locale: 'de' | 'en'; onClose: () => void }) {
   const palette = paletteFor(course.courseType || '?');
   const when =
     course.startTime && course.endTime
