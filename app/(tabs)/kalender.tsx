@@ -61,6 +61,7 @@ export default function KalenderScreen() {
   const [assignFilter, setAssignFilter] = useState<AssignFilter>('fixed');
   const [sort, setSort] = useState<CalSort>('time');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
   const isWeb = Platform.OS === 'web';
   const isCampus = sessionMode === 'campus' && campusStudies.length > 0;
   // Device store first, server snapshot second — a plain view-read: nothing
@@ -126,25 +127,13 @@ export default function KalenderScreen() {
     else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
   }
 
+  function closeSearch(): void {
+    setQuery('');
+    setSearchOpen(false);
+  }
+
   return (
-    <Screen
-      topInset
-      action={
-        isCampus ? (
-          <Pressable
-            onPress={() => router.push('/kalender-export')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={tx(locale, 'Kalender exportieren', 'Export calendar')}
-            style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
-            {Platform.OS === 'ios' ? (
-              <SymbolView name="square.and.arrow.up" size={18} tintColor={colors.blue} />
-            ) : (
-              <MaterialIcons name="share" size={20} color={colors.blue} />
-            )}
-          </Pressable>
-        ) : undefined
-      }>
+    <Screen topInset>
       {!isCampus ? (
         <Card>
           <Muted>
@@ -160,25 +149,66 @@ export default function KalenderScreen() {
         </Card>
       ) : (
         <>
-          <View style={styles.segment}>
-            {(['agenda', 'week', 'day', 'month'] as CalView[]).map((item) => (
-              <Pressable key={item} onPress={() => setView(item)} style={[styles.segmentItem, view === item && styles.segmentOn]}>
-                <Text style={[styles.segmentText, view === item && styles.segmentTextOn]}>
-                  {item === 'agenda'
-                    ? tx(locale, 'Agenda', 'Agenda')
-                    : item === 'week'
-                      ? tx(locale, 'Woche', 'Week')
-                      : item === 'day'
-                        ? tx(locale, 'Tag', 'Day')
-                        : tx(locale, 'Monat', 'Month')}
-                </Text>
-              </Pressable>
-            ))}
+          <View style={styles.controlBar}>
+            <View style={styles.segment}>
+              {(['agenda', 'week', 'day', 'month'] as CalView[]).map((item) => (
+                <Pressable key={item} onPress={() => setView(item)} style={[styles.segmentItem, view === item && styles.segmentOn]}>
+                  <Text style={[styles.segmentText, view === item && styles.segmentTextOn]}>
+                    {item === 'agenda'
+                      ? tx(locale, 'Agenda', 'Agenda')
+                      : item === 'week'
+                        ? tx(locale, 'Woche', 'Week')
+                        : item === 'day'
+                          ? tx(locale, 'Tag', 'Day')
+                          : tx(locale, 'Monat', 'Month')}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Pressable
+              onPress={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityState={{ expanded: searchOpen }}
+              accessibilityLabel={tx(locale, 'Suchen', 'Search')}
+              style={({ pressed }) => [styles.iconButton, searchOpen && styles.iconButtonOn, pressed && styles.pressed]}>
+              {Platform.OS === 'ios' ? (
+                <SymbolView name="magnifyingglass" size={18} tintColor={searchOpen ? '#FFFFFF' : colors.blue} />
+              ) : (
+                <MaterialIcons name="search" size={20} color={searchOpen ? '#FFFFFF' : colors.blue} />
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/kalender-export')}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={tx(locale, 'Kalender exportieren', 'Export calendar')}
+              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+              {Platform.OS === 'ios' ? (
+                <SymbolView name="square.and.arrow.up" size={18} tintColor={colors.blue} />
+              ) : (
+                <MaterialIcons name="share" size={20} color={colors.blue} />
+              )}
+            </Pressable>
           </View>
+          {searchOpen ? (
+            <View style={styles.searchRow}>
+              <TextInput
+                autoFocus
+                value={query}
+                onChangeText={setQuery}
+                placeholder={tx(locale, 'Suchen …', 'Search …')}
+                placeholderTextColor={colors.mute}
+                returnKeyType="search"
+                style={[inputStyle, styles.searchInput]}
+              />
+              <Pressable onPress={closeSearch} hitSlop={8} accessibilityRole="button">
+                <Text style={styles.cancel}>{tx(locale, 'Abbrechen', 'Cancel')}</Text>
+              </Pressable>
+            </View>
+          ) : null}
           <CalToolbar
             locale={locale}
-            query={query}
-            setQuery={setQuery}
             studies={campusStudies}
             studyFilter={studyFilter}
             setStudyFilter={setStudyFilter}
@@ -255,8 +285,6 @@ function weekdayOf(iso: string, locale: 'de' | 'en'): string {
 
 function CalToolbar({
   locale,
-  query,
-  setQuery,
   studies,
   studyFilter,
   setStudyFilter,
@@ -269,8 +297,6 @@ function CalToolbar({
   setSort,
 }: {
   locale: 'de' | 'en';
-  query: string;
-  setQuery: (value: string) => void;
   studies: CampusStudy[];
   studyFilter: StudyFilter;
   setStudyFilter: (value: StudyFilter) => void;
@@ -294,13 +320,6 @@ function CalToolbar({
         showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={toolbarStyles.row}>
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder={tx(locale, 'Suchen …', 'Search …')}
-          placeholderTextColor={colors.mute}
-          style={[inputStyle, toolbarStyles.searchInput]}
-        />
         <Pressable onPress={() => setSort(sort === 'time' ? 'title' : 'time')}>
           <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
         </Pressable>
@@ -691,18 +710,20 @@ const inputStyle = {
 };
 
 const toolbarStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4, flexGrow: 1 },
-  searchInput: { flex: 1, minWidth: 160, paddingVertical: 9 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 },
   filterPanel: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 10, gap: 8 },
-  filterTitle: { color: colors.blue, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   filterReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
 });
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
-  exportButton: {
-    width: 40,
-    height: 40,
+  controlBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  searchInput: { flex: 1, paddingVertical: 10 },
+  cancel: { color: colors.blue, fontSize: 15, fontWeight: '700' },
+  iconButton: {
+    width: 44,
+    height: 44,
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
@@ -710,7 +731,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
+  iconButtonOn: { backgroundColor: colors.blue, borderColor: colors.blue },
   segment: {
+    flex: 1,
     flexDirection: 'row',
     backgroundColor: colors.paper,
     borderWidth: 1,
