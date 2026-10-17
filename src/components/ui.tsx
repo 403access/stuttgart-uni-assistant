@@ -41,6 +41,7 @@ export function Screen({
   scroll = true,
   footer,
   stickyHeader,
+  flush = false,
 }: {
   children: ReactNode;
   kicker?: string;
@@ -49,6 +50,8 @@ export function Screen({
   scroll?: boolean;
   footer?: ReactNode;
   stickyHeader?: ReactNode;
+  /** Remove the side margins so cards reach the screen edges (e.g. the mail read view). */
+  flush?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const header = (
@@ -59,7 +62,7 @@ export function Screen({
     </View>
   );
   const body = (
-    <View style={[styles.body, !scroll && styles.bodyFill]}>
+    <View style={[styles.body, !scroll && styles.bodyFill, flush && styles.bodyFlush]}>
       {title || kicker ? header : null}
       {children}
     </View>
@@ -83,10 +86,10 @@ export function Screen({
   );
 }
 
-export function Card({ children, onPress }: { children: ReactNode; onPress?: () => void }) {
-  if (!onPress) return <View style={styles.card}>{children}</View>;
+export function Card({ children, onPress, square = false }: { children: ReactNode; onPress?: () => void; square?: boolean }) {
+  if (!onPress) return <View style={[styles.card, square && styles.cardSquare]}>{children}</View>;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, square && styles.cardSquare, pressed && styles.pressed]}>
       {children}
     </Pressable>
   );
@@ -166,10 +169,12 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 28 },
   body: { paddingHorizontal: 20, paddingTop: 12, gap: 14 },
   bodyFill: { flex: 1, paddingBottom: 8 },
+  bodyFlush: { paddingHorizontal: 0 },
   kicker: { color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },
   title: { color: colors.anthracite, fontSize: 30, lineHeight: 34, fontWeight: '700', letterSpacing: -0.6 },
   subtitle: { color: colors.inkSoft, fontSize: 15, lineHeight: 21 },
   card: { backgroundColor: colors.paper, borderRadius: 18, borderWidth: 1, borderColor: colors.line, padding: 16, gap: 8 },
+  cardSquare: { borderRadius: 0 },
   pressed: { opacity: 0.72 },
   section: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4 },
   sectionTitle: { color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },

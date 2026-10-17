@@ -67,9 +67,9 @@ export default function MailMessageScreen() {
   );
 
   return (
-    <Screen>
+    <Screen flush>
       <Stack.Screen options={{ title: tx(locale, 'Nachricht', 'Message') }} />
-      <Card>
+      <Card square>
         <Text style={styles.subject}>{message?.subject || tx(locale, '(ohne Betreff)', '(no subject)')}</Text>
         <Text style={styles.line} selectable>
           {message?.from || '–'}
@@ -86,7 +86,7 @@ export default function MailMessageScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {!loading && !invalidUid && !error ? (
-        <Card>
+        <Card square>
           {body?.text ? (
             <MailBody text={body.text} locale={locale} />
           ) : (
@@ -115,7 +115,7 @@ export default function MailMessageScreen() {
             }
             onPress={() => setShowHtml((value) => !value)}
           />
-          <Card>
+          <Card square>
             <Text style={styles.note}>
               {tx(
                 locale,
