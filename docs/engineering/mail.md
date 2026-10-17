@@ -73,8 +73,10 @@ Student → app (read-only list) → assistant server (process memory) → imap.
 
 `GET /v1/mail/folders` lists the account's mailboxes with one IMAP session
 (`LIST "" "*"`): name verbatim plus a `selectable` flag (non-selectable `\Noselect`
-entries are kept out of the dropdown by the app). `server/mail.mjs` parses both quoted
-names and inline `{n}` literals.
+entries are kept out of the dropdown by the app). `server/mail.mjs` parses the mailbox
+name as the astring after the hierarchy delimiter, covering quoted names, bare atoms
+(`"/" INBOX` — reading the last quoted token would turn the delimiter into the name) and
+inline `{n}` literals.
 
 ## Scope
 

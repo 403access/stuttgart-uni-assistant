@@ -125,10 +125,47 @@ export function decodeModifiedUtf7(value) {
 }
 
 /**
- * `* LIST (\HasNoChildren) "/" "INBOX"` — the mailbox name sits in a quoted token or an
- * inline literal. Names dedupe on a Map (the same box can appear in two listings); the
- * `name` keeps the raw modified-UTF-7 form for `SELECT`, `display` is decoded for people;
- * anything without a name stays out.
+ * The astring tokens after the flags of a LIST line: quoted strings and bare atoms
+ * (escapes resolved, NIL kept as the literal `NIL`).
+ */
+function listAstrings(text) {
+  const tokens = [];
+  let at = 0;
+  while (at < text.length) {
+    while (text[at] === ' ') at += 1;
+    if (at >= text.length) break;
+    if (text[at] === '"') {
+      at += 1;
+      let quoted = '';
+      while (at < text.length && text[at] !== '"') {
+        if (text[at] === '\\' && text[at + 1] !== undefined) {
+          quoted += text[at + 1];
+          at += 2;
+          continue;
+        }
+        quoted += text[at];
+        at += 1;
+      }
+      at += 1;
+      tokens.push(quoted);
+    } else {
+      let atom = '';
+      while (at < text.length && text[at] !== ' ') {
+        atom += text[at];
+        at += 1;
+      }
+      tokens.push(atom);
+    }
+  }
+  return tokens;
+}
+
+/**
+ * `* LIST (\HasNoChildren) "/" "INBOX"` — the line is `(flags) <delimiter> <name>`, so the
+ * mailbox name is the astring *after* the delimiter, which some servers send as a bare atom
+ * (`"/" INBOX`) rather than a quoted string. Names dedupe on a Map (the same box can appear
+ * in two listings); the `name` keeps the raw modified-UTF-7 form for `SELECT`, `display` is
+ * decoded for people; anything without a name stays out.
  */
 export function parseListLines(lines) {
   const byName = new Map();
@@ -143,10 +180,10 @@ export function parseListLines(lines) {
       // The pieces keep every text segment; the literal directly after `{n}` is the mailbox name.
       name = bytesPiece.bytes.toString('utf8');
     } else {
-      const textAfterFlags = head.text.slice(head.text.indexOf(') ') + 2);
-      const quotes = [...textAfterFlags.matchAll(/"((?:[^"\\]|\\.)*)"/g)];
-      if (quotes.length >= 1) name = quotes[quotes.length - 1][1].replace(/\\\\/g, '\\').replace(/\\"/g, '"');
-      else name = textAfterFlags.trim().replace(/OK$/, '').trim();
+      const afterFlags = head.text.slice(head.text.indexOf(') ') + 2);
+      // tokens[0] is the hierarchy delimiter (quoted char or NIL); the mailbox name follows.
+      const tokens = listAstrings(afterFlags);
+      name = tokens.length >= 2 ? tokens[1] : tokens[0] ?? '';
     }
     name = name.trim();
     if (!name) continue;

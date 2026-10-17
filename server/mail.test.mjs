@@ -73,6 +73,18 @@ test('parseListLines reads quoted mailbox names, inline literals and selectabili
   ]);
 });
 
+test('parseListLines reads bare-atom names without mistaking the delimiter for the mailbox', () => {
+  const folders = parseListLines([
+    [{ kind: 'text', text: '* LIST (\\HasNoChildren) "/" INBOX' }],
+    [{ kind: 'text', text: '* LIST (\\HasNoChildren) NIL INBOX' }],
+    [{ kind: 'text', text: '* LIST (\\Noselect \\HasChildren) "/" "/"' }],
+  ]);
+  assert.deepEqual(folders, [
+    { name: 'INBOX', display: 'INBOX', selectable: true },
+    { name: '/', display: '/', selectable: false },
+  ]);
+});
+
 test('decodeModifiedUtf7 resolves German umlauts, the literal ampersand and plain names', () => {
   assert.equal(decodeModifiedUtf7('Gel&APY-schte'), 'Gelöschte');
   assert.equal(decodeModifiedUtf7('Gel&ANY-schte Objekte'), 'GelÖschte Objekte'); // Ö keeps its own 16-bit unit
