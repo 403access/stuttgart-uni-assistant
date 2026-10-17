@@ -55,6 +55,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/campus-calendar-export.md](engineering/campus-calendar-export.md) | C@MPUS calendar export mask: observed form fields, formats, and the download route |
 | [engineering/campus-browser-login.md](engineering/campus-browser-login.md) | Beta sign-in through the in-app C@MPUS browser: harvest, validation, failure modes |
 | [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
+| [engineering/tanstack-query.md](engineering/tanstack-query.md) | Query client wiring, typed key factory, shared sync mutation, device-cache write-back |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
