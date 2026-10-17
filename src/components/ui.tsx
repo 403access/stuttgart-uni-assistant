@@ -100,10 +100,33 @@ export function Screen({
   );
 }
 
-export function Card({ children, onPress, square = false }: { children: ReactNode; onPress?: () => void; square?: boolean }) {
-  if (!onPress) return <View style={[styles.card, square && styles.cardSquare]}>{children}</View>;
+/** Position of a row inside a grouped list: only the outer corners stay rounded. */
+export type CardPosition = 'first' | 'middle' | 'last';
+
+function groupedCardStyle(square: boolean, position?: CardPosition) {
+  if (!position) return square ? styles.cardSquare : null;
+  return [
+    styles.cardGrouped,
+    position === 'first' && styles.cardGroupedFirst,
+    position === 'last' && styles.cardGroupedLast,
+  ];
+}
+
+export function Card({
+  children,
+  onPress,
+  square = false,
+  position,
+}: {
+  children: ReactNode;
+  onPress?: () => void;
+  square?: boolean;
+  position?: CardPosition;
+}) {
+  const grouped = groupedCardStyle(square, position);
+  if (!onPress) return <View style={[styles.card, grouped]}>{children}</View>;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, square && styles.cardSquare, pressed && styles.pressed]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, grouped, pressed && styles.pressed]}>
       {children}
     </Pressable>
   );
@@ -166,9 +189,9 @@ export function Strong({ children }: { children: ReactNode }) {
   return <Text style={styles.strong}>{children}</Text>;
 }
 
-export function InfoRow({ title, meta, detail, onPress }: { title: string; meta?: string; detail?: string; onPress?: () => void }) {
+export function InfoRow({ title, meta, detail, onPress, position }: { title: string; meta?: string; detail?: string; onPress?: () => void; position?: CardPosition }) {
   return (
-    <Card onPress={onPress}>
+    <Card onPress={onPress} position={position}>
       <View style={styles.row}>
         <Text style={[styles.strong, styles.flex]}>{title}</Text>
         {meta ? <Text style={styles.meta}>{meta}</Text> : null}
@@ -190,6 +213,11 @@ const styles = StyleSheet.create({
   subtitle: { color: colors.inkSoft, fontSize: 15, lineHeight: 21 },
   card: { backgroundColor: colors.paper, borderRadius: 18, borderWidth: 1, borderColor: colors.line, padding: 16, gap: 8 },
   cardSquare: { borderRadius: 0 },
+  // Grouped list rows: flat seams so touching rows share a single border line,
+  // with rounded corners kept only on the first row's top and the last row's bottom.
+  cardGrouped: { borderRadius: 0, borderTopWidth: 0 },
+  cardGroupedFirst: { borderTopWidth: 1, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+  cardGroupedLast: { borderBottomLeftRadius: 18, borderBottomRightRadius: 18 },
   pressed: { opacity: 0.72 },
   section: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4 },
   sectionTitle: { color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },
