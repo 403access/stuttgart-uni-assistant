@@ -93,22 +93,6 @@ export default function TodayScreen() {
           onPress={() => router.push({ pathname: '/meldung/[id]', params: { id: item.id } })}
         />
       ))}
-
-      <Section title={tx(locale, 'Direkt', 'Go to')} />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {[
-          [tx(locale, 'Anforderungen', 'Requirements'), '/anforderungen'],
-          [tx(locale, 'Reihenfolge', 'Sequence'), '/reihenfolge'],
-          [tx(locale, 'Dokumente', 'Documents'), '/dokumente'],
-          [tx(locale, 'Anrechnung', 'Recognition'), '/anrechnung'],
-          [tx(locale, 'Kommilitonen', 'Peers'), '/kommilitonen'],
-          [tx(locale, 'Altklausuren', 'Past exams'), '/altklausuren'],
-        ].map(([label, href]) => (
-          <Card key={href} onPress={() => router.push(href as '/anforderungen')}>
-            <Text style={{ color: colors.blue, fontWeight: '700' }}>{label}</Text>
-          </Card>
-        ))}
-      </View>
     </Screen>
   );
 }
