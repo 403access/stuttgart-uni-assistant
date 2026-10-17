@@ -9,6 +9,7 @@ The dashboard. Top to bottom:
 | Block | What you see | What you can tap |
 | --- | --- | --- |
 | Greeting card | Your name with a C@MPUS session, or the demonstration header with Lena's name and semester | — |
+| Date card | Today's date, the number of upcoming appointments, and the next appointment (only with a C@MPUS session and a course cache; hidden otherwise) | The next appointment's course |
 | Credit card | Passed ECTS against the 180-ECTS plan, ECTS in this semester, weighted average | Opens **Anforderungen (requirements)** |
 | Today's weekday | Every session of today from the timetable: kind of event, time, room | The module detail screen |
 | Fristen (deadlines) | The next three deadlines with dates | All deadlines on `/fristen` |
@@ -32,17 +33,18 @@ Be specific about a module ("Was muss ich in Numerische Mathematik können?", "W
 
 ## Kalender (Calendar)
 
-The calendar tab works over the cached appointments of the courses of your selected study, loaded from C@MPUS. Without a course cache it is empty — that is the honest state, not an error.
+The calendar tab works over the cached appointments of your courses, loaded from C@MPUS; a study filter (default **Alle / All**) spans all enrolled studies. Without a course cache it is empty — that is the honest state, not an error.
 
 | Control | What it does |
 | --- | --- |
 | View switch | Agenda list, week, day, or month grid |
-| Search | Filter by course title or appointment title |
-| Filter pills | Course type (lecture, tutorial, seminar …), and whether only fixed appointment slots are shown |
+| Search | A magnifier button opens a field that filters by course or appointment title |
+| Filter pills | Study (**Alle** or one enrolled study), course type (lecture, tutorial, seminar …), and whether only fixed appointment slots are shown |
 | Sort | By date, or by title |
-| Export | Official ICS/CSV export through the C@MPUS calendar export mask, deduplicated on import |
 
 Tapping an appointment opens the course's own screen. On web the course opens in a side panel so the calendar stays visible.
+
+The official ICS/CSV pull and the database sync are not on this tab: they live on the Campus tab as **Kalender-Import**, together with the import history (see [campus-calendar-export](../engineering/campus-calendar-export.md)).
 
 ## Fristen (Deadlines)
 
