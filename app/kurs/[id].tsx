@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Text } from 'react-native';
 
 import { cacheCampusCourses, getCachedCourse } from '@/src/auth/campus';
 import { findCachedCourse } from '@/src/campus/db';
 import { Button, Card, InfoRow, Muted, Screen } from '@/src/components/ui';
+import { deviceCourseQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
@@ -19,22 +20,17 @@ function one(value: string | string[] | undefined): string {
 export default function CourseScreen() {
   const { locale } = useApp();
   const id = Number(one(useLocalSearchParams<{ id: string }>().id));
-  const [course, setCourse] = useState<CampusCourse | null>(() => getCachedCourse(id));
-  useEffect(() => {
-    if (getCachedCourse(id)) return;
-    let active = true;
-    findCachedCourse(id)
-      .then((found) => {
-        if (active && found) {
-          cacheCampusCourses([found]);
-          setCourse(found);
-        }
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [id]);
+  // The session memory map answers instantly; the device-cache query fills
+  // the gap after a restart (the query back-fills the session map too).
+  const persisted = useQuery({
+    ...deviceCourseQuery(id),
+    queryFn: async () => {
+      const found = await findCachedCourse(id);
+      if (found) cacheCampusCourses([found]);
+      return found;
+    },
+  });
+  const course: CampusCourse | null = getCachedCourse(id) ?? persisted.data ?? null;
   if (!course) {
     return (
       <Screen kicker="C@MPUS">

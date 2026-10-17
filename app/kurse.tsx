@@ -1,18 +1,20 @@
 import { Stack, router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { activeStudy, campusDetail, loadServerCourses, loadServerTree } from '@/src/auth/campus';
-import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCachedNodes, loadCoursesFetchedIds, saveCourses, saveFullStructure, type CoursesSyncInfo } from '@/src/campus/db';
+import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCoursesFetchedIds, saveCourses, saveFullStructure } from '@/src/campus/db';
 import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
 import { StudySelector } from '@/src/components/study-selector';
+import { keys } from '@/src/query/keys';
+import { coursesFetchedIdsQuery, coursesSyncQuery, deviceCoursesQuery, deviceNodesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
-import type { BulkCourse } from '@/src/types';
 
 type CourseSort = 'title' | 'type' | 'time';
 
@@ -23,11 +25,7 @@ type CourseSort = 'title' | 'type' | 'time';
  */
 export default function KurseScreen() {
   const { locale, sessionMode, campusStudies, activeStudyId, setCurriculum } = useApp();
-  const [courses, setCourses] = useState<BulkCourse[]>([]);
-  const [elementCount, setElementCount] = useState(0);
-  const [fetchedIds, setFetchedIds] = useState<number[]>([]);
   const [failedIds, setFailedIds] = useState<number[]>([]);
-  const [coursesSync, setCoursesSync] = useState<CoursesSyncInfo | null>(null);
   const [saveError, setSaveError] = useState('');
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ fetched: 0, total: 0, courseCount: 0 });
@@ -35,71 +33,60 @@ export default function KurseScreen() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [sort, setSort] = useState<CourseSort>('title');
   const cancelRun = useRef(false);
+  // Guards the screen-level sync states only: query data is keyed per study,
+  // so a late sync completion can safely write another study's rows.
   const loadSeq = useRef(0);
+  const queryClient = useQueryClient();
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
+  const studyId = study?.studyId ?? null;
 
+  // Device store first: instant list, Weiter loads only the rest.
+  const nodesQ = useQuery(deviceNodesQuery(studyId));
+  const coursesQ = useQuery(deviceCoursesQuery(studyId));
+  const fetchedIdsQ = useQuery(coursesFetchedIdsQuery(studyId));
+  const coursesSyncQ = useQuery(coursesSyncQuery(studyId));
+  const elementCount = study ? (nodesQ.data?.length ?? 0) : 0;
+  const courses = useMemo(() => coursesQ.data ?? [], [coursesQ.data]);
+  const fetchedIds = useMemo(() => fetchedIdsQ.data ?? [], [fetchedIdsQ.data]);
+  const coursesSync = coursesSyncQ.data ?? null;
+
+  // Server snapshot second: cross-device catch-up merged into the local store.
+  const snapshotQ = useQuery(serverCoursesQuery(studyId));
+  const caughtUp = useRef<Set<number>>(new Set());
   useEffect(() => {
-    loadSeq.current += 1;
-    const seq = loadSeq.current;
-    setCourses([]);
-    setFetchedIds([]);
-    setFailedIds([]);
-    setCoursesSync(null);
-    setSaveError('');
+    const remote = snapshotQ.data;
+    if (!remote || remote.courses.length === 0 || studyId === null) return;
+    if (caughtUp.current.has(studyId)) return;
+    caughtUp.current.add(studyId);
+    (async () => {
+      const stored = await loadCachedCourses(studyId).catch(() => []);
+      const map = new Map(stored.map((course) => [course.id, course]));
+      for (const course of remote.courses) {
+        if (!map.has(course.id)) map.set(course.id, { ...course });
+      }
+      const all = [...map.values()];
+      const storedFetched = await loadCoursesFetchedIds(studyId).catch(() => []);
+      const allFetched = [...new Set([...storedFetched, ...remote.fetchedElementIds])];
+      const prevComplete = (await getCoursesSyncInfo(studyId).catch(() => null))?.complete ?? false;
+      if (all.length !== stored.length || allFetched.length !== storedFetched.length) {
+        await saveCourses(studyId, all, allFetched, prevComplete).catch(() => undefined);
+      }
+      queryClient.invalidateQueries({ queryKey: keys.deviceCourses(studyId) });
+      queryClient.invalidateQueries({ queryKey: keys.coursesSync(studyId) });
+    })().catch(() => undefined);
+  }, [snapshotQ.data, studyId, queryClient]);
+
+  // UI filters reset when another study is selected (state adjusted during render — no effect cascade).
+  const [lastStudyId, setLastStudyId] = useState<number | null>(studyId);
+  if (lastStudyId !== studyId) {
+    setLastStudyId(studyId);
     setQuery('');
     setTypeFilter('all');
     setSort('title');
+    setFailedIds([]);
+    setSaveError('');
     setProgress({ fetched: 0, total: 0, courseCount: 0 });
-    if (!study) {
-      setElementCount(0);
-      return;
-    }
-    const studyId = study.studyId;
-    loadCachedNodes(studyId)
-      .then((nodes) => {
-        if (loadSeq.current === seq) setElementCount(nodes.length);
-      })
-      .catch(() => {
-        if (loadSeq.current === seq) setElementCount(0);
-      });
-    // Hydrate from the course cache: instant list, Weiter loads only the rest.
-    // Guarded by seq so a late hydration never overwrites a running load.
-    loadCachedCourses(studyId)
-      .then((cached) => {
-        if (loadSeq.current === seq && cached.length) setCourses(cached);
-      })
-      .catch(() => undefined);
-    loadCoursesFetchedIds(studyId)
-      .then((ids) => {
-        if (loadSeq.current === seq) setFetchedIds(ids);
-      })
-      .catch(() => undefined);
-    getCoursesSyncInfo(studyId)
-      .then((info) => {
-        if (loadSeq.current === seq) setCoursesSync(info);
-      })
-      .catch(() => undefined);
-    // Server snapshot second: cross-device catch-up merged into the local store.
-    loadServerCourses(studyId)
-      .then(async (remote) => {
-        if (loadSeq.current !== seq || remote.courses.length === 0) return;
-        const stored = await loadCachedCourses(studyId).catch(() => []);
-        const map = new Map(stored.map((course) => [course.id, course]));
-        for (const course of remote.courses) {
-          if (!map.has(course.id)) map.set(course.id, { ...course });
-        }
-        const all = [...map.values()];
-        const storedFetched = await loadCoursesFetchedIds(studyId).catch(() => []);
-        const allFetched = [...new Set([...storedFetched, ...remote.fetchedElementIds])];
-        const prevComplete = (await getCoursesSyncInfo(studyId).catch(() => null))?.complete ?? false;
-        await saveCourses(studyId, all, allFetched, prevComplete).catch(() => undefined);
-        if (loadSeq.current !== seq) return;
-        setCourses(all);
-        setFetchedIds(allFetched);
-        setCoursesSync(await getCoursesSyncInfo(studyId).catch(() => null));
-      })
-      .catch(() => undefined);
-  }, [study?.studyId]);
+  }
 
   async function loadAll(): Promise<void> {
     if (!study || running) return;
@@ -127,16 +114,14 @@ export default function KurseScreen() {
       if (job.state === 'failed') {
         throw new Error(job.error ?? 'sync_failed');
       }
-      // Hydrate the local sync cache and the view from the server snapshots.
+      // Hydrate the local sync cache from the server snapshots.
       const [tree, remote] = await Promise.all([
         loadServerTree(myStudyId).catch(() => null),
         loadServerCourses(myStudyId).catch(() => null),
       ]);
       if (tree && tree.nodes.length > 0) {
-        if (current()) {
-          setCurriculum(tree.nodes, { studyId: myStudyId, replace: true });
-          setElementCount(tree.nodes.length);
-        }
+        queryClient.setQueryData(keys.deviceNodes(myStudyId), tree.nodes);
+        if (current()) setCurriculum(tree.nodes, { studyId: myStudyId, replace: true });
         await saveFullStructure(myStudyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
       }
       const storedCourses = await loadCachedCourses(myStudyId).catch(() => []);
@@ -157,10 +142,13 @@ export default function KurseScreen() {
           showToast({ tone: 'error', title: tx(locale, 'Cache-Speichern fehlgeschlagen', 'Cache save failed'), message: reason });
         }
       }
+      // The device-store keys own the list: write the fresh rows, the
+      // queries pick them up — no matter whether another study is open.
+      queryClient.setQueryData(keys.deviceCourses(myStudyId), all);
+      queryClient.setQueryData(keys.coursesFetchedIds(myStudyId), allFetched);
+      queryClient.setQueryData(keys.coursesSync(myStudyId), await getCoursesSyncInfo(myStudyId).catch(() => null));
+      queryClient.invalidateQueries({ queryKey: keys.serverCourses(myStudyId) });
       if (!current()) return;
-      setCourses(all);
-      setFetchedIds(allFetched);
-      setCoursesSync(await getCoursesSyncInfo(myStudyId).catch(() => null));
       setFailedIds(job.failedIds);
       if (job.state === 'cancelled') {
         setSaveError(tx(locale, 'Abgebrochen — Teilergebnisse sind gespeichert.', 'Cancelled — partial results are stored.'));
@@ -190,12 +178,12 @@ export default function KurseScreen() {
   }
 
   async function clearCourseCache(): Promise<void> {
-    if (!study || running) return;
-    await clearCachedCourses(study.studyId).catch(() => undefined);
-    setCourses([]);
-    setFetchedIds([]);
-    setFailedIds([]);
-    setCoursesSync(null);
+    if (studyId === null || running) return;
+    await clearCachedCourses(studyId).catch(() => undefined);
+    // The device store is empty now — drop the cached rows from the queries.
+    queryClient.setQueryData(keys.deviceCourses(studyId), []);
+    queryClient.setQueryData(keys.coursesFetchedIds(studyId), []);
+    queryClient.setQueryData(keys.coursesSync(studyId), null);
   }
 
   const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'Ohne Typ', 'No type')))].sort(), [courses, locale]);

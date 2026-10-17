@@ -4,9 +4,10 @@ import * as Sharing from 'expo-sharing';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { activeStudy, exportCampusCalendar, loadServerCourses, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
-import { loadCachedCourses } from '@/src/campus/db';
+import { activeStudy, exportCampusCalendar, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { useQuery } from '@tanstack/react-query';
+import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { StudySelector } from '@/src/components/study-selector';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -46,7 +47,6 @@ function minutesOf(value: string): number | null {
 /** Agenda, week, day, and month views over cached course appointments. No portal calls. */
 export default function KalenderScreen() {
   const { locale, sessionMode, campusStudies, activeStudyId } = useApp();
-  const [courses, setCourses] = useState<BulkCourse[]>([]);
   const [view, setView] = useState<CalView>('agenda');
   const [anchor, setAnchor] = useState(todayLocal());
   const [query, setQuery] = useState('');
@@ -57,27 +57,17 @@ export default function KalenderScreen() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const isWeb = Platform.OS === 'web';
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
-
-  useEffect(() => {
-    if (!study) {
-      setCourses([]);
-      return;
+  // Device store first, server snapshot second — a plain view-read: nothing
+  // is written back; the refetch on revisit comes from the queries.
+  const localQ = useQuery(deviceCoursesQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
+  const snapshotQ = useQuery(serverCoursesQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
+  const courses = useMemo(() => {
+    const map = new Map((localQ.data ?? []).map((course) => [course.id, course]));
+    for (const course of snapshotQ.data?.courses ?? []) {
+      if (!map.has(course.id)) map.set(course.id, { ...course });
     }
-    const studyId = study.studyId;
-    let active = true;
-    (async () => {
-      const local = await loadCachedCourses(studyId).catch(() => []);
-      const remote = await loadServerCourses(studyId).catch(() => null);
-      const map = new Map(local.map((course) => [course.id, course]));
-      for (const course of remote?.courses ?? []) {
-        if (!map.has(course.id)) map.set(course.id, { ...course });
-      }
-      if (active) setCourses([...map.values()]);
-    })().catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [study?.studyId]);
+    return [...map.values()];
+  }, [localQ.data, snapshotQ.data]);
 
   useEffect(() => {
     setSelectedId(null);

@@ -1,15 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack, router } from 'expo-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { clearSessionLog, useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
-import { cacheCampusCourses, loadCampusCourses, loadCampusCurriculum, loadCampusStudies, loadServerCalls, loadServerTree } from '@/src/auth/campus';
-import { appendElementCourses, clearApiLog, clearCachedCourses, clearCachedStudy, getCoursesSyncInfo, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, readApiLog, saveFullStructure, type CoursesSyncInfo, type CurriculumSyncInfo } from '@/src/campus/db';
+import { cacheCampusCourses, loadCampusCourses, loadCampusCurriculum, loadCampusStudies, loadServerTree } from '@/src/auth/campus';
+import {
+  appendElementCourses,
+  clearApiLog,
+  clearCachedCourses,
+  clearCachedStudy,
+  getCoursesSyncInfo,
+  getSyncInfo,
+  loadCachedCoursesByElement,
+  saveFullStructure,
+  type CoursesSyncInfo,
+  type CurriculumSyncInfo,
+} from '@/src/campus/db';
 import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
 import { JsonTree } from '@/src/components/json-tree';
+import { keys } from '@/src/query/keys';
+import { apiLogQuery, deviceTreesQuery, serverCallsQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -30,9 +44,8 @@ export default function StrukturenScreen() {
   const { locale, sessionMode, campusStudies, activeStudyId, setCurriculum } = useApp();
   const isWeb = Platform.OS === 'web';
   const log = useCampusLog();
+  const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [trees, setTrees] = useState<Record<number, CurriculumNode[]>>({});
-  const [infos, setInfos] = useState<Record<number, CurriculumSyncInfo | null>>({});
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -41,13 +54,34 @@ export default function StrukturenScreen() {
   const [fetching, setFetching] = useState<Record<number, { fetched: number; nodeCount: number; retries: number }>>({});
   const [fetchError, setFetchError] = useState('');
   const [syncNote, setSyncNote] = useState('');
-  const [storedLog, setStoredLog] = useState<CampusLogEntry[]>([]);
-  const [serverCalls, setServerCalls] = useState<CampusLogEntry[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
   const [showRoot, setShowRoot] = useState(false);
   const cancelFetch = useRef<Record<number, boolean>>({});
   const rowRefs = useRef(new Map<number, unknown>());
+  const studyIds = useMemo(() => campusStudies.map((study) => study.studyId), [campusStudies]);
+  // All device-store reads go through queries; writes set the query data directly.
+  const deviceTreesQ = useQuery(deviceTreesQuery(studyIds, { enabled: isWeb && sessionMode === 'campus' }));
+  const deviceLogQ = useQuery(apiLogQuery(500, { enabled: isWeb && sessionMode === 'campus' }));
+  const portalCallsQ = useQuery(serverCallsQuery(300, { enabled: isWeb && sessionMode === 'campus' }));
+  const trees = useMemo(() => deviceTreesQ.data?.trees ?? {}, [deviceTreesQ.data]);
+  const infos = useMemo(() => deviceTreesQ.data?.infos ?? {}, [deviceTreesQ.data]);
+  const storedLog = useMemo(() => deviceLogQ.data ?? [], [deviceLogQ.data]);
+  const serverCalls = useMemo(() => portalCallsQ.data ?? [], [portalCallsQ.data]);
+
+  /** Write a change into the device-tree query cache (and per-key device queries). */
+  function updateDeviceTrees(update: (current: { trees: Record<number, CurriculumNode[]>; infos: Record<number, CurriculumSyncInfo | null> }) => { trees: Record<number, CurriculumNode[]>; infos: Record<number, CurriculumSyncInfo | null> }): void {
+    const base = deviceTreesQ.data ?? { trees: {}, infos: {} };
+    queryClient.setQueryData(keys.deviceTrees(studyIds), update(base));
+  }
+
+  // A fresh session-log entry means something new landed in either store.
+  useEffect(() => {
+    if (deviceLogQ.dataUpdatedAt === 0) return;
+    deviceLogQ.refetch();
+    portalCallsQ.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [log.length]);
 
   function registerRowRef(id: number, element: unknown): void {
     if (element) rowRefs.current.set(id, element);
@@ -92,31 +126,6 @@ export default function StrukturenScreen() {
     return merged;
   }, [log, storedLog, serverCalls]);
 
-  useEffect(() => {
-    let active = true;
-    readApiLog(500)
-      .then((rows) => {
-        if (active) setStoredLog(rows);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [log]);
-
-  // Server portal hops (one row per attempt, including retries).
-  useEffect(() => {
-    let active = true;
-    loadServerCalls(300)
-      .then((rows) => {
-        if (active) setServerCalls(rows);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [log]);
-
   const selectedStudy = campusStudies.find((study) => study.studyId === selectedId) ?? null;
   const selectedNode = selectedStudy && selectedNodeId !== null ? (trees[selectedStudy.studyId] ?? []).find((node) => node.id === selectedNodeId) ?? null : null;
 
@@ -138,31 +147,10 @@ export default function StrukturenScreen() {
     }
   }, [campusStudies, activeStudyId, selectedId]);
 
-  useEffect(() => {
-    if (!isWeb || sessionMode !== 'campus') return;
-    let active = true;
-    (async () => {
-      const nextTrees: Record<number, CurriculumNode[]> = {};
-      const nextInfos: Record<number, CurriculumSyncInfo | null> = {};
-      for (const study of campusStudies) {
-        nextTrees[study.studyId] = await loadCachedNodes(study.studyId).catch(() => []);
-        nextInfos[study.studyId] = await getSyncInfo(study.studyId).catch(() => null);
-      }
-      if (active) {
-        setTrees(nextTrees);
-        setInfos(nextInfos);
-      }
-    })().catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [isWeb, sessionMode, campusStudies]);
-
   async function clearStudy(studyId: number): Promise<void> {
     if (fetching[studyId]) return;
     await clearCachedStudy(studyId).catch(() => undefined);
-    setTrees((current) => ({ ...current, [studyId]: [] }));
-    setInfos((current) => ({ ...current, [studyId]: null }));
+    updateDeviceTrees((current) => ({ trees: { ...current.trees, [studyId]: [] }, infos: { ...current.infos, [studyId]: null } }));
     if (studyId === activeStudyId) setCurriculum([], { studyId, replace: true });
   }
 
@@ -172,8 +160,11 @@ export default function StrukturenScreen() {
       await clearCachedStudy(study.studyId).catch(() => undefined);
       await clearCachedCourses(study.studyId).catch(() => undefined);
     }
-    setTrees({});
-    setInfos({});
+    for (const studyId of studyIds) {
+      queryClient.setQueryData(keys.deviceNodes(studyId), []);
+      queryClient.invalidateQueries({ queryKey: keys.serverCourses(studyId) });
+    }
+    updateDeviceTrees(() => ({ trees: {}, infos: {} }));
     if (activeStudyId !== null) setCurriculum([], { studyId: activeStudyId, replace: true });
   }
 
@@ -196,10 +187,10 @@ export default function StrukturenScreen() {
       // Hydrate the local sync cache and the browser from the server snapshot.
       const tree = await loadServerTree(studyId).catch(() => null);
       if (tree && tree.nodes.length > 0) {
+        queryClient.setQueryData(keys.deviceNodes(studyId), tree.nodes);
         await saveFullStructure(studyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
         const info = await getSyncInfo(studyId).catch(() => null);
-        setTrees((current) => ({ ...current, [studyId]: tree.nodes }));
-        setInfos((current) => ({ ...current, [studyId]: info }));
+        updateDeviceTrees((current) => ({ trees: { ...current.trees, [studyId]: tree.nodes }, infos: { ...current.infos, [studyId]: info } }));
         if (studyId === activeStudyId) setCurriculum(tree.nodes, { studyId, replace: true });
       }
       if (job.state === 'failed' || job.failedIds.length > 0) {
@@ -466,7 +457,7 @@ export default function StrukturenScreen() {
               label={tx(locale, 'Verlauf löschen', 'Clear history')}
               onPress={() => {
                 clearSessionLog();
-                setStoredLog([]);
+                queryClient.setQueryData(keys.apiLog(500), []);
                 setSelectedUid(null);
                 clearApiLog().catch(() => undefined);
               }}

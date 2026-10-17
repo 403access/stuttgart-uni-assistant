@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum, loadServerTree } from '@/src/auth/campus';
-import { clearCachedStudy, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, appendElementCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
+import { appendElementCourses, clearCachedStudy, loadCachedCoursesByElement, saveFullStructure } from '@/src/campus/db';
 import { runServerSync } from '@/src/campus/server-sync';
 import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
 import { StudySelector } from '@/src/components/study-selector';
+import { keys } from '@/src/query/keys';
+import { deviceNodesQuery, syncInfoQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
@@ -17,6 +20,7 @@ import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export function CampusInfoView() {
   const { locale, sessionMode, campusStudies, activeStudyId, curriculumNodes, curriculumStudyId, setCurriculum } = useApp();
+  const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [busyNode, setBusyNode] = useState<number | null>(null);
   const [error, setError] = useState('');
@@ -24,11 +28,15 @@ export function CampusInfoView() {
   const [progress, setProgress] = useState<{ fetched: number; queued: number; nodeCount: number; retries: number; failedIds: number[] } | null>(null);
   const [syncFailed, setSyncFailed] = useState<number[]>([]);
   const [syncCancelled, setSyncCancelled] = useState(false);
-  const [syncInfo, setSyncInfo] = useState<CurriculumSyncInfo | null>(null);
   const autoLoaded = useRef<number | null>(null);
   const cancelSync = useRef(false);
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
   const stale = study !== null && curriculumStudyId !== study.studyId;
+  // Device store reads through queries; the network loads below stay
+  // user-driven mutations until they are converted.
+  const cachedNodesQ = useQuery(deviceNodesQuery(study?.studyId ?? null, { enabled: Boolean(study?.elementId != null) }));
+  const syncInfoQ = useQuery(syncInfoQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
+  const syncInfo = syncInfoQ.data;
 
   async function loadRoot(target: CampusStudy, silent = false): Promise<void> {
     if (target.elementId == null) {
@@ -106,32 +114,15 @@ export function CampusInfoView() {
       return;
     }
     autoLoaded.current = study.studyId;
-    (async () => {
+    const cached = cachedNodesQ.data;
+    if (cached && cached.length > 0) {
       // Prefer the SQLite cache: instant tree, no network.
-      try {
-        const cached = await loadCachedNodes(study.studyId);
-        if (cached.length > 0) {
-          setCurriculum(cached, { studyId: study.studyId, replace: true });
-          setSyncInfo(await getSyncInfo(study.studyId).catch(() => null));
-          return;
-        }
-      } catch {
-        // Fall through to the network load below.
-      }
-      await loadRoot(study, true);
-    })().catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [study?.studyId, stale]);
-
-  useEffect(() => {
-    if (!study) {
-      setSyncInfo(null);
+      setCurriculum(cached, { studyId: study.studyId, replace: true });
       return;
     }
-    getSyncInfo(study.studyId)
-      .then(setSyncInfo)
-      .catch(() => undefined);
-  }, [study?.studyId]);
+    loadRoot(study, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [study?.studyId, stale, curriculumNodes.length, cachedNodesQ.data]);
 
   async function syncAll(): Promise<void> {
     if (!study || study.elementId == null || syncing) return;
@@ -157,7 +148,6 @@ export function CampusInfoView() {
       if (tree && tree.nodes.length > 0) {
         setCurriculum(tree.nodes, { studyId, replace: true });
         await saveFullStructure(studyId, rootElementId, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
-        setSyncInfo(await getSyncInfo(studyId).catch(() => null));
       }
       if (job.state === 'failed' || job.failedIds.length > 0) {
         const code = job.state === 'failed' ? (job.error ?? 'sync_failed') : 'campus_failed';
@@ -188,13 +178,16 @@ export function CampusInfoView() {
       });
     } finally {
       setSyncing(false);
+      // The store changed under the queries — refresh the cache metadata.
+      queryClient.invalidateQueries({ queryKey: keys.syncInfo(studyId) });
     }
   }
 
   async function clearCache(): Promise<void> {
     if (!study || syncing) return;
     await clearCachedStudy(study.studyId).catch(() => undefined);
-    setSyncInfo(await getSyncInfo(study.studyId).catch(() => null));
+    queryClient.invalidateQueries({ queryKey: keys.syncInfo(study.studyId) });
+    queryClient.invalidateQueries({ queryKey: keys.deviceNodes(study.studyId) });
   }
 
   return (
@@ -406,68 +399,60 @@ function compactTime(value: string): string {
 
 function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: number; elementId: number; elementName: string; locale: 'de' | 'en' }) {
   const [open, setOpen] = useState(false);
-  const [courses, setCourses] = useState<CampusCourse[] | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  // Cache first: instant and offline. Otherwise network with write-through.
+  // The question runs when the node opens; a tap retries after a failure.
+  const coursesQ = useQuery({
+    queryKey: keys.deviceCoursesByElement(studyId, elementId),
+    queryFn: async (): Promise<CampusCourse[]> => {
+      const cached = await loadCachedCoursesByElement(studyId, elementId).catch(() => []);
+      if (cached.length > 0) {
+        cacheCampusCourses(cached);
+        return cached;
+      }
+      const loaded = await loadCampusCourses(elementId, studyId);
+      await appendElementCourses(studyId, elementId, elementName, loaded.courses).catch(() => undefined);
+      return loaded.courses;
+    },
+    staleTime: Infinity,
+    enabled: open,
+  });
+  const courses = coursesQ.data ?? null;
+  const coursesError = coursesQ.error;
 
-  async function toggle(): Promise<void> {
-    if (busy) return;
+  function toggle(): void {
     if (open) {
       setOpen(false);
       return;
     }
-    if (courses) {
-      setOpen(true);
-      return;
-    }
-    setError('');
-    setBusy(true);
-    try {
-      // Cache first: instant and offline. Otherwise network with write-through.
-      const cached = await loadCachedCoursesByElement(studyId, elementId).catch(() => []);
-      if (cached.length > 0) {
-        cacheCampusCourses(cached);
-        setCourses(cached);
-        setOpen(true);
-        return;
-      }
-      const loaded = await loadCampusCourses(elementId, studyId);
-      setCourses(loaded.courses);
-      setOpen(true);
-      await appendElementCourses(studyId, elementId, elementName, loaded.courses).catch(() => undefined);
-    } catch (caught) {
-      const code = caught instanceof Error ? caught.message : 'campus_failed';
-      const detail = campusDetail(caught);
-      setError(
-        tx(
-          locale,
-          `Kurse nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
-          `Courses not loaded (${code}${detail ? `, ${detail}` : ''}).`,
-        ),
-      );
-      showFetchAlert(locale, {
-        title: tx(locale, 'Kurse nicht geladen', 'Courses not loaded'),
-        code,
-        detail: detail || undefined,
-        onRetry: toggle,
-      });
-    } finally {
-      setBusy(false);
-    }
+    setOpen(true);
+    if (coursesQ.isError) coursesQ.refetch();
   }
+
+  const errorText =
+    coursesError == null
+      ? ''
+      : (() => {
+          const code = coursesError instanceof Error ? coursesError.message : 'campus_failed';
+          const detail = campusDetail(coursesError);
+          return tx(
+            locale,
+            `Kurse nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
+            `Courses not loaded (${code}${detail ? `, ${detail}` : ''}).`,
+          );
+        })();
 
   return (
     <View style={{ marginLeft: 8, marginBottom: 4 }}>
       <Pressable onPress={toggle} hitSlop={8}>
         <Text style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>
-          {busy
+          {coursesQ.isPending && open && !courses
             ? '…'
             : courses
               ? `${courses.length} ${tx(locale, courses.length === 1 ? 'Kurs' : 'Kurse', courses.length === 1 ? 'course' : 'courses')}`
               : tx(locale, 'Kurse', 'Courses')}
         </Text>
       </Pressable>
-      {error ? <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 18 }}>{error}</Text> : null}
+      {errorText ? <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 18 }}>{errorText}</Text> : null}
       {open && courses && courses.length === 0 ? (
         <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
           {tx(locale, 'Keine Lehrveranstaltungen an diesem Knoten.', 'No courses on this node.')}
