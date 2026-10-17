@@ -1,23 +1,27 @@
 import { Tabs } from 'expo-router';
-import { View, type ColorValue } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import type { ComponentProps } from 'react';
+import { Platform } from 'react-native';
 
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
-function Dot({ color, filled = false }: { color: ColorValue; filled?: boolean }) {
-  return (
-    <View
-      style={{
-        width: 10,
-        height: 10,
-        borderRadius: 99,
-        backgroundColor: filled ? color : 'transparent',
-        borderWidth: 1.5,
-        borderColor: color,
-      }}
-    />
-  );
+/** SF Symbols on iOS, Material Icons elsewhere (Android, web). */
+function BarIcon({
+  symbol,
+  material,
+  color,
+}: {
+  symbol: SymbolViewProps['name'];
+  material: ComponentProps<typeof MaterialIcons>['name'];
+  color: string;
+}) {
+  if (Platform.OS === 'ios') {
+    return <SymbolView name={symbol} size={22} tintColor={color} />;
+  }
+  return <MaterialIcons name={material} size={24} color={color as string} />;
 }
 
 export default function TabLayout() {
@@ -35,71 +39,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: tx(locale, 'Heute', 'Today'),
-          tabBarIcon: ({ color }) => <Dot color={color} filled />,
+          tabBarIcon: ({ color }) => <BarIcon symbol="house.fill" material="home" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="studium"
         options={{
           title: tx(locale, 'Studium', 'Study'),
-          tabBarIcon: ({ color }) => (
-            <View style={{ width: 14, height: 10, borderRadius: 2, borderWidth: 1.5, borderColor: color }} />
-          ),
+          tabBarIcon: ({ color }) => <BarIcon symbol="graduationcap.fill" material="school" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',
-          tabBarIcon: ({ color }) => (
-            <View style={{ flexDirection: 'row', gap: 3 }}>
-              <Dot color={color} filled />
-              <Dot color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="campus-info"
-        options={{
-          title: 'C@MPUS',
-          tabBarIcon: ({ color }) => (
-            <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 1.5, borderColor: color }} />
-          ),
+          tabBarIcon: ({ color }) => <BarIcon symbol="bubble.left.and.bubble.right.fill" material="chat" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="kalender"
         options={{
           title: tx(locale, 'Kalender', 'Calendar'),
-          tabBarIcon: ({ color }) => (
-            <View style={{ width: 12, height: 12, borderRadius: 3, borderWidth: 1.5, borderColor: color, alignItems: 'center', justifyContent: 'center' }}>
-              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color }} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="campus"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => (
-            <View style={{ width: 10, height: 10, borderWidth: 1.5, borderColor: color, transform: [{ rotate: '45deg' }] }} />
-          ),
+          tabBarIcon: ({ color }) => <BarIcon symbol="calendar" material="calendar-today" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="mehr"
         options={{
-          title: tx(locale, 'Mehr', 'More'),
-          tabBarIcon: ({ color }) => (
-            <View style={{ width: 14, height: 14, flexDirection: 'row', flexWrap: 'wrap', gap: 2 }}>
-              <Dot color={color} filled />
-              <Dot color={color} filled />
-              <Dot color={color} filled />
-              <Dot color={color} filled />
-            </View>
-          ),
+          title: tx(locale, 'Campus', 'Campus'),
+          tabBarIcon: ({ color }) => <BarIcon symbol="ellipsis.circle.fill" material="more-horiz" color={color as string} />,
         }}
       />
     </Tabs>

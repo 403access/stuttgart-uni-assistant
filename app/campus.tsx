@@ -24,6 +24,7 @@ export default function CampusScreen() {
 
   return (
     <Screen
+      back
       kicker={tx(locale, 'Orientierung', 'Orientation')}
       title="Map"
       subtitle={

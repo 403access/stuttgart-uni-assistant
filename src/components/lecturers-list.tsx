@@ -1,14 +1,16 @@
 import { router } from 'expo-router';
+import { View } from 'react-native';
 
-import { InfoRow, Screen } from '@/src/components/ui';
+import { InfoRow, Muted } from '@/src/components/ui';
 import { people, places } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
 import { pick, tx } from '@/src/text';
 
-export default function PeopleScreen() {
+export function LecturersList() {
   const { locale } = useApp();
   return (
-    <Screen back kicker={tx(locale, 'Fakultät', 'Faculty')} title={tx(locale, 'Dozierende', 'Lecturers')} subtitle={tx(locale, 'Erfundene Profile für die Demonstration.', 'Fictional profiles for the demonstration.')}>
+    <View style={{ gap: 8 }}>
+      <Muted>{tx(locale, 'Erfundene Profile für die Demonstration.', 'Fictional profiles for the demonstration.')}</Muted>
       {people.map((person) => (
         <InfoRow
           key={person.id}
@@ -18,6 +20,6 @@ export default function PeopleScreen() {
           onPress={() => router.push({ pathname: '/dozent/[id]', params: { id: person.id } })}
         />
       ))}
-    </Screen>
+    </View>
   );
 }

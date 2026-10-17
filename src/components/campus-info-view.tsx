@@ -5,7 +5,7 @@ import { Platform, Pressable, Text, View } from 'react-native';
 import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum, loadServerTree } from '@/src/auth/campus';
 import { clearCachedStudy, getSyncInfo, loadCachedCoursesByElement, loadCachedNodes, appendElementCourses, saveFullStructure, type CurriculumSyncInfo } from '@/src/campus/db';
 import { runServerSync } from '@/src/campus/server-sync';
-import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
 import { StudySelector } from '@/src/components/study-selector';
@@ -15,7 +15,7 @@ import { formatDay, formatTime, tx } from '@/src/text';
 import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
-export default function CampusInfoScreen() {
+export function CampusInfoView() {
   const { locale, sessionMode, campusStudies, activeStudyId, curriculumNodes, curriculumStudyId, setCurriculum } = useApp();
   const [busy, setBusy] = useState(false);
   const [busyNode, setBusyNode] = useState<number | null>(null);
@@ -198,14 +198,12 @@ export default function CampusInfoScreen() {
   }
 
   return (
-    <Screen
-      kicker="C@MPUS"
-      title="C@MPUS"
-      subtitle={
-        study
+    <View style={{ gap: 14 }}>
+      <Muted>
+        {study
           ? `${study.name}${study.intendedDegree ? ` · ${study.intendedDegree}` : ''}${study.versionIdentifier ? ` · ${study.versionIdentifier}` : ''}`
-          : tx(locale, 'Live-Struktur aus C@MPUS, kein Demonstrationsstand.', 'Live structure from C@MPUS, not the demonstration record.')
-      }>
+          : tx(locale, 'Live-Struktur aus C@MPUS, kein Demonstrationsstand.', 'Live structure from C@MPUS, not the demonstration record.')}
+      </Muted>
       <StudySelector />
       {study === null ? (
         <Card>
@@ -316,7 +314,7 @@ export default function CampusInfoScreen() {
           ) : null}
         </>
       )}
-    </Screen>
+    </View>
   );
 }
 

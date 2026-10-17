@@ -12,8 +12,8 @@ import { Text } from 'react-native';
 export default function MoreScreen() {
   const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId } = useApp();
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
-  const entries: Array<{ title: string; detail: string; href: '/api' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' }> = [
-    { title: tx(locale, 'Schnittstelle', 'Interface'), detail: tx(locale, 'Aufrufe senden, Curriculum laden', 'Send calls, load the curriculum'), href: '/api' },
+  const entries: Array<{ title: string; detail: string; href: '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' }> = [
+    { title: tx(locale, 'Karte', 'Map'), detail: tx(locale, 'Uni-Lageplan und Gebäudesuche', 'University map and building search'), href: '/campus' },
     { title: tx(locale, 'Plattformen', 'Platforms'), detail: 'C@MPUS · ILIAS · SDG · SIAM', href: '/plattformen' },
     { title: tx(locale, 'Dokumente', 'Documents'), detail: tx(locale, 'ILIAS, Notizen, Import', 'ILIAS, notes, import'), href: '/dokumente' },
     { title: tx(locale, 'Kommilitonen', 'Peers'), detail: tx(locale, 'Bewertungen und geteilte Notizen', 'Reviews and shared notes'), href: '/kommilitonen' },
@@ -22,9 +22,10 @@ export default function MoreScreen() {
     { title: tx(locale, 'Anrechnung', 'Recognition'), detail: tx(locale, 'Anerkennung vorbereiten', 'Prepare a recognition request'), href: '/anrechnung' },
     { title: tx(locale, 'Fristen', 'Deadlines'), detail: tx(locale, 'Anmeldung, Abgabe, Prüfung', 'Registration, submission, exams'), href: '/fristen' },
     { title: tx(locale, 'Einstellungen', 'Settings'), detail: tx(locale, 'Sprache, Daten, Hinweis', 'Language, data, notice'), href: '/einstellungen' },
+    { title: tx(locale, 'Schnittstelle', 'Interface'), detail: tx(locale, 'Aufrufe senden, Curriculum laden', 'Send calls, load the curriculum'), href: '/api' },
   ];
   return (
-    <Screen kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Mehr', 'More')}>
+    <Screen kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Campus', 'Campus')}>
       {sessionMode === 'campus' ? <StudySelector /> : null}
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>

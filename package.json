@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~57.0.30",
     "expo-auth-session": "~57.0.16",
@@ -44,7 +45,8 @@
     "assistant": "node server/index.mjs",
     "campus:secret": "node scripts/set-campus-secret.mjs",
     "campus:token": "node scripts/set-campus-secret.mjs token",
-    "campus:session": "node scripts/set-campus-secret.mjs session"
+    "campus:session": "node scripts/set-campus-secret.mjs session",
+    "lint": "expo lint"
   },
   "private": true
 }
