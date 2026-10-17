@@ -1,13 +1,14 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import {
   fetchMailFolders,
   fetchMailStatus,
+  folderKind,
   folderLabel,
   getMailSnapshot,
   loadMailMessages,
@@ -15,6 +16,7 @@ import {
   mailMessage,
   submitMailCredentials,
   subscribeMailSnapshot,
+  type FolderKind,
 } from '@/src/auth/mail';
 import { Button, Card, FieldLabel, Pill, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
@@ -30,11 +32,24 @@ type InboxFilter = { kind: 'all' } | { kind: 'unread' } | { kind: 'sender'; send
 
 type InboxSort = 'newest' | 'oldest' | 'sender' | 'unread-first';
 
+/** Well-known mailboxes first in a stable order, then the user's own folders (`other` last). */
+const SYSTEM_FOLDER_ORDER: FolderKind[] = ['inbox', 'sent', 'drafts', 'archive', 'junk', 'trash', 'other'];
+
+function folderSection(kind: FolderKind): 'mailbox' | 'folder' {
+  return kind === 'other' ? 'folder' : 'mailbox';
+}
+
+function folderSectionLabel(section: 'mailbox' | 'folder', locale: 'de' | 'en'): string {
+  return section === 'folder' ? tx(locale, 'Eigene Ordner', 'Your folders') : tx(locale, 'Postfächer', 'Mailboxes');
+}
+
 interface DropdownOption {
   key: string;
   label: string;
   meta?: string;
   selected: boolean;
+  /** Section header this option sits under; consecutive options sharing it render one header. */
+  group?: string;
 }
 
 function ControlIcon({
@@ -84,23 +99,32 @@ function DropdownPicker({
             </View>
             <Text style={styles.sheetTitle}>{hint}</Text>
             <ScrollView style={styles.sheetScroll}>
-              {options.map((option) => (
-                <Pressable
-                  key={option.key}
-                  style={({ pressed }) => [styles.option, pressed && styles.pressed]}
-                  onPress={() => {
-                    onSelect(option.key);
-                    setOpen(false);
-                  }}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.optionText, option.selected && styles.optionTextActive]} numberOfLines={2}>
-                    {option.label}
-                  </Text>
-                  {option.meta ? <Text style={styles.optionMeta}>{option.meta}</Text> : null}
-                  {option.selected ? <ControlIcon symbol="checkmark" material="check" color={colors.blue} /> : null}
-                </Pressable>
-              ))}
+              {options.map((option, index) => {
+                const header = option.group && option.group !== options[index - 1]?.group ? option.group : null;
+                return (
+                  <Fragment key={option.key}>
+                    {header ? (
+                      <View style={styles.sheetGroupWrap}>
+                        <Text style={styles.sheetGroupText}>{header}</Text>
+                      </View>
+                    ) : null}
+                    <Pressable
+                      style={({ pressed }) => [styles.option, option.group && styles.optionGrouped, pressed && styles.pressed]}
+                      onPress={() => {
+                        onSelect(option.key);
+                        setOpen(false);
+                      }}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.optionText, option.selected && styles.optionTextActive]} numberOfLines={2}>
+                        {option.label}
+                      </Text>
+                      {option.meta ? <Text style={styles.optionMeta}>{option.meta}</Text> : null}
+                      {option.selected ? <ControlIcon symbol="checkmark" material="check" color={colors.blue} /> : null}
+                    </Pressable>
+                  </Fragment>
+                );
+              })}
             </ScrollView>
           </Pressable>
         </Pressable>
@@ -233,11 +257,26 @@ export default function MailScreen() {
     const source = selectable.length > 0 ? selectable : [{ name: 'INBOX', selectable: true }];
     // Unique names only — a server that lists a mailbox twice must not get a duplicate key.
     const unique = [...new Map(source.map((candidate) => [candidate.name, candidate])).values()];
-    return unique.map((candidate) => ({
-      key: candidate.name,
-      label: folderLabel(candidate.display || candidate.name, locale),
-      selected: candidate.name === folder,
-    }));
+    const label = (candidate: MailFolder) => folderLabel(candidate.display || candidate.name, locale);
+    // The well-known mailboxes lead in a fixed order, the account's own folders follow by name.
+    const ordered = [...unique].sort((a, b) => {
+      const rankA = SYSTEM_FOLDER_ORDER.indexOf(folderKind(a.name));
+      const rankB = SYSTEM_FOLDER_ORDER.indexOf(folderKind(b.name));
+      if (rankA !== rankB) return rankA - rankB;
+      return label(a).localeCompare(label(b), locale === 'de' ? 'de-DE' : 'en');
+    });
+    // Headers only earn their space when both sections exist; a single section stays a flat list.
+    const sections = new Set(ordered.map((candidate) => folderSection(folderKind(candidate.name))));
+    const grouped = sections.size > 1;
+    return ordered.map((candidate) => {
+      const section = folderSection(folderKind(candidate.name));
+      return {
+        key: candidate.name,
+        label: label(candidate),
+        selected: candidate.name === folder,
+        group: grouped ? folderSectionLabel(section, locale) : undefined,
+      };
+    });
   }, [folders, folder, locale]);
 
   const folderValueText = folderOptions.find((option) => option.selected)?.label ?? folderLabel(folder, locale);
@@ -620,6 +659,20 @@ const styles = StyleSheet.create({
   sheetGripWrap: { alignItems: 'center', paddingBottom: 6 },
   sheetGrip: { width: 40, height: 5, borderRadius: 5, backgroundColor: colors.line },
   sheetTitle: { color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase', paddingTop: 8, paddingBottom: 6 },
+  sheetGroupWrap: { paddingTop: 16, paddingBottom: 6 },
+  sheetGroupText: {
+    alignSelf: 'flex-start',
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+    borderRadius: 8,
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
   sheetScroll: { maxHeight: 420 },
   option: {
     flexDirection: 'row',
@@ -630,6 +683,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.line,
   },
   optionText: { flex: 1, color: colors.anthracite, fontSize: 15 },
+  optionGrouped: { paddingLeft: 14, borderLeftWidth: 2, borderLeftColor: colors.line, marginLeft: 2 },
   optionTextActive: { color: colors.blue, fontWeight: '700' },
   optionMeta: { color: colors.mute, fontSize: 13, fontWeight: '700' },
   pressed: { opacity: 0.72 },

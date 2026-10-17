@@ -217,19 +217,33 @@ export async function fetchMailBody(folder: string, uid: number): Promise<MailBo
   return folders;
 }
 
+/** Which well-known role a mailbox plays; anything unrecognized is a plain `other` folder. */
+export type FolderKind = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'other';
+
+export function folderKind(name: string): FolderKind {
+  const lower = name.toLowerCase();
+  if (lower.includes('inbox') || lower.includes('posteingang')) return 'inbox';
+  if (lower.includes('gesendet') || lower.includes('sent')) return 'sent';
+  if (lower.includes('entwurf') || lower.includes('draft')) return 'drafts';
+  if (lower.includes('papierkorb') || lower.includes('trash') || lower.includes('deleted')) return 'trash';
+  if (lower.includes('junk') || lower.includes('spam')) return 'junk';
+  if (lower.includes('archiv') || lower.includes('archive')) return 'archive';
+  return 'other';
+}
+
 /**
  * Friendly folder names for the dropdown: the well-known mailboxes get localized
  * labels, everything else shows its last path segment (Exchange uses paths like
  * "Gesendete Elemente" verbatim, so the fallback stays close to the real name).
  */
 export function folderLabel(name: string, locale: 'de' | 'en'): string {
-  const lower = name.toLowerCase();
-  if (lower.includes('inbox') || lower.includes('posteingang')) return tx(locale, 'Posteingang', 'Inbox');
-  if (lower.includes('gesendet') || lower.includes('sent')) return tx(locale, 'Gesendet', 'Sent');
-  if (lower.includes('entwurf') || lower.includes('draft')) return tx(locale, 'Entwürfe', 'Drafts');
-  if (lower.includes('papierkorb') || lower.includes('trash') || lower.includes('deleted')) return tx(locale, 'Papierkorb', 'Trash');
-  if (lower.includes('junk') || lower.includes('spam')) return tx(locale, 'Junk', 'Junk');
-  if (lower.includes('archiv') || lower.includes('archive')) return tx(locale, 'Archiv', 'Archive');
+  const kind = folderKind(name);
+  if (kind === 'inbox') return tx(locale, 'Posteingang', 'Inbox');
+  if (kind === 'sent') return tx(locale, 'Gesendet', 'Sent');
+  if (kind === 'drafts') return tx(locale, 'Entwürfe', 'Drafts');
+  if (kind === 'trash') return tx(locale, 'Papierkorb', 'Trash');
+  if (kind === 'junk') return tx(locale, 'Junk', 'Junk');
+  if (kind === 'archive') return tx(locale, 'Archiv', 'Archive');
   const segments = name.split(/[/.]/).filter(Boolean);
   return segments[segments.length - 1] ?? name;
 }

@@ -17,7 +17,10 @@ Two surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
   first (Posteingang, Gesendet, Entwürfe, … — the real folder list comes from an IMAP
   `LIST`; names travel in modified UTF-7, the server returns raw `name` plus decoded
   `display`, so `Gel&APY-schte` shows as `Gelöschte` while `SELECT` uses the raw form,
-  and repeated listings dedupe), then search, then the filter and
+  and repeated listings dedupe). Recognized mailboxes are ordered
+  Posteingang → Gesendet → Entwürfe → Archiv → Junk → Papierkorb, the account's own
+  folders follow by name; when both kinds exist the sheet labels them "Postfächer" and
+  "Eigene Ordner" (a single kind stays a flat list). Then search, then the filter and
   sort dropdowns, then the cog that opens connection management. The
   60-second fetching interval (`REFRESH_INTERVAL_MS`) refreshes quietly while connected.
   The filter and sort options are inferred
