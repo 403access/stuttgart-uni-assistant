@@ -55,6 +55,15 @@ export default function TodayScreen() {
         </Text>
       </Card>
 
+      <Card onPress={() => router.push('/studium')}>
+        <Text style={{ color: colors.blue, fontWeight: '700' }}>
+          {tx(locale, 'Studium öffnen', 'Open Study')}
+        </Text>
+        <Text style={{ color: colors.inkSoft }}>
+          {tx(locale, 'Module, Struktur, Tutorien, Dozierende', 'Modules, structure, tutorials, lecturers')}
+        </Text>
+      </Card>
+
       <Section title={weekdays[locale][now.getDay()] ?? ''} action={tx(locale, 'Campus', 'Campus')} onAction={() => router.push('/campus')} />
       {sessions.length ? (
         sessions.map((row) => (
