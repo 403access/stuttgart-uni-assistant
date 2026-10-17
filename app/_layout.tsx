@@ -7,6 +7,7 @@ import { View } from 'react-native';
 
 import { AppStateProvider, useApp } from '@/src/state/AppState';
 import { ToastHost } from '@/src/components/toast';
+import { QueryProvider } from '@/src/query/client';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -23,9 +24,11 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <AppStateProvider>
-      <StatusBar style="dark" />
-      <Gate />
-      <ToastHost />
+      <QueryProvider>
+        <StatusBar style="dark" />
+        <Gate />
+        <ToastHost />
+      </QueryProvider>
     </AppStateProvider>
   );
 }

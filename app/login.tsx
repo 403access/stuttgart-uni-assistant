@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
-import { campusDetail, fetchCampusStatus, signInWithCampusToken, submitBrowserCredentials, type CampusStatus } from '@/src/auth/campus';
+import { campusDetail, fetchCampusStatus, signInWithCampusToken, submitBrowserCredentials } from '@/src/auth/campus';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { student } from '@/src/data';
+import { keys } from '@/src/query/keys';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -33,8 +35,10 @@ const DIAGNOSE_JS =
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { locale, setLocale, signInCampus, signInDemo, signInLocal, signInOidc } = useApp();
-  const [status, setStatus] = useState<OidcStatus | null>(null);
-  const [campusStatus, setCampusStatus] = useState<CampusStatus | null>(null);
+  // The status probes resolve to null when the server is unreachable — the
+  // screen renders unknown as disabled, not as an error toast.
+  const status = useQuery({ queryKey: keys.oidcStatus(), queryFn: () => fetchOidcStatus() }).data ?? null;
+  const campusStatus = useQuery({ queryKey: keys.campusStatus(), queryFn: () => fetchCampusStatus() }).data ?? null;
   const [account, setAccount] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -46,19 +50,6 @@ export default function LoginScreen() {
   const [browserDiag, setBrowserDiag] = useState('');
   const webview = useRef<WebView | null>(null);
   const redirectUri = universityRedirectUri();
-
-  useEffect(() => {
-    let active = true;
-    fetchOidcStatus().then((next) => {
-      if (active) setStatus(next);
-    });
-    fetchCampusStatus().then((next) => {
-      if (active) setCampusStatus(next);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   async function enterWithCampusToken() {
     if (busy) return;

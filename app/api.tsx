@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Stack } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
 import { asCampusCourses, asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
 import type { CampusCourse } from '@/src/types';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
+import { keys } from '@/src/query/keys';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -36,26 +38,17 @@ function preview(value: unknown): string {
 
 export default function ApiScreen() {
   const { locale, curriculumNodes, campusStudies, activeStudyId, setCurriculum, setStudies, setActiveStudy, signInCampus } = useApp();
-  const [operations, setOperations] = useState<ApiOperation[]>([]);
-  const [live, setLive] = useState(true);
+  // The catalog fetch never fails here: it answers the bundled fallback with
+  // `live: false`, which the screen renders as the stale-list hint.
+  const catalog = useQuery({ queryKey: keys.catalog(), queryFn: () => fetchApiCatalog() });
+  const operations = catalog.data?.operations ?? [];
+  const live = catalog.data?.live ?? false;
   const [elementId, setElementId] = useState('');
   const [courseId, setCourseId] = useState('');
   const [busyId, setBusyId] = useState('');
   const [result, setResult] = useState<ApiCallResult | null>(null);
   const [notice, setNotice] = useState('');
   const [coursesPreview, setCoursesPreview] = useState<CampusCourse[]>([]);
-
-  useEffect(() => {
-    let active = true;
-    fetchApiCatalog().then((catalog) => {
-      if (!active) return;
-      setOperations(catalog.operations);
-      setLive(catalog.live);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   async function send(operation: ApiOperation, requestedId?: number) {
     if (busyId) return;
