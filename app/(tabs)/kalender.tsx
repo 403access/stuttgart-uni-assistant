@@ -51,7 +51,7 @@ export default function KalenderScreen() {
   const [anchor, setAnchor] = useState(todayLocal());
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [assignFilter, setAssignFilter] = useState<AssignFilter>('all');
+  const [assignFilter, setAssignFilter] = useState<AssignFilter>('fixed');
   const [sort, setSort] = useState<CalSort>('time');
   const [exportOpen, setExportOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
