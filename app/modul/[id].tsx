@@ -17,7 +17,8 @@ function one(value: string | string[] | undefined): string {
 export default function ModuleScreen() {
   const app = useApp();
   const { locale, plannedIds, togglePlanned, reviews, addReview } = app;
-  const module = modules.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
+  const params = useLocalSearchParams<{ id: string }>();
+  const module = modules.find((item) => item.id === one(params.id));
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState('4');
   const [workload, setWorkload] = useState('8');

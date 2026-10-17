@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -85,10 +85,6 @@ export default function KalenderScreen() {
     [allCourses, studyFilter],
   );
 
-  useEffect(() => {
-    setSelectedKey(null);
-  }, [studyFilter]);
-
   const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'Ohne Typ', 'No type')))].sort(), [courses, locale]);
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -121,6 +117,12 @@ export default function KalenderScreen() {
   }, [visible]);
 
   const selected = selectedKey !== null ? (courses.find((course) => courseKey(course.studyId, course.id) === selectedKey) ?? null) : null;
+
+  /** Changing the study filter can drop the open course; reset the selection in the handler. */
+  function changeStudyFilter(value: StudyFilter): void {
+    setStudyFilter(value);
+    setSelectedKey(null);
+  }
 
   function handleCoursePress(course: StudyCourse): void {
     if (isWeb) setSelectedKey(courseKey(course.studyId, course.id));
@@ -199,7 +201,7 @@ export default function KalenderScreen() {
             locale={locale}
             studies={campusStudies}
             studyFilter={studyFilter}
-            setStudyFilter={setStudyFilter}
+            setStudyFilter={changeStudyFilter}
             typeFilter={typeFilter}
             setTypeFilter={setTypeFilter}
             types={types}
@@ -810,7 +812,6 @@ const blockTime = { fontSize: 12, fontWeight: '700' as const };
 const blockMeta = { fontSize: 11, lineHeight: 14 };
 
 const monthCol = { width: '13%' as const };
-const monthCellEmpty = monthCol;
 
 const monthCell = {
   backgroundColor: colors.paper,
@@ -835,7 +836,7 @@ function CourseDetailPanel({ course, locale, onClose }: { course: StudyCourse; l
       : course.startTime
         ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)} ${tx(locale, 'Uhr', "o'clock")}`
         : '';
-  const rows: Array<[string, string]> = [
+  const rows: [string, string][] = [
     [tx(locale, 'Nummer', 'Number'), course.courseNumber || '–'],
     [
       tx(locale, 'Umfang', 'Size'),

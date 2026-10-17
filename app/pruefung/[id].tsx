@@ -13,7 +13,8 @@ function one(value: string | string[] | undefined): string {
 
 export default function ExamScreen() {
   const { locale } = useApp();
-  const exam = exams.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
+  const params = useLocalSearchParams<{ id: string }>();
+  const exam = exams.find((item) => item.id === one(params.id));
   if (!exam) {
     return (
       <Screen kicker={tx(locale, 'Eintrag fehlt', 'Entry missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>

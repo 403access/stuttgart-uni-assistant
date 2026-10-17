@@ -13,7 +13,8 @@ function one(value: string | string[] | undefined): string {
 
 export default function PersonScreen() {
   const { locale } = useApp();
-  const person = people.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
+  const params = useLocalSearchParams<{ id: string }>();
+  const person = people.find((item) => item.id === one(params.id));
   if (!person) {
     return (
       <Screen kicker={tx(locale, 'Profil fehlt', 'Profile missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>

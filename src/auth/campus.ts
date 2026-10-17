@@ -55,7 +55,7 @@ export interface ServerTree {
 
 export interface ServerCourses {
   studyId: number;
-  courses: Array<CampusCourse & { elementIds: number[]; elementNames: string[] }>;
+  courses: (CampusCourse & { elementIds: number[]; elementNames: string[] })[];
   fetchedElementIds: number[];
   sync: { courseCount: number; finishedAt: string | null; complete: boolean } | null;
 }

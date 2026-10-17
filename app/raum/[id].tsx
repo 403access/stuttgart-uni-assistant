@@ -14,7 +14,8 @@ function one(value: string | string[] | undefined): string {
 
 export default function RoomScreen() {
   const { locale } = useApp();
-  const place = places.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
+  const params = useLocalSearchParams<{ id: string }>();
+  const place = places.find((item) => item.id === one(params.id));
   if (!place) {
     return (
       <Screen kicker={tx(locale, 'Ort fehlt', 'Place missing')} subtitle={tx(locale, 'Kein Ort mit dieser Kennung.', 'No place with this id.')}>

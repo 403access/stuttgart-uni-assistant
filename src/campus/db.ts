@@ -447,9 +447,9 @@ interface CourseRow {
 
 const COURSE_COLUMNS = 'id, course_number, title, course_type, course_type_short, semester, semester_id, duration, lecturers, room_name, start_time, end_time, detail_url, registration_status, registration_action, registration_url';
 
-async function elementsByCourse(studyId: number): Promise<Map<number, Array<{ elementId: number; elementName: string }>>> {
+async function elementsByCourse(studyId: number): Promise<Map<number, { elementId: number; elementName: string }[]>> {
   const db = await getDbOrNull();
-  const map = new Map<number, Array<{ elementId: number; elementName: string }>>();
+  const map = new Map<number, { elementId: number; elementName: string }[]>();
   if (!db) return map;
   const rows = await db.getAllAsync<{ course_id: number; element_id: number; element_name: string }>(
     'SELECT course_id, element_id, element_name FROM course_elements WHERE study_id = ? ORDER BY element_id',
@@ -463,7 +463,7 @@ async function elementsByCourse(studyId: number): Promise<Map<number, Array<{ el
   return map;
 }
 
-function rowToBulkCourse(row: CourseRow, links: Array<{ elementId: number; elementName: string }>): BulkCourse {
+function rowToBulkCourse(row: CourseRow, links: { elementId: number; elementName: string }[]): BulkCourse {
   return {
     id: row.id,
     courseNumber: row.course_number ?? '',

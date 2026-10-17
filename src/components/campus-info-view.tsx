@@ -342,7 +342,7 @@ function CurriculumTree({
   return (
     <>
       {roots.map((node) => (
-        <TreeNode key={node.id} node={node} children={children} depth={0} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
+        <TreeNode key={node.id} node={node} childMap={children} depth={0} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
       ))}
     </>
   );
@@ -350,7 +350,7 @@ function CurriculumTree({
 
 function TreeNode({
   node,
-  children,
+  childMap,
   depth,
   studyId,
   locale,
@@ -358,14 +358,14 @@ function TreeNode({
   onNode,
 }: {
   node: CurriculumNode;
-  children: Map<number, CurriculumNode[]>;
+  childMap: Map<number, CurriculumNode[]>;
   depth: number;
   studyId: number;
   locale: 'de' | 'en';
   busyNode: number | null;
   onNode: (nodeId: number) => void;
 }) {
-  const kids = children.get(node.id) ?? [];
+  const kids = childMap.get(node.id) ?? [];
   const status = [
     node.completed ? tx(locale, 'abgeschlossen', 'completed') : '',
     node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : '',
@@ -388,7 +388,7 @@ function TreeNode({
       {kids.length > 0 ? (
         <TreeChildren>
           {kids.map((kid) => (
-            <TreeNode key={kid.id} node={kid} children={children} depth={depth + 1} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
+            <TreeNode key={kid.id} node={kid} childMap={childMap} depth={depth + 1} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
           ))}
         </TreeChildren>
       ) : null}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -67,8 +67,9 @@ export function ToastHost() {
 }
 
 function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
-  const slide = useRef(new Animated.Value(24)).current;
-  const fade = useRef(new Animated.Value(0)).current;
+  // Animation values persist for the card's lifetime; state keeps them out of render-time ref reads.
+  const [slide] = useState(() => new Animated.Value(24));
+  const [fade] = useState(() => new Animated.Value(0));
   useEffect(() => {
     Animated.parallel([
       Animated.timing(slide, { toValue: 0, duration: 220, useNativeDriver: true }),

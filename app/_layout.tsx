@@ -2,7 +2,7 @@ import { Stack, useSegments, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import { AppStateProvider, useApp } from '@/src/state/AppState';
@@ -37,11 +37,12 @@ function Gate() {
   const { ready, sessionAccount, locale } = useApp();
   const segments = useSegments();
   const router = useRouter();
-  const [settled, setSettled] = useState(false);
+  const onLogin = segments[0] === 'login' || segments[0] === 'oidc';
+  // Settled once the route matches the session; the effect below only performs the redirect.
+  const settled = ready && (sessionAccount ? !onLogin : onLogin);
 
   useEffect(() => {
     if (!ready) return;
-    const onLogin = segments[0] === 'login' || segments[0] === 'oidc';
     if (!sessionAccount && !onLogin) {
       router.replace('/login');
       return;
@@ -50,8 +51,7 @@ function Gate() {
       router.replace('/');
       return;
     }
-    setSettled(true);
-  }, [ready, sessionAccount, segments, router]);
+  }, [ready, sessionAccount, onLogin, router]);
 
   useEffect(() => {
     if (settled) SplashScreen.hideAsync().catch(() => undefined);

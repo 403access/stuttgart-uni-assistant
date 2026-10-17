@@ -200,8 +200,14 @@ export default function StrukturenScreen() {
     return merged;
   }, [log, storedLog, serverCalls]);
 
-  const selectedStudy = campusStudies.find((study) => study.studyId === selectedId) ?? null;
-  const selectedNode = selectedStudy && selectedNodeId !== null ? (trees[selectedStudy.studyId] ?? []).find((node) => node.id === selectedNodeId) ?? null : null;
+  // The chosen study is intent; when studies load or change, fall back to the active
+  // study (or the first) during render instead of syncing the state back through an effect.
+  const studyKnown = selectedId !== null && campusStudies.some((study) => study.studyId === selectedId);
+  const effectiveSelectedId = studyKnown ? selectedId : (activeStudyId ?? campusStudies[0]?.studyId ?? null);
+  const effectiveSelectedNodeId = effectiveSelectedId === selectedId ? selectedNodeId : null;
+  const selectedStudy = campusStudies.find((study) => study.studyId === effectiveSelectedId) ?? null;
+  const selectedNode =
+    selectedStudy && effectiveSelectedNodeId !== null ? (trees[selectedStudy.studyId] ?? []).find((node) => node.id === effectiveSelectedNodeId) ?? null : null;
 
   function selectNode(id: number): void {
     setSelectedNodeId(id);
@@ -212,14 +218,6 @@ export default function StrukturenScreen() {
     setSelectedUid(uid);
     setSelectedNodeId(null);
   }
-
-  useEffect(() => {
-    if (!campusStudies.length) return;
-    if (selectedId === null || !campusStudies.some((study) => study.studyId === selectedId)) {
-      setSelectedId(activeStudyId ?? campusStudies[0].studyId);
-      setSelectedNodeId(null);
-    }
-  }, [campusStudies, activeStudyId, selectedId]);
 
   async function clearStudy(studyId: number): Promise<void> {
     if (fetching[studyId]) return;
@@ -242,36 +240,10 @@ export default function StrukturenScreen() {
     if (activeStudyId !== null) setCurriculum([], { studyId: activeStudyId, replace: true });
   }
 
-  const nodes = useMemo(() => (selectedId !== null ? (trees[selectedId] ?? []) : []), [trees, selectedId]);
-  const studyMeta = useMemo(() => {
-    if (!selectedStudy || nodes.length === 0) return null;
-    const byId = new Set(nodes.map((node) => node.id));
-    const roots = nodes.filter((node) => node.parentId === null || !byId.has(node.parentId));
-    const childCount = new Map<number, number>();
-    for (const node of nodes) {
-      if (node.parentId !== null) childCount.set(node.parentId, (childCount.get(node.parentId) ?? 0) + 1);
-    }
-    const topLevel = roots.length === 1 ? (childCount.get(roots[0].id) ?? 0) : roots.length;
-    return { elementId: selectedStudy.elementId, topLevel, total: nodes.length };
-  }, [nodes, selectedStudy]);
-  const types = useMemo(() => [...new Set(nodes.map((node) => node.elementType).filter(Boolean))].sort(), [nodes]);
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    const filtered = nodes.filter((node) => {
-      if (typeFilter !== 'all' && node.elementType !== typeFilter) return false;
-      if (statusFilter === 'done' && !node.completed) return false;
-      if (statusFilter === 'progress' && !node.inProgress) return false;
-      if (statusFilter === 'open' && (node.completed || node.inProgress)) return false;
-      if (needle && !`${node.name} ${node.designation}`.toLowerCase().includes(needle)) return false;
-      return true;
-    });
-    const by = {
-      name: (a: CurriculumNode, b: CurriculumNode) => a.name.localeCompare(b.name),
-      designation: (a: CurriculumNode, b: CurriculumNode) => a.designation.localeCompare(b.designation),
-      id: (a: CurriculumNode, b: CurriculumNode) => a.id - b.id,
-    }[sort];
-    return [...filtered].sort(by);
-  }, [nodes, query, typeFilter, statusFilter, sort]);
+  const nodes = effectiveSelectedId !== null ? (trees[effectiveSelectedId] ?? []) : [];
+  const studyMeta = studySummary(nodes, selectedStudy);
+  const types = [...new Set(nodes.map((node) => node.elementType).filter(Boolean))].sort();
+  const visible = visibleNodes(nodes, query, typeFilter, statusFilter, sort);
 
   if (!isWeb) {
     return (
@@ -332,7 +304,7 @@ export default function StrukturenScreen() {
             const info = infos[study.studyId];
             const count = trees[study.studyId]?.length ?? 0;
             const busy = fetching[study.studyId];
-            const isActive = study.studyId === selectedId;
+            const isActive = study.studyId === effectiveSelectedId;
             return (
               <Card key={study.studyId}>
                 <Pressable
@@ -445,7 +417,7 @@ export default function StrukturenScreen() {
                   locale={locale}
                   expanded={expanded}
                   setExpanded={setExpanded}
-                  selectedId={selectedNodeId}
+                  selectedId={effectiveSelectedNodeId}
                   onSelect={selectNode}
                   showRoot={showRoot}
                   registerRef={registerRowRef}
@@ -509,6 +481,38 @@ function statusLine(node: CurriculumNode, locale: 'de' | 'en'): string | undefin
     node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : '',
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : undefined;
+}
+
+/** Header numbers for the selected study: its element id, top-level sections and node total. */
+function studySummary(nodes: CurriculumNode[], selectedStudy: CampusStudy | null): { elementId: number | null; topLevel: number; total: number } | null {
+  if (!selectedStudy || nodes.length === 0) return null;
+  const byId = new Set(nodes.map((node) => node.id));
+  const roots = nodes.filter((node) => node.parentId === null || !byId.has(node.parentId));
+  const childCount = new Map<number, number>();
+  for (const node of nodes) {
+    if (node.parentId !== null) childCount.set(node.parentId, (childCount.get(node.parentId) ?? 0) + 1);
+  }
+  const topLevel = roots.length === 1 ? (childCount.get(roots[0].id) ?? 0) : roots.length;
+  return { elementId: selectedStudy.elementId, topLevel, total: nodes.length };
+}
+
+/** The loaded nodes narrowed by search and filters, then sorted by the chosen key. */
+function visibleNodes(nodes: CurriculumNode[], query: string, typeFilter: string, statusFilter: StatusFilter, sort: SortKey): CurriculumNode[] {
+  const needle = query.trim().toLowerCase();
+  const filtered = nodes.filter((node) => {
+    if (typeFilter !== 'all' && node.elementType !== typeFilter) return false;
+    if (statusFilter === 'done' && !node.completed) return false;
+    if (statusFilter === 'progress' && !node.inProgress) return false;
+    if (statusFilter === 'open' && (node.completed || node.inProgress)) return false;
+    if (needle && !`${node.name} ${node.designation}`.toLowerCase().includes(needle)) return false;
+    return true;
+  });
+  const by = {
+    name: (a: CurriculumNode, b: CurriculumNode) => a.name.localeCompare(b.name),
+    designation: (a: CurriculumNode, b: CurriculumNode) => a.designation.localeCompare(b.designation),
+    id: (a: CurriculumNode, b: CurriculumNode) => a.id - b.id,
+  }[sort];
+  return [...filtered].sort(by);
 }
 
 const sortOrder: SortKey[] = ['name', 'designation', 'id'];
@@ -657,7 +661,7 @@ function StudyTree({
         <TreeNode
           key={node.id}
           node={node}
-          children={children}
+          childMap={children}
           depth={0}
           locale={locale}
           expanded={expanded}
@@ -673,7 +677,7 @@ function StudyTree({
 
 function TreeNode({
   node,
-  children,
+  childMap,
   depth,
   locale,
   expanded,
@@ -683,7 +687,7 @@ function TreeNode({
   registerRef,
 }: {
   node: CurriculumNode;
-  children: Map<number, CurriculumNode[]>;
+  childMap: Map<number, CurriculumNode[]>;
   depth: number;
   locale: 'de' | 'en';
   expanded: Record<number, boolean>;
@@ -692,7 +696,7 @@ function TreeNode({
   onSelect: (id: number) => void;
   registerRef: (id: number, element: unknown) => void;
 }) {
-  const kids = children.get(node.id) ?? [];
+  const kids = childMap.get(node.id) ?? [];
   const isOpen = depth === 0 || expanded[node.id] === true;
   const toggleNode = (): void => {
     if (kids.length) setExpanded((current) => ({ ...current, [node.id]: !isOpen }));
@@ -720,7 +724,7 @@ function TreeNode({
             <TreeNode
               key={kid.id}
               node={kid}
-              children={children}
+              childMap={childMap}
               depth={depth + 1}
               locale={locale}
               expanded={expanded}
@@ -920,19 +924,28 @@ function rawResponse(entry: CampusLogEntry): string {
   return JSON.stringify({ code: entry.code ?? null, detail: entry.detail ?? null, httpStatus: entry.httpStatus ?? null });
 }
 
+/** `JSON.parse` that reports failure as `undefined` instead of throwing (JSON never parses to undefined). */
+function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
 function PrettyJson({ entry }: { entry: CampusLogEntry }) {
   if (!entry.responseJson) {
     return <JsonTree value={{ code: entry.code ?? null, detail: entry.detail ?? null, httpStatus: entry.httpStatus ?? null }} />;
   }
-  try {
-    return <JsonTree value={JSON.parse(entry.responseJson) as unknown} />;
-  } catch {
+  const parsed = parseJson(entry.responseJson);
+  if (parsed === undefined) {
     return (
       <Text style={{ color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo' }}>
         {breakable(entry.responseJson)}
       </Text>
     );
   }
+  return <JsonTree value={parsed} />;
 }
 
 function ResponseRendered({ entry, locale }: { entry: CampusLogEntry; locale: 'de' | 'en' }) {
@@ -997,7 +1010,7 @@ function EntryDetail({ entry, locale, onClose }: { entry: CampusLogEntry | null;
     }
   }
 
-  const rows: Array<[string, string]> = [
+  const rows: [string, string][] = [
     [tx(locale, 'Status', 'Status'), entry.ok ? 'OK' : (entry.code ?? '?')],
     [tx(locale, 'Operation', 'Operation'), entry.op],
     [tx(locale, 'Zeit', 'Time'), entry.time],
@@ -1120,7 +1133,7 @@ function NodeDetail({
     }
   }
 
-  const rows: Array<[string, string]> = [
+  const rows: [string, string][] = [
     [tx(locale, 'Kennung', 'Code'), node.designation || '–'],
     [
       tx(locale, 'Stand', 'Status'),

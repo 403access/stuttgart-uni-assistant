@@ -14,7 +14,7 @@ import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import type { ModuleStatus } from '@/src/types';
 
-const filters: Array<ModuleStatus | 'all'> = ['all', 'enrolled', 'open', 'passed'];
+const filters: (ModuleStatus | 'all')[] = ['all', 'enrolled', 'open', 'passed'];
 
 const segments = [
   { key: 'module', de: 'Module', en: 'Modules' },
