@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
-import { campusDetail, fetchCampusStatus, signInWithCampusToken, type CampusStatus } from '@/src/auth/campus';
+import { campusDetail, fetchCampusStatus, signInWithCampusToken, submitBrowserCredentials, type CampusStatus } from '@/src/auth/campus';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
@@ -10,6 +11,24 @@ import { student } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
+
+const HARVEST_JS =
+  "(function(){var out={cookies:'',storage:{}};" +
+  "try{out.cookies=document.cookie||'';}catch(e){}" +
+  'try{var i,k;' +
+  "for(i=0;i<localStorage.length;i++){k=localStorage.key(i);out.storage['local:'+k]=String(localStorage.getItem(k)).slice(0,4000);}" +
+  "for(i=0;i<sessionStorage.length;i++){k=sessionStorage.key(i);out.storage['session:'+k]=String(sessionStorage.getItem(k)).slice(0,4000);}" +
+  '}catch(e){out.error=String(e);}' +
+  'window.ReactNativeWebView.postMessage(JSON.stringify(out));' +
+  'return true;})();';
+
+const DIAGNOSE_JS =
+  '(function(){var out={diagnostic:true,url:location.href,cookies:[],local:[],session:[]};' +
+  'try{out.cookies=document.cookie.split(";").map(function(c){return c.split("=")[0].trim();}).filter(Boolean);}catch(e){}' +
+  'function keys(s){var r=[];try{for(var i=0;i<s.length;i++){var k=s.key(i);r.push(k+":"+String(s.getItem(k)).length);}}catch(e){}return r;}' +
+  'out.local=keys(localStorage);out.session=keys(sessionStorage);' +
+  'window.ReactNativeWebView.postMessage(JSON.stringify(out));' +
+  'return true;})();';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -20,6 +39,12 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [campusLog, setCampusLog] = useState('');
+  const [browserOpen, setBrowserOpen] = useState(false);
+  const [harvestBusy, setHarvestBusy] = useState(false);
+  const [browserError, setBrowserError] = useState('');
+  const [browserUrl, setBrowserUrl] = useState('');
+  const [browserDiag, setBrowserDiag] = useState('');
+  const webview = useRef<WebView | null>(null);
   const redirectUri = universityRedirectUri();
 
   useEffect(() => {
@@ -83,6 +108,56 @@ export default function LoginScreen() {
     }
   }
 
+  async function onBrowserMessage(event: WebViewMessageEvent) {
+    if (harvestBusy) return;
+    let parsed: { diagnostic?: boolean; url?: unknown; cookies?: unknown; local?: unknown; session?: unknown; cookiesRaw?: unknown; storage?: unknown } = {};
+    try {
+      parsed = JSON.parse(event.nativeEvent.data) as typeof parsed;
+    } catch {
+      return;
+    }
+    if (parsed.diagnostic) {
+      const names = (value: unknown): string => (Array.isArray(value) ? value.map(String).join(', ') : '–');
+      const lines = [
+        `${tx(locale, 'Seite', 'Page')}: ${typeof parsed.url === 'string' ? parsed.url.slice(0, 120) : '–'}`,
+        `${tx(locale, 'Cookies', 'Cookies')}: ${names(parsed.cookies)}`,
+        `localStorage: ${names(parsed.local)}`,
+        `sessionStorage: ${names(parsed.session)}`,
+      ];
+      console.info(`[campus-diagnose]\n${lines.join('\n')}`);
+      setBrowserDiag(lines.join('\n'));
+      return;
+    }
+    setHarvestBusy(true);
+    setBrowserError('');
+    try {
+      const storage: Record<string, string> = {};
+      if (parsed.storage && typeof parsed.storage === 'object') {
+        for (const [key, value] of Object.entries(parsed.storage as Record<string, unknown>)) {
+          if (typeof value === 'string' && value) storage[String(key).slice(0, 120)] = value.slice(0, 4000);
+        }
+      }
+      const result = await submitBrowserCredentials({ cookies: typeof parsed.cookies === 'string' ? parsed.cookies : '', storage });
+      setBrowserOpen(false);
+      setCampusLog(
+        tx(
+          locale,
+          `Browser-Anmeldung übernommen (${result.studies} Studiengänge). Lade Profil …`,
+          `Browser sign-in adopted (${result.studies} studies). Loading profile …`,
+        ),
+      );
+      await enterWithCampusToken();
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      const message = campusMessage(locale, code, campusDetail(caught));
+      setBrowserError(message);
+      setCampusLog(message);
+      setError(message);
+    } finally {
+      setHarvestBusy(false);
+    }
+  }
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.hero}>
@@ -110,6 +185,15 @@ export default function LoginScreen() {
         <Button
           label={busy ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Mit C@MPUS-Token anmelden', 'Sign in with C@MPUS token')}
           onPress={enterWithCampusToken}
+        />
+        <Button
+          secondary
+          label={tx(locale, 'Im C@MPUS-Browser anmelden (Beta)', 'Sign in with the C@MPUS browser (Beta)')}
+          onPress={() => {
+            setError('');
+            setBrowserError('');
+            setBrowserOpen(true);
+          }}
         />
         {campusLog ? <Text style={error ? styles.error : styles.footer}>{campusLog}</Text> : null}
         <Text style={styles.footer}>
@@ -208,6 +292,59 @@ export default function LoginScreen() {
           )}
         </Text>
       </ScrollView>
+      <Modal visible={browserOpen} animationType="slide" onRequestClose={() => setBrowserOpen(false)}>
+        <View style={[styles.browserShell, { paddingTop: insets.top }]}>
+          <View style={styles.browserBar}>
+            <Text style={styles.browserTitle}>{tx(locale, 'C@MPUS-Anmeldung (Beta)', 'C@MPUS sign-in (Beta)')}</Text>
+            <Pressable onPress={() => setBrowserOpen(false)} hitSlop={8}>
+              <Text style={styles.browserClose}>✕</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.browserHint}>
+            {tx(
+              locale,
+              'Melde dich auf der C@MPUS-Seite mit st-Konto und Passwort an und tippe dann auf Übernehmen. Das Passwort bleibt auf der Seite der Universität; übernommen werden nur Sitzung und Token.',
+              'Sign in on the C@MPUS page with your st-account and password, then tap Adopt. The password stays on the university page; only the session and token are adopted.',
+            )}
+          </Text>
+          <WebView
+            ref={webview}
+            source={{ uri: 'https://campus.uni-stuttgart.de/cusonline/' }}
+            sharedCookiesEnabled
+            thirdPartyCookiesEnabled
+            onNavigationStateChange={(state) => setBrowserUrl(state.url)}
+            onMessage={onBrowserMessage}
+            style={{ flex: 1 }}
+          />
+          <View style={{ padding: 12, paddingBottom: Math.max(insets.bottom, 12) }}>
+            {browserUrl ? (
+              <Text style={styles.browserHint} numberOfLines={2}>
+                {browserUrl.slice(0, 120)}
+              </Text>
+            ) : null}
+            {browserDiag ? <Text style={styles.browserDiag}>{browserDiag}</Text> : null}
+            {harvestBusy ? (
+              <Text style={styles.browserHint}>
+                {tx(
+                  locale,
+                  'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
+                  'Checking credentials against C@MPUS … this can take up to a minute.',
+                )}
+              </Text>
+            ) : null}
+            {browserError ? <Text style={styles.error}>{browserError}</Text> : null}
+            <Button
+              label={harvestBusy ? tx(locale, 'Übernahme läuft …', 'Adopting …') : tx(locale, 'Anmeldung übernehmen', 'Adopt sign-in')}
+              onPress={() => webview.current?.injectJavaScript(HARVEST_JS)}
+            />
+            <Button
+              secondary
+              label={tx(locale, 'Speicher diagnostizieren', 'Diagnose storage')}
+              onPress={() => webview.current?.injectJavaScript(DIAGNOSE_JS)}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -236,6 +373,13 @@ function campusMessage(locale: 'de' | 'en', code: string, detail = ''): string {
       locale,
       'C@MPUS meldet invalid_token. CAMPUS_BEARER_TOKEN ist abgelaufen oder gehört nicht zu diesem PSESSIONID. Setze einen neuen Token aus derselben Anmeldung und starte den Server neu.',
       'C@MPUS reports invalid_token. CAMPUS_BEARER_TOKEN has expired or does not belong to this PSESSIONID. Set a new token from the same login and restart the server.',
+    );
+  }
+  if (code === 'no_credentials_found') {
+    return tx(
+      locale,
+      'Aus dem Browser kam nichts Verwertbares an (Sitzungs-Cookie oft HttpOnly, kein Token im Speicher). Nutze den Token-Ablauf: C@MPUS im Browser öffnen, Token aus den Entwicklerwerkzeugen kopieren, per npm run campus:token setzen.',
+      'Nothing usable came from the browser (the session cookie is often HttpOnly, no token in storage). Use the token flow instead: open C@MPUS in the browser, copy the token from devtools, set it with npm run campus:token.',
     );
   }
   if (code === 'campus_unauthorized') {
@@ -290,4 +434,10 @@ const styles = StyleSheet.create({
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   footer: { color: colors.inkSoft, fontSize: 13, lineHeight: 19 },
   redirect: { color: colors.anthracite, fontSize: 13, lineHeight: 18 },
+  browserShell: { flex: 1, backgroundColor: colors.paper },
+  browserBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
+  browserTitle: { color: colors.anthracite, fontSize: 17, fontWeight: '700' },
+  browserClose: { color: colors.blue, fontSize: 20, fontWeight: '700' },
+  browserHint: { color: colors.inkSoft, fontSize: 13, lineHeight: 18, paddingHorizontal: 16, paddingBottom: 8 },
+  browserDiag: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo', paddingHorizontal: 12, paddingBottom: 8 },
 });

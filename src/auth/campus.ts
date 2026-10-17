@@ -645,3 +645,27 @@ export async function syncExportedCalendar(options: { dateFrom: string; dateTo: 
   });
   return { filename: payload.filename ?? '', imported: payload.imported ?? 0, skipped: payload.skipped ?? 0, total: payload.total ?? 0 };
 }
+
+export interface BrowserHarvest {
+  cookies: string;
+  storage: Record<string, string>;
+}
+
+/** Beta sign-in: hand the in-app browser harvest to the server for validation. Secrets never touch the app bundle. */
+export async function submitBrowserCredentials(harvest: BrowserHarvest): Promise<{ ok: boolean; studies: number }> {
+  const url = endpoint('/v1/campus/credentials');
+  console.info('[campus-credentials] POST', url);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cookies: harvest.cookies.slice(0, 8000), storage: harvest.storage }),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; studies?: number } & CampusFailure;
+  if (!response.ok || payload.ok !== true) throw campusFailure(payload, 'campus_failed', response.status);
+  return { ok: true, studies: typeof payload.studies === 'number' ? payload.studies : 0 };
+}

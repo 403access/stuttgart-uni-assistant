@@ -277,3 +277,56 @@ test('calendar sync imports once and skips duplicates on repeat', async () => {
   assert.equal(second.skipped, 3);
   delete process.env.CAMPUS_SESSION_COOKIE;
 });
+
+test('browser harvest parsing reads the session cookie and token candidates', () => {
+  assert.equal(campus.sessionCookieFromString('a=1; PSESSIONID=abc123; b=2'), 'abc123');
+  assert.deepEqual(
+    campus.bearerCandidatesFromStorage({ 'other': 'z'.repeat(80), 'local:cusonline_co.login.accessToken': 'eyJh.YmM.ZGVm' }),
+    ['eyJh.YmM.ZGVm', 'z'.repeat(80)],
+  );
+  assert.deepEqual(
+    campus.bearerCandidatesFromStorage({ 'local:cusonline_co.login.accessToken': 'k'.repeat(44) }),
+    ['k'.repeat(44)],
+  );
+  assert.equal(campus.sessionCookieFromString('nope'), '');
+  assert.equal(campus.sessionCookieFromString(undefined), '');
+  const bears = campus.bearerCandidatesFromStorage({ 'local:x': 'short', 'session:access': 'eyJh.YmM.ZGVm', 'other': 'z'.repeat(80) });
+  assert.deepEqual(bears, ['eyJh.YmM.ZGVm', 'z'.repeat(80)]);
+  assert.deepEqual(campus.bearerCandidatesFromStorage(null), []);
+  assert.deepEqual(campus.extractBrowserCredentials({ cookies: '', storage: {} }), { session: '', bearers: [] });
+});
+
+test('browser credentials validate cookie plus bearer and keep the pair', async () => {
+  delete process.env.CAMPUS_BEARER_TOKEN;
+  delete process.env.CAMPUS_SESSION_COOKIE;
+  const goodBearer = 'good-jwt-value'.padEnd(70, '0');
+  const chooser = { resource: [{ content: { CmStudyInfoDto: { studyId: 9, name: { value: 'S' }, myStudyLink: { href: 'https://x/myStudies/9/myCurriculumElements/3' } } } }] };
+  const seen = [];
+  const fetchImpl = async (url, options = {}) => {
+    seen.push(options.headers);
+    const auth = options.headers?.Authorization ?? '';
+    const cookie = options.headers?.Cookie ?? '';
+    if (auth === `Bearer ${goodBearer}` && cookie === 'PSESSIONID=good-cookie') {
+      return { ok: true, status: 200, json: async () => chooser };
+    }
+    return { ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token' } } }] }) };
+  };
+  const result = await campus.loginWithBrowserCredentials({ cookies: 'PSESSIONID=good-cookie', storage: { 'x': 'nope', 'session:at': goodBearer } }, fetchImpl);
+  assert.equal(result.ok, true);
+  assert.equal(result.studies, 1);
+  assert.equal(campus.campusAuthorizationHeader(), `Bearer ${goodBearer}`);
+  assert.ok(seen.some((headers) => headers.Cookie === 'PSESSIONID=good-cookie'));
+  campus.clearRuntimeToken();
+  campus.clearRuntimeSession();
+});
+
+test('browser credentials reject an empty harvest and restore on failure', async () => {
+  await assert.rejects(() => campus.loginWithBrowserCredentials({ cookies: '', storage: {} }), (error) => error.message === 'no_credentials_found');
+  const failing = async () => ({ ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token' } } }] }) });
+  await assert.rejects(
+    () => campus.loginWithBrowserCredentials({ cookies: 'PSESSIONID=bad', storage: { t: 'eyJh.YmM.ZGVm' } }, failing),
+    (error) => error.message === 'invalid_token',
+  );
+  assert.equal(campus.campusAuthorizationHeader(), null);
+  assert.equal(campus.publicCampusStatus().sessionCookieConfigured, false);
+});
