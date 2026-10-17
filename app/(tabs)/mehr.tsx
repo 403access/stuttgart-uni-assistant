@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { activeStudy } from '@/src/auth/campus';
-import { Card, InfoRow, Screen, Section, type CardPosition } from '@/src/components/ui';
+import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
@@ -12,14 +12,6 @@ import { pick, tx } from '@/src/text';
 type CampusHref = '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/kalender-export';
 type CampusEntry = { title: string; detail: string; href: CampusHref };
 type CampusGroup = { title: string; entries: CampusEntry[] };
-
-/** Only the first and last row of a group keep their outer corners rounded. */
-function groupPosition(index: number, total: number): CardPosition | undefined {
-  if (total <= 1) return undefined;
-  if (index === 0) return 'first';
-  if (index === total - 1) return 'last';
-  return 'middle';
-}
 
 export default function MoreScreen() {
   const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId } = useApp();
@@ -110,7 +102,7 @@ export default function MoreScreen() {
                 key={entry.href}
                 title={entry.title}
                 detail={entry.detail}
-                position={groupPosition(index, group.entries.length)}
+                position={listPosition(index, group.entries.length)}
                 onPress={() => router.push(entry.href)}
               />
             ))}

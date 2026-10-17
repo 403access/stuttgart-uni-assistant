@@ -1,25 +1,68 @@
 import { Stack } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Platform, Pressable, Text, View } from 'react-native';
 
 import { exportCampusCalendar, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
-import { Button, Card, Pill, Screen } from '@/src/components/ui';
+import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
+import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
+import { keys } from '@/src/query/keys';
+import { apiLogQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
+import type { Locale } from '@/src/types';
 
 function germanDate(date: Date): string {
   return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
 }
 
-/** Official calendar export on its own page: download as ICS/CSV or sync into the local database. */
+/** The two kinds of calendar import the portal export supports. */
+function importKind(entry: CampusLogEntry, locale: Locale): string {
+  return entry.request?.startsWith('sync') ? tx(locale, 'Datenbank-Sync', 'Database sync') : tx(locale, 'Download', 'Download');
+}
+
+/** `2026-10-17T14:30:00.000Z` → `17.10.2026 · 16:30` (local time). */
+function importWhen(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} · ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** `export 17.10.2026–17.10.2027 format=99` → `17.10.2026–17.10.2027`. */
+function importRange(request: string): string {
+  const match = request.match(/^(?:export|sync)\s+(\S+)/);
+  return match ? match[1] : '';
+}
+
+function importDetail(entry: CampusLogEntry): string {
+  return [importRange(entry.request ?? ''), entry.response].filter(Boolean).join(' · ');
+}
+
+/** Import screen: pull the personal calendar through the C@MPUS export mask, or sync it into the local database. */
 export default function CalendarExportScreen() {
-  const { locale } = useApp();
+  const { locale, sessionMode } = useApp();
+  const queryClient = useQueryClient();
   const [format, setFormat] = useState<CalendarExportFormat>(99);
   const [error, setError] = useState('');
   const [syncNote, setSyncNote] = useState('');
+
+  // Persisted import log (device store) merged with this session's live calls,
+  // so a fresh import shows before the fire-and-forget write lands.
+  const logQ = useQuery(apiLogQuery(500, { enabled: sessionMode === 'campus' }));
+  const sessionLog = useCampusLog();
+  const imports = useMemo(() => {
+    const byUid = new Map<string, CampusLogEntry>();
+    for (const entry of logQ.data ?? []) if (entry.op === 'export') byUid.set(entry.uid, entry);
+    for (const entry of sessionLog) if (entry.op === 'export') byUid.set(entry.uid, entry);
+    return [...byUid.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 20);
+  }, [logQ.data, sessionLog]);
+
+  const refreshHistory = (): void => {
+    queryClient.invalidateQueries({ queryKey: keys.apiLog(500) }).catch(() => undefined);
+  };
 
   function exportRange(): { dateFrom: string; dateTo: string } {
     const from = new Date();
@@ -62,6 +105,7 @@ export default function CalendarExportScreen() {
       await Sharing.shareAsync(file.uri, { mimeType: result.contentType, dialogTitle: result.filename });
     },
     onMutate: () => setError(''),
+    onSuccess: refreshHistory,
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       setError(tx(locale, `Import fehlgeschlagen (${code}).`, `Import failed (${code}).`));
@@ -83,6 +127,7 @@ export default function CalendarExportScreen() {
           `${result.imported} new · ${result.skipped} duplicates skipped (${result.total} events).`,
         ),
       );
+      refreshHistory();
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -113,6 +158,26 @@ export default function CalendarExportScreen() {
         {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
         {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
       </Card>
+      <Section title={tx(locale, 'Verlauf', 'History')} />
+      {imports.length === 0 ? (
+        <Card>
+          <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>
+            {tx(locale, 'Noch keine Importe aufgezeichnet.', 'No imports recorded yet.')}
+          </Text>
+        </Card>
+      ) : (
+        <View>
+          {imports.map((entry, index) => (
+            <InfoRow
+              key={entry.uid}
+              title={importKind(entry, locale)}
+              meta={importWhen(entry.createdAt)}
+              detail={importDetail(entry)}
+              position={listPosition(index, imports.length)}
+            />
+          ))}
+        </View>
+      )}
     </Screen>
   );
 }

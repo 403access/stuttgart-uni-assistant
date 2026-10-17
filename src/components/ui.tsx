@@ -103,6 +103,14 @@ export function Screen({
 /** Position of a row inside a grouped list: only the outer corners stay rounded. */
 export type CardPosition = 'first' | 'middle' | 'last';
 
+/** Row `index` in a grouped list of `total` rows — single rows stay a full card. */
+export function listPosition(index: number, total: number): CardPosition | undefined {
+  if (total <= 1) return undefined;
+  if (index === 0) return 'first';
+  if (index === total - 1) return 'last';
+  return 'middle';
+}
+
 function groupedCardStyle(square: boolean, position?: CardPosition) {
   if (!position) return square ? styles.cardSquare : null;
   return [
