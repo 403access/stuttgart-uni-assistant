@@ -126,18 +126,9 @@ export default function KalenderScreen() {
     else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
   }
 
-  const subtitle = isCampus
-    ? studyFilter === 'all'
-      ? tx(locale, 'Alle Studiengänge', 'All degree programs')
-      : (campusStudies.find((item) => item.studyId === studyFilter)?.name ?? tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.'))
-    : tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.');
-
   return (
     <Screen
       topInset
-      kicker="C@MPUS"
-      title={tx(locale, 'Kalender', 'Calendar')}
-      subtitle={subtitle}
       action={
         isCampus ? (
           <Pressable
