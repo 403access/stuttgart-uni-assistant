@@ -1,6 +1,6 @@
 # The daily screens
 
-These are the tabs a student opens most days: **Heute (Today)**, **Chat**, **Kalender (Calendar)**, and the deadline screen.
+These are the tabs a student opens most days: **Heute (Today)**, **Kalender (Calendar)**, **Chat**, and the deadline screen.
 
 ## Heute (Today)
 

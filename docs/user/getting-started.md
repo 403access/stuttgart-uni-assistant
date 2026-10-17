@@ -58,7 +58,7 @@ Any path signs you in. The demonstration profile needs nothing; the token, brows
 
 1. Pick the language in **Einstellungen (Settings)**. German is the default, English switches every bundled string immediately.
 2. On **Heute (Today)** you see credits, today's sessions, and the next deadlines. On the demonstration profile these are Lena's numbers.
-3. The six tabs at the bottom are **Heute (Today)**, **Studium (Study)**, **Chat**, **Kalender (Calendar)**, **Nachrichten (Messages)**, **Campus**. Everything else is reached from the last tab.
+3. The five tabs at the bottom are **Heute (Today)**, **Kalender (Calendar)**, **Chat**, **Nachrichten (Messages)**, **Campus**. Everything else is reached from the last tab.
 4. Your profile lives under **Campus** at the top: name, account, and — with a C@MPUS session — the study selector for switching between enrolled studies.
 
 ## Sign out and switch profile

@@ -43,17 +43,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Chat',
-          tabBarIcon: ({ color }) => <BarIcon symbol="bubble.left.and.bubble.right.fill" material="chat" color={color as string} />,
-        }}
-      />
-      <Tabs.Screen
         name="kalender"
         options={{
           title: tx(locale, 'Kalender', 'Calendar'),
           tabBarIcon: ({ color }) => <BarIcon symbol="calendar" material="calendar-today" color={color as string} />,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Chat',
+          tabBarIcon: ({ color }) => <BarIcon symbol="bubble.left.and.bubble.right.fill" material="chat" color={color as string} />,
         }}
       />
       <Tabs.Screen
