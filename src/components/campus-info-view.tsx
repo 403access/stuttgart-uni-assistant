@@ -7,7 +7,7 @@ import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadC
 import { appendElementCourses, clearCachedStudy, loadCachedCoursesByElement, saveFullStructure } from '@/src/campus/db';
 import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
-import { StructureRow, TreeChildren } from '@/src/components/structure-row';
+import { CurriculumTree } from '@/src/components/curriculum-tree';
 import { StudySelector } from '@/src/components/study-selector';
 import { campusSyncMutation } from '@/src/query/mutations';
 import { keys } from '@/src/query/keys';
@@ -15,7 +15,7 @@ import { deviceNodesQuery, syncInfoQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
-import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
+import type { CampusCourse, CampusStudy } from '@/src/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export function CampusInfoView() {
@@ -301,97 +301,15 @@ export function CampusInfoView() {
               <Section title={tx(locale, 'Struktur', 'Structure')} />
               <CurriculumTree
                 nodes={curriculumNodes}
-                studyId={study.studyId}
                 locale={locale}
-                busyNode={busyNode}
-                onNode={(nodeId) => loadChildren(study, nodeId)}
+                busyNodeId={busyNode}
+                onSelect={(nodeId) => loadChildren(study, nodeId)}
+                renderUnderRow={(node) => <NodeCourses studyId={study.studyId} elementId={node.id} elementName={node.name} locale={locale} />}
               />
             </>
           ) : null}
         </>
       )}
-    </View>
-  );
-}
-
-function CurriculumTree({
-  nodes,
-  studyId,
-  locale,
-  busyNode,
-  onNode,
-}: {
-  nodes: CurriculumNode[];
-  studyId: number;
-  locale: 'de' | 'en';
-  busyNode: number | null;
-  onNode: (nodeId: number) => void;
-}) {
-  const byId = new Map(nodes.map((node) => [node.id, node]));
-  const children = new Map<number, CurriculumNode[]>();
-  const roots: CurriculumNode[] = [];
-  for (const node of nodes) {
-    if (node.parentId !== null && byId.has(node.parentId)) {
-      const list = children.get(node.parentId) ?? [];
-      list.push(node);
-      children.set(node.parentId, list);
-    } else {
-      roots.push(node);
-    }
-  }
-  return (
-    <>
-      {roots.map((node) => (
-        <TreeNode key={node.id} node={node} childMap={children} depth={0} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
-      ))}
-    </>
-  );
-}
-
-function TreeNode({
-  node,
-  childMap,
-  depth,
-  studyId,
-  locale,
-  busyNode,
-  onNode,
-}: {
-  node: CurriculumNode;
-  childMap: Map<number, CurriculumNode[]>;
-  depth: number;
-  studyId: number;
-  locale: 'de' | 'en';
-  busyNode: number | null;
-  onNode: (nodeId: number) => void;
-}) {
-  const kids = childMap.get(node.id) ?? [];
-  const status = [
-    node.completed ? tx(locale, 'abgeschlossen', 'completed') : '',
-    node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : '',
-    busyNode === node.id ? '…' : '',
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  return (
-    <View>
-      <StructureRow
-        name={node.name}
-        designation={node.designation || undefined}
-        elementType={node.elementType || undefined}
-        status={status || undefined}
-        meta={kids.length ? `${kids.length} ${tx(locale, 'Unterpunkte', 'children')}` : undefined}
-        onPress={() => onNode(node.id)}
-        depth={depth}
-      />
-      <NodeCourses studyId={studyId} elementId={node.id} elementName={node.name} locale={locale} />
-      {kids.length > 0 ? (
-        <TreeChildren>
-          {kids.map((kid) => (
-            <TreeNode key={kid.id} node={kid} childMap={childMap} depth={depth + 1} studyId={studyId} locale={locale} busyNode={busyNode} onNode={onNode} />
-          ))}
-        </TreeChildren>
-      ) : null}
     </View>
   );
 }

@@ -98,3 +98,13 @@ export function clearSessionLog(): void {
   snapshot = [];
   listeners.forEach((notify) => notify());
 }
+
+/**
+ * Merge several log sources (session, device, server) by `uid`, newest first.
+ * Later sources win on a duplicate, so pass them in ascending priority.
+ */
+export function mergeCampusLogs(...sources: CampusLogEntry[][]): CampusLogEntry[] {
+  const byUid = new Map<string, CampusLogEntry>();
+  for (const source of sources) for (const entry of source) byUid.set(entry.uid, entry);
+  return [...byUid.values()].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+}

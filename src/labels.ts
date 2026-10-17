@@ -1,4 +1,4 @@
-import type { Campus, Locale, ModuleStatus, NewsSource, PlaceKind, PlatformId } from '@/src/types';
+import type { Campus, CurriculumNode, Locale, ModuleStatus, NewsSource, PlaceKind, PlatformId } from '@/src/types';
 import { tx } from '@/src/text';
 
 export function moduleStatus(status: ModuleStatus, locale: Locale): string {
@@ -30,6 +30,21 @@ export function newsSource(source: NewsSource, locale: Locale): string {
   if (source === 'institute') return tx(locale, 'Institut', 'Institute');
   if (source === 'sdg') return 'SDG Campus';
   return tx(locale, 'Universität', 'University');
+}
+
+/** Completion flags of a curriculum node as one line: `abgeschlossen · in Arbeit`. */
+export function curriculumProgress(node: CurriculumNode, locale: Locale): string | undefined {
+  const parts = [
+    node.completed ? tx(locale, 'abgeschlossen', 'completed') : '',
+    node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : '',
+  ].filter(Boolean);
+  return parts.length ? parts.join(' · ') : undefined;
+}
+
+/** One search-row line for a curriculum node: element type plus completion flags. */
+export function curriculumDetail(node: CurriculumNode, locale: Locale): string | undefined {
+  const parts = [node.elementType, curriculumProgress(node, locale)].filter(Boolean);
+  return parts.length ? parts.join(' · ') : undefined;
 }
 
 export function placeKind(kind: PlaceKind, locale: Locale): string {

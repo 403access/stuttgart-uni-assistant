@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/src/theme';
@@ -189,6 +190,31 @@ export function FieldLabel({ children }: { children: string }) {
   return <Text style={styles.fieldLabel}>{children}</Text>;
 }
 
+/** Square-ish search/text field. `compact` trims the vertical padding for a toolbar row. */
+export function SearchField({
+  value,
+  onChangeText,
+  placeholder,
+  style,
+  compact = false,
+}: {
+  value: string;
+  onChangeText: (value: string) => void;
+  placeholder?: string;
+  style?: StyleProp<TextStyle>;
+  compact?: boolean;
+}) {
+  return (
+    <TextInput
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor={colors.mute}
+      style={[styles.input, compact && styles.inputCompact, style]}
+    />
+  );
+}
+
 export function Muted({ children }: { children: ReactNode }) {
   return <Text style={styles.muted}>{children}</Text>;
 }
@@ -239,6 +265,17 @@ const styles = StyleSheet.create({
   buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   buttonTextSecondary: { color: colors.blue },
   fieldLabel: { color: colors.inkSoft, fontSize: 13, fontWeight: '600' },
+  input: {
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: colors.anthracite,
+  },
+  inputCompact: { paddingVertical: 8 },
   muted: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   strong: { color: colors.anthracite, fontSize: 16, fontWeight: '700' },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' },

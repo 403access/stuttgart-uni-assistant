@@ -55,6 +55,7 @@ Strings that the student sees are `Localized` objects (`de` and `en`) or they pa
 | `Pill` | Status chip. Tones map to the soft colors above |
 | `Meter` | ECTS progress inside an area |
 | `Button` | Primary mid-blue action, or a quiet variant |
+| `SearchField` | Bordered text field; `compact` trims the padding for a toolbar row |
 | `FieldLabel`, `Muted`, `Strong`, `InfoRow` | Form and definition-list text |
 
 Tab icons in `app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small geometric mark per tab. The five labels are Heute, Studium, Chat, Campus, and Mehr, translated with `tx`.

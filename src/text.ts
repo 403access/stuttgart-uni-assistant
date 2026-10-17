@@ -59,3 +59,8 @@ export function hay(value: string): string {
 export function uid(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
+
+/** Zero-width spaces after URL-ish separators so long tokens wrap instead of overflowing. */
+export function breakable(value: string): string {
+  return value.replace(/([/?&=_\-])/g, '$1\u200B');
+}
