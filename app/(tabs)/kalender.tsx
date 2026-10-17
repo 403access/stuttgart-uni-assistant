@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import * as Sharing from 'expo-sharing';
+import { MaterialIcons } from '@expo/vector-icons';
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { activeStudy, exportCampusCalendar, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
+import { activeStudy } from '@/src/auth/campus';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { StudySelector } from '@/src/components/study-selector';
@@ -53,7 +54,6 @@ export default function KalenderScreen() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [assignFilter, setAssignFilter] = useState<AssignFilter>('fixed');
   const [sort, setSort] = useState<CalSort>('time');
-  const [exportOpen, setExportOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const isWeb = Platform.OS === 'web';
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
@@ -124,7 +124,23 @@ export default function KalenderScreen() {
       topInset
       kicker="C@MPUS"
       title={tx(locale, 'Kalender', 'Calendar')}
-      subtitle={study ? study.name : tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.')}>
+      subtitle={study ? study.name : tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.')}
+      action={
+        study ? (
+          <Pressable
+            onPress={() => router.push('/kalender-export')}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, 'Kalender exportieren', 'Export calendar')}
+            style={({ pressed }) => [styles.exportButton, pressed && styles.pressed]}>
+            {Platform.OS === 'ios' ? (
+              <SymbolView name="square.and.arrow.up" size={18} tintColor={colors.blue} />
+            ) : (
+              <MaterialIcons name="share" size={20} color={colors.blue} />
+            )}
+          </Pressable>
+        ) : undefined
+      }>
       <StudySelector />
       {study === null ? (
         <Card>
@@ -205,10 +221,7 @@ export default function KalenderScreen() {
             setAssignFilter={setAssignFilter}
             sort={sort}
             setSort={setSort}
-            exportOpen={exportOpen}
-            onToggleExport={() => setExportOpen((open) => !open)}
           />
-          {exportOpen ? <ExportCard locale={locale} /> : null}
           {isWeb && selected ? (
             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <View style={{ flex: 2, minWidth: 280, gap: 14 }}>
@@ -283,8 +296,6 @@ function CalToolbar({
   setAssignFilter,
   sort,
   setSort,
-  exportOpen,
-  onToggleExport,
 }: {
   locale: 'de' | 'en';
   query: string;
@@ -296,8 +307,6 @@ function CalToolbar({
   setAssignFilter: (value: AssignFilter) => void;
   sort: CalSort;
   setSort: (value: CalSort) => void;
-  exportOpen: boolean;
-  onToggleExport: () => void;
 }) {
   const [filtersOpen, setFiltersOpen] = useState<'type' | 'place' | null>(null);
   const typeActive = typeFilter !== 'all';
@@ -305,13 +314,17 @@ function CalToolbar({
   const toggle = (panel: 'type' | 'place'): void => setFiltersOpen((open) => (open === panel ? null : panel));
   return (
     <View style={{ gap: 8 }}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={toolbarStyles.row}>
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder={tx(locale, 'Suchen …', 'Search …')}
           placeholderTextColor={colors.mute}
-          style={[inputStyle, { flex: 1, minWidth: 140, paddingVertical: 8 }]}
+          style={[inputStyle, toolbarStyles.searchInput]}
         />
         <Pressable onPress={() => setSort(sort === 'time' ? 'title' : 'time')}>
           <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
@@ -329,10 +342,7 @@ function CalToolbar({
             active={filtersOpen === 'place' || placeActive}
           />
         </Pressable>
-        <Pressable onPress={onToggleExport}>
-          <Pill label={`${tx(locale, 'Export', 'Export')} ${exportOpen ? '▾' : '▸'}`} active={exportOpen} />
-        </Pressable>
-      </View>
+      </ScrollView>
       {filtersOpen === 'type' ? (
         <View style={toolbarStyles.filterPanel}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -677,12 +687,25 @@ const inputStyle = {
 };
 
 const toolbarStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 },
+  searchInput: { width: 180, paddingVertical: 9 },
   filterPanel: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 10, gap: 8 },
   filterTitle: { color: colors.blue, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   filterReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
 });
 
 const styles = StyleSheet.create({
+  pressed: { opacity: 0.72 },
+  exportButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   hero: {
     backgroundColor: colors.anthracite,
     borderRadius: 20,
@@ -830,111 +853,6 @@ const monthToday = { backgroundColor: colors.blue, borderColor: colors.blue };
 const monthDateToday = { color: '#FFFFFF' };
 const monthAnchor = { borderColor: colors.blue, borderWidth: 2 };
 const monthDot = { width: 5, height: 5, borderRadius: 99 };
-
-function germanDate(date: Date): string {
-  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
-}
-
-function ExportCard({ locale }: { locale: 'de' | 'en' }) {
-  const [format, setFormat] = useState<CalendarExportFormat>(99);
-  const [error, setError] = useState('');
-  const [syncNote, setSyncNote] = useState('');
-
-  function exportRange(): { dateFrom: string; dateTo: string } {
-    const from = new Date();
-    const to = new Date(from);
-    to.setFullYear(to.getFullYear() + 1);
-    return { dateFrom: germanDate(from), dateTo: germanDate(to) };
-  }
-
-  // Export and database sync as mutations: pending flags come from the hooks.
-  const downloadMutation = useMutation({
-    mutationKey: ['calendar-export'],
-    mutationFn: async () => {
-      const { dateFrom, dateTo } = exportRange();
-      const result = await exportCampusCalendar({
-        dateFrom,
-        dateTo,
-        format,
-        charset: format === 99 ? 'UTF8' : 'WE8ISO8859P1',
-      });
-      const safeName = result.filename.replace(/[^\w.\-]+/g, '_');
-      if (Platform.OS === 'web') {
-        const documentRef = globalThis.document;
-        if (!documentRef) throw new Error('download_unavailable');
-        const binary = Uint8Array.from(globalThis.atob(result.base64), (char) => char.charCodeAt(0));
-        const blob = new Blob([binary], { type: result.contentType });
-        const url = URL.createObjectURL(blob);
-        const link = documentRef.createElement('a');
-        link.href = url;
-        link.download = result.filename;
-        link.click();
-        URL.revokeObjectURL(url);
-        return;
-      }
-      const { File, Paths } = await import('expo-file-system');
-      const file = new File(Paths.cache, safeName);
-      if (file.exists) file.delete();
-      file.create();
-      file.write(result.base64, { encoding: 'base64' });
-      if (!(await Sharing.isAvailableAsync())) throw new Error('share_unavailable');
-      await Sharing.shareAsync(file.uri, { mimeType: result.contentType, dialogTitle: result.filename });
-    },
-    onMutate: () => setError(''),
-    onError: (caught) => {
-      const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setError(tx(locale, `Export fehlgeschlagen (${code}).`, `Export failed (${code}).`));
-    },
-  });
-
-  const syncMutation = useMutation({
-    mutationKey: ['calendar-sync'],
-    mutationFn: () => syncExportedCalendar(exportRange()),
-    onMutate: () => {
-      setError('');
-      setSyncNote('');
-    },
-    onSuccess: (result) => {
-      setSyncNote(
-        tx(
-          locale,
-          `${result.imported} neu · ${result.skipped} Duplikate übersprungen (${result.total} Termine).`,
-          `${result.imported} new · ${result.skipped} duplicates skipped (${result.total} events).`,
-        ),
-      );
-    },
-    onError: (caught) => {
-      const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setError(tx(locale, `Sync fehlgeschlagen (${code}).`, `Sync failed (${code}).`));
-    },
-  });
-
-  return (
-    <Card>
-      <Text style={{ color: colors.anthracite, fontWeight: '700' }}>
-        {tx(locale, 'Offizieller Kalender-Export', 'Official calendar export')}
-      </Text>
-      <Muted>
-        {tx(
-          locale,
-          'Lädt den persönlichen Kalender über die Exportmaske von C@MPUS (ein Jahr ab heute).',
-          'Downloads the personal calendar through the C@MPUS export mask (one year from today).',
-        )}
-      </Muted>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {([99, 2] as CalendarExportFormat[]).map((item) => (
-          <Pressable key={item} onPress={() => setFormat(item)}>
-            <Pill label={item === 99 ? 'ICS' : 'CSV'} active={format === item} />
-          </Pressable>
-        ))}
-        <Button label={downloadMutation.isPending ? '…' : tx(locale, 'Exportieren', 'Export')} onPress={() => downloadMutation.mutate()} />
-        <Button secondary label={syncMutation.isPending ? '…' : tx(locale, 'In Datenbank syncen', 'Sync into database')} onPress={() => syncMutation.mutate()} />
-      </View>
-      {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
-      {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
-    </Card>
-  );
-}
 
 function CourseDetailPanel({ course, locale, onClose }: { course: BulkCourse; locale: 'de' | 'en'; onClose: () => void }) {
   const palette = paletteFor(course.courseType || '?');

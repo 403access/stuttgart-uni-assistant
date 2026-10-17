@@ -41,6 +41,7 @@ export function Screen({
   scroll = true,
   footer,
   stickyHeader,
+  action,
   flush = false,
   topInset = false,
 }: {
@@ -51,6 +52,8 @@ export function Screen({
   scroll?: boolean;
   footer?: ReactNode;
   stickyHeader?: ReactNode;
+  /** Rendered at the top right of the header row, e.g. an icon button. */
+  action?: ReactNode;
   /** Remove the side margins so cards reach the screen edges (e.g. the mail read view). */
   flush?: boolean;
   /**
@@ -63,15 +66,18 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const header = (
-    <View style={{ gap: 6 }}>
-      {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
-      {title ? <Text style={styles.title}>{title}</Text> : null}
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <View style={styles.headerRow}>
+      <View style={{ gap: 6, flex: 1 }}>
+        {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
+        {title ? <Text style={styles.title}>{title}</Text> : null}
+        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      </View>
+      {action}
     </View>
   );
   const body = (
     <View style={[styles.body, !scroll && styles.bodyFill, flush && styles.bodyFlush]}>
-      {title || kicker ? header : null}
+      {title || kicker || action ? header : null}
       {children}
     </View>
   );
@@ -175,6 +181,7 @@ export function InfoRow({ title, meta, detail, onPress }: { title: string; meta?
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.mist },
   scroll: { paddingBottom: 28 },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   body: { paddingHorizontal: 20, paddingTop: 12, gap: 14 },
   bodyFill: { flex: 1, paddingBottom: 8 },
   bodyFlush: { paddingHorizontal: 0 },
