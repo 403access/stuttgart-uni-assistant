@@ -25,7 +25,8 @@ Scripts in `package.json`:
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
 | `check` | `tsx scripts/check-assistant.ts` + `tsx scripts/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests, the assistant-tunnel helper tests |
 | `assistant` | `node server/index.mjs` | Local Grok proxy on port 8787 |
-| `assistant:tunnel` | `node scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes the public URL into `EXPO_PUBLIC_ASSISTANT_URL` |
+| `assistant:tunnel` | `node scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes the public URL into `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
+| `assistant:local` | `node scripts/tunnel-assistant.mjs --clear` | Blank `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` after a tunnel was killed the hard way |
 | `campus:token` / `campus:session` | `node scripts/set-campus-secret.mjs` | Write `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` into git-ignored `.env` |
 | `campus:secret` | `node scripts/set-campus-secret.mjs` | `list` shows which secrets are set, masked; `--help` shows usage |
 
@@ -56,7 +57,7 @@ Healthy and unconfigured:
 
 On a phone, set `EXPO_PUBLIC_ASSISTANT_URL` to `http://<computer-lan-ip>:8787` before starting Expo. Restart Expo after changing it, because public env vars are read at bundle time. Use `off` to force the local engine.
 
-Off the local network, Expo's own tunnel (`npm run tunnel`) does not carry the assistant. Start the assistant, put it behind its own tunnel with `npm run assistant:tunnel` — that writes the `trycloudflare.com` hostname into `EXPO_PUBLIC_ASSISTANT_URL` — and start Expo last:
+Off the local network, Expo's own tunnel (`npm run tunnel`) does not carry the assistant. Start the assistant, put it behind its own tunnel with `npm run assistant:tunnel` — that writes the `trycloudflare.com` hostname into `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and leaves `EXPO_PUBLIC_ASSISTANT_URL` alone — and start Expo last:
 
 ```bash
 npm run assistant        # terminal 1
@@ -64,7 +65,7 @@ npm run assistant:tunnel # terminal 2, writes .env and holds the tunnel
 npm run tunnel           # terminal 3
 ```
 
-The hostname is new on every run, so Expo has to be restarted with it. Every assistant route is public while the tunnel is up; stop it after the demonstration. [assistant-tunnel.md](../engineering/assistant-tunnel.md) has the details.
+The hostname is new on every run, so Expo has to be restarted with it. Ctrl-C blanks the tunnel variable again, so the next `npx expo start` falls back to the local URL instead of a dead one; `npm run assistant:local` does the same for a tunnel that was killed the hard way. Every assistant route is public while the tunnel is up; stop it after the demonstration. [assistant-tunnel.md](../engineering/assistant-tunnel.md) has the details.
 
 Stop the assistant process when you are done. It listens on `0.0.0.0`. Leave it running only while you are demonstrating on the LAN.
 
@@ -82,7 +83,7 @@ This writes a static bundle and renders the routes. It is a build check, not a h
 | --- | --- | --- | --- |
 | Local demo | `npx expo start` or `npm run web` | Bundle + Async Storage | Optional, same machine |
 | Device demo | Expo Go or a dev build | Same | LAN URL in `EXPO_PUBLIC_ASSISTANT_URL` |
-| Device demo, off the LAN | Expo Go | Same | `npm run assistant:tunnel` hostname in `EXPO_PUBLIC_ASSISTANT_URL`, with Expo started through `npm run tunnel` |
+| Device demo, off the LAN | Expo Go | Same | `npm run assistant:tunnel` hostname in `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`, with Expo started through `npm run tunnel` |
 | Later preview binary | EAS, not configured | Still the fictional record | Server host with the key in the environment |
 | Later production | Store build under the demo bundle id only until a real owner exists | Per-student data from a backend | Same proxy pattern, connectors behind the backend |
 
@@ -97,7 +98,7 @@ There is no staging server in this repository.
 | File sharing and opening documents in place | `expo-file-system` plugin in `app.json` |
 | On-device curriculum, course, and call cache | `expo-sqlite` plugin in `app.json`. Included in Expo Go; on web the cache falls back to AsyncStorage |
 | Secrets | `.env`, git-ignored |
-| Public assistant URL | `EXPO_PUBLIC_ASSISTANT_URL` |
+| Public assistant URL | `EXPO_PUBLIC_ASSISTANT_URL` (base) and `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` (while a tunnel is up) |
 
 Do not generate or commit `ios/` and `android/`. When a binary is actually required:
 

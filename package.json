@@ -48,6 +48,7 @@
     "check": "tsx scripts/check-assistant.ts && tsx --tsconfig scripts/tsconfig.test.json scripts/check-campus-db.ts && node --test server/oidc.test.mjs server/campus.test.mjs server/db.test.mjs server/mail.test.mjs scripts/set-campus-secret.test.mjs scripts/tunnel-assistant.test.mjs",
     "assistant": "node server/index.mjs",
     "assistant:tunnel": "node scripts/tunnel-assistant.mjs",
+    "assistant:local": "node scripts/tunnel-assistant.mjs --clear",
     "campus:secret": "node scripts/set-campus-secret.mjs",
     "campus:token": "node scripts/set-campus-secret.mjs token",
     "campus:session": "node scripts/set-campus-secret.mjs session",

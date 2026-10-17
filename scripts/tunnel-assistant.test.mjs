@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { copyFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'node:test';
@@ -89,6 +89,8 @@ test('parseArgs defaults to port 8787 and accepts --port', () => {
   assert.equal(parseArgs([]).port, 8787);
   assert.equal(parseArgs(['--port', '9000']).port, 9000);
   assert.equal(parseArgs(['-p', '9000']).port, 9000);
+  assert.equal(parseArgs(['--clear']).clear, true);
+  assert.equal(parseArgs(['--local']).clear, true);
   assert.equal(parseArgs(['--help']).help, true);
 });
 
@@ -98,12 +100,39 @@ test('parseArgs refuses an unknown option and a bad port without changing anythi
   assert.throws(() => parseArgs(['--port', '0']), /between 1 and 65535/);
 });
 
-test('--help prints the three commands and exits 0', async () => {
+test('--help prints the commands and both env keys', async () => {
   const result = await run(await sandbox(), ['--help']);
   assert.equal(result.code, 0, result.stderr);
   assert.match(result.stdout, /npm run assistant:tunnel/);
   assert.match(result.stdout, /npm run tunnel/);
+  assert.match(result.stdout, /EXPO_PUBLIC_ASSISTANT_TUNNEL_URL/);
   assert.match(result.stdout, /EXPO_PUBLIC_ASSISTANT_URL/);
+});
+
+test('--clear blanks the tunnel URL and leaves the base URL alone', async () => {
+  const dir = await sandbox();
+  await writeFile(
+    join(dir, '.env'),
+    'EXPO_PUBLIC_ASSISTANT_URL=http://127.0.0.1:8787\nEXPO_PUBLIC_ASSISTANT_TUNNEL_URL=https://old-words.trycloudflare.com\n',
+    'utf8',
+  );
+  const result = await run(dir, ['--clear']);
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(result.stdout, /EXPO_PUBLIC_ASSISTANT_TUNNEL_URL: https:\/\/old-words\.trycloudflare\.com -> \(cleared\)/);
+  const text = await readFile(join(dir, '.env'), 'utf8');
+  assert.match(text, /^EXPO_PUBLIC_ASSISTANT_URL=http:\/\/127\.0\.0\.1:8787$/m);
+  assert.match(text, /^EXPO_PUBLIC_ASSISTANT_TUNNEL_URL=$/m);
+  assert.doesNotMatch(text, /trycloudflare/);
+});
+
+test('--clear on an empty tunnel URL changes nothing', async () => {
+  const dir = await sandbox();
+  const before = 'EXPO_PUBLIC_ASSISTANT_URL=http://127.0.0.1:8787\nEXPO_PUBLIC_ASSISTANT_TUNNEL_URL=\n';
+  await writeFile(join(dir, '.env'), before, 'utf8');
+  const result = await run(dir, ['--clear']);
+  assert.equal(result.code, 0, result.stderr);
+  assert.match(result.stdout, /already empty\. Nothing changed\./);
+  assert.equal(await readFile(join(dir, '.env'), 'utf8'), before);
 });
 
 test('an unknown option exits non-zero and says nothing changed', async () => {
@@ -112,9 +141,12 @@ test('an unknown option exits non-zero and says nothing changed', async () => {
   assert.match(result.stderr, /Unknown option "--wat". Nothing changed\./);
 });
 
-test('a missing cloudflared exits 1 with the install hint', async () => {
-  const result = await run(await sandbox(), [], { PATH: '' });
+test('a missing cloudflared exits 1 with the install hint and leaves .env alone', async () => {
+  const dir = await sandbox();
+  const result = await run(dir, [], { PATH: '' });
   assert.equal(result.code, 1, result.stdout);
   assert.match(result.stderr, /cloudflared was not found on PATH/);
   assert.match(result.stderr, /brew install cloudflared/);
+  // No hostname was ever stored, so the exit path must not create or edit .env.
+  await assert.rejects(readFile(join(dir, '.env'), 'utf8'), /ENOENT/);
 });

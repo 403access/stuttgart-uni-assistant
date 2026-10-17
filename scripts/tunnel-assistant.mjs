@@ -4,13 +4,18 @@
  *
  *   npm run assistant:tunnel
  *   npm run assistant:tunnel -- --port 9000
+ *   npm run assistant:tunnel -- --clear
  *
  * The Expo dev server has its own tunnel (`npm run tunnel`). A phone on that
  * tunnel is off the local network, so it cannot reach `127.0.0.1:8787` on this
  * machine — the assistant needs a public URL of its own. This script starts
- * `cloudflared tunnel --url <local assistant>`, waits for the hostname, writes
- * it to `EXPO_PUBLIC_ASSISTANT_URL` in the git-ignored `.env`, and then checks
- * `GET /health` through the tunnel.
+ * `cloudflared tunnel --url <local assistant>`, waits for the hostname, and
+ * writes it to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` in the git-ignored `.env`.
+ *
+ * The base URL in `EXPO_PUBLIC_ASSISTANT_URL` is never touched. The app uses
+ * the tunnel URL while it is set and the base URL otherwise, so stopping the
+ * tunnel does not leave a dead hostname behind: Ctrl-C blanks the tunnel
+ * variable again (see `--clear` for a tunnel that was killed the hard way).
  *
  * A quick tunnel is ephemeral: the hostname changes on every run. Run this
  * before `npm run tunnel`, and restart Expo whenever the hostname changes,
@@ -24,7 +29,10 @@ import { readValue, writeKey } from './set-campus-secret.mjs';
 
 const envPath = new URL('../.env', import.meta.url);
 const examplePath = new URL('../.env.example', import.meta.url);
-const key = 'EXPO_PUBLIC_ASSISTANT_URL';
+/** The base URL, set by hand. This script reads it but never writes it. */
+export const baseKey = 'EXPO_PUBLIC_ASSISTANT_URL';
+/** The public hostname while a tunnel is up. Blanked again when the tunnel stops. */
+export const tunnelKey = 'EXPO_PUBLIC_ASSISTANT_TUNNEL_URL';
 const urlPattern = /https:\/\/[a-z0-9][a-z0-9-]*\.trycloudflare\.com/i;
 
 /** The quick-tunnel hostname in a chunk of cloudflared output, or ''. */
@@ -38,10 +46,13 @@ function usage() {
 
   npm run assistant:tunnel             Tunnel http://127.0.0.1:8787
   npm run assistant:tunnel -- --port 9000
+  npm run assistant:tunnel -- --clear  Forget the last hostname
   npm run assistant:tunnel -- --help   This text
 
-Writes the public hostname to ${key} in .env. The hostname
-changes on every run, so start the Expo tunnel afterwards:
+Writes the public hostname to ${tunnelKey} in .env and
+blanks it again when the tunnel stops. ${baseKey}
+is never changed, so the app falls back to the local URL on the next run.
+The hostname changes on every run, so start the Expo tunnel afterwards:
 
   npm run assistant        # terminal 1
   npm run assistant:tunnel # terminal 2, this script
@@ -55,6 +66,8 @@ export function parseArgs(argv) {
     if (arg === '--port' || arg === '-p') {
       options.port = Number(argv[index + 1]);
       index += 1;
+    } else if (arg === '--clear' || arg === '--local' || arg === '--off') {
+      options.clear = true;
     } else if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else {
@@ -91,14 +104,47 @@ function readEnvText() {
   return '';
 }
 
-async function adopt(hostname) {
+/** Write the tunnel variable, keeping the base variable and the file mode as they are. */
+function writeTunnel(value) {
   const text = readEnvText();
-  const previous = readValue(text, key);
-  writeFileSync(envPath, writeKey(text, key, hostname));
+  const previous = readValue(text, tunnelKey);
+  writeFileSync(envPath, writeKey(text, tunnelKey, value));
   chmodSync(envPath, 0o600);
+  return previous;
+}
+
+/**
+ * Blank the tunnel variable and return the hostname that was dropped.
+ * A no-op when there is nothing stored, so it never creates or edits `.env`
+ * for a run that never got a hostname.
+ */
+export function blankTunnel() {
+  const text = readEnvText();
+  const previous = readValue(text, tunnelKey);
+  if (!previous) return '';
+  writeFileSync(envPath, writeKey(text, tunnelKey, ''));
+  chmodSync(envPath, 0o600);
+  return previous;
+}
+
+/** Blank the tunnel variable and report what happened. Used by `--clear`. */
+export function clearTunnel() {
+  const previous = blankTunnel();
+  console.log(
+    previous
+      ? `${tunnelKey}: ${previous} -> (cleared). The app uses ${baseKey} again.`
+      : `${tunnelKey} was already empty. Nothing changed.`,
+  );
+  return previous;
+}
+
+async function adopt(hostname) {
+  const previous = writeTunnel(hostname);
+  const base = readValue(readEnvText(), baseKey);
   console.log('');
   console.log(`Public URL: ${hostname}`);
-  console.log(`${key}: ${previous || '(unset)'} -> ${hostname}`);
+  console.log(`${tunnelKey}: ${previous || '(unset)'} -> ${hostname}`);
+  console.log(`${baseKey} stays ${base || '(unset)'} as the fallback when the tunnel stops.`);
   const result = await waitForHealth(hostname);
   if (result.ok) {
     console.log(`GET /health through the tunnel: ${result.status} ok`);
@@ -108,7 +154,8 @@ async function adopt(hostname) {
   }
   console.log('');
   console.log('Next: npm run tunnel   (Expo reads .env at bundle time, so start it after this)');
-  console.log('Keep this process running while the phone is connected. Ctrl-C stops the tunnel.');
+  console.log('Keep this process running while the phone is connected.');
+  console.log('Ctrl-C stops the tunnel and blanks the public URL again.');
 }
 
 async function main() {
@@ -117,12 +164,28 @@ async function main() {
     usage();
     return;
   }
+  if (options.clear) {
+    clearTunnel();
+    console.log('Restart Expo for the change to take effect, because EXPO_PUBLIC_* is read at bundle time.');
+    return;
+  }
 
   const target = `http://127.0.0.1:${options.port}`;
   const local = await health(target);
   if (!local.ok) {
     console.warn(`No answer from ${target}/health. Start the assistant server first: npm run assistant`);
   }
+
+  // The hostname is only written while a tunnel lives, so it has to be blanked
+  // again on the way out — otherwise the next local run inherits a dead URL.
+  // blankTunnel is idempotent, so it is safe on every exit path.
+  const release = () => {
+    const previous = blankTunnel();
+    if (previous) console.log(`\n${tunnelKey}: ${previous} -> (cleared)`);
+  };
+  process.on('exit', release);
+  process.on('SIGINT', release);
+  process.on('SIGTERM', release);
 
   console.log(`Quick tunnel for ${target} (cloudflared). Waiting for the hostname…`);
   const child = spawn('cloudflared', ['tunnel', '--url', target], { stdio: ['ignore', 'pipe', 'pipe'] });

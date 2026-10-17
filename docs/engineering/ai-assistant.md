@@ -42,7 +42,7 @@ Summaries of bundled pages use `src/assistant/summarize.ts`: split sentences, th
 
 `src/assistant/remote.ts`
 
-- URL: `process.env.EXPO_PUBLIC_ASSISTANT_URL` or `http://127.0.0.1:8787`. The value `off` skips the call.
+- URL: `process.env.EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` when a tunnel is up, otherwise `process.env.EXPO_PUBLIC_ASSISTANT_URL` or `http://127.0.0.1:8787`. The value `off` skips the call.
 - `POST /v1/assist` with `{ locale, question, facts, history }`. History is the last six turns.
 - Abort after 40 seconds.
 - Returns `null` on network failure, a non-OK status, or an empty `text`. The caller keeps the campus message.

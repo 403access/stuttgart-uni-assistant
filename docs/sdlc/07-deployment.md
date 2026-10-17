@@ -12,7 +12,7 @@ This phase is specified. The app has not been submitted to TestFlight, the Play 
 | --- | --- | --- | --- |
 | Local demo | `npx expo start`, Expo Go, or `npm run web` | Bundled catalog plus Async Storage | Optional `npm run assistant` on the same machine |
 | Device demo | Expo Go or a development build | Same | `EXPO_PUBLIC_ASSISTANT_URL` set to the computer's LAN address |
-| Device demo, off the LAN | Expo Go | Same | `npm run assistant:tunnel` hostname in `EXPO_PUBLIC_ASSISTANT_URL`, Expo through `npm run tunnel` ([assistant-tunnel.md](../engineering/assistant-tunnel.md)) |
+| Device demo, off the LAN | Expo Go | Same | `npm run assistant:tunnel` hostname in `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`, Expo through `npm run tunnel` ([assistant-tunnel.md](../engineering/assistant-tunnel.md)) |
 | Later internal build | EAS development or preview profile | Still the demonstration record, until a connector exists | Assistant server deployed with `XAI_API_KEY` in the host environment, not in the app |
 | Later production | Store binaries | Per-student record from a backend | Same server pattern, with university connectors behind it |
 
@@ -28,7 +28,7 @@ The file-system plugin turns on opening documents in place and file sharing, so 
 Secrets:
 
 - `XAI_API_KEY` only in the server environment or a git-ignored `.env`. `.gitignore` ignores `.env`.
-- `EXPO_PUBLIC_ASSISTANT_URL` is public by design. It is a URL, not a credential.
+- `EXPO_PUBLIC_ASSISTANT_URL` and `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` are public by design. They are URLs, not credentials. The tunnel script writes and clears the second one.
 
 ## Build path when a binary is needed
 

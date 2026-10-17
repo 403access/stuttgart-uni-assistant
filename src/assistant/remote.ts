@@ -1,6 +1,22 @@
 import type { Locale } from '@/src/types';
 
-export const assistantUrl = process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787';
+/**
+ * Where the assistant server lives.
+ *
+ * `EXPO_PUBLIC_ASSISTANT_URL` is the base URL set by hand — `127.0.0.1` on a
+ * simulator, the machine's LAN address on a phone. `npm run assistant:tunnel`
+ * writes the public hostname to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` while the
+ * tunnel is up and blanks it again when the tunnel stops, so a phone off the
+ * LAN is pointed at Cloudflare without clobbering the local value. The tunnel
+ * wins while it is set, and `off` still disables the remote engine.
+ *
+ * Both are inlined into the bundle at build time, so Expo has to be restarted
+ * after a change.
+ */
+const baseUrl = process.env.EXPO_PUBLIC_ASSISTANT_URL || 'http://127.0.0.1:8787';
+const tunnelUrl = process.env.EXPO_PUBLIC_ASSISTANT_TUNNEL_URL || '';
+
+export const assistantUrl = baseUrl === 'off' ? 'off' : tunnelUrl || baseUrl;
 
 export async function askGrok(input: {
   locale: Locale;

@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
+import { assistantUrl } from '@/src/assistant/remote';
 import { campusDetail, fetchCampusStatus, signInWithCampusToken, submitBrowserCredentials } from '@/src/auth/campus';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
@@ -60,8 +61,8 @@ export default function LoginScreen() {
       setCampusLog(
         tx(
           locale,
-          `Rufe ${(process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787')}/v1/campus/login auf …`,
-          `Calling ${(process.env.EXPO_PUBLIC_ASSISTANT_URL ?? 'http://127.0.0.1:8787')}/v1/campus/login …`,
+          `Rufe ${assistantUrl}/v1/campus/login auf …`,
+          `Calling ${assistantUrl}/v1/campus/login …`,
         ),
       );
     },

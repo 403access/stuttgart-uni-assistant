@@ -35,7 +35,7 @@ cp .env.example .env
 npm run assistant
 ```
 
-The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`. `GET /health` is on that assistant server, for example `http://127.0.0.1:8787/health`. The Expo app on port 8081 does not serve `/health`.
+The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`. `npm run assistant:tunnel` writes the public hostname of a running tunnel to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`, which takes priority while it is set, and blanks it again when the tunnel stops — so a local run never inherits a dead tunnel URL. `GET /health` is on that assistant server, for example `http://127.0.0.1:8787/health`. The Expo app on port 8081 does not serve `/health`.
 
 `GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
@@ -43,7 +43,7 @@ When the phone is not on the local network, Expo's tunnel carries the bundle but
 
 ```bash
 npm run assistant         # assistant on 127.0.0.1:8787
-npm run assistant:tunnel  # Cloudflare hostname, written into EXPO_PUBLIC_ASSISTANT_URL
+npm run assistant:tunnel  # Cloudflare hostname, written into EXPO_PUBLIC_ASSISTANT_TUNNEL_URL
 npm run tunnel            # Expo with --tunnel
 ```
 
@@ -71,7 +71,7 @@ npm run check
 | `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
 | `app/api.tsx` | API overview. Replays known server routes |
 | `server/index.mjs` | Assistant server. Holds the xAI key and the C@MPUS secrets |
-| `scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_URL` |
+| `scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
 | `scripts/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |
 

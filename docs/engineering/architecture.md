@@ -50,7 +50,7 @@ Stack headers are off. Each screen draws its own title with the shared `Screen` 
 1. The chat screen builds an `AnswerInput` from the catalog, the language, the clock, and an optional focused document (`buildAnswerInput`).
 2. `buildLocalAnswer` writes the bubble and appends it with `engine: 'campus'`.
 3. The same input is flattened by `renderFacts`.
-4. `askGrok` POSTs `{ locale, question, facts, history }` to `EXPO_PUBLIC_ASSISTANT_URL` or `http://127.0.0.1:8787`, with a 40 second abort.
+4. `askGrok` POSTs `{ locale, question, facts, history }` to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` when a tunnel is up, otherwise `EXPO_PUBLIC_ASSISTANT_URL` or `http://127.0.0.1:8787`, with a 40 second abort.
 5. A non-empty reply replaces that message and sets `engine: 'grok'`. Any failure leaves the campus bubble.
 
 The history sent upstream is the messages already in state plus the new user turn. `setState` is asynchronous, so the hook's `messages` array does not yet include the turn that was just added. The chat screen passes that turn explicitly.
