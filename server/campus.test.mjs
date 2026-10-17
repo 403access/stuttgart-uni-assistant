@@ -5,7 +5,7 @@ process.env.CAMPUS_DB_PATH = ':memory:';
 
 import { apiCatalog } from './catalog.mjs';
 import { resetDbForTests } from './db.mjs';
-import { campusAuthorizationHeader, campusRequestHeaders, clearRuntimeToken, coursesFromPayload, coursesRequestUrl, elementIdFromLink, extractRefreshedToken, loadCurriculumCourses, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, publicCampusStatus, refreshCampusToken, refreshRequestUrl, studiesFromChooser } from './campus.mjs';
+import { campusAuthorizationHeader, campusRequestHeaders, clearRuntimeToken, coursesFromPayload, coursesRequestUrl, elementIdFromLink, extractRefreshedToken, loadCurriculumCourses, loadCurriculumStructure, parseElementId, parseStudyId, portalMessage, profileFromCurriculum, proactiveCampusRefresh, proactiveRefreshMinutes, publicCampusStatus, refreshCampusToken, refreshRequestUrl, startCampusTokenRefresh, stopCampusTokenRefresh, studiesFromChooser } from './campus.mjs';
 
 beforeEach(() => {
   resetDbForTests();
@@ -14,6 +14,8 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env.CAMPUS_BEARER_TOKEN;
   delete process.env.CAMPUS_SESSION_COOKIE;
+  delete process.env.CAMPUS_REFRESH_MINUTES;
+  stopCampusTokenRefresh();
   clearRuntimeToken();
 });
 
@@ -295,6 +297,85 @@ test('refresh reads common token field spellings', () => {
   assert.equal(extractRefreshedToken(null), '');
 });
 
+test('proactive refresh cadence comes from the env with sane bounds', () => {
+  assert.equal(proactiveRefreshMinutes(), 10);
+  process.env.CAMPUS_REFRESH_MINUTES = '45';
+  assert.equal(proactiveRefreshMinutes(), 45);
+  for (const value of ['0', '-5', '1.5', '99999', 'abc']) {
+    process.env.CAMPUS_REFRESH_MINUTES = value;
+    assert.equal(proactiveRefreshMinutes(), 10);
+  }
+});
+
+test('proactive refresh skips without a session cookie', async () => {
+  process.env.CAMPUS_BEARER_TOKEN = 'old-token';
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls += 1;
+    return { ok: true, status: 200, json: async () => ({ access_token: 'new-token' }) };
+  };
+  assert.equal(await proactiveCampusRefresh(fetchImpl), false);
+  assert.equal(calls, 0);
+  assert.equal(campusAuthorizationHeader(), 'Bearer old-token');
+});
+
+test('a proactive refresh renews the token ahead of any 401', async () => {
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  const fetchImpl = async (url) => {
+    assert.equal(url, refreshRequestUrl());
+    return { ok: true, status: 200, json: async () => ({ access_token: 'fresh-token' }) };
+  };
+  assert.equal(await proactiveCampusRefresh(fetchImpl), true);
+  assert.equal(campusAuthorizationHeader(), 'Bearer fresh-token');
+  assert.equal(publicCampusStatus().tokenRefreshed, true);
+});
+
+test('a failed proactive refresh is swallowed, not thrown', async () => {
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  const fetchImpl = async () => ({ ok: false, status: 401, json: async () => ({}) });
+  assert.equal(await proactiveCampusRefresh(fetchImpl), false);
+});
+
+test('the proactive scheduler ticks on its cadence and can be stopped', async () => {
+  process.env.CAMPUS_REFRESH_MINUTES = '1';
+  process.env.CAMPUS_SESSION_COOKIE = 'session-value';
+  const calls = [];
+  const fetchImpl = async (url) => {
+    if (url.includes('/auth/token/refresh')) {
+      calls.push(url);
+      return { ok: true, status: 200, json: async () => ({ access_token: 'tick-token' }) };
+    }
+    throw new Error('unexpected call');
+  };
+  const { mock } = await import('node:test');
+  const flush = async () => {
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+  };
+  mock.timers.enable({ apis: ['setInterval'] });
+  try {
+    startCampusTokenRefresh(fetchImpl);
+    startCampusTokenRefresh(fetchImpl); // a second start is a no-op
+    await flush();
+    assert.equal(calls.length, 1); // one renewal right at startup
+    mock.timers.tick(60_000);
+    await flush();
+    assert.equal(calls.length, 2);
+    mock.timers.tick(120_000);
+    await flush();
+    assert.equal(calls.length, 3);
+    mock.timers.tick(60_000);
+    await flush();
+    assert.equal(calls.length, 4);
+    stopCampusTokenRefresh();
+    mock.timers.tick(600_000);
+    await flush();
+    assert.equal(calls.length, 4);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
 test('an expired token is refreshed once and the call retried', async () => {
   process.env.CAMPUS_BEARER_TOKEN = 'old-token';
   process.env.CAMPUS_SESSION_COOKIE = 'session-value';
@@ -346,6 +427,7 @@ test('api catalog only names known paths', () => {
     '/v1/campus/config',
     '/v1/oidc/config',
     '/v1/campus/login',
+    '/v1/campus/credentials',
     '/v1/campus/structure',
     '/v1/campus/courses',
     '/v1/campus/studies',

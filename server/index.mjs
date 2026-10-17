@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
-import { exportCampusCalendar, loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure, loginWithCampusToken, publicCampusStatus, syncExportedCalendar } from './campus.mjs';
+import { exportCampusCalendar, loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure, loginWithBrowserCredentials, loginWithCampusToken, publicCampusStatus, startCampusTokenRefresh, syncExportedCalendar } from './campus.mjs';
 import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls } from './db.mjs';
 import { cancelSyncJob, getSyncJob, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
@@ -122,6 +122,27 @@ const server = createServer(async (request, response) => {
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/config') {
     send(response, 200, publicCampusStatus());
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/campus/credentials') {
+    console.log('[campus] POST /v1/campus/credentials');
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      // Secrets in, never out: the body is neither logged nor echoed.
+      const result = await loginWithBrowserCredentials({ cookies: body?.cookies, storage: body?.storage });
+      console.log(`[campus] credentials ok studies=${result.studies}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'campus_failed';
+      console.log(`[campus] credentials failed ${code}`);
+      send(response, Number(error.status) || 500, { error: code });
+    }
     return;
   }
   if (request.method === 'POST' && url.pathname === '/v1/campus/login') {
@@ -408,6 +429,8 @@ const server = createServer(async (request, response) => {
     send(response, 502, { error: 'upstream_failed' });
   }
 });
+
+startCampusTokenRefresh();
 
 server.listen(port, '0.0.0.0', () => {
   console.log(`assistant server on http://127.0.0.1:${port}`);

@@ -5,8 +5,15 @@ import { getCoursesSync, isExpanded, loadCourses, loadCoursesFetchedIds, loadStu
 /** Refreshed bearer token for this process. Memory only: a restart falls back to `CAMPUS_BEARER_TOKEN`. */
 let runtimeBearerToken = null;
 
+/** Portal session cookie captured through the in-app browser login. Memory only, like the token. */
+let runtimeSessionCookie = null;
+
 export function clearRuntimeToken() {
   runtimeBearerToken = null;
+}
+
+export function clearRuntimeSession() {
+  runtimeSessionCookie = null;
 }
 
 export function campusBearerToken() {
@@ -22,6 +29,7 @@ export function campusAuthorizationHeader() {
 }
 
 export function campusSessionCookie() {
+  if (runtimeSessionCookie) return runtimeSessionCookie;
   const raw = (process.env.CAMPUS_SESSION_COOKIE || '').trim();
   if (!raw) return '';
   return raw.replace(/^(PSESSIONID|JSESSIONID)=/i, '');
@@ -186,6 +194,57 @@ export async function refreshCampusToken(fetchImpl = fetch) {
   runtimeBearerToken = token;
   console.log('[campus] bearer token refreshed (memory only — persist with npm run campus:token)');
   return true;
+}
+
+/** Renewal cadence in minutes from the env, clamped to 1–1440, default 10. */
+export function proactiveRefreshMinutes() {
+  const raw = Number(process.env.CAMPUS_REFRESH_MINUTES);
+  if (Number.isInteger(raw) && raw >= 1 && raw <= 1440) return raw;
+  return 10;
+}
+
+let proactiveTimer = null;
+let proactiveInFlight = false;
+
+/**
+ * One proactive renewal ahead of any 401. Never throws: the reactive retry
+ * in `readCampus` stays the safety net for a dead cookie or a failed call.
+ */
+export async function proactiveCampusRefresh(fetchImpl = fetch) {
+  if (proactiveInFlight) return false;
+  if (!campusSessionCookie()) return false;
+  proactiveInFlight = true;
+  try {
+    return await refreshCampusToken(fetchImpl);
+  } catch (error) {
+    console.log(`[campus] proactive refresh failed ${error instanceof Error ? error.message : error}`);
+    return false;
+  } finally {
+    proactiveInFlight = false;
+  }
+}
+
+/**
+ * Renew the token on a fixed cadence instead of waiting for a 401, and once
+ * right at startup: a restart with a valid cookie renews without `.env`.
+ * The timer never keeps the process alive.
+ */
+export function startCampusTokenRefresh(fetchImpl = fetch) {
+  if (proactiveTimer) return;
+  const minutes = proactiveRefreshMinutes();
+  console.log(`[campus] proactive token refresh every ${minutes} min (needs a session cookie)`);
+  const tick = () => {
+    proactiveCampusRefresh(fetchImpl);
+  };
+  proactiveTimer = setInterval(tick, minutes * 60_000);
+  proactiveTimer.unref?.();
+  tick();
+}
+
+export function stopCampusTokenRefresh() {
+  if (!proactiveTimer) return;
+  clearInterval(proactiveTimer);
+  proactiveTimer = null;
 }
 
 /** Positive integer, or null when the caller wants the configured root. Rejects paths and other text. */
@@ -686,4 +745,82 @@ export async function syncExportedCalendar({ dateFrom, dateTo } = {}, fetchImpl 
   const { imported, skipped } = saveExportedEvents(events);
   console.log(`[campus] calendar sync ok ${downloaded.filename}: ${imported} new, ${skipped} duplicates`);
   return { filename: downloaded.filename, imported, skipped, total: events.length };
+}
+
+/** PSESSIONID value from a `document.cookie` string. Empty when absent (e.g. HttpOnly). */
+export function sessionCookieFromString(cookies) {
+  if (typeof cookies !== 'string') return '';
+  const match = cookies.match(/(?:^|;\s*)PSESSIONID=([^;]+)/i);
+  const value = (match?.[1] ?? '').trim();
+  return value.replace(/^(PSESSIONID|JSESSIONID)=/i, '');
+}
+
+function looksLikeJwt(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(value.trim());
+}
+
+function looksLikeOpaqueToken(value) {
+  return typeof value === 'string' && value.trim().length >= 64 && /^[A-Za-z0-9_\-.~+/=]+$/.test(value.trim());
+}
+
+/**
+ * Bearer candidates from harvested web storage: `{ 'local:key': value }`.
+ * The known login key `cusonline_co.login.accessToken` comes first and is
+ * accepted as-is (observed at 44 chars, below heuristic thresholds);
+ * everything else needs JWT shape or a long opaque value.
+ */
+export function bearerCandidatesFromStorage(storage) {
+  if (!storage || typeof storage !== 'object') return [];
+  const entries = Object.entries(storage).filter(([, value]) => typeof value === 'string' && value);
+  const scored = entries.map(([key, value]) => {
+    const text = String(value).slice(0, 4000).trim();
+    const known = /(?:^|[/:.])cusonline_co\.login\.accessToken$/.test(key);
+    const tokenish = /token|jwt|bearer|access|auth/i.test(key) ? 0 : 1;
+    const usable = known ? text.length >= 8 : looksLikeJwt(text) || looksLikeOpaqueToken(text);
+    return { key, text, usable, rank: (known ? -10 : 0) + tokenish };
+  });
+  const viable = scored.filter((item) => item.usable);
+  viable.sort((a, b) => a.rank - b.rank || b.text.length - a.text.length);
+  return viable.map((item) => item.text);
+}
+
+export function extractBrowserCredentials(harvest) {
+  const cookies = typeof harvest?.cookies === 'string' ? harvest.cookies : '';
+  const session = sessionCookieFromString(cookies);
+  const bearers = bearerCandidatesFromStorage(harvest?.storage);
+  return { session, bearers };
+}
+
+/**
+ * Beta sign-in until the OIDC client is approved: take the session cookie
+ * and bearer candidates harvested from the in-app browser login, validate
+ * them against the chooser, and keep the working pair in process memory.
+ * Tries cookie+bearer first, then bearer alone. Never logs the values.
+ */
+export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
+  const { session, bearers } = extractBrowserCredentials(harvest);
+  if (!session && bearers.length === 0) throw httpError(400, 'no_credentials_found');
+  const previousToken = runtimeBearerToken;
+  const previousCookie = runtimeSessionCookie;
+  const attempts = [];
+  if (session) {
+    for (const bearer of bearers) attempts.push({ session, bearer });
+    attempts.push({ session, bearer: null });
+  }
+  for (const bearer of bearers) attempts.push({ session: null, bearer });
+  let lastError = null;
+  for (const attempt of attempts) {
+    runtimeBearerToken = attempt.bearer;
+    runtimeSessionCookie = attempt.session;
+    try {
+      const { studies } = await loadCampusStudies(fetchImpl);
+      console.log(`[campus] browser credentials ok studies=${studies.length} session=${Boolean(attempt.session)}`);
+      return { ok: true, studies: studies.length, activeStudyId: pickActiveStudyId(studies, null) };
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  runtimeBearerToken = previousToken;
+  runtimeSessionCookie = previousCookie;
+  throw lastError ?? httpError(401, 'campus_unauthorized');
 }
