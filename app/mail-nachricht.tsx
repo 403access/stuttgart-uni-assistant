@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
@@ -68,6 +68,7 @@ export default function MailMessageScreen() {
 
   return (
     <Screen>
+      <Stack.Screen options={{ title: tx(locale, 'Nachricht', 'Message') }} />
       <Card>
         <Text style={styles.subject}>{message?.subject || tx(locale, '(ohne Betreff)', '(no subject)')}</Text>
         <Text style={styles.line} selectable>
