@@ -31,6 +31,7 @@ export default function TodayScreen() {
 
   return (
     <Screen
+      topInset
       kicker="Stuttgart Uni"
       title={sessionMode === 'campus' && sessionName ? sessionName : tx(locale, 'Guten Tag', 'Good day')}
       subtitle={subtitle}>

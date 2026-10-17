@@ -28,7 +28,7 @@ export default function MoreScreen() {
       : []),
   ];
   return (
-    <Screen kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Campus', 'Campus')}>
+    <Screen topInset kicker={tx(locale, 'Profil', 'Profile')} title={tx(locale, 'Campus', 'Campus')}>
       {sessionMode === 'campus' ? <StudySelector /> : null}
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>

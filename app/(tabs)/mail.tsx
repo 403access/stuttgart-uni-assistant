@@ -448,7 +448,7 @@ export default function MailScreen() {
   ) : null;
 
   return (
-    <Screen stickyHeader={controlsBar}>
+    <Screen stickyHeader={controlsBar} topInset>
       {!connected ? (
         <Card>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>

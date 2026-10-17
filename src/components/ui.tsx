@@ -42,6 +42,7 @@ export function Screen({
   footer,
   stickyHeader,
   flush = false,
+  topInset = false,
 }: {
   children: ReactNode;
   kicker?: string;
@@ -52,6 +53,13 @@ export function Screen({
   stickyHeader?: ReactNode;
   /** Remove the side margins so cards reach the screen edges (e.g. the mail read view). */
   flush?: boolean;
+  /**
+   * Pad the top by the safe-area inset. Off by default because a screen pushed onto
+   * the stack already sits below the native header, which clears the status bar — an
+   * extra inset would only leave an empty gap. Headerless screens (the tabs, `oidc`)
+   * pass it so their content clears the status bar.
+   */
+  topInset?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   const header = (
@@ -68,7 +76,7 @@ export function Screen({
     </View>
   );
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={[styles.screen, topInset && { paddingTop: insets.top }]}>
       {scroll ? (
         <ScrollView
           contentContainerStyle={styles.scroll}

@@ -121,6 +121,7 @@ export default function KalenderScreen() {
 
   return (
     <Screen
+      topInset
       kicker="C@MPUS"
       title={tx(locale, 'Kalender', 'Calendar')}
       subtitle={study ? study.name : tx(locale, 'Termine aus zwischengespeicherten Kursen.', 'Appointments from cached courses.')}>

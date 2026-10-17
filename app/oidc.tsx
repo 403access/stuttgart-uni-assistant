@@ -10,6 +10,7 @@ export default function OidcReturnScreen() {
   const { locale } = useApp();
   return (
     <Screen
+      topInset
       title={tx(locale, 'Anmeldung', 'Sign-in')}
       subtitle={tx(
         locale,
