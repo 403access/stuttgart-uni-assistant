@@ -104,20 +104,12 @@ export default function KalenderScreen() {
     return map;
   }, [visible]);
 
-  const today = todayLocal();
-  const upcomingCount = visible.filter((course) => course.startTime.slice(0, 10) >= today).length;
   const selected = selectedId !== null ? (courses.find((course) => course.id === selectedId) ?? null) : null;
 
   function handleCoursePress(course: BulkCourse): void {
     if (isWeb) setSelectedId(course.id);
     else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
   }
-  const nowStamp = (() => {
-    const now = new Date();
-    return `${today}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  })();
-  const nextUp = [...visible].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')).find((course) => course.startTime >= nowStamp) ?? null;
-  const fixedCount = visible.filter((course) => isAssigned(course.registrationStatus)).length;
 
   return (
     <Screen
@@ -157,44 +149,6 @@ export default function KalenderScreen() {
         </Card>
       ) : (
         <>
-          <View style={styles.hero}>
-            <View style={styles.heroCircle} />
-            <View style={styles.heroCircleSmall} />
-            <View style={styles.heroRow}>
-              <View style={{ gap: 2, flex: 1, minWidth: 160 }}>
-                <Text style={styles.heroKicker}>{weekdayOf(today, locale)}</Text>
-                <Text style={styles.heroDate}>
-                  {Number(today.slice(8, 10))}. {monthShort(today, locale)}
-                </Text>
-                <Text style={styles.heroSub}>
-                  {tx(locale, `${upcomingCount} anstehende Termine`, `${upcomingCount} upcoming appointments`)}
-                </Text>
-              </View>
-              {nextUp ? (
-                <Pressable
-                  style={styles.heroNext}
-                  onPress={() => handleCoursePress(nextUp)}>
-                  <Text style={styles.heroNextKicker}>{tx(locale, 'Als Nächstes', 'Up next')}</Text>
-                  <Text style={styles.heroNextTitle} numberOfLines={2}>
-                    {nextUp.title}
-                  </Text>
-                  <Text style={styles.heroNextMeta} numberOfLines={1}>
-                    {`${formatDay(nextUp.startTime.slice(0, 10), locale)}, ${formatTime(nextUp.startTime)}${nextUp.endTime ? `–${formatTime(nextUp.endTime)}` : ''}${nextUp.roomName ? ` · ${nextUp.roomName}` : ''}`}
-                  </Text>
-                </Pressable>
-              ) : (
-                <View style={styles.heroNext}>
-                  <Text style={styles.heroNextKicker}>{tx(locale, 'Stand', 'Status')}</Text>
-                  <Text style={styles.heroNextTitle}>
-                    {tx(locale, `${fixedCount} Fixplätze`, `${fixedCount} fixed places`)}
-                  </Text>
-                  <Text style={styles.heroNextMeta} numberOfLines={1}>
-                    {tx(locale, `${visible.length} Termine gesamt`, `${visible.length} appointments total`)}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
           <View style={styles.segment}>
             {(['agenda', 'week', 'day', 'month'] as CalView[]).map((item) => (
               <Pressable key={item} onPress={() => setView(item)} style={[styles.segmentItem, view === item && styles.segmentOn]}>
@@ -706,48 +660,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
-  hero: {
-    backgroundColor: colors.anthracite,
-    borderRadius: 20,
-    padding: 18,
-    overflow: 'hidden',
-  },
-  heroCircle: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 99,
-    backgroundColor: colors.blue,
-    right: -40,
-    top: -50,
-    opacity: 0.85,
-  },
-  heroCircleSmall: {
-    position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 99,
-    backgroundColor: colors.light,
-    right: 70,
-    bottom: -30,
-    opacity: 0.7,
-  },
-  heroKicker: { color: '#9FC0E8', fontSize: 12, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
-  heroDate: { color: '#FFFFFF', fontSize: 34, fontWeight: '700', letterSpacing: -0.5 },
-  heroSub: { color: '#D7DBDE', fontSize: 14 },
-  heroRow: { flexDirection: 'row', gap: 12, alignItems: 'center', flexWrap: 'wrap' },
-  heroNext: {
-    flex: 1,
-    minWidth: 200,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 2,
-  },
-  heroNextKicker: { color: '#9FC0E8', fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
-  heroNextTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '700', lineHeight: 22 },
-  heroNextMeta: { color: '#D7DBDE', fontSize: 13 },
   segment: {
     flexDirection: 'row',
     backgroundColor: colors.paper,

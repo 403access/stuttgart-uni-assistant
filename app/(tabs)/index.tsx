@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { activeStudy } from '@/src/auth/campus';
+import { CalendarHero } from '@/src/components/calendar-hero';
 import { Card, InfoRow, Mark, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { deadlines, modules, news, places, program, student } from '@/src/data';
@@ -40,6 +41,7 @@ export default function TodayScreen() {
         <Mark size={28} />
         <Pill label={degreePill} tone="blue" />
       </View>
+      <CalendarHero />
       <Card onPress={() => router.push('/anforderungen')}>
         <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'Bestandene Leistung', 'Credits passed')}</Text>
         <Text style={{ color: colors.anthracite, fontSize: 28, fontWeight: '700' }}>
