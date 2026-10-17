@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput } from 'react-native';
 
@@ -57,7 +57,8 @@ export default function DocumentsScreen() {
   }
 
   return (
-    <Screen back kicker={tx(locale, 'Document Hub', 'Document hub')} title={tx(locale, 'Dokumente', 'Documents')}>
+    <Screen kicker={tx(locale, 'Document Hub', 'Document hub')}>
+      <Stack.Screen options={{ title: tx(locale, 'Dokumente', 'Documents') }} />
       <Button
         label={tx(locale, 'ILIAS auf dieses Gerät legen', 'Save ILIAS onto this device')}
         onPress={() => {

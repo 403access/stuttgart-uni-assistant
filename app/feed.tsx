@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 
 import { InfoRow, Screen } from '@/src/components/ui';
 import { news } from '@/src/data';
@@ -10,7 +10,8 @@ export default function FeedScreen() {
   const { locale } = useApp();
   const rows = [...news].sort((a, b) => b.date.localeCompare(a.date));
   return (
-    <Screen back kicker={tx(locale, 'Kommunikationsquellen', 'Channels')} title={tx(locale, 'Meldungen', 'Notices')}>
+    <Screen kicker={tx(locale, 'Kommunikationsquellen', 'Channels')}>
+      <Stack.Screen options={{ title: tx(locale, 'Meldungen', 'Notices') }} />
       {rows.map((item) => (
         <InfoRow
           key={item.id}

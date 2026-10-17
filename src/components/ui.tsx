@@ -1,11 +1,8 @@
-import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { tx } from '@/src/text';
 
 export function Mark({ size = 36 }: { size?: number }) {
   return (
@@ -38,7 +35,6 @@ export function Mark({ size = 36 }: { size?: number }) {
 
 export function Screen({
   children,
-  back = false,
   kicker,
   title,
   subtitle,
@@ -46,7 +42,6 @@ export function Screen({
   footer,
 }: {
   children: ReactNode;
-  back?: boolean;
   kicker?: string;
   title?: string;
   subtitle?: string;
@@ -54,14 +49,8 @@ export function Screen({
   footer?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const { locale } = useApp();
   const header = (
     <View style={{ gap: 6 }}>
-      {back ? (
-        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.back}>
-          <Text style={styles.backText}>{tx(locale, 'Zurück', 'Back')}</Text>
-        </Pressable>
-      ) : null}
       {kicker ? <Text style={styles.kicker}>{kicker}</Text> : null}
       {title ? <Text style={styles.title}>{title}</Text> : null}
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -69,7 +58,7 @@ export function Screen({
   );
   const body = (
     <View style={[styles.body, !scroll && styles.bodyFill]}>
-      {title || kicker || back ? header : null}
+      {title || kicker ? header : null}
       {children}
     </View>
   );
@@ -170,8 +159,6 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: 28 },
   body: { paddingHorizontal: 20, paddingTop: 12, gap: 14 },
   bodyFill: { flex: 1, paddingBottom: 8 },
-  back: { alignSelf: 'flex-start', paddingVertical: 4 },
-  backText: { color: colors.blue, fontSize: 15, fontWeight: '600' },
   kicker: { color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },
   title: { color: colors.anthracite, fontSize: 30, lineHeight: 34, fontWeight: '700', letterSpacing: -0.6 },
   subtitle: { color: colors.inkSoft, fontSize: 15, lineHeight: 21 },

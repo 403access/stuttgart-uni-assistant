@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, Screen } from '@/src/components/ui';
@@ -16,9 +16,16 @@ export default function NewsDetailScreen() {
   const { locale } = useApp();
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = news.find((entry) => entry.id === one(id));
-  if (!item) return <Screen back title={tx(locale, 'Meldung fehlt', 'Notice missing')}><Text /></Screen>;
+  if (!item) {
+    return (
+      <Screen kicker={tx(locale, 'Meldung fehlt', 'Notice missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
+        <Stack.Screen options={{ title: tx(locale, 'Meldung fehlt', 'Notice missing') }} />
+      </Screen>
+    );
+  }
   return (
-    <Screen back kicker={newsSource(item.source, locale)} title={pick(item.title, locale)} subtitle={formatDate(item.date, locale)}>
+    <Screen kicker={newsSource(item.source, locale)} subtitle={formatDate(item.date, locale)}>
+      <Stack.Screen options={{ title: pick(item.title, locale) }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 16, lineHeight: 24 }}>{pick(item.body, locale)}</Text>
       </Card>

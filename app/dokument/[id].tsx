@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
@@ -22,7 +22,13 @@ export default function DocumentScreen() {
   const imported = imports.find((item) => item.id === id);
   const [panel, setPanel] = useState('');
   const [busy, setBusy] = useState(false);
-  if (!bundled && !imported) return <Screen back title={tx(locale, 'Dokument fehlt', 'Document missing')}><Text /></Screen>;
+  if (!bundled && !imported) {
+    return (
+      <Screen kicker={tx(locale, 'Dokument fehlt', 'Document missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
+        <Stack.Screen options={{ title: tx(locale, 'Dokument fehlt', 'Document missing') }} />
+      </Screen>
+    );
+  }
 
   const title = bundled ? pick(bundled.title, locale) : (imported?.title ?? '');
   const pages = bundled ? bundled.pages[locale] : imported?.text ? [imported.text] : [];
@@ -44,7 +50,8 @@ export default function DocumentScreen() {
   }
 
   return (
-    <Screen back kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'Geteilt', 'Shared')) : tx(locale, 'Eigene Datei', 'Your file')} title={title} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>
+    <Screen kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'Geteilt', 'Shared')) : tx(locale, 'Eigene Datei', 'Your file')} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>
+      <Stack.Screen options={{ title }} />
       <Text style={{ color: colors.inkSoft }}>{offline ? tx(locale, 'Auf diesem Gerät lesbar.', 'Readable on this device.') : tx(locale, 'Noch nicht als offline markiert.', 'Not marked offline yet.')}</Text>
       {!plain ? (
         <Card>

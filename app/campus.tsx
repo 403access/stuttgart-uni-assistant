@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -24,15 +24,14 @@ export default function CampusScreen() {
 
   return (
     <Screen
-      back
       kicker={tx(locale, 'Orientierung', 'Orientation')}
-      title="Map"
       subtitle={
         view === 'uni'
           ? tx(locale, 'Lageplan der Universität. Quelle: maps.uni-stuttgart.de.', 'University map. Source: maps.uni-stuttgart.de.')
           : tx(locale, 'Schematischer Plan für Vaihingen und Stadtmitte. Kein vermessener Lageplan und kein Standort.', 'A schematic for Vaihingen and Stadtmitte. Not a surveyed map and not your location.')
       }
       scroll={view === 'overview'}>
+      <Stack.Screen options={{ title: tx(locale, 'Karte', 'Map') }} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable onPress={() => setView('uni')}>
           <Pill label={tx(locale, 'Uni-Karte', 'Uni map')} active={view === 'uni'} />

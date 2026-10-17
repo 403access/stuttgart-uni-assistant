@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen } from '@/src/components/ui';
@@ -15,12 +15,19 @@ function one(value: string | string[] | undefined): string {
 export default function RoomScreen() {
   const { locale } = useApp();
   const place = places.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
-  if (!place) return <Screen back title={tx(locale, 'Ort fehlt', 'Place missing')}><Text /></Screen>;
+  if (!place) {
+    return (
+      <Screen kicker={tx(locale, 'Ort fehlt', 'Place missing')} subtitle={tx(locale, 'Kein Ort mit dieser Kennung.', 'No place with this id.')}>
+        <Stack.Screen options={{ title: tx(locale, 'Ort fehlt', 'Place missing') }} />
+      </Screen>
+    );
+  }
   const sessions = modules.flatMap((module) =>
     module.sessions.filter((session) => session.roomId === place.id).map((session) => ({ module, session })),
   );
   return (
-    <Screen back kicker={campusName(place.campus, locale)} title={place.name} subtitle={placeKind(place.kind, locale)}>
+    <Screen kicker={campusName(place.campus, locale)} subtitle={placeKind(place.kind, locale)}>
+      <Stack.Screen options={{ title: place.name }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{place.address}</Text>
         <Text style={{ color: colors.inkSoft, lineHeight: 21 }}>{pick(place.note, locale)}</Text>

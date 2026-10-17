@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
@@ -218,14 +218,13 @@ export default function KurseScreen() {
 
   return (
     <Screen
-      back
       kicker="C@MPUS"
-      title={tx(locale, 'Kurse', 'Courses')}
       subtitle={
         study
           ? `${study.name} · ${courses.length} ${tx(locale, 'Kurse', 'courses')} · ${fetchedIds.length}/${elementCount} ${tx(locale, 'Elemente gelesen', 'elements read')}`
           : tx(locale, 'Alle Lehrveranstaltungen eines Studiengangs.', 'All courses of a study.')
       }>
+      <Stack.Screen options={{ title: tx(locale, 'Kurse', 'Courses') }} />
       <StudySelector />
       {study === null ? (
         <Card>

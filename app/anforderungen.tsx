@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 
 import { Card, Meter, Screen } from '@/src/components/ui';
 import { modules, program, student } from '@/src/data';
@@ -16,14 +16,13 @@ export default function RequirementsScreen() {
   const gap = expected - credit.earned;
   return (
     <Screen
-      back
       kicker={tx(locale, 'Prüfungsordnung', 'Examination regulations')}
-      title={tx(locale, 'Anforderungen', 'Requirements')}
       subtitle={tx(
         locale,
         'Vereinfachter Demonstrationsplan, keine amtliche Prüfungsordnung.',
         'A simplified demonstration plan, not the official examination regulations.',
       )}>
+      <Stack.Screen options={{ title: tx(locale, 'Anforderungen', 'Requirements') }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 22, fontWeight: '700' }}>
           {credit.earned} / {program.totalEcts} ECTS

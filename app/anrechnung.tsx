@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Stack } from 'expo-router';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
@@ -55,10 +56,9 @@ export default function RecognitionScreen() {
 
   return (
     <Screen
-      back
       kicker={tx(locale, 'Prüfungsausschuss', 'Examinations board')}
-      title={tx(locale, 'Anrechnung', 'Recognition')}
       subtitle={tx(locale, 'Die App reicht nichts ein. Sie sortiert den Entwurf und die Unterlagen. Der Antrag geht an den Prüfungsausschuss.', 'The app submits nothing. It organizes the draft and the papers. The request goes to the examinations board.')}>
+      <Stack.Screen options={{ title: tx(locale, 'Anrechnung', 'Recognition') }} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable onPress={() => setOrigin('abroad')}>
           <Pill label={tx(locale, 'Ausland', 'Abroad')} active={origin === 'abroad'} />

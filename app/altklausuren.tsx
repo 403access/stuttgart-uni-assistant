@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 
 import { InfoRow, Screen } from '@/src/components/ui';
 import { exams, modules } from '@/src/data';
@@ -9,10 +9,9 @@ export default function ExamsScreen() {
   const { locale } = useApp();
   return (
     <Screen
-      back
       kicker={tx(locale, 'Index', 'Index')}
-      title={tx(locale, 'Altklausuren', 'Past exams')}
       subtitle={tx(locale, 'Themen und Schwerpunkte aus dem Demonstrationskreis. Keine Prüfungs-PDFs.', 'Topics and focus from the demonstration cohort. No exam PDFs.')}>
+      <Stack.Screen options={{ title: tx(locale, 'Altklausuren', 'Past exams') }} />
       {exams.map((exam) => {
         const module = modules.find((item) => item.id === exam.moduleId);
         return (

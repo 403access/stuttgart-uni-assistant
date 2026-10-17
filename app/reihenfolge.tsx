@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
@@ -15,10 +15,9 @@ export default function SequenceScreen() {
   const semesters = [1, 2, 3, 4, 5, 6];
   return (
     <Screen
-      back
       kicker={tx(locale, 'Abhängigkeiten', 'Dependencies')}
-      title={tx(locale, 'Reihenfolge', 'Sequence')}
       subtitle={tx(locale, 'Zuerst werden fast volle Bereiche geschlossen, dann die größten Lücken.', 'Nearly finished areas close first, then the largest gaps.')}>
+      <Stack.Screen options={{ title: tx(locale, 'Reihenfolge', 'Sequence') }} />
       <Card>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
           {tx(locale, `Vorschlag nächstes Semester · ${sum} ECTS`, `Suggested next semester · ${sum} ECTS`)}

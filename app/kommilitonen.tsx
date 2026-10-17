@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents, modules, reviews as seedReviews } from '@/src/data';
@@ -15,7 +15,8 @@ export default function PeersScreen() {
     ...imports.filter((item) => item.shared).map((item) => ({ id: item.id, title: item.title, detail: tx(locale, 'Deine Notiz', 'Your note') })),
   ];
   return (
-    <Screen back kicker={tx(locale, 'Kommilitonen', 'Peers')} title={tx(locale, 'Austausch', 'Exchange')} subtitle={tx(locale, 'Bewertungen und Notizen aus dem Demonstrationskreis plus dem, was du auf diesem Gerät teilst.', 'Reviews and notes from the demonstration cohort, plus what you share from this device.')}>
+    <Screen kicker={tx(locale, 'Kommilitonen', 'Peers')} subtitle={tx(locale, 'Bewertungen und Notizen aus dem Demonstrationskreis plus dem, was du auf diesem Gerät teilst.', 'Reviews and notes from the demonstration cohort, plus what you share from this device.')}>
+      <Stack.Screen options={{ title: tx(locale, 'Austausch', 'Exchange') }} />
       <Section title={tx(locale, 'Empfehlungen', 'Recommendations')} />
       {all.map((review) => {
         const module = modules.find((item) => item.id === review.moduleId);

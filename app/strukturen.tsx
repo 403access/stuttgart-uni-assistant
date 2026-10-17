@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 
 import { clearSessionLog, useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
 import { cacheCampusCourses, loadCampusCourses, loadCampusCurriculum, loadCampusStudies, loadServerCalls, loadServerTree } from '@/src/auth/campus';
@@ -279,7 +279,7 @@ export default function StrukturenScreen() {
 
   if (!isWeb) {
     return (
-      <Screen back kicker="Web" title={tx(locale, 'Strukturen', 'Structures')}>
+      <Screen kicker="Web">
         <Card>
           <Muted>
             {tx(
@@ -295,7 +295,7 @@ export default function StrukturenScreen() {
 
   if (sessionMode !== 'campus' || campusStudies.length === 0) {
     return (
-      <Screen back kicker="Web" title={tx(locale, 'Strukturen', 'Structures')}>
+      <Screen kicker="Web">
         <Card>
           <Muted>
             {tx(
@@ -314,15 +314,14 @@ export default function StrukturenScreen() {
 
   return (
     <Screen
-      back
       kicker="Web"
-      title={tx(locale, 'Strukturen', 'Structures')}
       subtitle={tx(
         locale,
         'Alle zwischengespeicherten Studiengänge. Blättern lädt nichts nach — nur die Knöpfe holen Daten.',
         'All cached degree programs. Browsing never refetches — only the buttons fetch.',
       )}
       scroll={!isWeb}>
+      <Stack.Screen options={{ title: tx(locale, 'Strukturen', 'Structures') }} />
       <View style={[pageStyles.columns, isWeb && pageStyles.columnsWeb]}>
         <View style={[pageStyles.columnMain, isWeb && pageStyles.columnScroll]}>
           <Section title={tx(locale, 'Studiengänge', 'Degree programs')} />

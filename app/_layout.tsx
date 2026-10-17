@@ -1,15 +1,16 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useSegments, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
-WebBrowser.maybeCompleteAuthSession();
-
 import { AppStateProvider, useApp } from '@/src/state/AppState';
 import { ToastHost } from '@/src/components/toast';
 import { colors } from '@/src/theme';
+import { tx } from '@/src/text';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -30,7 +31,7 @@ export default function RootLayout() {
 }
 
 function Gate() {
-  const { ready, sessionAccount } = useApp();
+  const { ready, sessionAccount, locale } = useApp();
   const segments = useSegments();
   const router = useRouter();
   const [settled, setSettled] = useState(false);
@@ -55,9 +56,17 @@ function Gate() {
 
   return (
     <View style={{ flex: 1, opacity: settled ? 1 : 0 }}>
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.mist } }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="login" />
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: colors.mist },
+          headerTintColor: colors.blue,
+          headerTitleStyle: { color: colors.anthracite, fontWeight: '700', fontSize: 17 },
+          headerBackTitle: tx(locale, 'Zurück', 'Back'),
+          headerShadowVisible: false,
+        }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="oidc" options={{ headerShown: false }} />
       </Stack>
     </View>
   );

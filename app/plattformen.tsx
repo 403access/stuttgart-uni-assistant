@@ -1,3 +1,4 @@
+import { Stack } from 'expo-router';
 import { Text } from 'react-native';
 
 import { openOfficialCampus } from '@/src/auth/oidc';
@@ -31,7 +32,8 @@ export default function PlatformsScreen() {
   const { locale, syncAt, syncPlatform, sessionAccount, sessionMode } = useApp();
   const ids: PlatformId[] = ['siam', 'campus', 'ilias', 'sdg'];
   return (
-    <Screen back kicker={tx(locale, 'Anbindung', 'Connections')} title={tx(locale, 'Plattformen', 'Platforms')} subtitle={tx(locale, 'C@MPUS, ILIAS und SDG Campus bleiben lokal. SIAM öffnet den Identity Provider im Browser.', 'C@MPUS, ILIAS, and SDG Campus stay local. SIAM opens the identity provider in the browser.')}>
+    <Screen kicker={tx(locale, 'Anbindung', 'Connections')} subtitle={tx(locale, 'C@MPUS, ILIAS und SDG Campus bleiben lokal. SIAM öffnet den Identity Provider im Browser.', 'C@MPUS, ILIAS, and SDG Campus stay local. SIAM opens the identity provider in the browser.')}>
+      <Stack.Screen options={{ title: tx(locale, 'Plattformen', 'Platforms') }} />
       {ids.map((id) => (
         <Card key={id}>
           <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>{platformName(id)}</Text>

@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen } from '@/src/components/ui';
@@ -14,11 +14,18 @@ function one(value: string | string[] | undefined): string {
 export default function PersonScreen() {
   const { locale } = useApp();
   const person = people.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
-  if (!person) return <Screen back title={tx(locale, 'Profil fehlt', 'Profile missing')}><Text /></Screen>;
+  if (!person) {
+    return (
+      <Screen kicker={tx(locale, 'Profil fehlt', 'Profile missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
+        <Stack.Screen options={{ title: tx(locale, 'Profil fehlt', 'Profile missing') }} />
+      </Screen>
+    );
+  }
   const room = places.find((place) => place.id === person.roomId);
   const taught = modules.filter((item) => item.lecturerId === person.id);
   return (
-    <Screen back kicker={pick(person.title, locale)} title={person.name} subtitle={pick(person.institute, locale)}>
+    <Screen kicker={pick(person.title, locale)} subtitle={pick(person.institute, locale)}>
+      <Stack.Screen options={{ title: person.name }} />
       <Card>
         <Text style={{ color: colors.anthracite, lineHeight: 22 }}>{pick(person.research, locale)}</Text>
         <Text style={{ color: colors.inkSoft }}>{person.email}</Text>

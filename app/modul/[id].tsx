@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
@@ -21,7 +21,13 @@ export default function ModuleScreen() {
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState('4');
   const [workload, setWorkload] = useState('8');
-  if (!module) return <Screen back title={tx(locale, 'Modul fehlt', 'Module missing')}><Text /></Screen>;
+  if (!module) {
+    return (
+      <Screen kicker={tx(locale, 'Modul fehlt', 'Module missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
+        <Stack.Screen options={{ title: tx(locale, 'Modul fehlt', 'Module missing') }} />
+      </Screen>
+    );
+  }
   const current = module;
   const lecturer = people.find((item) => item.id === current.lecturerId);
   const area = current.area;
@@ -50,7 +56,8 @@ export default function ModuleScreen() {
   }
 
   return (
-    <Screen back kicker={module.code} title={pick(module.title, locale)} subtitle={`${module.ects} ECTS · ${area}`}>
+    <Screen kicker={module.code} subtitle={`${module.ects} ECTS · ${area}`}>
+      <Stack.Screen options={{ title: pick(module.title, locale) }} />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         <Pill label={moduleStatus(module.status, locale)} tone={module.status === 'passed' ? 'ok' : module.status === 'enrolled' ? 'blue' : 'wait'} />
         {typeof module.grade === 'number' ? <Pill label={formatGrade(module.grade, locale)} tone="ok" /> : null}

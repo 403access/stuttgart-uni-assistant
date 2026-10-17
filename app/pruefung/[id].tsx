@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen } from '@/src/components/ui';
@@ -14,10 +14,17 @@ function one(value: string | string[] | undefined): string {
 export default function ExamScreen() {
   const { locale } = useApp();
   const exam = exams.find((item) => item.id === one(useLocalSearchParams<{ id: string }>().id));
-  if (!exam) return <Screen back title={tx(locale, 'Eintrag fehlt', 'Entry missing')}><Text /></Screen>;
+  if (!exam) {
+    return (
+      <Screen kicker={tx(locale, 'Eintrag fehlt', 'Entry missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
+        <Stack.Screen options={{ title: tx(locale, 'Eintrag fehlt', 'Entry missing') }} />
+      </Screen>
+    );
+  }
   const module = modules.find((item) => item.id === exam.moduleId);
   return (
-    <Screen back kicker={exam.term} title={module ? pick(module.title, locale) : exam.moduleId}>
+    <Screen kicker={exam.term}>
+      <Stack.Screen options={{ title: module ? pick(module.title, locale) : exam.moduleId }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{pick(exam.focus, locale)}</Text>
         {exam.topics[locale].map((topic) => (

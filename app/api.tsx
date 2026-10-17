@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Stack } from 'expo-router';
 import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
@@ -143,15 +144,14 @@ export default function ApiScreen() {
 
   return (
     <Screen
-      back
       kicker="API"
-      title={tx(locale, 'Schnittstelle', 'Interface')}
       subtitle={tx(
         locale,
         'Token und Cookie bleiben auf dem Server. Senden geht nur für die Aufrufe, die diese App schon kennt.',
         'The token and cookie stay on the server. Send works only for the calls this app already knows.',
       )}
     >
+      <Stack.Screen options={{ title: tx(locale, 'Schnittstelle', 'Interface') }} />
       {live ? null : (
         <Muted>
           {tx(

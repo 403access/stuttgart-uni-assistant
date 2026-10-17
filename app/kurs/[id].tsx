@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Text } from 'react-native';
@@ -37,7 +37,8 @@ export default function CourseScreen() {
   }, [id]);
   if (!course) {
     return (
-      <Screen back kicker="C@MPUS" title={tx(locale, 'Kurs fehlt', 'Course missing')}>
+      <Screen kicker="C@MPUS">
+        <Stack.Screen options={{ title: tx(locale, 'Kurs fehlt', 'Course missing') }} />
         <Muted>
           {tx(
             locale,
@@ -55,7 +56,8 @@ export default function CourseScreen() {
         ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)} ${tx(locale, 'Uhr', "o'clock")}`
         : '';
   return (
-    <Screen back kicker={course.courseType || 'C@MPUS'} title={course.title} subtitle={course.semester}>
+    <Screen kicker={course.courseType || 'C@MPUS'} subtitle={course.semester}>
+      <Stack.Screen options={{ title: course.title }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>
           {course.courseNumber || tx(locale, 'Ohne Nummer', 'No number')}

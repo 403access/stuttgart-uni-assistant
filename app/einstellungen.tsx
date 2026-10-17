@@ -1,3 +1,4 @@
+import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { endUniversitySession, universityUrls } from '@/src/auth/oidc';
@@ -14,7 +15,8 @@ export default function SettingsScreen() {
     signOut();
   }
   return (
-    <Screen back kicker={tx(locale, 'App', 'App')} title={tx(locale, 'Einstellungen', 'Settings')}>
+    <Screen kicker={tx(locale, 'App', 'App')}>
+      <Stack.Screen options={{ title: tx(locale, 'Einstellungen', 'Settings') }} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable onPress={() => setLocale('de')} style={[chip, locale === 'de' && chipOn]}>
           <Text style={{ color: locale === 'de' ? '#FFFFFF' : colors.anthracite, fontWeight: '700' }}>Deutsch</Text>
