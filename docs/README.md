@@ -2,6 +2,20 @@
 
 Stuttgart Uni is documented as a product, as a system, and as a lifecycle. The files below are the record of how the demonstration was framed, designed, built, checked, and what remains before a real university integration.
 
+## User guide
+
+For the person holding the phone: what each screen does and what stays on the device.
+
+| Document | Contents |
+| --- | --- |
+| [user/README.md](user/README.md) | How to read this guide, and the rule the app keeps about what is live versus demonstration record |
+| [user/getting-started.md](user/getting-started.md) | Running the app, the six sign-in paths, language, first minutes |
+| [user/daily-screens.md](user/daily-screens.md) | Heute, Chat, Kalender, and the deadline list |
+| [user/study.md](user/study.md) | Modules, requirements, planning, recognition, lecturers, peers |
+| [user/campus.md](user/campus.md) | Live C@MPUS structures and courses, rooms, the map |
+| [user/mail.md](user/mail.md) | UniMail: connecting, the inbox, reading a message |
+| [user/documents-and-settings.md](user/documents-and-settings.md) | Documents, notices, settings, and what is stored about you |
+
 ## Product
 
 | Document | Contents |

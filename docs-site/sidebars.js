@@ -11,6 +11,19 @@ const sidebars = {
   productSidebar: [
     {
       type: 'category',
+      label: 'User guide',
+      link: { type: 'doc', id: 'user/README' },
+      items: [
+        'user/getting-started',
+        'user/daily-screens',
+        'user/study',
+        'user/campus',
+        'user/mail',
+        'user/documents-and-settings',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Product',
       link: { type: 'doc', id: 'product-description' },
       items: ['product/feature-catalog', 'product/personas-and-journeys'],
