@@ -312,6 +312,21 @@ function proofFromPost(post, user, password) {
 }
 
 /**
+ * `page.evaluate` while the page is navigating throws "Execution context was
+ * destroyed". That is not a failure: the submit navigated, so the next poll
+ * sees the new page. Any other error is real and propagates.
+ */
+export async function safeEvaluate(page, expression) {
+  try {
+    return await page.evaluate(expression);
+  } catch (error) {
+    const message = String(error?.message ?? error);
+    if (/Execution context was destroyed|because of a navigation|Target closed/i.test(message)) return null;
+    throw error;
+  }
+}
+
+/**
  * Drive the login in a real browser engine.
  *
  * The C@MPUS shell starts the SSO redirect in its own JavaScript, so no amount
@@ -357,12 +372,17 @@ export async function runBrowserLogin({
     await page.goto(startUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
 
     while (Date.now() - started < timeoutMs) {
-      const messages = await page.evaluate(`(function(){
+      const messages = await safeEvaluate(page, `(function(){
         window.__probeMessages = [];
         window.ReactNativeWebView = { postMessage: function(raw){ try { window.__probeMessages.push(JSON.parse(raw)); } catch (e) {} } };
         ${headlessAutofillScript(user, password, `${started}`)}
         return window.__probeMessages;
       })()`);
+      // A null result means the page navigated mid-poll: wait and look again.
+      if (!messages) {
+        await page.waitForTimeout(500);
+        continue;
+      }
       const last = messages[messages.length - 1];
       if (last && last.step !== 'waiting' && steps[steps.length - 1] !== last.step) {
         steps.push(last.step);
@@ -389,7 +409,7 @@ export async function runBrowserLogin({
 
       for (const cookie of await context.cookies()) jar.update([`${cookie.name}=${cookie.value}`]);
       if (jar.value('PSESSIONID')) {
-        storage = await page.evaluate(HARVEST_STORAGE_SCRIPT).catch(() => ({}));
+        storage = (await safeEvaluate(page, HARVEST_STORAGE_SCRIPT)) ?? {};
         return {
           ok: true,
           reason: 'signed-in',

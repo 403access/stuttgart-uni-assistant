@@ -4,7 +4,7 @@ import { after, test } from 'node:test';
 
 import { JSDOM } from 'jsdom';
 
-import { CookieJar, collectEntries, mask, parseArgs, resolveUrl, runBrowserLogin, runLogin, verifySession } from './campus-headless-login.mjs';
+import { CookieJar, collectEntries, mask, parseArgs, resolveUrl, runBrowserLogin, runLogin, safeEvaluate, verifySession } from './campus-headless-login.mjs';
 
 /**
  * The probe is driven from the terminal instead of a WebView, so the tests
@@ -218,6 +218,25 @@ test('verifySession mints a bearer and hands the pair to the assistant', async (
   const posted = JSON.parse(calls[1].init.body);
   assert.equal(posted.cookies, SESSION_COOKIE);
   assert.equal(posted.storage['local:cusonline_co.login.accessToken'], 'bearer-token');
+});
+
+test('safeEvaluate treats a mid-navigation context as "look again", not a failure', async () => {
+  const navigating = {
+    evaluate: async () => {
+      throw new Error('page.evaluate: Execution context was destroyed, most likely because of a navigation');
+    },
+  };
+  assert.equal(await safeEvaluate(navigating, '1'), null);
+
+  const broken = {
+    evaluate: async () => {
+      throw new Error('SyntaxError: unexpected token');
+    },
+  };
+  await assert.rejects(() => safeEvaluate(broken, '1'), /unexpected token/);
+
+  const working = { evaluate: async (expression) => `ok:${expression}` };
+  assert.equal(await safeEvaluate(working, 'x'), 'ok:x');
 });
 
 test('verifySession without a session cookie does not call out', async () => {
