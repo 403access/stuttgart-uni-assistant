@@ -10,7 +10,7 @@ import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui'
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { formatDay, formatTime, tx, weekdays } from '@/src/text';
+import { formatDay, formatTime, shortMonths, tx, weekdays } from '@/src/text';
 import type { BulkCourse, CampusStudy } from '@/src/types';
 
 type CalView = 'agenda' | 'week' | 'day' | 'month';
@@ -85,12 +85,12 @@ export default function KalenderScreen() {
     [allCourses, studyFilter],
   );
 
-  const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'Ohne Typ', 'No type')))].sort(), [courses, locale]);
+  const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'common.ohne_typ')))].sort(), [courses, locale]);
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const filtered = courses.filter((course) => {
       if (!course.startTime) return false;
-      if (typeFilter !== 'all' && (course.courseType || tx(locale, 'Ohne Typ', 'No type')) !== typeFilter) return false;
+      if (typeFilter !== 'all' && (course.courseType || tx(locale, 'common.ohne_typ')) !== typeFilter) return false;
       if (assignFilter === 'fixed' && !isAssigned(course.registrationStatus)) return false;
       if (assignFilter === 'notfixed' && isAssigned(course.registrationStatus)) return false;
       if (needle) {
@@ -139,15 +139,15 @@ export default function KalenderScreen() {
       {!isCampus ? (
         <Card>
           <Muted>
-            {tx(locale, 'Melden Sie sich mit dem C@MPUS-Token an, um Termine zu sehen.', 'Sign in with the C@MPUS token to see appointments.')}
+            {tx(locale, 'tabsKalender.melden')}
           </Muted>
         </Card>
       ) : courses.length === 0 ? (
         <Card>
           <Muted>
-            {tx(locale, 'Keine Kurse zwischengespeichert. Lade sie über die Kurse-Seite, dann erscheinen hier die Termine.', 'No courses cached. Load them from the courses page, then appointments appear here.')}
+            {tx(locale, 'tabsKalender.kurse')}
           </Muted>
-          <Button secondary label={tx(locale, 'Kurse öffnen', 'Open courses')} onPress={() => router.push('/kurse')} />
+          <Button secondary label={tx(locale, 'tabsKalender.kurse_oeffnen')} onPress={() => router.push('/kurse')} />
         </Card>
       ) : (
         <>
@@ -157,12 +157,12 @@ export default function KalenderScreen() {
                 <Pressable key={item} onPress={() => setView(item)} style={[styles.segmentItem, view === item && styles.segmentOn]}>
                   <Text style={[styles.segmentText, view === item && styles.segmentTextOn]}>
                     {item === 'agenda'
-                      ? tx(locale, 'Agenda', 'Agenda')
+                      ? tx(locale, 'tabsKalender.agenda')
                       : item === 'week'
-                        ? tx(locale, 'Woche', 'Week')
+                        ? tx(locale, 'tabsKalender.woche')
                         : item === 'day'
-                          ? tx(locale, 'Tag', 'Day')
-                          : tx(locale, 'Monat', 'Month')}
+                          ? tx(locale, 'tabsKalender.tag')
+                          : tx(locale, 'tabsKalender.monat')}
                   </Text>
                 </Pressable>
               ))}
@@ -172,7 +172,7 @@ export default function KalenderScreen() {
               hitSlop={8}
               accessibilityRole="button"
               accessibilityState={{ expanded: searchOpen }}
-              accessibilityLabel={tx(locale, 'Suchen', 'Search')}
+              accessibilityLabel={tx(locale, 'tabsKalender.suchen')}
               style={({ pressed }) => [styles.iconButton, searchOpen && styles.iconButtonOn, pressed && styles.pressed]}>
               {Platform.OS === 'ios' ? (
                 <SymbolView name="magnifyingglass" size={18} tintColor={searchOpen ? '#FFFFFF' : colors.blue} />
@@ -187,13 +187,13 @@ export default function KalenderScreen() {
                 autoFocus
                 value={query}
                 onChangeText={setQuery}
-                placeholder={tx(locale, 'Suchen …', 'Search …')}
+                placeholder={tx(locale, 'common.suchen')}
                 placeholderTextColor={colors.mute}
                 returnKeyType="search"
                 style={[inputStyle, styles.searchInput]}
               />
               <Pressable onPress={closeSearch} hitSlop={8} accessibilityRole="button">
-                <Text style={styles.cancel}>{tx(locale, 'Abbrechen', 'Cancel')}</Text>
+                <Text style={styles.cancel}>{tx(locale, 'common.abbrechen')}</Text>
               </Pressable>
             </View>
           ) : null}
@@ -248,11 +248,6 @@ export default function KalenderScreen() {
     </Screen>
   );
 }
-
-const shortMonths = {
-  de: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
-  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-} as const;
 
 function monthShort(iso: string, locale: 'de' | 'en'): string {
   const index = Number(iso.slice(5, 7)) - 1;
@@ -311,27 +306,27 @@ function CalToolbar({
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={toolbarStyles.row}>
         <Pressable onPress={() => setSort(sort === 'time' ? 'title' : 'time')}>
-          <Pill label={`${sort === 'time' ? tx(locale, 'Termin', 'Date') : tx(locale, 'Titel', 'Title')} ▾`} active />
+          <Pill label={`${sort === 'time' ? tx(locale, 'common.termin') : tx(locale, 'common.titel')} ▾`} active />
         </Pressable>
         {studies.length > 0 ? (
           <Pressable onPress={() => toggle('study')}>
             <Pill
-              label={studyActive ? (studies.find((item) => item.studyId === studyFilter)?.name ?? tx(locale, 'Studium', 'Study')) : `${tx(locale, 'Studium', 'Study')} ▾`}
+              label={studyActive ? (studies.find((item) => item.studyId === studyFilter)?.name ?? tx(locale, 'common.studium')) : `${tx(locale, 'common.studium')} ▾`}
               active={filtersOpen === 'study' || studyActive}
             />
           </Pressable>
         ) : null}
         <Pressable onPress={() => toggle('type')}>
-          <Pill label={typeActive ? typeFilter : `${tx(locale, 'Typ', 'Type')} ▾`} active={filtersOpen === 'type' || typeActive} />
+          <Pill label={typeActive ? typeFilter : `${tx(locale, 'common.typ')} ▾`} active={filtersOpen === 'type' || typeActive} />
         </Pressable>
         <Pressable onPress={() => toggle('place')}>
           <Pill
             label={
               placeActive
                 ? assignFilter === 'fixed'
-                  ? tx(locale, 'Fixplatz', 'Fixed place')
-                  : tx(locale, 'Kein Fixplatz', 'No fixed place')
-                : `${tx(locale, 'Platz', 'Place')} ▾`
+                  ? tx(locale, 'tabsKalender.fixplatz')
+                  : tx(locale, 'tabsKalender.fixplatz_2')
+                : `${tx(locale, 'tabsKalender.platz')} ▾`
             }
             active={filtersOpen === 'place' || placeActive}
           />
@@ -341,7 +336,7 @@ function CalToolbar({
         <View style={toolbarStyles.filterPanel}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             <Pressable onPress={() => setStudyFilter('all')}>
-              <Pill label={tx(locale, 'Alle', 'All')} active={studyFilter === 'all'} />
+              <Pill label={tx(locale, 'common.alle')} active={studyFilter === 'all'} />
             </Pressable>
             {studies.map((study) => (
               <Pressable key={study.studyId} onPress={() => setStudyFilter(study.studyId)}>
@@ -351,7 +346,7 @@ function CalToolbar({
           </View>
           {studyActive ? (
             <Pressable onPress={() => setStudyFilter('all')}>
-              <Text style={toolbarStyles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+              <Text style={toolbarStyles.filterReset}>{tx(locale, 'common.zuruecksetzen')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -360,7 +355,7 @@ function CalToolbar({
         <View style={toolbarStyles.filterPanel}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             <Pressable onPress={() => setTypeFilter('all')}>
-              <Pill label={tx(locale, 'Alle', 'All')} active={typeFilter === 'all'} />
+              <Pill label={tx(locale, 'common.alle')} active={typeFilter === 'all'} />
             </Pressable>
             {types.map((type) => (
               <Pressable key={type} onPress={() => setTypeFilter(typeFilter === type ? 'all' : type)}>
@@ -370,7 +365,7 @@ function CalToolbar({
           </View>
           {typeActive ? (
             <Pressable onPress={() => setTypeFilter('all')}>
-              <Text style={toolbarStyles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+              <Text style={toolbarStyles.filterReset}>{tx(locale, 'common.zuruecksetzen')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -383,10 +378,10 @@ function CalToolbar({
                 <Pill
                   label={
                     item === 'all'
-                      ? tx(locale, 'Alle Plätze', 'All places')
+                      ? tx(locale, 'tabsKalender.alle')
                       : item === 'fixed'
-                        ? tx(locale, 'Fixplatz', 'Fixed place')
-                        : tx(locale, 'Kein Fixplatz', 'No fixed place')
+                        ? tx(locale, 'tabsKalender.fixplatz')
+                        : tx(locale, 'tabsKalender.fixplatz_2')
                   }
                   active={assignFilter === item}
                 />
@@ -395,7 +390,7 @@ function CalToolbar({
           </View>
           {placeActive ? (
             <Pressable onPress={() => setAssignFilter('all')}>
-              <Text style={toolbarStyles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+              <Text style={toolbarStyles.filterReset}>{tx(locale, 'common.zuruecksetzen')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -457,7 +452,7 @@ function CourseRow({ course, locale, onPress }: { course: StudyCourse; locale: '
 
 function AgendaView({ days, locale, onCoursePress }: { days: Map<string, StudyCourse[]>; locale: 'de' | 'en'; onCoursePress: (course: StudyCourse) => void }) {
   const entries = [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(0, 60);
-  if (!entries.length) return <Muted>{tx(locale, 'Keine Termine für diese Auswahl.', 'No appointments for this selection.')}</Muted>;
+  if (!entries.length) return <Muted>{tx(locale, 'tabsKalender.termine_auswahl')}</Muted>;
   return (
     <>
       {entries.map(([day, items]) => (
@@ -523,7 +518,7 @@ function WeekView({ days, anchor, setAnchor, setView, locale }: { days: Map<stri
           );
         })}
       </View>
-      <Muted>{tx(locale, 'Tag antippen für die Tagesansicht.', 'Tap a day for the day view.')}</Muted>
+      <Muted>{tx(locale, 'tabsKalender.tag_antippen')}</Muted>
     </View>
   );
 }
@@ -535,7 +530,7 @@ function DayNav({ anchor, setAnchor, step = 1, locale, range }: { anchor: string
         <Pill label="‹" />
       </Pressable>
       <Pressable onPress={() => setAnchor(todayLocal())}>
-        <Pill label={tx(locale, 'Heute', 'Today')} />
+        <Pill label={tx(locale, 'tabsKalender.heute')} />
       </Pressable>
       <Pressable onPress={() => setAnchor(shiftDay(anchor, step))}>
         <Pill label="›" />
@@ -563,7 +558,7 @@ function DayView({ days, anchor, setAnchor, locale, onCoursePress }: { days: Map
     <View style={{ gap: 8 }}>
       <DayNav anchor={anchor} setAnchor={setAnchor} locale={locale} />
       {items.length === 0 && timeless.length === 0 ? (
-        <Muted>{tx(locale, 'Keine Termine an diesem Tag.', 'No appointments this day.')}</Muted>
+        <Muted>{tx(locale, 'tabsKalender.termine')}</Muted>
       ) : null}
       {items.length > 0 ? (
         <View style={timeline}>
@@ -630,6 +625,15 @@ function MonthView({
   const cells = new Date(year, month, 0).getDate();
   const today = todayLocal();
   const monthName = new Date(year, month - 1, 1).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
+  const weekdayShort = [
+    tx(locale, 'tabsKalender.mo'),
+    tx(locale, 'tabsKalender.di'),
+    tx(locale, 'tabsKalender.mi'),
+    tx(locale, 'tabsKalender.do'),
+    tx(locale, 'tabsKalender.fr'),
+    tx(locale, 'tabsKalender.sa'),
+    tx(locale, 'tabsKalender.so'),
+  ];
   const blanks = Array.from({ length: firstOffset }, (_, index) => `blank-${index}`);
   const dates = Array.from({ length: cells }, (_, index) => `${year}-${String(month).padStart(2, '0')}-${String(index + 1).padStart(2, '0')}`);
   const prevMonth = `${shiftDay(`${year}-${String(month).padStart(2, '0')}-15`, -20).slice(0, 7)}-15`;
@@ -641,7 +645,7 @@ function MonthView({
           <Pill label="‹" />
         </Pressable>
         <Pressable onPress={() => setAnchor(today)}>
-          <Pill label={tx(locale, 'Heute', 'Today')} />
+          <Pill label={tx(locale, 'tabsKalender.heute')} />
         </Pressable>
         <Pressable onPress={() => setAnchor(nextMonth)}>
           <Pill label="›" />
@@ -649,9 +653,9 @@ function MonthView({
         <Text style={{ color: colors.anthracite, fontSize: 16, fontWeight: '700', textTransform: 'capitalize' }}>{monthName}</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 4 }}>
-        {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((label, index) => (
+        {weekdayShort.map((label) => (
           <Text key={label} style={[weekDay, { flex: 1, textAlign: 'center' }]}>
-            {locale === 'de' ? label : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'][index]}
+            {label}
           </Text>
         ))}
       </View>
@@ -832,24 +836,24 @@ function CourseDetailPanel({ course, locale, onClose }: { course: StudyCourse; l
   const palette = paletteFor(course.courseType || '?');
   const when =
     course.startTime && course.endTime
-      ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)}–${formatTime(course.endTime)} ${tx(locale, 'Uhr', "o'clock")}`
+      ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)}–${formatTime(course.endTime)} ${tx(locale, 'common.uhr')}`
       : course.startTime
-        ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)} ${tx(locale, 'Uhr', "o'clock")}`
+        ? `${formatDay(course.startTime.slice(0, 10), locale)}, ${formatTime(course.startTime)} ${tx(locale, 'common.uhr')}`
         : '';
   const rows: [string, string][] = [
-    [tx(locale, 'Nummer', 'Number'), course.courseNumber || '–'],
+    [tx(locale, 'tabsKalender.nummer'), course.courseNumber || '–'],
     [
-      tx(locale, 'Umfang', 'Size'),
+      tx(locale, 'tabsKalender.umfang'),
       [course.courseTypeShort || course.courseType, course.duration !== null ? `${course.duration} SWS` : '', course.semester].filter(Boolean).join(' · ') || '–',
     ],
-    [tx(locale, course.lecturers.length === 1 ? 'Dozent*in' : 'Dozierende', course.lecturers.length === 1 ? 'Lecturer' : 'Lecturers'), course.lecturers.join(', ') || '–'],
-    [tx(locale, 'Anmeldung', 'Registration'), course.registrationStatus || '–'],
+    [course.lecturers.length === 1 ? tx(locale, 'common.dozent') : tx(locale, 'common.dozierende'), course.lecturers.join(', ') || '–'],
+    [tx(locale, 'common.anmeldung'), course.registrationStatus || '–'],
   ];
   return (
     <View style={{ gap: 10 }}>
       <Section
-        title={course.courseType || tx(locale, 'Kurs', 'Course')}
-        action={tx(locale, 'Schließen', 'Close')}
+        title={course.courseType || tx(locale, 'common.kurs')}
+        action={tx(locale, 'common.schliessen')}
         onAction={onClose}
       />
       <Card>
@@ -862,18 +866,18 @@ function CourseDetailPanel({ course, locale, onClose }: { course: StudyCourse; l
         ))}
         {when ? (
           <Text style={[rowTime, { color: palette.fg }]}>
-            {tx(locale, 'Nächster Termin: ', 'Next appointment: ')}
+            {tx(locale, 'tabsKalender.naechster')}
             {when}
           </Text>
         ) : null}
         {course.roomName ? <Text style={rowMeta}>{course.roomName}</Text> : null}
       </Card>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Button secondary label={tx(locale, 'Vollansicht', 'Full view')} onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })} />
+        <Button secondary label={tx(locale, 'tabsKalender.vollansicht')} onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })} />
         {course.registrationUrl ? (
           <Button
             secondary
-            label={course.registrationAction || tx(locale, 'Anmeldung', 'Registration')}
+            label={course.registrationAction || tx(locale, 'common.anmeldung')}
             onPress={() => WebBrowser.openBrowserAsync(course.registrationUrl).catch(() => undefined)}
           />
         ) : null}

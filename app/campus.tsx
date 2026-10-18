@@ -24,20 +24,20 @@ export default function CampusScreen() {
 
   return (
     <Screen
-      kicker={tx(locale, 'Orientierung', 'Orientation')}
+      kicker={tx(locale, 'campus.orientierung')}
       subtitle={
         view === 'uni'
-          ? tx(locale, 'Lageplan der Universität. Quelle: maps.uni-stuttgart.de.', 'University map. Source: maps.uni-stuttgart.de.')
-          : tx(locale, 'Schematischer Plan für Vaihingen und Stadtmitte. Kein vermessener Lageplan und kein Standort.', 'A schematic for Vaihingen and Stadtmitte. Not a surveyed map and not your location.')
+          ? tx(locale, 'campus.lageplan')
+          : tx(locale, 'campus.schematischer')
       }
       scroll={view === 'overview'}>
-      <Stack.Screen options={{ title: tx(locale, 'Karte', 'Map') }} />
+      <Stack.Screen options={{ title: tx(locale, 'common.karte') }} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable onPress={() => setView('uni')}>
-          <Pill label={tx(locale, 'Uni-Karte', 'Uni map')} active={view === 'uni'} />
+          <Pill label={tx(locale, 'campus.uni')} active={view === 'uni'} />
         </Pressable>
         <Pressable onPress={() => setView('overview')}>
-          <Pill label={tx(locale, 'Übersicht', 'Overview')} active={view === 'overview'} />
+          <Pill label={tx(locale, 'campus.uebersicht')} active={view === 'overview'} />
         </Pressable>
       </View>
       {view === 'uni' ? <UniMap locale={locale} /> : <Overview campus={campus} setCampus={setCampus} query={query} setQuery={setQuery} locale={locale} />}
@@ -51,14 +51,10 @@ function UniMap({ locale }: { locale: 'de' | 'en' }) {
     return (
       <Card>
         <Muted>
-          {tx(
-            locale,
-            'Die Karte kann hier nicht eingebettet werden. Öffne sie im Browser.',
-            'The map cannot be embedded here. Open it in the browser.',
-          )}
+          {tx(locale, 'campus.karte')}
         </Muted>
         <Button
-          label={tx(locale, 'maps.uni-stuttgart.de öffnen', 'Open maps.uni-stuttgart.de')}
+          label={tx(locale, 'campus.maps')}
           onPress={() => WebBrowser.openBrowserAsync(UNI_MAPS_URL).catch(() => undefined)}
         />
       </Card>
@@ -113,7 +109,7 @@ function Overview({
       <TextInput
         value={query}
         onChangeText={setQuery}
-        placeholder={tx(locale, 'Raum, Mensa, Bibliothek, K1 …', 'Room, cafeteria, library, K1 …')}
+        placeholder={tx(locale, 'campus.raum')}
         placeholderTextColor={colors.mute}
         style={input}
       />

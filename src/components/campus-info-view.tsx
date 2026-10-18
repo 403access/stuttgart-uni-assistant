@@ -40,11 +40,7 @@ export function CampusInfoView() {
   async function loadRoot(target: CampusStudy, silent = false): Promise<void> {
     if (target.elementId == null) {
       setError(
-        tx(
-          locale,
-          'Für diesen Studiengang fehlt die Verknüpfung aus der Chooser-Antwort.',
-          'This study has no link from the chooser response.',
-        ),
+        tx(locale, 'campusInfoView.diesen'),
       );
       return;
     }
@@ -58,15 +54,11 @@ export function CampusInfoView() {
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const detail = campusDetail(caught);
-      const text = tx(
-        locale,
-        `Struktur nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
-        `Structure not loaded (${code}${detail ? `, ${detail}` : ''}).`,
-      );
+      const text = tx(locale, 'campusInfoView.struktur_geladen', [code, detail ? `, ${detail}` : '']);
       setError(text);
       if (!silent) {
         showFetchAlert(locale, {
-          title: tx(locale, 'Struktur nicht geladen', 'Structure not loaded'),
+          title: tx(locale, 'campusInfoView.struktur_geladen_2'),
           code,
           detail: detail || undefined,
           onRetry: () => loadRoot(target),
@@ -88,14 +80,10 @@ export function CampusInfoView() {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const detail = campusDetail(caught);
       setError(
-        tx(
-          locale,
-          `Knoten nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
-          `Node not loaded (${code}${detail ? `, ${detail}` : ''}).`,
-        ),
+        tx(locale, 'campusInfoView.knoten_geladen', [code, detail ? `, ${detail}` : '']),
       );
       showFetchAlert(locale, {
-        title: tx(locale, 'Knoten nicht geladen', 'Node not loaded'),
+        title: tx(locale, 'campusInfoView.knoten_geladen_2'),
         code,
         detail: detail || undefined,
         onRetry: () => loadChildren(target, nodeId),
@@ -144,7 +132,7 @@ export function CampusInfoView() {
       }
       if (job.failedIds.length > 0) {
         showFetchAlert(locale, {
-          title: tx(locale, `${job.failedIds.length} Knoten übersprungen`, `${job.failedIds.length} nodes skipped`),
+          title: tx(locale, 'common.knoten_uebersprungen', [job.failedIds.length]),
           code: 'campus_failed',
           onRetry: syncAll,
         });
@@ -154,14 +142,10 @@ export function CampusInfoView() {
       const code = caught instanceof Error ? caught.message : 'sync_failed';
       const detail = campusDetail(caught);
       setError(
-        tx(
-          locale,
-          `Struktur-Sync nicht gestartet (${code}${detail ? `, ${detail}` : ''}).`,
-          `Structure sync did not start (${code}${detail ? `, ${detail}` : ''}).`,
-        ),
+        tx(locale, 'campusInfoView.struktur_sync', [code, detail ? `, ${detail}` : '']),
       );
       showFetchAlert(locale, {
-        title: tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed'),
+        title: tx(locale, 'common.struktur_sync'),
         code,
         detail: detail || undefined,
         onRetry: syncAll,
@@ -198,17 +182,13 @@ export function CampusInfoView() {
       <Muted>
         {study
           ? `${study.name}${study.intendedDegree ? ` · ${study.intendedDegree}` : ''}${study.versionIdentifier ? ` · ${study.versionIdentifier}` : ''}`
-          : tx(locale, 'Live-Struktur aus C@MPUS, kein Demonstrationsstand.', 'Live structure from C@MPUS, not the demonstration record.')}
+          : tx(locale, 'campusInfoView.live')}
       </Muted>
       <StudySelector />
       {study === null ? (
         <Card>
           <Muted>
-            {tx(
-              locale,
-              'Melden Sie sich mit dem C@MPUS-Token an, um die echte Curriculum-Struktur zu sehen.',
-              'Sign in with the C@MPUS token to see the real curriculum structure.',
-            )}
+            {tx(locale, 'campusInfoView.melden')}
           </Muted>
         </Card>
       ) : (
@@ -217,88 +197,72 @@ export function CampusInfoView() {
             <Pill
               label={
                 stale
-                  ? tx(locale, 'Anderer Stand', 'Other state')
-                  : tx(locale, `${curriculumNodes.length} Knoten`, `${curriculumNodes.length} nodes`)
+                  ? tx(locale, 'campusInfoView.anderer')
+                  : tx(locale, 'campusInfoView.knoten_2', [curriculumNodes.length])
               }
               tone={stale ? 'wait' : 'neutral'}
             />
-            <Button label={busy ? '…' : tx(locale, 'Neu laden', 'Reload')} onPress={() => loadRoot(study)} secondary />
+            <Button label={busy ? '…' : tx(locale, 'campusInfoView.neu')} onPress={() => loadRoot(study)} secondary />
           </View>
           {stale ? (
             <Card>
               <Muted>
-                {tx(
-                  locale,
-                  'Die Knoten gehören zu einem anderen Studiengang. Lade die Struktur für die Auswahl.',
-                  'The nodes belong to another study. Load the structure for the selection.',
-                )}
+                {tx(locale, 'campusInfoView.knoten')}
               </Muted>
-              <Button label={tx(locale, 'Struktur laden', 'Load structure')} onPress={() => loadRoot(study)} />
+              <Button label={tx(locale, 'common.struktur')} onPress={() => loadRoot(study)} />
             </Card>
           ) : null}
-          <Section title={tx(locale, 'Offline-Cache', 'Offline cache')} />
+          <Section title={tx(locale, 'campusInfoView.offline')} />
           <Card>
             <Text style={{ color: colors.anthracite, fontWeight: '700' }}>
               {syncInfo && syncInfo.nodeCount > 0
-                ? `${syncInfo.nodeCount} ${tx(locale, 'Knoten', 'nodes')}${syncInfo.finishedAt ? ` · ${formatDay(syncInfo.finishedAt, locale)}, ${formatTime(syncInfo.finishedAt)} ${tx(locale, 'Uhr', "o'clock")}` : ''}${syncInfo.complete ? '' : ` · ${tx(locale, 'unvollständig', 'incomplete')}`}`
-                : tx(locale, 'Kein Cache für diesen Studiengang.', 'No cache for this study.')}
+                ? `${syncInfo.nodeCount} ${tx(locale, 'common.knoten')}${syncInfo.finishedAt ? ` · ${formatDay(syncInfo.finishedAt, locale)}, ${formatTime(syncInfo.finishedAt)} ${tx(locale, 'common.uhr')}` : ''}${syncInfo.complete ? '' : ` · ${tx(locale, 'common.unvollstaendig')}`}`
+                : tx(locale, 'campusInfoView.cache')}
             </Text>
             <Muted>
-              {tx(
-                locale,
-                'Lädt alle Ebenen der Struktur und legt sie in einer SQLite-Datenbank auf dem Gerät ab.',
-                'Loads every level of the structure into an on-device SQLite database.',
-              )}
+              {tx(locale, 'campusInfoView.laedt')}
             </Muted>
             {syncing && progress ? (
               <Text style={{ color: colors.blue, fontWeight: '700' }}>
-                {tx(
-                  locale,
-                  `${progress.fetched} Abfragen · ${progress.nodeCount} Knoten${progress.retries > 0 ? ` · ${progress.retries} Wiederholungen` : ''}`,
-                  `${progress.fetched} calls · ${progress.nodeCount} nodes${progress.retries > 0 ? ` · ${progress.retries} retries` : ''}`,
-                )}
+                {tx(locale, 'common.abfragen', [progress.fetched, progress.nodeCount, progress.retries > 0 ? ` · ${progress.retries} Wiederholungen` : ''])}
               </Text>
             ) : null}
             {syncFailed.length > 0 ? (
               <Text style={{ color: colors.warning, fontSize: 14, lineHeight: 20 }}>
-                {tx(
-                  locale,
-                  `${syncFailed.length} Knoten übersprungen (3 Versuche je Knoten). Weiter laden versucht nur den Rest.`,
-                  `${syncFailed.length} nodes skipped (3 attempts each). Continue loads only the rest.`,
-                )}
+                {tx(locale, 'campusInfoView.knoten_uebersprungen', [syncFailed.length])}
               </Text>
             ) : null}
             {syncCancelled ? (
               <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>
-                {tx(locale, 'Abgebrochen. Weiter laden setzt an der Stelle fort.', 'Cancelled. Continue resumes where it stopped.')}
+                {tx(locale, 'campusInfoView.abgebrochen')}
               </Text>
             ) : null}
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {syncing ? (
-                <Button secondary label={tx(locale, 'Abbrechen', 'Cancel')} onPress={() => (cancelSync.current = true)} />
+                <Button secondary label={tx(locale, 'common.abbrechen')} onPress={() => (cancelSync.current = true)} />
               ) : (
                 <Button
-                  label={syncInfo && syncInfo.nodeCount > 0 ? tx(locale, 'Weiter laden', 'Continue loading') : tx(locale, 'Alles laden', 'Load everything')}
+                  label={syncInfo && syncInfo.nodeCount > 0 ? tx(locale, 'common.weiter') : tx(locale, 'campusInfoView.alles')}
                   onPress={syncAll}
                 />
               )}
               {!syncing && syncInfo && syncInfo.nodeCount > 0 ? (
-                <Button secondary label={tx(locale, 'Cache leeren', 'Clear cache')} onPress={clearCache} />
+                <Button secondary label={tx(locale, 'common.cache')} onPress={clearCache} />
               ) : null}
             </View>
           </Card>
           {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
           {Platform.OS === 'web' ? (
-            <Button secondary label={tx(locale, 'Struktur-Browser öffnen', 'Open structure browser')} onPress={() => router.push('/strukturen')} />
+            <Button secondary label={tx(locale, 'campusInfoView.struktur_browser')} onPress={() => router.push('/strukturen')} />
           ) : null}
           {curriculumNodes.length === 0 && !stale && !error ? (
             <Card>
-              <Muted>{tx(locale, 'Struktur wird geladen …', 'Loading structure …')}</Muted>
+              <Muted>{tx(locale, 'campusInfoView.struktur_wird')}</Muted>
             </Card>
           ) : null}
           {!stale && curriculumNodes.length > 0 ? (
             <>
-              <Section title={tx(locale, 'Struktur', 'Structure')} />
+              <Section title={tx(locale, 'campusInfoView.struktur')} />
               <CurriculumTree
                 nodes={curriculumNodes}
                 locale={locale}
@@ -355,11 +319,7 @@ function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: num
       : (() => {
           const code = coursesError instanceof Error ? coursesError.message : 'campus_failed';
           const detail = campusDetail(coursesError);
-          return tx(
-            locale,
-            `Kurse nicht geladen (${code}${detail ? `, ${detail}` : ''}).`,
-            `Courses not loaded (${code}${detail ? `, ${detail}` : ''}).`,
-          );
+          return tx(locale, 'campusInfoView.kurse', [code, detail ? `, ${detail}` : '']);
         })();
 
   return (
@@ -369,14 +329,14 @@ function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: num
           {coursesQ.isPending && open && !courses
             ? '…'
             : courses
-              ? `${courses.length} ${tx(locale, courses.length === 1 ? 'Kurs' : 'Kurse', courses.length === 1 ? 'course' : 'courses')}`
-              : tx(locale, 'Kurse', 'Courses')}
+              ? `${courses.length} ${courses.length === 1 ? tx(locale, 'campusInfoView.kurs') : tx(locale, 'kurse.kurse')}`
+              : tx(locale, 'common.kurse')}
         </Text>
       </Pressable>
       {errorText ? <Text style={{ color: colors.danger, fontSize: 13, lineHeight: 18 }}>{errorText}</Text> : null}
       {open && courses && courses.length === 0 ? (
         <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
-          {tx(locale, 'Keine Lehrveranstaltungen an diesem Knoten.', 'No courses on this node.')}
+          {tx(locale, 'common.lehrveranstaltungen')}
         </Text>
       ) : null}
       {open &&

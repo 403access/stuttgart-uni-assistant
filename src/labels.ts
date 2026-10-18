@@ -2,19 +2,19 @@ import type { Campus, CurriculumNode, Locale, ModuleStatus, NewsSource, PlaceKin
 import { tx } from '@/src/text';
 
 export function moduleStatus(status: ModuleStatus, locale: Locale): string {
-  if (status === 'passed') return tx(locale, 'Bestanden', 'Passed');
-  if (status === 'enrolled') return tx(locale, 'Belegt', 'Enrolled');
-  return tx(locale, 'Offen', 'Open');
+  if (status === 'passed') return tx(locale, 'labels.bestanden');
+  if (status === 'enrolled') return tx(locale, 'labels.belegt');
+  return tx(locale, 'common.offen');
 }
 
 export function sessionKind(kind: string, locale: Locale): string {
-  if (kind === 'lecture') return tx(locale, 'Vorlesung', 'Lecture');
-  if (kind === 'exercise') return tx(locale, 'Übung', 'Exercise');
-  return tx(locale, 'Seminar', 'Seminar');
+  if (kind === 'lecture') return tx(locale, 'labels.vorlesung');
+  if (kind === 'exercise') return tx(locale, 'labels.uebung');
+  return tx(locale, 'labels.seminar');
 }
 
 export function campusName(campus: Campus, locale: Locale): string {
-  return campus === 'vaihingen' ? 'Vaihingen' : tx(locale, 'Stadtmitte', 'Stadtmitte');
+  return campus === 'vaihingen' ? 'Vaihingen' : tx(locale, 'labels.stadtmitte');
 }
 
 export function platformName(id: PlatformId): string {
@@ -26,17 +26,17 @@ export function platformName(id: PlatformId): string {
 
 export function newsSource(source: NewsSource, locale: Locale): string {
   if (source === 'stuvus') return 'stuvus';
-  if (source === 'faculty') return tx(locale, 'Fakultät', 'Faculty');
-  if (source === 'institute') return tx(locale, 'Institut', 'Institute');
+  if (source === 'faculty') return tx(locale, 'labels.fakultaet');
+  if (source === 'institute') return tx(locale, 'labels.institut');
   if (source === 'sdg') return 'SDG Campus';
-  return tx(locale, 'Universität', 'University');
+  return tx(locale, 'labels.universitaet');
 }
 
 /** Completion flags of a curriculum node as one line: `abgeschlossen · in Arbeit`. */
 export function curriculumProgress(node: CurriculumNode, locale: Locale): string | undefined {
   const parts = [
-    node.completed ? tx(locale, 'abgeschlossen', 'completed') : '',
-    node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : '',
+    node.completed ? tx(locale, 'common.abgeschlossen') : '',
+    node.inProgress ? tx(locale, 'common.arbeit') : '',
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : undefined;
 }
@@ -48,16 +48,12 @@ export function curriculumDetail(node: CurriculumNode, locale: Locale): string |
 }
 
 export function placeKind(kind: PlaceKind, locale: Locale): string {
-  const labels: Record<PlaceKind, [string, string]> = {
-    lecture: ['Hörsaal', 'Lecture hall'],
-    exercise: ['Übungsraum', 'Exercise room'],
-    seminar: ['Seminarraum', 'Seminar room'],
-    office: ['Sprechzimmer', 'Office hour room'],
-    library: ['Bibliothek', 'Library'],
-    mensa: ['Mensa', 'Cafeteria'],
-    study: ['Lernort', 'Study space'],
-    transit: ['Haltestelle', 'Stop'],
-  };
-  const pair = labels[kind];
-  return tx(locale, pair[0], pair[1]);
+  if (kind === 'lecture') return tx(locale, 'labels.hoersaal');
+  if (kind === 'exercise') return tx(locale, 'labels.uebungsraum');
+  if (kind === 'seminar') return tx(locale, 'labels.seminarraum');
+  if (kind === 'office') return tx(locale, 'labels.sprechzimmer');
+  if (kind === 'library') return tx(locale, 'labels.bibliothek');
+  if (kind === 'mensa') return tx(locale, 'labels.mensa');
+  if (kind === 'study') return tx(locale, 'labels.lernort');
+  return tx(locale, 'labels.haltestelle');
 }

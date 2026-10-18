@@ -30,40 +30,40 @@ export default function MoreScreen() {
   }
   const groups: CampusGroup[] = [
     {
-      title: tx(locale, 'Campus', 'Campus'),
+      title: tx(locale, 'common.campus'),
       entries: [
-        { title: tx(locale, 'Karte', 'Map'), detail: tx(locale, 'Uni-Lageplan und Gebäudesuche', 'University map and building search'), href: '/campus', tags: ['map', 'karte', 'lageplan', 'gebäude', 'gebaeude', 'building', 'standort', 'location', 'campus'] },
-        { title: tx(locale, 'Plattformen', 'Platforms'), detail: 'C@MPUS · ILIAS · SDG · SIAM', href: '/plattformen', tags: ['plattformen', 'platforms', 'plattform', 'campus', 'ilias', 'sdg', 'siam', 'portal'] },
-        { title: tx(locale, 'E-Mail', 'E-mail'), detail: tx(locale, 'UniMail-Anbindung und Posteingang', 'UniMail connection and inbox'), href: '/mail', tags: ['email', 'e-mail', 'mail', 'unimail', 'posteingang', 'inbox', 'nachrichten'] },
+        { title: tx(locale, 'common.karte'), detail: tx(locale, 'tabsMehr.uni'), href: '/campus', tags: ['map', 'karte', 'lageplan', 'gebäude', 'gebaeude', 'building', 'standort', 'location', 'campus'] },
+        { title: tx(locale, 'common.plattformen'), detail: 'C@MPUS · ILIAS · SDG · SIAM', href: '/plattformen', tags: ['plattformen', 'platforms', 'plattform', 'campus', 'ilias', 'sdg', 'siam', 'portal'] },
+        { title: tx(locale, 'tabsMehr.e'), detail: tx(locale, 'tabsMehr.unimail'), href: '/mail', tags: ['email', 'e-mail', 'mail', 'unimail', 'posteingang', 'inbox', 'nachrichten'] },
       ],
     },
     {
-      title: tx(locale, 'Studium', 'Studies'),
+      title: tx(locale, 'tabsMehr.studium'),
       entries: [
-        { title: tx(locale, 'Kalender-Import', 'Calendar import'), detail: tx(locale, 'C@MPUS-Kalender in die App laden', 'Load the C@MPUS calendar into the app'), href: '/kalender-export', tags: ['kalender', 'calendar', 'import', 'ics', 'csv', 'stundenplan', 'timetable', 'sync'] },
-        { title: tx(locale, 'Dokumente', 'Documents'), detail: tx(locale, 'ILIAS, Notizen, Import', 'ILIAS, notes, import'), href: '/dokumente', tags: ['dokumente', 'documents', 'dateien', 'files', 'ilias', 'notizen', 'notes', 'import'] },
-        { title: tx(locale, 'Altklausuren', 'Past exams'), detail: tx(locale, 'Themen und Schwerpunkte, keine PDFs', 'Topics and focus, no PDFs'), href: '/altklausuren', tags: ['altklausuren', 'past exams', 'klausuren', 'exams', 'prüfung', 'pruefung', 'themen', 'topics'] },
-        { title: tx(locale, 'Anrechnung', 'Recognition'), detail: tx(locale, 'Anerkennung vorbereiten', 'Prepare a recognition request'), href: '/anrechnung', tags: ['anrechnung', 'anerkennung', 'recognition', 'credits', 'ects', 'leistungen'] },
-        { title: tx(locale, 'Fristen', 'Deadlines'), detail: tx(locale, 'Anmeldung, Abgabe, Prüfung', 'Registration, submission, exams'), href: '/fristen', tags: ['fristen', 'deadlines', 'deadline', 'anmeldung', 'abgabe', 'prüfung', 'pruefung', 'termine'] },
+        { title: tx(locale, 'common.kalender'), detail: tx(locale, 'tabsMehr.c'), href: '/kalender-export', tags: ['kalender', 'calendar', 'import', 'ics', 'csv', 'stundenplan', 'timetable', 'sync'] },
+        { title: tx(locale, 'common.dokumente'), detail: tx(locale, 'tabsMehr.ilias'), href: '/dokumente', tags: ['dokumente', 'documents', 'dateien', 'files', 'ilias', 'notizen', 'notes', 'import'] },
+        { title: tx(locale, 'common.altklausuren'), detail: tx(locale, 'tabsMehr.themen'), href: '/altklausuren', tags: ['altklausuren', 'past exams', 'klausuren', 'exams', 'prüfung', 'pruefung', 'themen', 'topics'] },
+        { title: tx(locale, 'common.anrechnung'), detail: tx(locale, 'tabsMehr.anerkennung'), href: '/anrechnung', tags: ['anrechnung', 'anerkennung', 'recognition', 'credits', 'ects', 'leistungen'] },
+        { title: tx(locale, 'common.fristen'), detail: tx(locale, 'tabsMehr.anmeldung'), href: '/fristen', tags: ['fristen', 'deadlines', 'deadline', 'anmeldung', 'abgabe', 'prüfung', 'pruefung', 'termine'] },
       ],
     },
     {
-      title: tx(locale, 'Austausch', 'Exchange'),
+      title: tx(locale, 'common.austausch'),
       entries: [
-        { title: tx(locale, 'Kommilitonen', 'Peers'), detail: tx(locale, 'Bewertungen und geteilte Notizen', 'Reviews and shared notes'), href: '/kommilitonen', tags: ['kommilitonen', 'peers', 'bewertungen', 'reviews', 'community', 'austausch', 'notizen', 'notes'] },
-        { title: tx(locale, 'Meldungen', 'Notices'), detail: tx(locale, 'Universität, Fakultät, stuvus', 'University, faculty, stuvus'), href: '/feed', tags: ['meldungen', 'notices', 'news', 'feed', 'universität', 'universitaet', 'fakultät', 'fakultaet', 'stuvus', 'nachrichten'] },
+        { title: tx(locale, 'common.kommilitonen'), detail: tx(locale, 'tabsMehr.bewertungen'), href: '/kommilitonen', tags: ['kommilitonen', 'peers', 'bewertungen', 'reviews', 'community', 'austausch', 'notizen', 'notes'] },
+        { title: tx(locale, 'common.meldungen'), detail: tx(locale, 'tabsMehr.universitaet'), href: '/feed', tags: ['meldungen', 'notices', 'news', 'feed', 'universität', 'universitaet', 'fakultät', 'fakultaet', 'stuvus', 'nachrichten'] },
       ],
     },
     {
-      title: tx(locale, 'App', 'App'),
+      title: tx(locale, 'common.app'),
       entries: [
-        { title: tx(locale, 'Einstellungen', 'Settings'), detail: tx(locale, 'Sprache, Daten, Hinweis', 'Language, data, notice'), href: '/einstellungen', tags: ['einstellungen', 'settings', 'sprache', 'language', 'daten', 'data', 'hinweis', 'notice'] },
+        { title: tx(locale, 'common.einstellungen'), detail: tx(locale, 'tabsMehr.sprache'), href: '/einstellungen', tags: ['einstellungen', 'settings', 'sprache', 'language', 'daten', 'data', 'hinweis', 'notice'] },
         ...(typeof __DEV__ !== 'undefined' && __DEV__
-          ? [{ title: tx(locale, 'Schnittstelle', 'Interface'), detail: tx(locale, 'Aufrufe senden, Curriculum laden', 'Send calls, load the curriculum'), href: '/api' as CampusHref, tags: ['schnittstelle', 'interface', 'api', 'aufrufe', 'calls', 'curriculum'] }]
+          ? [{ title: tx(locale, 'common.schnittstelle'), detail: tx(locale, 'tabsMehr.aufrufe'), href: '/api' as CampusHref, tags: ['schnittstelle', 'interface', 'api', 'aufrufe', 'calls', 'curriculum'] }]
           : []),
         {
-          title: tx(locale, 'Sitzung beenden', 'End session'),
-          detail: tx(locale, 'Abmelden und gespeicherte Anmeldung löschen', 'Sign out and delete the saved sign-in'),
+          title: tx(locale, 'tabsMehr.sitzung'),
+          detail: tx(locale, 'tabsMehr.abmelden'),
           onPress: leave,
           tone: 'danger' as const,
           tags: ['abmelden', 'sign out', 'logout', 'sitzung', 'session', 'beenden', 'end session', 'anmeldung', 'sign-in'],
@@ -90,15 +90,15 @@ export default function MoreScreen() {
   return (
     <Screen
       topInset
-      kicker={tx(locale, 'Profil', 'Profile')}
-      title={tx(locale, 'Campus', 'Campus')}
+      kicker={tx(locale, 'tabsMehr.profil')}
+      title={tx(locale, 'common.campus')}
       action={
         <Pressable
           onPress={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityState={{ expanded: searchOpen }}
-          accessibilityLabel={tx(locale, 'Einstellungen durchsuchen', 'Search settings')}
+          accessibilityLabel={tx(locale, 'tabsMehr.einstellungen')}
           style={({ pressed }) => [styles.iconButton, searchOpen && styles.iconButtonOn, pressed && styles.pressed]}>
           {Platform.OS === 'ios' ? (
             <SymbolView name="magnifyingglass" size={18} tintColor={searchOpen ? '#FFFFFF' : colors.blue} />
@@ -113,12 +113,12 @@ export default function MoreScreen() {
             autoFocus
             value={query}
             onChangeText={setQuery}
-            placeholder={tx(locale, 'Einstellungen durchsuchen …', 'Search settings …')}
+            placeholder={tx(locale, 'tabsMehr.einstellungen_durchsuchen')}
             placeholderTextColor={colors.mute}
             style={styles.searchInput}
           />
           <Pressable onPress={closeSearch} hitSlop={8} accessibilityRole="button">
-            <Text style={styles.cancel}>{tx(locale, 'Abbrechen', 'Cancel')}</Text>
+            <Text style={styles.cancel}>{tx(locale, 'common.abbrechen')}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -129,30 +129,18 @@ export default function MoreScreen() {
         </Text>
         <Text style={{ color: colors.inkSoft }}>
           {sessionMode === 'local'
-            ? tx(locale, 'Lokal eingetragen', 'Entered on this device')
+            ? tx(locale, 'tabsMehr.lokal')
             : sessionMode === 'campus'
               ? sessionAccount
               : `${sessionAccount ?? ''}${sessionEmail ? ` · ${sessionEmail}` : ` · ${student.matriculation}`}`}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
           {sessionMode === 'oidc'
-            ? tx(
-                locale,
-                `Angemeldet über den Identity Provider. Stundenplan und Noten sind weiter der Demonstrationsstand von ${student.name}.`,
-                `Signed in through the identity provider. The timetable and grades are still the demonstration record of ${student.name}.`,
-              )
+            ? tx(locale, 'tabsMehr.angemeldet_ueber', [student.name])
             : sessionMode === 'campus'
-              ? tx(
-                  locale,
-                  'Angemeldet mit dem C@MPUS-Token. Der Name kommt aus der Curriculum-Struktur.',
-                  'Signed in with the C@MPUS token. The name comes from the curriculum structure.',
-                )
+              ? tx(locale, 'tabsMehr.angemeldet')
               : sessionMode === 'local'
-              ? tx(
-                  locale,
-                  `Nutzerkennung nur lokal eingetragen. Das Passwort wurde nicht geprüft. C@MPUS öffnest du über Plattformen. Der Studienstand ist weiter ${student.name}.`,
-                  `Account id stored only on this device. The password was not checked. Open C@MPUS from Platforms. The study record is still ${student.name}.`,
-                )
+              ? tx(locale, 'tabsMehr.nutzerkennung', [student.name])
               : pick(student.faculty, locale)}
         </Text>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
@@ -164,7 +152,7 @@ export default function MoreScreen() {
       {visibleGroups.length === 0 ? (
         <Card>
           <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>
-            {tx(locale, 'Keine Einstellungen gefunden.', 'No settings found.')}
+            {tx(locale, 'tabsMehr.einstellungen_gefunden')}
           </Text>
         </Card>
       ) : (

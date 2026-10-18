@@ -31,10 +31,10 @@ export interface StudyCacheCardProps {
 
 /** One enrolled study: cache summary plus load/continue/cancel/clear controls. */
 export function StudyCacheCard({ study, info, count, busy, active, locale, onSelect, onLoad, onCancel, onClear }: StudyCacheCardProps) {
-  const cached = `${tx(locale, 'Knoten im Cache', 'cached nodes')}`;
+  const cached = `${tx(locale, 'studyCacheCard.knoten')}`;
   const meta = [
     study.intendedDegree,
-    info && info.nodeCount > 0 ? `${info.nodeCount} ${cached}` : count > 0 ? `${count} ${cached}` : tx(locale, 'kein Cache', 'no cache'),
+    info && info.nodeCount > 0 ? `${info.nodeCount} ${cached}` : count > 0 ? `${count} ${cached}` : tx(locale, 'studyCacheCard.cache'),
   ]
     .filter(Boolean)
     .join(' · ');
@@ -50,22 +50,18 @@ export function StudyCacheCard({ study, info, count, busy, active, locale, onSel
       {busy ? (
         <View style={styles.actions}>
           <Text style={styles.busy}>
-            {tx(
-              locale,
-              `${busy.fetched} Abfragen · ${busy.nodeCount} Knoten${busy.retries > 0 ? ` · ${busy.retries} Wiederholungen` : ''}`,
-              `${busy.fetched} calls · ${busy.nodeCount} nodes${busy.retries > 0 ? ` · ${busy.retries} retries` : ''}`,
-            )}
+            {tx(locale, 'common.abfragen', [busy.fetched, busy.nodeCount, busy.retries > 0 ? ` · ${busy.retries} Wiederholungen` : ''])}
           </Text>
-          <Button secondary label={tx(locale, 'Abbrechen', 'Cancel')} onPress={onCancel} />
+          <Button secondary label={tx(locale, 'common.abbrechen')} onPress={onCancel} />
         </View>
       ) : (
         <View style={styles.actions}>
           <Button
             secondary={count > 0}
-            label={count > 0 ? tx(locale, 'Weiter laden', 'Continue loading') : tx(locale, 'Struktur laden', 'Load structure')}
+            label={count > 0 ? tx(locale, 'common.weiter') : tx(locale, 'common.struktur')}
             onPress={onLoad}
           />
-          {count > 0 ? <Button secondary label={tx(locale, 'Cache leeren', 'Clear cache')} onPress={onClear} /> : null}
+          {count > 0 ? <Button secondary label={tx(locale, 'common.cache')} onPress={onClear} /> : null}
         </View>
       )}
     </Card>

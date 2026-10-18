@@ -80,40 +80,24 @@ export function formatDump(parsed: Pick<HarvestMessage, 'url' | 'title' | 'forms
 export function campusMessage(locale: Locale, code: string, detail = ''): string {
   const suffix = detail ? ` ${detail}` : '';
   if (code === 'server_unreachable') {
-    return tx(
-      locale,
-      'Der Assistenz-Server auf http://127.0.0.1:8787 antwortet nicht. Port 8081 ist nur die App. Starte im Projektordner: npm run assistant',
-      'The assistant server at http://127.0.0.1:8787 is not answering. Port 8081 is only the app. In the project directory run: npm run assistant',
-    );
+    return tx(locale, 'loginMessages.assistenz');
   }
   if (code === 'token_missing') {
-    return tx(locale, 'In der .env fehlt CAMPUS_BEARER_TOKEN. Server neu starten, nachdem der Wert gesetzt ist.', 'CAMPUS_BEARER_TOKEN is missing from .env. Restart the server after setting it.');
+    return tx(locale, 'loginMessages.env');
   }
   if (code === 'missing_session_cookie') {
-    return tx(
-      locale,
-      'C@MPUS hat den Token erhalten und verlangt zusätzlich das Cookie PSESSIONID derselben Anmeldung. Setze nur diesen Wert als CAMPUS_SESSION_COOKIE in der .env und starte den Server neu.',
-      'C@MPUS received the token and also requires the PSESSIONID cookie from that same login. Set only that value as CAMPUS_SESSION_COOKIE in .env and restart the server.',
-    );
+    return tx(locale, 'loginMessages.c_mpus_hat');
   }
   if (code === 'invalid_token') {
-    return tx(
-      locale,
-      'C@MPUS meldet invalid_token. CAMPUS_BEARER_TOKEN ist abgelaufen oder gehört nicht zu diesem PSESSIONID. Setze einen neuen Token aus derselben Anmeldung und starte den Server neu.',
-      'C@MPUS reports invalid_token. CAMPUS_BEARER_TOKEN has expired or does not belong to this PSESSIONID. Set a new token from the same login and restart the server.',
-    );
+    return tx(locale, 'loginMessages.c_mpus_meldet');
   }
   if (code === 'no_credentials_found') {
-    return tx(
-      locale,
-      'Aus dem Browser kam nichts Verwertbares an (Sitzungs-Cookie oft HttpOnly, kein Token im Speicher). Nutze den Token-Ablauf: C@MPUS im Browser öffnen, Token aus den Entwicklerwerkzeugen kopieren, per npm run campus:token setzen.',
-      'Nothing usable came from the browser (the session cookie is often HttpOnly, no token in storage). Use the token flow instead: open C@MPUS in the browser, copy the token from devtools, set it with npm run campus:token.',
-    );
+    return tx(locale, 'loginMessages.browser');
   }
   if (code === 'campus_unauthorized') {
-    return tx(locale, `C@MPUS hat den Token abgelehnt.${suffix}`, `C@MPUS rejected the token.${suffix}`);
+    return tx(locale, 'loginMessages.c_mpus', [suffix]);
   }
-  return tx(locale, `C@MPUS-Anmeldung nicht abgeschlossen (${code}).${suffix}`, `C@MPUS sign-in did not finish (${code}).${suffix}`);
+  return tx(locale, 'loginMessages.c', [code, suffix]);
 }
 
 /** The subset of the OIDC status the copy depends on. */
@@ -123,19 +107,15 @@ export interface OidcStatusLike {
 }
 
 export function messageFor(locale: Locale, code: string, status: OidcStatusLike | null): string {
-  if (code === 'cancelled') return tx(locale, 'Anmeldung abgebrochen.', 'Sign-in cancelled.');
+  if (code === 'cancelled') return tx(locale, 'loginMessages.anmeldung');
   if (code === 'oidc_unconfigured') {
-    return tx(
-      locale,
-      'Im Server fehlt OIDC_CLIENT_ID oder OIDC_CLIENT_SECRET. Beides trägt das TIK ein, nachdem der Dienst registriert wurde.',
-      'The server is missing OIDC_CLIENT_ID or OIDC_CLIENT_SECRET. TIK issues both after the service is registered.',
-    );
+    return tx(locale, 'loginMessages.server');
   }
   if (code === 'redirect_rejected') {
-    return tx(locale, 'Diese Redirect-Adresse lässt der lokale Server nicht zu.', 'The local server rejected this redirect address.');
+    return tx(locale, 'loginMessages.redirect');
   }
   if (!status) {
-    return tx(locale, 'Der Anmeldungs-Server ist nicht erreichbar. Läuft npm run assistant?', 'The sign-in server is unreachable. Is npm run assistant running?');
+    return tx(locale, 'loginMessages.anmeldungs');
   }
-  return tx(locale, `Anmeldung nicht abgeschlossen (${code}).`, `Sign-in did not finish (${code}).`);
+  return tx(locale, 'loginMessages.anmeldung_abgeschlossen', [code]);
 }

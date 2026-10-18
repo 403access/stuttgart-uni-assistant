@@ -68,8 +68,9 @@ onboarding done; `signOut` clears the session but not the onboarding record.
 
 `app/onboarding/index.tsx` holds the step machine (current step index, back
 navigation, progress dots); each step is a component under
-`src/components/onboarding/`. Copy goes through `tx(locale, de, en)` as
-everywhere else.
+`src/components/onboarding/`. Copy goes through `tx(locale, key)` with keys in
+`src/i18n/de.ts` and `src/i18n/en.ts`, as everywhere else
+([i18n.md](i18n.md)).
 
 ## Step 2: the security step (the important one)
 

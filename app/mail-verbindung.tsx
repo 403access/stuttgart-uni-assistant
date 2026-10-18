@@ -45,11 +45,7 @@ export default function MailConnectionScreen() {
       const display = getMailSnapshot().folders?.find((candidate) => candidate.name === folder)?.display ?? folder;
       const messages = await loadMailMessages(25, folder);
       setNote(
-        tx(
-          locale,
-          `${messages.length} Nachrichten aus „${folderLabel(display, locale)}“ geladen. Der Tab zeigt sie, sobald du zurückkommst.`,
-          `${messages.length} messages from "${folderLabel(display, locale)}" loaded. The tab shows them once you go back.`,
-        ),
+        tx(locale, 'mailVerbindung.nachrichten', [messages.length, folderLabel(display, locale)]),
       );
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'mail_failed';
@@ -81,40 +77,24 @@ export default function MailConnectionScreen() {
   return (
     <Screen
       kicker="UniMail"
-      title={tx(locale, 'Verbindung', 'Connection')}
-      subtitle={tx(
-        locale,
-        'Nur lesen: aktualisieren oder aufheben. Die Anmeldedaten liegen im Speicher des Assistenz-Servers, nie auf dem Gerät.',
-        'Read-only: refresh or drop. The credentials live in the assistant server memory, never on this device.',
-      )}
+      title={tx(locale, 'mailVerbindung.verbindung_2')}
+      subtitle={tx(locale, 'mailVerbindung.lesen')}
     >
-      <Stack.Screen options={{ title: tx(locale, 'UniMail-Verbindung', 'UniMail connection') }} />
+      <Stack.Screen options={{ title: tx(locale, 'mailVerbindung.unimail') }} />
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
           <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
-          <Pill tone={connected ? 'ok' : 'wait'} label={tx(locale, connected ? 'Verbunden' : 'Nicht verbunden', connected ? 'Connected' : 'Not connected')} />
+          <Pill tone={connected ? 'ok' : 'wait'} label={connected ? tx(locale, 'mailVerbindung.verbunden') : tx(locale, 'tabsMail.verbunden')} />
         </View>
         <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
           {status === null
-            ? tx(locale, 'Der Assistenz-Server antwortet noch nicht. Starte npm run assistant.', 'The assistant server is not answering yet. Start npm run assistant.')
+            ? tx(locale, 'common.assistenz')
             : connected
-              ? tx(
-                  locale,
-                  `Konto ${status.account ?? '–'}${status.address ? ` · ${status.address}` : ''}. Der Server liest den Posteingang über ${status.imap}.`,
-                  `Account ${status.account ?? '–'}${status.address ? ` · ${status.address}` : ''}. The server reads the inbox over ${status.imap}.`,
-                )
-              : tx(
-                  locale,
-                  'Keine Anmeldedaten hinterlegt. Zurück im Tab trägst du Nutzerkennung und Passwort neu ein.',
-                  'No credentials stored. In the tab, enter the user id and password again.',
-                )}
+              ? tx(locale, 'mailVerbindung.konto', [status.account ?? '–', status.address ? ` · ${status.address}` : '', status.imap])
+              : tx(locale, 'mailVerbindung.anmeldedaten')}
         </Text>
         <Text style={{ color: colors.inkSoft, fontSize: 13, lineHeight: 19 }}>
-          {tx(
-            locale,
-            `Webmail in der Ansicht der Universität: ${status?.webmail ?? 'https://mail.uni-stuttgart.de/'}`,
-            `Webmail in the university's own view: ${status?.webmail ?? 'https://mail.uni-stuttgart.de/'}`,
-          )}
+          {tx(locale, 'mailVerbindung.webmail', [status?.webmail ?? 'https://mail.uni-stuttgart.de/'])}
         </Text>
       </Card>
       {note ? <Text style={styles.note}>{note}</Text> : null}
@@ -122,19 +102,15 @@ export default function MailConnectionScreen() {
       {connected ? (
         <>
           <Button
-            label={loading ? tx(locale, 'Posteingang lädt …', 'Inbox loading …') : tx(locale, 'Posteingang aktualisieren', 'Refresh inbox')}
+            label={loading ? tx(locale, 'mailVerbindung.posteingang_laedt') : tx(locale, 'mailVerbindung.posteingang')}
             onPress={refreshInbox}
           />
-          <Button secondary label={busy ? tx(locale, 'Verbindung wird gelöst …', 'Dropping connection …') : tx(locale, 'Verbindung lösen', 'Drop connection')} onPress={disconnect} />
+          <Button secondary label={busy ? tx(locale, 'mailVerbindung.verbindung_wird') : tx(locale, 'mailVerbindung.verbindung_loesen')} onPress={disconnect} />
         </>
       ) : null}
       <Card>
         <Text style={{ color: colors.inkSoft, fontSize: 13, lineHeight: 19 }}>
-          {tx(
-            locale,
-            'Nach „Verbindung lösen“ verwirft der Server das Paar aus Nutzerkennung und Passwort — es gibt sonst keine Kopie auf dem Gerät, der Tab zeigt danach wieder das Anmeldeformular.',
-            'After dropping the connection the server forgets the user id and password pair — no copy remains on the device, and the tab shows the sign-in form again.',
-          )}
+          {tx(locale, 'mailVerbindung.verbindung')}
         </Text>
       </Card>
     </Screen>

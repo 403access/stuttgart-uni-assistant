@@ -49,17 +49,13 @@ export function CampusBrowserModal({
     <Modal visible={visible} presentationStyle="fullScreen" animationType="slide" onRequestClose={onClose}>
       <View style={[styles.shell, { paddingTop: insets.top }]}>
         <View style={styles.bar}>
-          <Text style={styles.title}>{tx(locale, 'C@MPUS-Anmeldung (Beta)', 'C@MPUS sign-in (Beta)')}</Text>
+          <Text style={styles.title}>{tx(locale, 'campusBrowserModal.c')}</Text>
           <Pressable onPress={onClose} hitSlop={8}>
             <Text style={styles.close}>✕</Text>
           </Pressable>
         </View>
         <Text style={styles.hint}>
-          {tx(
-            locale,
-            'Melde dich auf der C@MPUS-Seite mit st-Konto und Passwort an und tippe dann auf Übernehmen. Das Passwort bleibt auf der Seite der Universität; übernommen werden nur Sitzung und Token.',
-            'Sign in on the C@MPUS page with your st-account and password, then tap Adopt. The password stays on the university page; only the session and token are adopted.',
-          )}
+          {tx(locale, 'campusBrowserModal.melde')}
         </Text>
         <WebView
           ref={webview}
@@ -84,21 +80,17 @@ export function CampusBrowserModal({
               phase={profileLoading ? 'profile' : 'adopt'}
               detail={
                 profileLoading
-                  ? tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')
-                  : tx(
-                      locale,
-                      'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
-                      'Checking credentials against C@MPUS … this can take up to a minute.',
-                    )
+                  ? tx(locale, 'common.studien')
+                  : tx(locale, 'common.pruefe')
               }
             />
           ) : null}
           {error ? <ErrorText>{error}</ErrorText> : null}
           <Button
-            label={busy ? tx(locale, 'Übernahme läuft …', 'Adopting …') : tx(locale, 'Anmeldung übernehmen', 'Adopt sign-in')}
+            label={busy ? tx(locale, 'campusBrowserModal.uebernahme') : tx(locale, 'campusBrowserModal.anmeldung')}
             onPress={onAdopt}
           />
-          <Button secondary label={tx(locale, 'Speicher diagnostizieren', 'Diagnose storage')} onPress={onDiagnose} />
+          <Button secondary label={tx(locale, 'campusBrowserModal.speicher')} onPress={onDiagnose} />
         </View>
       </View>
     </Modal>

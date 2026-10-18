@@ -41,7 +41,7 @@ function folderSection(kind: FolderKind): 'mailbox' | 'folder' {
 }
 
 function folderSectionLabel(section: 'mailbox' | 'folder', locale: 'de' | 'en'): string {
-  return section === 'folder' ? tx(locale, 'Eigene Ordner', 'Your folders') : tx(locale, 'Postfächer', 'Mailboxes');
+  return section === 'folder' ? tx(locale, 'tabsMail.eigene') : tx(locale, 'tabsMail.postfaecher');
 }
 
 interface DropdownOption {
@@ -217,11 +217,11 @@ export default function MailScreen() {
 
   /** Dropdown data: current value text plus the inferred options with their row counts. */
   const filterOptions = useMemo<DropdownOption[]>(() => {
-    const options: DropdownOption[] = [{ key: 'all', label: tx(locale, 'Alle', 'All'), selected: activeFilter.kind === 'all' }];
+    const options: DropdownOption[] = [{ key: 'all', label: tx(locale, 'common.alle'), selected: activeFilter.kind === 'all' }];
     if (offered.unread > 0)
       options.push({
         key: 'unread',
-        label: tx(locale, 'Neu', 'Unread'),
+        label: tx(locale, 'tabsMail.neu_2'),
         meta: String(offered.unread),
         selected: activeFilter.kind === 'unread',
       });
@@ -237,10 +237,10 @@ export default function MailScreen() {
   }, [locale, activeFilter, offered]);
 
   const sortOptions = useMemo<DropdownOption[]>(() => {
-    const options: DropdownOption[] = [{ key: 'newest', label: tx(locale, 'Neueste', 'Newest'), selected: activeSort === 'newest' }];
-    if (offered.anyDates) options.push({ key: 'oldest', label: tx(locale, 'Älteste', 'Oldest'), selected: activeSort === 'oldest' });
-    if (offered.multipleSenders) options.push({ key: 'sender', label: tx(locale, 'Absender', 'Sender'), selected: activeSort === 'sender' });
-    if (offered.unread > 0) options.push({ key: 'unread-first', label: tx(locale, 'Neu zuerst', 'Unread first'), selected: activeSort === 'unread-first' });
+    const options: DropdownOption[] = [{ key: 'newest', label: tx(locale, 'common.neueste'), selected: activeSort === 'newest' }];
+    if (offered.anyDates) options.push({ key: 'oldest', label: tx(locale, 'common.aelteste'), selected: activeSort === 'oldest' });
+    if (offered.multipleSenders) options.push({ key: 'sender', label: tx(locale, 'tabsMail.absender'), selected: activeSort === 'sender' });
+    if (offered.unread > 0) options.push({ key: 'unread-first', label: tx(locale, 'tabsMail.neu_zuerst'), selected: activeSort === 'unread-first' });
     return options;
   }, [locale, activeSort, offered.anyDates, offered.multipleSenders, offered.unread]);
 
@@ -338,7 +338,7 @@ export default function MailScreen() {
         const loaded = await loadMailMessages(25, target);
         setMessages(loaded);
         const display = getMailSnapshot().folders?.find((candidate) => candidate.name === target)?.display ?? target;
-        if (!quiet) setNote(tx(locale, `„${folderLabel(display, locale)}“ geladen.`, `"${folderLabel(display, locale)}" loaded.`));
+        if (!quiet) setNote(tx(locale, 'tabsMail.geladen', [folderLabel(display, locale)]));
       } catch (caught) {
         const code = caught instanceof Error ? caught.message : 'mail_failed';
         if (!quiet) setError(mailMessage(locale, code, mailDetail(caught)));
@@ -418,8 +418,8 @@ export default function MailScreen() {
       setMailAccount(result.account);
       showToast({
         tone: 'success',
-        title: tx(locale, `Verbunden als ${result.account}`, `Connected as ${result.account}`),
-        message: result.address || tx(locale, 'Uni-Mail', 'university mail'),
+        title: tx(locale, 'tabsMail.verbunden_2', [result.account]),
+        message: result.address || tx(locale, 'tabsMail.uni'),
       });
       fetchMailFolders().catch(() => undefined);
       await refreshMessages({ quiet: true });
@@ -441,7 +441,7 @@ export default function MailScreen() {
     <View style={styles.stickyBar}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.controlsRow}>
         <DropdownPicker
-          hint={tx(locale, 'Postfach wählen', 'Choose mailbox')}
+          hint={tx(locale, 'tabsMail.postfach')}
           valueText={folderValueText}
           options={folderOptions}
           onSelect={applyFolderKey}
@@ -454,30 +454,30 @@ export default function MailScreen() {
                 value={query}
                 onChangeText={setQuery}
                 style={styles.searchInput}
-                placeholder={tx(locale, 'Suche', 'Search')}
+                placeholder={tx(locale, 'tabsMail.suche')}
                 placeholderTextColor={colors.mute}
                 autoCorrect={false}
                 autoCapitalize="none"
               />
               {query ? (
-                <Pressable hitSlop={8} onPress={() => setQuery('')} accessibilityLabel={tx(locale, 'Suche leeren', 'Clear search')}>
+                <Pressable hitSlop={8} onPress={() => setQuery('')} accessibilityLabel={tx(locale, 'tabsMail.suche_leeren')}>
                   <Text style={styles.clear}>✕</Text>
                 </Pressable>
               ) : null}
             </View>
             <DropdownPicker
-              hint={tx(locale, 'Nach Absender und Neuheit filtern', 'Filter by sender and unread')}
+              hint={tx(locale, 'tabsMail.absender_neuheit')}
               valueText={filterValueText}
               options={filterOptions}
               onSelect={applyFilterKey}
             />
-            <DropdownPicker hint={tx(locale, 'Sortieren', 'Sort')} valueText={sortValueText} options={sortOptions} onSelect={applySortKey} />
+            <DropdownPicker hint={tx(locale, 'tabsMail.sortieren')} valueText={sortValueText} options={sortOptions} onSelect={applySortKey} />
           </>
         ) : null}
         <Pressable
           hitSlop={8}
           onPress={() => router.push('/mail-verbindung')}
-          accessibilityLabel={tx(locale, 'Verbindung verwalten', 'Manage connection')}
+          accessibilityLabel={tx(locale, 'tabsMail.verbindung_verwalten')}
           accessibilityRole="button"
           style={({ pressed }) => [pressed && styles.pressed]}
         >
@@ -497,18 +497,14 @@ export default function MailScreen() {
         <Card>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
-            <Pill tone="wait" label={tx(locale, 'Nicht verbunden', 'Not connected')} />
+            <Pill tone="wait" label={tx(locale, 'tabsMail.verbunden')} />
           </View>
           <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
             {status === null
-              ? tx(locale, 'Der Assistenz-Server antwortet noch nicht. Starte npm run assistant.', 'The assistant server is not answering yet. Start npm run assistant.')
-              : tx(
-                  locale,
-                  'Trage kurz Nutzerkennung und Passwort ein, damit der Server den Posteingang über IMAP abrufen darf.',
-                  'Enter the user id and password so the server may read the inbox over IMAP.',
-                )}
+              ? tx(locale, 'common.assistenz')
+              : tx(locale, 'tabsMail.trage')}
           </Text>
-          <FieldLabel>{tx(locale, 'Nutzerkennung (kurz, z. B. st123456)', 'User id (short, e.g. st123456)')}</FieldLabel>
+          <FieldLabel>{tx(locale, 'tabsMail.nutzerkennung')}</FieldLabel>
           <TextInput
             value={account}
             onChangeText={setAccount}
@@ -518,15 +514,11 @@ export default function MailScreen() {
             placeholder={sessionAccount ?? 'st123456'}
             placeholderTextColor={colors.mute}
           />
-          <FieldLabel>{tx(locale, 'Passwort des Uni-Kontos', 'University account password')}</FieldLabel>
+          <FieldLabel>{tx(locale, 'tabsMail.passwort_uni')}</FieldLabel>
           <TextInput value={password} onChangeText={setPassword} secureTextEntry style={styles.input} placeholder="••••••••" placeholderTextColor={colors.mute} />
-          <Button label={busy ? tx(locale, 'Verbindung läuft …', 'Connecting …') : tx(locale, 'Mit UniMail verbinden', 'Connect with UniMail')} onPress={connect} />
+          <Button label={busy ? tx(locale, 'tabsMail.verbindung') : tx(locale, 'tabsMail.unimail')} onPress={connect} />
           <Text style={styles.hint}>
-            {tx(
-              locale,
-              'Das Passwort wird geprüft, indem der Server sich einmal beim IMAP-Dienst des TIK anmeldet. Es bleibt im Speicher des Servers, wird weder auf dem Gerät gespeichert noch angezeigt.',
-              'The password is proofed by signing the server in once at the TIK IMAP service. It stays in the server memory, never stored on this device or shown again.',
-            )}
+            {tx(locale, 'tabsMail.passwort')}
           </Text>
         </Card>
       ) : null}
@@ -534,26 +526,20 @@ export default function MailScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {activeFilter.kind !== 'all' || query ? (
         <Text style={styles.meta}>
-          {tx(
-            locale,
-            `${visibleMessages.length} von ${messages.length}${activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : ''}${query ? ` · „${query.trim()}“` : ''}`,
-            `${visibleMessages.length} of ${messages.length}${activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : ''}${query ? ` · “${query.trim()}”` : ''}`,
-          )}
+          {tx(locale, 'tabsMail.von', [visibleMessages.length, messages.length, activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : '', query ? ` · „${query.trim()}“` : ''])}
         </Text>
       ) : null}
       {messages.length === 0 ? (
         <Text style={styles.hint}>
           {connected
-            ? tx(
-                locale,
-                loading ? `Lade „${folderValueText}“ …` : `Keine Nachrichten in „${folderValueText}“.`,
-                loading ? `Loading "${folderValueText}" …` : `No messages in "${folderValueText}".`,
-              )
-            : tx(locale, 'Erst verbinden, dann erscheinen die neuesten Nachrichten hier.', 'Connect first; the newest messages then appear here.')}
+            ? loading
+              ? tx(locale, 'tabsMail.lade', [folderValueText])
+              : tx(locale, 'tabsMail.nachrichten', [folderValueText])
+            : tx(locale, 'tabsMail.erst')}
         </Text>
       ) : visibleMessages.length === 0 ? (
         <Text style={styles.hint}>
-          {tx(locale, 'Kein Treffer für Suche oder Filter im geladenen Bestand.', 'No match for the search or filter in the loaded messages.')}
+          {tx(locale, 'tabsMail.treffer')}
         </Text>
       ) : null}
       {visibleMessages.length > 0 ? (
@@ -574,20 +560,20 @@ export default function MailScreen() {
                     params: { uid: String(message.uid), folder },
                   })
                 }
-                accessibilityLabel={tx(locale, `Nachricht öffnen: ${message.subject || 'ohne Betreff'}`, `Open message: ${message.subject || 'no subject'}`)}
+                accessibilityLabel={tx(locale, 'tabsMail.nachricht', [message.subject || 'ohne Betreff'])}
               >
                 <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
                   <View style={[styles.dot, { backgroundColor: message.seen ? colors.line : colors.blue }]} />
                   <View style={{ flex: 1, gap: 4 }}>
                     <Text style={[styles.subject, message.seen && styles.subjectSeen]} numberOfLines={2}>
-                      {message.subject || tx(locale, '(ohne Betreff)', '(no subject)')}
+                      {message.subject || tx(locale, 'common.ohne')}
                     </Text>
                     <Text style={styles.from} numberOfLines={1}>
                       {message.from || '–'}
                     </Text>
                     <Text style={styles.meta}>
                       {message.date ? new Date(message.date).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : '–'}
-                      {!message.seen ? tx(locale, ' · neu', ' · new') : ''}
+                      {!message.seen ? tx(locale, 'tabsMail.neu') : ''}
                     </Text>
                   </View>
                 </View>
@@ -598,11 +584,7 @@ export default function MailScreen() {
       ) : null}
       <Card>
         <Text style={styles.hint}>
-          {tx(
-            locale,
-            'Nur gelesen und angezeigt. Antworten und Versand bleiben beim Webmail unter https://mail.uni-stuttgart.de/, das die Universität selbst betreibt.',
-            'Read and shown only. Replying and sending stay in the webmail at https://mail.uni-stuttgart.de/, operated by the university itself.',
-          )}
+          {tx(locale, 'tabsMail.gelesen')}
         </Text>
       </Card>
     </Screen>

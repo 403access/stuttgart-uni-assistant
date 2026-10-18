@@ -20,7 +20,7 @@ function germanDate(date: Date): string {
 
 /** The two kinds of calendar import the portal export supports. */
 function importKind(entry: CampusLogEntry, locale: Locale): string {
-  return entry.request?.startsWith('sync') ? tx(locale, 'Datenbank-Sync', 'Database sync') : tx(locale, 'Download', 'Download');
+  return entry.request?.startsWith('sync') ? tx(locale, 'kalenderExport.datenbank') : tx(locale, 'kalenderExport.download');
 }
 
 /** `2026-10-17T14:30:00.000Z` → `17.10.2026 · 16:30` (local time). */
@@ -108,7 +108,7 @@ export default function CalendarExportScreen() {
     onSuccess: refreshHistory,
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setError(tx(locale, `Import fehlgeschlagen (${code}).`, `Import failed (${code}).`));
+      setError(tx(locale, 'kalenderExport.import', [code]));
     },
   });
 
@@ -121,31 +121,23 @@ export default function CalendarExportScreen() {
     },
     onSuccess: (result) => {
       setSyncNote(
-        tx(
-          locale,
-          `${result.imported} neu · ${result.skipped} Duplikate übersprungen (${result.total} Termine).`,
-          `${result.imported} new · ${result.skipped} duplicates skipped (${result.total} events).`,
-        ),
+        tx(locale, 'kalenderExport.neu', [result.imported, result.skipped, result.total]),
       );
       refreshHistory();
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setError(tx(locale, `Sync fehlgeschlagen (${code}).`, `Sync failed (${code}).`));
+      setError(tx(locale, 'kalenderExport.sync', [code]));
     },
   });
 
   return (
     <Screen
       kicker="C@MPUS"
-      subtitle={tx(
-        locale,
-        'Lädt den persönlichen Kalender über die Exportmaske von C@MPUS (ein Jahr ab heute).',
-        'Downloads the personal calendar through the C@MPUS export mask (one year from today).',
-      )}>
-      <Stack.Screen options={{ title: tx(locale, 'Kalender-Import', 'Calendar import') }} />
+      subtitle={tx(locale, 'kalenderExport.laedt')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.kalender') }} />
       <Card>
-        <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{tx(locale, 'Format', 'Format')}</Text>
+        <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{tx(locale, 'kalenderExport.format')}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {([99, 2] as CalendarExportFormat[]).map((item) => (
             <Pressable key={item} onPress={() => setFormat(item)}>
@@ -153,16 +145,16 @@ export default function CalendarExportScreen() {
             </Pressable>
           ))}
         </View>
-        <Button label={downloadMutation.isPending ? '…' : tx(locale, 'Importieren', 'Import')} onPress={() => downloadMutation.mutate()} />
-        <Button secondary label={syncMutation.isPending ? '…' : tx(locale, 'In Datenbank syncen', 'Sync into database')} onPress={() => syncMutation.mutate()} />
+        <Button label={downloadMutation.isPending ? '…' : tx(locale, 'kalenderExport.importieren')} onPress={() => downloadMutation.mutate()} />
+        <Button secondary label={syncMutation.isPending ? '…' : tx(locale, 'kalenderExport.datenbank_syncen')} onPress={() => syncMutation.mutate()} />
         {syncNote ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{syncNote}</Text> : null}
         {error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{error}</Text> : null}
       </Card>
-      <Section title={tx(locale, 'Verlauf', 'History')} />
+      <Section title={tx(locale, 'kalenderExport.verlauf')} />
       {imports.length === 0 ? (
         <Card>
           <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>
-            {tx(locale, 'Noch keine Importe aufgezeichnet.', 'No imports recorded yet.')}
+            {tx(locale, 'kalenderExport.importe')}
           </Text>
         </Card>
       ) : (

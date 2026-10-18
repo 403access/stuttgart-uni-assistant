@@ -44,34 +44,34 @@ export default function RecognitionScreen() {
   const papers =
     origin === 'abroad'
       ? [
-          tx(locale, 'Learning Agreement', 'Learning agreement'),
-          tx(locale, 'Transcript der Gasthochschule', 'Host transcript'),
-          tx(locale, 'Modulbeschreibung mit Lernzielen', 'Module description with learning outcomes'),
+          tx(locale, 'anrechnung.learning'),
+          tx(locale, 'anrechnung.transcript'),
+          tx(locale, 'anrechnung.modulbeschreibung'),
         ]
       : [
-          tx(locale, 'Notenspiegel der vorherigen Hochschule', 'Transcript from the previous university'),
-          tx(locale, 'Auszug aus dem Modulhandbuch', 'Excerpt from the module handbook'),
-          tx(locale, 'Nachweis über bestandene Prüfung', 'Proof that the exam was passed'),
+          tx(locale, 'anrechnung.notenspiegel'),
+          tx(locale, 'anrechnung.auszug'),
+          tx(locale, 'anrechnung.nachweis'),
         ];
 
   return (
     <Screen
-      kicker={tx(locale, 'Prüfungsausschuss', 'Examinations board')}
-      subtitle={tx(locale, 'Die App reicht nichts ein. Sie sortiert den Entwurf und die Unterlagen. Der Antrag geht an den Prüfungsausschuss.', 'The app submits nothing. It organizes the draft and the papers. The request goes to the examinations board.')}>
-      <Stack.Screen options={{ title: tx(locale, 'Anrechnung', 'Recognition') }} />
+      kicker={tx(locale, 'anrechnung.pruefungsausschuss')}
+      subtitle={tx(locale, 'anrechnung.app')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.anrechnung') }} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable onPress={() => setOrigin('abroad')}>
-          <Pill label={tx(locale, 'Ausland', 'Abroad')} active={origin === 'abroad'} />
+          <Pill label={tx(locale, 'anrechnung.ausland')} active={origin === 'abroad'} />
         </Pressable>
         <Pressable onPress={() => setOrigin('previous')}>
-          <Pill label={tx(locale, 'Vorheriges Studium', 'Previous degree')} active={origin === 'previous'} />
+          <Pill label={tx(locale, 'anrechnung.vorheriges')} active={origin === 'previous'} />
         </Pressable>
       </View>
-      <Field label={tx(locale, 'Hochschule', 'Institution')} value={institution} onChange={setInstitution} />
-      <Field label={tx(locale, 'Kurs', 'Course')} value={courseTitle} onChange={setCourseTitle} />
+      <Field label={tx(locale, 'anrechnung.hochschule')} value={institution} onChange={setInstitution} />
+      <Field label={tx(locale, 'common.kurs')} value={courseTitle} onChange={setCourseTitle} />
       <Field label="ECTS" value={ects} onChange={setEcts} />
-      <Field label={tx(locale, 'Note, falls vorhanden', 'Grade, if you have one')} value={grade} onChange={setGrade} />
-      <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'Zielmodul', 'Target module')}</Text>
+      <Field label={tx(locale, 'anrechnung.note')} value={grade} onChange={setGrade} />
+      <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'anrechnung.zielmodul')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {modules
           .filter((item) => item.area === 'elective' || item.area === 'sq' || item.id === suggestion?.id)
@@ -89,12 +89,12 @@ export default function RecognitionScreen() {
           </Text>
           <Text style={{ color: target.status === 'passed' ? colors.danger : colors.inkSoft }}>
             {target.status === 'passed'
-              ? tx(locale, 'Dieses Modul ist im Demonstrationsstand schon bestanden. Eine zweite Anrechnung wäre vermutlich ausgeschlossen.', 'This module is already passed in the demonstration record. A second recognition would likely be refused.')
-              : tx(locale, `${target.ects} ECTS im Plan. Der Ausschuss vergleicht Lernziele, nicht nur den Titel.`, `${target.ects} ECTS in the plan. The board compares learning outcomes, not only the title.`)}
+              ? tx(locale, 'anrechnung.modul')
+              : tx(locale, 'anrechnung.ects', [target.ects])}
           </Text>
         </Card>
       ) : null}
-      <Field label={tx(locale, 'Notiz', 'Note')} value={note} onChange={setNote} />
+      <Field label={tx(locale, 'common.notiz')} value={note} onChange={setNote} />
       <Card>
         {papers.map((item) => (
           <Text key={item} style={{ color: colors.anthracite }}>
@@ -102,7 +102,7 @@ export default function RecognitionScreen() {
           </Text>
         ))}
       </Card>
-      <Button label={tx(locale, 'Entwurf auf dem Gerät sichern', 'Save the draft on this device')} onPress={save} />
+      <Button label={tx(locale, 'anrechnung.entwurf')} onPress={save} />
       {transfers.map((draft) => (
         <InfoRow
           key={draft.id}
@@ -112,7 +112,7 @@ export default function RecognitionScreen() {
           onPress={() => removeTransfer(draft.id)}
         />
       ))}
-      {transfers.length ? <Text style={{ color: colors.mute }}>{tx(locale, 'Tippen entfernt den Entwurf.', 'Tap a draft to remove it.')}</Text> : null}
+      {transfers.length ? <Text style={{ color: colors.mute }}>{tx(locale, 'anrechnung.tippen')}</Text> : null}
     </Screen>
   );
 }

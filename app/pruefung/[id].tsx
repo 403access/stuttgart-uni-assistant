@@ -17,8 +17,8 @@ export default function ExamScreen() {
   const exam = exams.find((item) => item.id === one(params.id));
   if (!exam) {
     return (
-      <Screen kicker={tx(locale, 'Eintrag fehlt', 'Entry missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
-        <Stack.Screen options={{ title: tx(locale, 'Eintrag fehlt', 'Entry missing') }} />
+      <Screen kicker={tx(locale, 'pruefung.eintrag')} subtitle={tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'pruefung.eintrag') }} />
       </Screen>
     );
   }

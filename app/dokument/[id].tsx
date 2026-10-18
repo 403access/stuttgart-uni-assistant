@@ -49,8 +49,8 @@ export default function DocumentScreen() {
 
   if (!bundled && !imported) {
     return (
-      <Screen kicker={tx(locale, 'Dokument fehlt', 'Document missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
-        <Stack.Screen options={{ title: tx(locale, 'Dokument fehlt', 'Document missing') }} />
+      <Screen kicker={tx(locale, 'dokument.dokument')} subtitle={tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'dokument.dokument') }} />
       </Screen>
     );
   }
@@ -59,13 +59,13 @@ export default function DocumentScreen() {
   const offline = bundled ? downloadedIds.includes(bundled.id) : true;
 
   return (
-    <Screen kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'Geteilt', 'Shared')) : tx(locale, 'Eigene Datei', 'Your file')} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>
+    <Screen kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'dokument.geteilt')) : tx(locale, 'dokument.eigene')} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>
       <Stack.Screen options={{ title }} />
-      <Text style={{ color: colors.inkSoft }}>{offline ? tx(locale, 'Auf diesem Gerät lesbar.', 'Readable on this device.') : tx(locale, 'Noch nicht als offline markiert.', 'Not marked offline yet.')}</Text>
+      <Text style={{ color: colors.inkSoft }}>{offline ? tx(locale, 'dokument.diesem') : tx(locale, 'dokument.offline')}</Text>
       {!plain ? (
         <Card>
           <Text style={{ color: colors.inkSoft, lineHeight: 21 }}>
-            {tx(locale, 'Die Datei ist importiert, hat aber keinen auslesbaren Text. Zusammenfassungen brauchen einen Textlayer oder eine TXT/Markdown-Datei.', 'The file is imported but has no readable text. Summaries need a text layer or a TXT/Markdown file.')}
+            {tx(locale, 'dokument.datei')}
           </Text>
         </Card>
       ) : (
@@ -81,15 +81,15 @@ export default function DocumentScreen() {
       {plain ? (
         <View style={{ gap: 8 }}>
           <Button
-            label={tx(locale, 'Kurz fassen', 'Summarize')}
-            onPress={() => refine(tx(locale, 'Fasse das Dokument in Stichpunkten zusammen.', 'Summarize the document in bullet points.'), asBullets(summarize(plain)))}
+            label={tx(locale, 'dokument.kurz')}
+            onPress={() => refine(tx(locale, 'dokument.fasse'), asBullets(summarize(plain)))}
           />
           <Button
             secondary
-            label={tx(locale, 'In einfacher Sprache', 'In plain language')}
+            label={tx(locale, 'dokument.einfacher')}
             onPress={() =>
               refine(
-                tx(locale, 'Formuliere den Inhalt in einfacher Sprache, ohne Fakten zu erfinden.', 'Rewrite the content in plain language without inventing facts.'),
+                tx(locale, 'dokument.formuliere'),
                 asBullets(summarize(plain, 3)),
               )
             }
@@ -100,32 +100,32 @@ export default function DocumentScreen() {
             onPress={() =>
               alternate
                 ? setPanel(alternate)
-                : refine(tx(locale, 'Übersetze den Text in die andere Sprache. Erfinde nichts.', 'Translate the text into the other language. Do not invent anything.'), plain)
+                : refine(tx(locale, 'dokument.uebersetze'), plain)
             }
           />
-          <Button secondary label={tx(locale, 'Im Chat fragen', 'Ask in chat')} onPress={() => router.navigate({ pathname: '/chat', params: { doc: id } })} />
+          <Button secondary label={tx(locale, 'dokument.chat')} onPress={() => router.navigate({ pathname: '/chat', params: { doc: id } })} />
           <Button
             secondary
-            label={tx(locale, 'Exportieren', 'Export')}
+            label={tx(locale, 'dokument.exportieren')}
             onPress={() => {
-              if (plain) exportText(title, plain).catch(() => setPanel(tx(locale, 'Export ist hier nicht verfügbar.', 'Export is not available here.')));
+              if (plain) exportText(title, plain).catch(() => setPanel(tx(locale, 'dokument.export')));
             }}
           />
         </View>
       ) : null}
       {bundled?.source === 'ilias' ? (
-        <Button secondary label={offline ? tx(locale, 'Offline-Markierung lösen', 'Remove offline mark') : tx(locale, 'Offline markieren', 'Mark offline')} onPress={() => toggleDownload(bundled.id)} />
+        <Button secondary label={offline ? tx(locale, 'dokument.offline_markierung') : tx(locale, 'dokument.offline_markieren')} onPress={() => toggleDownload(bundled.id)} />
       ) : null}
       {imported ? (
         <Button
           secondary
-          label={imported.shared ? tx(locale, 'Nicht mehr teilen', 'Stop sharing') : tx(locale, 'Mit dem Kurs teilen', 'Share with the course')}
+          label={imported.shared ? tx(locale, 'dokument.mehr') : tx(locale, 'dokument.kurs')}
           onPress={() => toggleShare(imported.id)}
         />
       ) : null}
       {panel ? (
         <Card>
-          <Text style={{ color: colors.blue, fontWeight: '700' }}>{busy ? tx(locale, 'Grok formuliert …', 'Grok is writing …') : tx(locale, 'Auszug', 'Extract')}</Text>
+          <Text style={{ color: colors.blue, fontWeight: '700' }}>{busy ? tx(locale, 'dokument.grok') : tx(locale, 'dokument.auszug')}</Text>
           <Text style={{ color: colors.anthracite, lineHeight: 22 }}>{panel}</Text>
         </Card>
       ) : null}

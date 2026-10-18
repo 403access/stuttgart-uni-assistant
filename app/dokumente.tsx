@@ -23,7 +23,7 @@ export default function DocumentsScreen() {
       id,
       title: picked.title,
       text: picked.text,
-      folder: tx(locale, 'Import', 'Import'),
+      folder: tx(locale, 'dokumente.import'),
       source: 'device',
       createdAt: new Date().toISOString(),
       shared: false,
@@ -32,8 +32,8 @@ export default function DocumentsScreen() {
     });
     setMessage(
       picked.text
-        ? tx(locale, 'Textdatei liegt im persönlichen Ordner.', 'The text file is in your folder.')
-        : tx(locale, 'Datei ist vermerkt. Binäre PDFs haben in dieser Fassung noch keinen Textlayer.', 'The file is listed. Binary PDFs have no text layer in this build.'),
+        ? tx(locale, 'dokumente.textdatei')
+        : tx(locale, 'dokumente.datei'),
     );
     router.push({ pathname: '/dokument/[id]', params: { id } });
   }
@@ -44,9 +44,9 @@ export default function DocumentsScreen() {
     const id = uid('note');
     addImport({
       id,
-      title: title.trim() || tx(locale, 'Eigene Notiz', 'Personal note'),
+      title: title.trim() || tx(locale, 'dokumente.eigene'),
       text: note,
-      folder: tx(locale, 'Notizen', 'Notes'),
+      folder: tx(locale, 'dokumente.notizen'),
       source: 'note',
       createdAt: new Date().toISOString(),
       shared: false,
@@ -57,16 +57,16 @@ export default function DocumentsScreen() {
   }
 
   return (
-    <Screen kicker={tx(locale, 'Document Hub', 'Document hub')}>
-      <Stack.Screen options={{ title: tx(locale, 'Dokumente', 'Documents') }} />
+    <Screen kicker={tx(locale, 'dokumente.document')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.dokumente') }} />
       <Button
-        label={tx(locale, 'ILIAS auf dieses Gerät legen', 'Save ILIAS onto this device')}
+        label={tx(locale, 'dokumente.ilias')}
         onPress={() => {
           syncPlatform('ilias');
-          setMessage(tx(locale, 'ILIAS-Kurse sind als offline markiert.', 'ILIAS courses are marked offline.'));
+          setMessage(tx(locale, 'dokumente.ilias_kurse'));
         }}
       />
-      <Button label={tx(locale, 'Datei vom Gerät importieren', 'Import a file from this device')} onPress={importFile} secondary />
+      <Button label={tx(locale, 'dokumente.datei_vom')} onPress={importFile} secondary />
       {message ? <Text style={{ color: colors.inkSoft }}>{message}</Text> : null}
       <Section title="ILIAS" />
       {documents
@@ -75,7 +75,7 @@ export default function DocumentsScreen() {
           <InfoRow
             key={item.id}
             title={pick(item.title, locale)}
-            meta={downloadedIds.includes(item.id) ? tx(locale, 'offline', 'offline') : 'ILIAS'}
+            meta={downloadedIds.includes(item.id) ? tx(locale, 'dokumente.offline') : 'ILIAS'}
             detail={pick(item.folder, locale)}
             onPress={() => {
               if (!downloadedIds.includes(item.id)) toggleDownload(item.id);
@@ -83,20 +83,20 @@ export default function DocumentsScreen() {
             }}
           />
         ))}
-      <Section title={tx(locale, 'Geteilt und eigene', 'Shared and yours')} />
+      <Section title={tx(locale, 'dokumente.geteilt_eigene')} />
       {documents
         .filter((item) => item.source === 'peer')
         .map((item) => (
           <InfoRow key={item.id} title={pick(item.title, locale)} meta={item.author} detail={pick(item.folder, locale)} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
         ))}
       {imports.map((item) => (
-        <InfoRow key={item.id} title={item.title} meta={item.shared ? tx(locale, 'geteilt', 'shared') : item.folder} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
+        <InfoRow key={item.id} title={item.title} meta={item.shared ? tx(locale, 'dokumente.geteilt') : item.folder} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
       ))}
       <Card>
-        <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'Notiz anlegen', 'Write a note')}</Text>
-        <TextInput value={title} onChangeText={setTitle} placeholder={tx(locale, 'Titel', 'Title')} placeholderTextColor={colors.mute} style={input} />
-        <TextInput value={body} onChangeText={setBody} multiline placeholder={tx(locale, 'Zusammenfassung, Karten, Lösungsweg', 'Summary, cards, solution path')} placeholderTextColor={colors.mute} style={[input, { minHeight: 100 }]} />
-        <Button label={tx(locale, 'Notiz speichern', 'Save note')} onPress={saveNote} />
+        <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'dokumente.notiz')}</Text>
+        <TextInput value={title} onChangeText={setTitle} placeholder={tx(locale, 'common.titel')} placeholderTextColor={colors.mute} style={input} />
+        <TextInput value={body} onChangeText={setBody} multiline placeholder={tx(locale, 'dokumente.zusammenfassung')} placeholderTextColor={colors.mute} style={[input, { minHeight: 100 }]} />
+        <Button label={tx(locale, 'dokumente.notiz_speichern')} onPress={saveNote} />
       </Card>
     </Screen>
   );

@@ -13,6 +13,7 @@ src/assistant/               local answers, fact sheet, Grok client
 src/state/AppState.tsx       Async Storage
 src/documents/io.ts          picker and export
 src/components/ui.tsx        shared visual pieces
+src/i18n/                    German/English catalogs and the `tx` lookup
 server/index.mjs             POST /v1/assist → api.x.ai
 ```
 
@@ -42,6 +43,7 @@ Stack headers are off. Each screen draws its own title with the shared `Screen` 
 | `src/data` | The fictional catalog: program, modules, people, places, deadlines, news, documents, reviews, exams, tutorials |
 | `src/domain/plan.ts` | Pure functions over that catalog |
 | `src/assistant` | Turn a question into an answer, then optionally ask the server to rewrite it |
+| `src/i18n` | The German and English catalogs and the `tx(locale, key)` lookup every screen reads its copy from ([i18n.md](i18n.md)) |
 | `src/documents/io.ts` | Pick a file and export text. `expo-file-system` is imported only on the native branch |
 | `src/campus/db.ts` + `db.web.ts` | Curriculum, course, and API-call cache. SQLite (`expo-sqlite`) on native, AsyncStorage on web — the web module never imports the native one, following the same platform split |
 
@@ -67,7 +69,7 @@ The curriculum, course, and API-call caches live outside that key in `campus-cac
 
 ## Assistant server
 
-`server/index.mjs` has no npm dependencies. It reads `../.env` if present, without adding those values over variables that are already set.
+`server/index.mjs` has no npm dependencies. It reads `../.env` if present, without adding those values over variables that are already set. Its user-facing copy — the Grok system prompt — is keyed in `server/i18n/` the same way the app keys its strings ([i18n.md](i18n.md)).
 
 | Route | Behavior |
 | --- | --- |

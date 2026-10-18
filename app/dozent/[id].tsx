@@ -17,8 +17,8 @@ export default function PersonScreen() {
   const person = people.find((item) => item.id === one(params.id));
   if (!person) {
     return (
-      <Screen kicker={tx(locale, 'Profil fehlt', 'Profile missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
-        <Stack.Screen options={{ title: tx(locale, 'Profil fehlt', 'Profile missing') }} />
+      <Screen kicker={tx(locale, 'dozent.profil')} subtitle={tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'dozent.profil') }} />
       </Screen>
     );
   }

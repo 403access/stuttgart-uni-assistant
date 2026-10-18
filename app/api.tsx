@@ -13,22 +13,19 @@ import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
 function summary(locale: 'de' | 'en', id: string): string {
-  const copy: Record<string, [string, string]> = {
-    health: ['Serverstatus, ohne Token.', 'Server status, without the token.'],
-    'campus-config': ['Ob Token und Sitzungs-Cookie gesetzt sind.', 'Whether the token and session cookie are set.'],
-    'oidc-config': ['Ob der Identity Provider vorbereitet ist.', 'Whether the identity provider is prepared.'],
-    'campus-login': ['Lädt die Curriculum-Wurzel und meldet damit an.', 'Loads the curriculum root and signs in with it.'],
-    'campus-structure': ['Dieselbe Struktur, optional für eine Kind-Id.', 'The same structure, optionally for a child id.'],
-    'campus-studies': ['Listet die eingeschriebenen Studiengänge.', 'Lists the enrolled degree programs.'],
-    'campus-courses': ['Lehrveranstaltungen eines Curriculum-Knotens.', 'Courses of a curriculum node.'],
-    'campus-course-groups': ['Gruppen und Termine einer Veranstaltung.', 'Groups and appointments of a course.'],
-    assist: ['Kurze Testfrage an das Modell.', 'A short test question to the model.'],
-    'oidc-start': ['Startet den Browser-Login. Nicht von hier.', 'Starts the browser login. Not from here.'],
-    'oidc-exchange': ['Tauscht den Code. Nicht von hier.', 'Exchanges the code. Not from here.'],
-    'oidc-logout': ['Beendet die IdP-Sitzung. Nicht von hier.', 'Ends the IdP session. Not from here.'],
-  };
-  const pair = copy[id];
-  return pair ? tx(locale, pair[0], pair[1]) : id;
+  if (id === 'health') return tx(locale, 'api.serverstatus');
+  if (id === 'campus-config') return tx(locale, 'api.ob_token');
+  if (id === 'oidc-config') return tx(locale, 'api.ob');
+  if (id === 'campus-login') return tx(locale, 'api.laedt');
+  if (id === 'campus-structure') return tx(locale, 'api.dieselbe');
+  if (id === 'campus-studies') return tx(locale, 'api.listet');
+  if (id === 'campus-courses') return tx(locale, 'api.lehrveranstaltungen_curriculum');
+  if (id === 'campus-course-groups') return tx(locale, 'api.gruppen');
+  if (id === 'assist') return tx(locale, 'api.kurze');
+  if (id === 'oidc-start') return tx(locale, 'api.startet');
+  if (id === 'oidc-exchange') return tx(locale, 'api.tauscht');
+  if (id === 'oidc-logout') return tx(locale, 'api.beendet');
+  return id;
 }
 
 function preview(value: unknown): string {
@@ -68,11 +65,7 @@ export default function ApiScreen() {
       const withDetail = detail ? ` (${detail})` : '';
       if (error === 'invalid_token') {
         setNotice(
-          tx(
-            locale,
-            `C@MPUS meldet invalid_token${withDetail}. Der gespeicherte Bearer-Token passt nicht mehr zu dieser Sitzung.`,
-            `C@MPUS reports invalid_token${withDetail}. The stored bearer token no longer matches this session.`,
-          ),
+          tx(locale, 'api.c', [withDetail]),
         );
         return;
       }
@@ -87,32 +80,30 @@ export default function ApiScreen() {
         if (body.account && body.name)
           signInCampus({ account: body.account, name: body.name, nodes, studyId: typeof body.studyId === 'number' ? body.studyId : null, studies: studies.length ? studies : undefined });
         setNotice(
-          tx(
-            locale,
-            body.name ? `${body.name}: ${nodes.length} Knoten${studies.length ? `, ${studies.length} Studiengänge` : ''}.` : 'Anmeldung ohne Namen.',
-            body.name ? `${body.name}: ${nodes.length} nodes${studies.length ? `, ${studies.length} studies` : ''}.` : 'Sign-in without a name.',
-          ),
+          body.name
+            ? studies.length
+              ? tx(locale, 'api.knoten_studiengaenge', [body.name, nodes.length, studies.length])
+              : tx(locale, 'api.knoten', [body.name, nodes.length])
+            : tx(locale, 'api.anmeldung'),
         );
       }
       if (operation.id === 'campus-structure' && next.status === 200) {
         const nodes = asCurriculumNodes((next.body as { nodes?: unknown }).nodes);
         if (nodes.length) setCurriculum(nodes);
-        setNotice(tx(locale, `${nodes.length} Knoten übernommen.`, `Stored ${nodes.length} nodes.`));
+        setNotice(tx(locale, 'api.knoten_uebernommen', [nodes.length]));
       }
       if (operation.id === 'campus-studies' && next.status === 200) {
         const studies = asCampusStudies((next.body as { studies?: unknown }).studies);
         if (studies.length) setStudies(studies);
-        setNotice(tx(locale, `${studies.length} Studiengänge übernommen.`, `Stored ${studies.length} degree programs.`));
+        setNotice(tx(locale, 'api.studiengaenge_uebernommen', [studies.length]));
       }
       if (operation.id === 'campus-courses' && next.status === 200) {
         const courses = asCampusCourses((next.body as { courses?: unknown }).courses);
         setCoursesPreview(courses);
         setNotice(
-          tx(
-            locale,
-            courses.length ? `${courses.length} Lehrveranstaltungen.` : 'Keine Lehrveranstaltungen an diesem Knoten.',
-            courses.length ? `${courses.length} courses.` : 'No courses on this node.',
-          ),
+          courses.length
+            ? tx(locale, 'api.lehrveranstaltungen_2', [courses.length])
+            : tx(locale, 'common.lehrveranstaltungen'),
         );
       }
     },
@@ -121,7 +112,7 @@ export default function ApiScreen() {
       setResult(null);
       setNotice(
         code === 'server_unreachable'
-          ? tx(locale, 'Der Server auf Port 8787 antwortet nicht. Starte npm run assistant neu.', 'The server on port 8787 is not answering. Restart npm run assistant.')
+          ? tx(locale, 'api.server')
           : code,
       );
     },
@@ -133,11 +124,11 @@ export default function ApiScreen() {
     // Course groups take a course id instead of an element id.
     const typed = requestedId ?? (operation.acceptsCourseId ? Number(courseId) || undefined : elementId ? Number(elementId) : undefined);
     if (operation.acceptsElementId && elementId && !requestedId && !/^[1-9]\d{0,9}$/.test(elementId)) {
-      setNotice(tx(locale, 'Die Element-Id muss eine positive Ganzzahl sein.', 'The element id must be a positive integer.'));
+      setNotice(tx(locale, 'api.element'));
       return;
     }
     if (operation.acceptsCourseId && courseId && !requestedId && !/^[1-9]\d{0,9}$/.test(courseId)) {
-      setNotice(tx(locale, 'Die Kurs-Id muss eine positive Ganzzahl sein.', 'The course id must be a positive integer.'));
+      setNotice(tx(locale, 'api.kurs'));
       return;
     }
     // Courses belong to one study: replay with the selected study when set.
@@ -148,23 +139,15 @@ export default function ApiScreen() {
   return (
     <Screen
       kicker="API"
-      subtitle={tx(
-        locale,
-        'Token und Cookie bleiben auf dem Server. Senden geht nur für die Aufrufe, die diese App schon kennt.',
-        'The token and cookie stay on the server. Send works only for the calls this app already knows.',
-      )}
+      subtitle={tx(locale, 'api.token')}
     >
-      <Stack.Screen options={{ title: tx(locale, 'Schnittstelle', 'Interface') }} />
+      <Stack.Screen options={{ title: tx(locale, 'common.schnittstelle') }} />
       {live ? null : (
         <Muted>
-          {tx(
-            locale,
-            'Die Liste ist die bekannte Fassung. GET /v1/api antwortet noch nicht. Starte den Server neu.',
-            'This list is the known set. GET /v1/api is not answering yet. Restart the server.',
-          )}
+          {tx(locale, 'api.liste')}
         </Muted>
       )}
-      <Section title={tx(locale, 'Aufrufe', 'Calls')} />
+      <Section title={tx(locale, 'api.aufrufe')} />
       {operations.map((operation) => (
         <Card key={operation.id}>
           <Text style={styles.method}>
@@ -176,7 +159,7 @@ export default function ApiScreen() {
               value={elementId}
               onChangeText={setElementId}
               keyboardType="number-pad"
-              placeholder={tx(locale, 'Element-Id, leer = Wurzel', 'Element id, empty = root')}
+              placeholder={tx(locale, 'api.element_id')}
               placeholderTextColor={colors.mute}
               style={styles.input}
             />
@@ -185,18 +168,18 @@ export default function ApiScreen() {
               value={courseId}
               onChangeText={setCourseId}
               keyboardType="number-pad"
-              placeholder={tx(locale, 'Kurs-Id, z. B. 461098', 'Course id, e.g. 461098')}
+              placeholder={tx(locale, 'api.kurs_id')}
               placeholderTextColor={colors.mute}
               style={styles.input}
             />
           ) : null}
           {operation.replay ? (
             <Button
-              label={busyId === operation.id ? tx(locale, 'Sende …', 'Sending …') : tx(locale, 'Senden', 'Send')}
+              label={busyId === operation.id ? tx(locale, 'api.sende') : tx(locale, 'common.senden')}
               onPress={() => send(operation)}
             />
           ) : (
-            <Muted>{tx(locale, 'Nur im Anmeldeablauf.', 'Only in the sign-in flow.')}</Muted>
+            <Muted>{tx(locale, 'api.anmeldeablauf')}</Muted>
           )}
         </Card>
       ))}
@@ -209,9 +192,9 @@ export default function ApiScreen() {
           <Text style={styles.preview}>{preview(result.body)}</Text>
         </Card>
       ) : null}
-      <Section title={tx(locale, 'Studiengänge', 'Degree programs')} />
+      <Section title={tx(locale, 'common.studiengaenge')} />
       {campusStudies.length === 0 ? (
-        <Muted>{tx(locale, 'Noch keine Studiengänge. Sende die Chooser-Abfrage.', 'No degree programs yet. Send the chooser call.')}</Muted>
+        <Muted>{tx(locale, 'api.studiengaenge')}</Muted>
       ) : (
         campusStudies.map((study) => (
           <InfoRow
@@ -221,7 +204,7 @@ export default function ApiScreen() {
             detail={[
               study.studyStatus,
               study.versionIdentifier,
-              study.lastAccessed ? tx(locale, 'zuletzt geöffnet', 'last opened') : '',
+              study.lastAccessed ? tx(locale, 'api.zuletzt') : '',
               study.elementId ? `element ${study.elementId}` : '',
             ]
               .filter(Boolean)
@@ -230,9 +213,9 @@ export default function ApiScreen() {
           />
         ))
       )}
-      <Section title={tx(locale, 'Lehrveranstaltungen', 'Courses')} />
+      <Section title={tx(locale, 'api.lehrveranstaltungen')} />
       {coursesPreview.length === 0 ? (
-        <Muted>{tx(locale, 'Noch keine Kurse. Sende die Courses-Abfrage mit einer Element-Id.', 'No courses yet. Send the courses call with an element id.')}</Muted>
+        <Muted>{tx(locale, 'api.kurse')}</Muted>
       ) : (
         coursesPreview.map((course) => (
           <InfoRow
@@ -243,9 +226,9 @@ export default function ApiScreen() {
           />
         ))
       )}
-      <Section title={tx(locale, 'Curriculum', 'Curriculum')} />
+      <Section title={tx(locale, 'api.curriculum')} />
       {curriculumNodes.length === 0 ? (
-        <Muted>{tx(locale, 'Noch keine Knoten. Sende die Curriculum-Struktur.', 'No nodes yet. Send the curriculum structure.')}</Muted>
+        <Muted>{tx(locale, 'api.knoten_sende')}</Muted>
       ) : (
         curriculumNodes.map((node) => (
           <InfoRow
@@ -254,9 +237,9 @@ export default function ApiScreen() {
             meta={node.designation || String(node.id)}
             detail={[
               node.elementType,
-              node.parentId ? `parent ${node.parentId}` : tx(locale, 'Wurzel', 'Root'),
-              node.completed ? tx(locale, 'abgeschlossen', 'completed') : '',
-              node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : '',
+              node.parentId ? `parent ${node.parentId}` : tx(locale, 'common.wurzel'),
+              node.completed ? tx(locale, 'common.abgeschlossen') : '',
+              node.inProgress ? tx(locale, 'common.arbeit') : '',
             ]
               .filter(Boolean)
               .join(' · ')}

@@ -12,7 +12,7 @@ import type { Locale } from '@/src/types';
 type ResponseView = 'text' | 'json' | 'pretty';
 
 function responseToggleLabel(view: ResponseView, locale: Locale): string {
-  if (view === 'text') return tx(locale, 'Text', 'Text');
+  if (view === 'text') return tx(locale, 'apiEntryDetail.text');
   if (view === 'json') return 'JSON';
   return 'Pretty';
 }
@@ -92,7 +92,7 @@ function ResponseRendered({ entry, locale }: { entry: CampusLogEntry; locale: Lo
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ color: colors.anthracite, fontSize: 16, fontWeight: '700' }}>
-        {tx(locale, `${preview.count} Einträge`, `${preview.count} entries`)}
+        {tx(locale, 'apiEntryDetail.eintraege', [preview.count])}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
         {preview.names.map((name, index) => (
@@ -100,7 +100,7 @@ function ResponseRendered({ entry, locale }: { entry: CampusLogEntry; locale: Lo
         ))}
       </View>
       {preview.count > preview.names.length ? (
-        <Muted>{tx(locale, `+ ${preview.count - preview.names.length} weitere`, `+ ${preview.count - preview.names.length} more`)}</Muted>
+        <Muted>{tx(locale, 'apiEntryDetail.weitere', [preview.count - preview.names.length])}</Muted>
       ) : null}
     </View>
   );
@@ -122,7 +122,7 @@ export function ApiEntryDetail({ entry, locale, onClose }: ApiEntryDetailProps) 
   const [responseView, setResponseView] = useState<ResponseView>('text');
 
   if (!entry) {
-    return <Muted>{tx(locale, 'Eintrag im Verlauf wählen.', 'Select an entry in the history.')}</Muted>;
+    return <Muted>{tx(locale, 'apiEntryDetail.eintrag')}</Muted>;
   }
 
   const canRefetch = entry.op === 'structure' || entry.op === 'courses' || entry.op === 'studies';
@@ -136,35 +136,35 @@ export function ApiEntryDetail({ entry, locale, onClose }: ApiEntryDetailProps) 
     try {
       if (current.op === 'structure' && current.elementId !== undefined) {
         const loaded = await loadCampusCurriculum(current.elementId, current.studyId);
-        setNote(tx(locale, `Erneut geladen: ${loaded.nodes.length} Knoten.`, `Reloaded: ${loaded.nodes.length} nodes.`));
+        setNote(tx(locale, 'apiEntryDetail.erneut_geladen', [loaded.nodes.length]));
       } else if (current.op === 'courses' && current.elementId !== undefined) {
         const loaded = await loadCampusCourses(current.elementId, current.studyId);
-        setNote(tx(locale, `Erneut geladen: ${loaded.courses.length} Kurse.`, `Reloaded: ${loaded.courses.length} courses.`));
+        setNote(tx(locale, 'apiEntryDetail.erneut_geladen_kurse', [loaded.courses.length]));
       } else if (current.op === 'studies') {
         const loaded = await loadCampusStudies();
-        setNote(tx(locale, `Erneut geladen: ${loaded.studies.length} Studiengänge.`, `Reloaded: ${loaded.studies.length} studies.`));
+        setNote(tx(locale, 'apiEntryDetail.erneut_geladen_studiengaenge', [loaded.studies.length]));
       }
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setNote(tx(locale, `Erneut fehlgeschlagen (${code}).`, `Retry failed (${code}).`));
+      setNote(tx(locale, 'apiEntryDetail.erneut', [code]));
     } finally {
       setRefetching(false);
     }
   }
 
   const rows: [string, string][] = [
-    [tx(locale, 'Status', 'Status'), entry.ok ? 'OK' : (entry.code ?? '?')],
-    [tx(locale, 'Operation', 'Operation'), entry.op],
-    [tx(locale, 'Zeit', 'Time'), entry.time],
-    [tx(locale, 'Dauer', 'Duration'), `${entry.elapsedMs} ms`],
-    [tx(locale, 'HTTP', 'HTTP'), entry.httpStatus !== undefined ? String(entry.httpStatus) : '–'],
-    [tx(locale, 'Studie', 'Study'), entry.studyId !== undefined ? String(entry.studyId) : '–'],
-    [tx(locale, 'Element', 'Element'), entry.elementId !== undefined ? String(entry.elementId) : '–'],
+    [tx(locale, 'apiEntryDetail.status'), entry.ok ? 'OK' : (entry.code ?? '?')],
+    [tx(locale, 'apiEntryDetail.operation'), entry.op],
+    [tx(locale, 'apiEntryDetail.zeit'), entry.time],
+    [tx(locale, 'apiEntryDetail.dauer'), `${entry.elapsedMs} ms`],
+    [tx(locale, 'apiEntryDetail.http'), entry.httpStatus !== undefined ? String(entry.httpStatus) : '–'],
+    [tx(locale, 'apiEntryDetail.studie'), entry.studyId !== undefined ? String(entry.studyId) : '–'],
+    [tx(locale, 'apiEntryDetail.element'), entry.elementId !== undefined ? String(entry.elementId) : '–'],
   ];
 
   return (
     <View style={{ gap: 10 }}>
-      <Section title={tx(locale, 'Details', 'Details')} action={tx(locale, 'Schließen', 'Close')} onAction={onClose} />
+      <Section title={tx(locale, 'apiEntryDetail.details')} action={tx(locale, 'common.schliessen')} onAction={onClose} />
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <View style={{ width: 12, height: 12, borderRadius: 99, backgroundColor: entry.ok ? colors.success : colors.danger }} />
@@ -181,14 +181,14 @@ export function ApiEntryDetail({ entry, locale, onClose }: ApiEntryDetailProps) 
         ) : null}
         {entry.request ? (
           <>
-            <Text style={styles.label}>{tx(locale, 'Anfrage', 'Request')}</Text>
+            <Text style={styles.label}>{tx(locale, 'apiEntryDetail.anfrage')}</Text>
             <Text style={{ color: colors.anthracite, fontSize: 14 }}>{entry.request}</Text>
           </>
         ) : null}
         {entry.response || entry.responseJson ? (
           <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={styles.label}>{tx(locale, 'Antwort', 'Response')}</Text>
+              <Text style={styles.label}>{tx(locale, 'apiEntryDetail.antwort')}</Text>
               <ResponseToggle locale={locale} view={responseView} onChange={setResponseView} />
             </View>
             {responseView === 'json' ? (
@@ -201,7 +201,7 @@ export function ApiEntryDetail({ entry, locale, onClose }: ApiEntryDetailProps) 
           </>
         ) : null}
       </Card>
-      {canRefetch ? <Button label={refetching ? '…' : tx(locale, 'Erneut laden', 'Reload')} onPress={refetch} secondary /> : null}
+      {canRefetch ? <Button label={refetching ? '…' : tx(locale, 'apiEntryDetail.erneut_laden')} onPress={refetch} secondary /> : null}
       {note ? <Text style={{ color: colors.inkSoft, fontSize: 14, lineHeight: 20 }}>{note}</Text> : null}
     </View>
   );

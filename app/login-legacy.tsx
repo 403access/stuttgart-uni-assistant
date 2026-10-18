@@ -58,11 +58,7 @@ export default function LoginScreen() {
       // between the wait and the home tabs.
       headless.setPhase('profile');
       setCampusLog(
-        tx(
-          locale,
-          `Browser-Anmeldung übernommen (${result.studies} Studiengänge). Lade Profil …`,
-          `Browser sign-in adopted (${result.studies} studies). Loading profile …`,
-        ),
+        tx(locale, 'common.browser', [result.studies]),
       );
       campusSignIn.mutate();
     },
@@ -84,16 +80,12 @@ export default function LoginScreen() {
     mutationFn: signInWithCampusToken,
     onMutate: () => {
       setError('');
-      setCampusLog(tx(locale, `Rufe ${assistantUrl}/v1/campus/login auf …`, `Calling ${assistantUrl}/v1/campus/login …`));
+      setCampusLog(tx(locale, 'common.rufe', [assistantUrl]));
     },
     onSuccess: (profile) => {
       const names = profile.studies.map((item) => item.name).join(', ');
       setCampusLog(
-        tx(
-          locale,
-          `Angemeldet als ${profile.name} (${profile.account}). ${profile.nodes.length} Knoten, ${profile.studies.length} ${profile.studies.length === 1 ? 'Studiengang' : 'Studiengänge'}: ${names}.`,
-          `Signed in as ${profile.name} (${profile.account}). ${profile.nodes.length} nodes, ${profile.studies.length} ${profile.studies.length === 1 ? 'study' : 'studies'}: ${names}.`,
-        ),
+        tx(locale, 'common.angemeldet', [profile.name, profile.account, profile.nodes.length, profile.studies.length, profile.studies.length === 1 ? 'Studiengang' : 'Studiengänge', names]),
       );
       // Deliberately no close() here: the session update and the navigation land
       // in the same tick, so hiding the waiting view now would render one frame
@@ -111,7 +103,7 @@ export default function LoginScreen() {
       headless.close();
       browser.close();
       showFetchAlert(locale, {
-        title: tx(locale, 'C@MPUS-Anmeldung fehlgeschlagen', 'C@MPUS sign-in failed'),
+        title: tx(locale, 'common.c'),
         code,
         detail: campusDetail(caught) || undefined,
         onRetry: () => campusSignIn.mutate(),
@@ -143,19 +135,15 @@ export default function LoginScreen() {
       <View style={styles.hero}>
         <Mark size={48} />
         <Text style={styles.brand}>University Assistant</Text>
-        <Text style={styles.heroText}>{tx(locale, 'Studienassistenz für den Campusalltag', 'A study assistant for campus life')}</Text>
+        <Text style={styles.heroText}>{tx(locale, 'loginLegacy.studienassistenz')}</Text>
       </View>
       <ScrollView style={styles.sheet} contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + 24 }]}>
         <View style={styles.deprecated}>
           <Text style={styles.deprecatedText}>
-            {tx(
-              locale,
-              'Diese Ansicht ist veraltet und bleibt nur als Nachschlagewerk erhalten. Die aktuelle Anmeldung findest du auf der neuen Startseite.',
-              'This view is deprecated and kept for reference only. The current sign-in lives on the new start screen.',
-            )}
+            {tx(locale, 'loginLegacy.ansicht')}
           </Text>
           <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/login'))} hitSlop={8}>
-            <Text style={styles.deprecatedLink}>{tx(locale, 'Zur neuen Anmeldung', 'Go to the new sign-in')}</Text>
+            <Text style={styles.deprecatedLink}>{tx(locale, 'loginLegacy.neuen')}</Text>
           </Pressable>
         </View>
         <LanguagePicker locale={locale} setLocale={setLocale} />
@@ -177,16 +165,12 @@ export default function LoginScreen() {
           onStoredLogin={() => void headless.startStoredLogin()}
           onForget={() => void headless.forgetStoredLogin()}
         />
-        <SectionTitle>{tx(locale, 'Bestehendes Konto, ohne Registrierung', 'Existing account, no registration')}</SectionTitle>
+        <SectionTitle>{tx(locale, 'loginLegacy.bestehendes')}</SectionTitle>
         <Notice>
-          {tx(
-            locale,
-            'Dein st-Konto und dein Passwort gelten auf der Anmeldeseite von C@MPUS. Die App muss dafür nicht beim TIK registriert sein. Der Identity Provider nimmt ein Passwort von einer unregistrierten App nicht entgegen.',
-            'Your st-account and password work on the C@MPUS sign-in page. This app does not need to be registered with TIK for that. The identity provider does not accept a password from an unregistered app.',
-          )}
+          {tx(locale, 'loginLegacy.st')}
         </Notice>
         <Button
-          label={busy ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Mit C@MPUS-Token anmelden', 'Sign in with C@MPUS token')}
+          label={busy ? tx(locale, 'common.anmeldung_laeuft') : tx(locale, 'loginLegacy.c_mpus_token')}
           onPress={() => campusSignIn.mutate()}
         />
         {campusSignIn.isPending ? (
@@ -194,63 +178,47 @@ export default function LoginScreen() {
             compact
             locale={locale}
             phase="profile"
-            detail={tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')}
+            detail={tx(locale, 'common.studien')}
           />
         ) : null}
-        <Button secondary label={tx(locale, 'Im C@MPUS-Browser anmelden (Beta)', 'Sign in with the C@MPUS browser (Beta)')} onPress={browser.openBrowser} />
+        <Button secondary label={tx(locale, 'loginLegacy.c_mpus')} onPress={browser.openBrowser} />
         {campusLog ? <Text style={error ? styles.error : styles.footer}>{campusLog}</Text> : null}
         <Footer>
           {campusStatus === null
-            ? tx(locale, 'Der lokale Server antwortet noch nicht. Starte npm run assistant.', 'The local server is not answering yet. Start npm run assistant.')
+            ? tx(locale, 'loginLegacy.lokale_server')
             : campusStatus.tokenConfigured
-              ? tx(
-                  locale,
-                  `Token ist gesetzt${campusStatus.sessionCookieConfigured ? ', Sitzungs-Cookie auch' : ''}. Der Server liest CAMPUS_BEARER_TOKEN und fragt die Curriculum-Struktur ab.`,
-                  `Token is set${campusStatus.sessionCookieConfigured ? ', and so is the session cookie' : ''}. The server reads CAMPUS_BEARER_TOKEN and requests the curriculum structure.`,
-                )
-              : tx(
-                  locale,
-                  'CAMPUS_BEARER_TOKEN fehlt in der .env des Servers.',
-                  'CAMPUS_BEARER_TOKEN is missing from the server .env.',
-                )}
+              ? tx(locale, 'loginLegacy.token', [campusStatus.sessionCookieConfigured ? ', Sitzungs-Cookie auch' : ''])
+              : tx(locale, 'loginLegacy.campus')}
         </Footer>
-        <Button label={tx(locale, 'C@MPUS öffnen und anmelden', 'Open C@MPUS and sign in')} onPress={() => openOfficialCampus().catch(() => undefined)} secondary />
+        <Button label={tx(locale, 'loginLegacy.c')} onPress={() => openOfficialCampus().catch(() => undefined)} secondary />
         <Field
-          label={tx(locale, 'Nutzerkennung für diese App', 'Account id for this app')}
+          label={tx(locale, 'loginLegacy.nutzerkennung_app')}
           value={account}
           onChangeText={setAccount}
           placeholder="st123456"
         />
         <Button
           secondary
-          label={tx(locale, 'Mit dieser Nutzerkennung weiter', 'Continue with this account')}
+          label={tx(locale, 'loginLegacy.nutzerkennung_weiter')}
           onPress={() => {
             if (account.trim().length < 3) {
-              setError(tx(locale, 'Bitte die Nutzerkennung eintragen, zum Beispiel st123456.', 'Enter the account id, for example st123456.'));
+              setError(tx(locale, 'loginLegacy.bitte'));
               return;
             }
             signInLocal(account);
           }}
         />
         <Footer>
-          {tx(
-            locale,
-            `Die Nutzerkennung steht dann im Profil. Stundenplan und Noten bleiben der Demonstrationsstand von ${student.name}, bis ein registrierter Client C@MPUS lesen darf.`,
-            `The account id then shows on the profile. The timetable and grades stay the demonstration record of ${student.name}, until a registered client is allowed to read C@MPUS.`,
-          )}
+          {tx(locale, 'loginLegacy.nutzerkennung', [student.name])}
         </Footer>
-        <SectionTitle>{tx(locale, 'Registrierter SIAM-Client', 'Registered SIAM client')}</SectionTitle>
+        <SectionTitle>{tx(locale, 'loginLegacy.registrierter')}</SectionTitle>
         <Notice>
-          {tx(
-            locale,
-            'Wenn das TIK eine Client-ID vergeben hat, läuft die Anmeldung über den Identity Provider. Das Passwort bleibt auch dann auf der Seite der Universität.',
-            'Once TIK has issued a client id, sign-in runs through the identity provider. The password still stays on the university page.',
-          )}
+          {tx(locale, 'loginLegacy.wenn')}
         </Notice>
         <Meta>{universityUrls.campus}</Meta>
         <Meta>{universityUrls.authorize}</Meta>
         <Button
-          label={busy ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Mit SIAM anmelden', 'Sign in with SIAM')}
+          label={busy ? tx(locale, 'common.anmeldung_laeuft') : tx(locale, 'loginLegacy.siam')}
           onPress={() => siamSignIn.mutate()}
         />
         {siamSignIn.isPending ? (
@@ -258,37 +226,21 @@ export default function LoginScreen() {
             compact
             locale={locale}
             phase="identify"
-            detail={tx(locale, 'Warte auf die Universität …', 'Waiting for the university …')}
+            detail={tx(locale, 'loginLegacy.warte')}
           />
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Footer>
           {status === null
-            ? tx(
-                locale,
-                'Der lokale Server antwortet noch nicht. Starte ihn mit npm run assistant, damit die App den IdP öffnen kann.',
-                'The local server is not answering yet. Start it with npm run assistant so the app can open the IdP.',
-              )
+            ? tx(locale, 'loginLegacy.lokale')
             : status.configured
-              ? tx(
-                  locale,
-                  `Client ist konfiguriert${status.loginHintSet ? ', die Nutzerkennung wird auf der IdP-Seite vorausgefüllt' : ''}. Redirect, der beim TIK eingetragen sein muss:`,
-                  `Client is configured${status.loginHintSet ? ', the account id is prefilled on the IdP page' : ''}. Redirect that must be registered with TIK:`,
-                )
-              : tx(
-                  locale,
-                  `Noch kein OIDC-Client. OIDC_CLIENT_ID und OIDC_CLIENT_SECRET kommen vom TIK (${universityUrls.support}), nicht das Passwort. Redirect für die Anfrage:`,
-                  `No OIDC client yet. OIDC_CLIENT_ID and OIDC_CLIENT_SECRET come from TIK (${universityUrls.support}), not the password. Redirect to include in that request:`,
-                )}
+              ? tx(locale, 'loginLegacy.client', [status.loginHintSet ? ', die Nutzerkennung wird auf der IdP-Seite vorausgefüllt' : ''])
+              : tx(locale, 'loginLegacy.oidc', [universityUrls.support])}
         </Footer>
         <Text style={styles.redirect}>{redirectUri}</Text>
-        <Button secondary label={tx(locale, 'Demonstrationsprofil öffnen', 'Open demonstration profile')} onPress={() => signInDemo(student.account)} />
+        <Button secondary label={tx(locale, 'loginLegacy.demonstrationsprofil')} onPress={() => signInDemo(student.account)} />
         <Footer>
-          {tx(
-            locale,
-            `Ohne IdP wird der Datensatz von ${student.name} geladen. Stundenplan und Noten bleiben auch nach einer SIAM-Anmeldung dieser Demonstrationsstand, bis C@MPUS angebunden ist.`,
-            `Without the IdP, the record of ${student.name} is loaded. The timetable and grades stay on that demonstration record after a SIAM sign-in, until C@MPUS is connected.`,
-          )}
+          {tx(locale, 'loginLegacy.ohne', [student.name])}
         </Footer>
       </ScrollView>
       <CampusBrowserModal

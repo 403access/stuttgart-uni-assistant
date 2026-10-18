@@ -29,11 +29,11 @@ export default function ChatScreen() {
       ? { title: imported.title, text: imported.text || imported.title }
       : undefined;
   const suggestions = [
-    tx(locale, 'Was habe ich heute?', 'What do I have today?'),
-    tx(locale, 'Welche Frist ist als Nächstes dran?', 'Which deadline is next?'),
-    tx(locale, 'Wie viele ECTS fehlen mir?', 'How many ECTS do I still need?'),
-    tx(locale, 'Welche Module kann ich als Nächstes belegen?', 'Which modules can I take next?'),
-    tx(locale, 'Wo ist die Mensa in Vaihingen?', 'Where is the cafeteria in Vaihingen?'),
+    tx(locale, 'tabsChat.habe'),
+    tx(locale, 'tabsChat.welche'),
+    tx(locale, 'tabsChat.wie'),
+    tx(locale, 'tabsChat.welche_module'),
+    tx(locale, 'tabsChat.wo'),
   ];
 
   // The local answer posts immediately; the mutation only asks Grok to
@@ -85,21 +85,17 @@ export default function ChatScreen() {
       <View style={{ paddingHorizontal: 20, paddingTop: 12, gap: 6 }}>
         <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1 }}>CHAT</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: colors.anthracite, fontSize: 30, fontWeight: '700' }}>{tx(locale, 'Assistent', 'Assistant')}</Text>
+          <Text style={{ color: colors.anthracite, fontSize: 30, fontWeight: '700' }}>{tx(locale, 'tabsChat.assistent')}</Text>
           <Pressable onPress={clearChat} hitSlop={8}>
-            <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'Leeren', 'Clear')}</Text>
+            <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'tabsChat.leeren')}</Text>
           </Pressable>
         </View>
         <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
-          {tx(
-            locale,
-            'Antworten kommen aus dem Demonstrationsstand. Grok formuliert sie neu, wenn der Assistenz-Server läuft.',
-            'Answers come from the demonstration record. Grok rewrites them when the assistant server is running.',
-          )}
+          {tx(locale, 'tabsChat.antworten')}
         </Text>
         {focus ? (
           <Text style={{ color: colors.blue, fontWeight: '700' }}>
-            {tx(locale, 'Bezug', 'Context')}: {focus.title}
+            {tx(locale, 'tabsChat.bezug')}: {focus.title}
           </Text>
         ) : null}
       </View>
@@ -118,27 +114,27 @@ export default function ChatScreen() {
               <Text style={{ color: message.role === 'user' ? '#FFFFFF' : colors.anthracite, fontSize: 15, lineHeight: 21 }}>{message.text}</Text>
               {message.role === 'assistant' ? (
                 <Text style={{ color: colors.inkSoft, fontSize: 12, marginTop: 8 }}>
-                  {message.engine === 'grok' ? 'Grok' : tx(locale, 'Campus-Wissen', 'Campus record')}
+                  {message.engine === 'grok' ? 'Grok' : tx(locale, 'tabsChat.campus')}
                   {message.sources.length ? ` · ${message.sources.slice(0, 3).join(' · ')}` : ''}
                 </Text>
               ) : null}
             </View>
           ))
         )}
-        {busy ? <Text style={{ color: colors.inkSoft }}>{tx(locale, 'Grok wird gefragt …', 'Asking Grok …')}</Text> : null}
+        {busy ? <Text style={{ color: colors.inkSoft }}>{tx(locale, 'tabsChat.grok')}</Text> : null}
       </ScrollView>
       <View style={{ padding: 12, paddingBottom: 8, gap: 8 }}>
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
           <TextInput
             value={draft}
             onChangeText={setDraft}
-            placeholder={tx(locale, 'Frage zum Studium', 'Ask about your studies')}
+            placeholder={tx(locale, 'tabsChat.frage')}
             placeholderTextColor={colors.mute}
             style={[input, { flex: 1 }]}
             multiline
           />
           <Pressable onPress={() => send(draft)} style={sendButton}>
-            <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{tx(locale, 'Senden', 'Send')}</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{tx(locale, 'common.senden')}</Text>
           </Pressable>
         </View>
       </View>

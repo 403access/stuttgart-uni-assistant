@@ -21,9 +21,9 @@ import { tx } from '@/src/text';
 
 /** What the app is for, one line each, shown under the brand. */
 const HIGHLIGHTS = [
-  { icon: 'event-note' as const, de: 'Stundenplan', en: 'Timetable' },
-  { icon: 'school' as const, de: 'Module & Noten', en: 'Modules & grades' },
-  { icon: 'mail-outline' as const, de: 'UniMail', en: 'UniMail' },
+  { icon: 'event-note' as const, label: (locale: 'de' | 'en') => tx(locale, 'login.stundenplan') },
+  { icon: 'school' as const, label: (locale: 'de' | 'en') => tx(locale, 'login.module') },
+  { icon: 'mail-outline' as const, label: (locale: 'de' | 'en') => tx(locale, 'login.unimail') },
 ];
 
 export default function LoginScreen() {
@@ -47,13 +47,13 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.brand}>University Assistant</Text>
           <Text style={styles.tagline}>
-            {tx(locale, 'Dein Studienalltag, an einem Ort.', 'Your campus life, in one place.')}
+            {tx(locale, 'login.studienalltag')}
           </Text>
           <View style={styles.highlights}>
             {HIGHLIGHTS.map((item) => (
               <View key={item.icon} style={styles.highlight}>
                 <MaterialIcons name={item.icon} size={14} color="#FFFFFF" />
-                <Text style={styles.highlightText}>{tx(locale, item.de, item.en)}</Text>
+                <Text style={styles.highlightText}>{item.label(locale)}</Text>
               </View>
             ))}
           </View>
@@ -61,30 +61,26 @@ export default function LoginScreen() {
 
         <View style={styles.sheet}>
           <View style={styles.sheetTop}>
-            <Text style={styles.eyebrow}>{tx(locale, 'Anmeldung', 'Sign-in')}</Text>
+            <Text style={styles.eyebrow}>{tx(locale, 'common.anmeldung_2')}</Text>
             <LanguagePicker locale={locale} setLocale={setLocale} />
           </View>
-          <Text style={styles.welcome}>{tx(locale, 'Willkommen zurück', 'Welcome back')}</Text>
+          <Text style={styles.welcome}>{tx(locale, 'login.willkommen')}</Text>
           <Text style={styles.lead}>
-            {tx(locale, 'Melde dich mit deinem st-Konto an.', 'Sign in with your st-account.')}
+            {tx(locale, 'login.melde')}
           </Text>
 
           {serverDown ? (
             <View style={styles.warning}>
               <MaterialIcons name="wifi-off" size={18} color={colors.warning} />
               <Text style={styles.warningText}>
-                {tx(
-                  locale,
-                  'Der lokale Server antwortet noch nicht. Starte ihn im Projektordner mit „npm run assistant“.',
-                  'The local server is not answering yet. Start it in the project directory with “npm run assistant”.',
-                )}
+                {tx(locale, 'login.lokale')}
               </Text>
             </View>
           ) : null}
 
           <View style={styles.primary}>
             <Field
-              label={tx(locale, 'Nutzerkennung', 'Account id')}
+              label={tx(locale, 'common.nutzerkennung')}
               value={headless.account}
               onChangeText={headless.setAccount}
               textContentType="username"
@@ -92,32 +88,32 @@ export default function LoginScreen() {
               placeholder="st123456@stud.uni-stuttgart.de"
             />
             <Field
-              label={tx(locale, 'Passwort', 'Password')}
+              label={tx(locale, 'common.passwort')}
               value={headless.password}
               onChangeText={headless.setPassword}
               secureTextEntry
               textContentType="password"
-              placeholder={tx(locale, 'Passwort des st-Kontos', 'st-account password')}
+              placeholder={tx(locale, 'common.passwort_st')}
             />
             <Button
               label={
                 headless.open || campusSignIn.isPending
-                  ? tx(locale, 'Anmeldung läuft …', 'Signing in …')
-                  : tx(locale, 'Anmelden', 'Sign in')
+                  ? tx(locale, 'common.anmeldung_laeuft')
+                  : tx(locale, 'login.anmelden')
               }
               onPress={() => void headless.start()}
             />
             {headless.savedLogin ? (
               <Button
                 secondary
-                label={tx(locale, `Gespeicherte Anmeldung für ${headless.savedLogin.account} verwenden`, `Use the stored sign-in for ${headless.savedLogin.account}`)}
+                label={tx(locale, 'common.gespeicherte', [headless.savedLogin.account])}
                 onPress={() => void headless.startStoredLogin()}
               />
             ) : null}
             {headless.savedLogin ? (
               <Button
                 secondary
-                label={tx(locale, 'Gespeicherte Anmeldung löschen', 'Delete the stored sign-in')}
+                label={tx(locale, 'common.gespeicherte_anmeldung')}
                 onPress={() => void headless.forgetStoredLogin()}
               />
             ) : null}
@@ -126,7 +122,7 @@ export default function LoginScreen() {
                 compact
                 locale={locale}
                 phase="profile"
-                detail={tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')}
+                detail={tx(locale, 'common.studien')}
               />
             ) : null}
             {headless.error ? <Text style={styles.error}>{headless.error}</Text> : null}

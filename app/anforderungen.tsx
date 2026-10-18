@@ -16,28 +16,20 @@ export default function RequirementsScreen() {
   const gap = expected - credit.earned;
   return (
     <Screen
-      kicker={tx(locale, 'Prüfungsordnung', 'Examination regulations')}
-      subtitle={tx(
-        locale,
-        'Vereinfachter Demonstrationsplan, keine amtliche Prüfungsordnung.',
-        'A simplified demonstration plan, not the official examination regulations.',
-      )}>
-      <Stack.Screen options={{ title: tx(locale, 'Anforderungen', 'Requirements') }} />
+      kicker={tx(locale, 'anforderungen.pruefungsordnung')}
+      subtitle={tx(locale, 'anforderungen.vereinfachter')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.anforderungen') }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 22, fontWeight: '700' }}>
           {credit.earned} / {program.totalEcts} ECTS
         </Text>
         <Text style={{ color: colors.inkSoft }}>
-          {tx(
-            locale,
-            `${credit.active} belegt · ${credit.open} offen · Schnitt ${average === null ? '–' : formatGrade(average, locale)}`,
-            `${credit.active} enrolled · ${credit.open} open · average ${average === null ? '–' : formatGrade(average, locale)}`,
-          )}
+          {tx(locale, 'anforderungen.belegt_offen', [credit.active, credit.open, average === null ? '–' : formatGrade(average, locale)])}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
           {gap > 0
-            ? tx(locale, `Richtwert nach ${student.semester - 1} Semestern: ${expected} ECTS. Abstand: ${gap}.`, `Guide value after ${student.semester - 1} semesters: ${expected} ECTS. Gap: ${gap}.`)
-            : tx(locale, 'Der Richtwert der bisherigen Semester ist erreicht.', 'The guide value for the completed semesters is met.')}
+            ? tx(locale, 'anforderungen.richtwert_semestern', [student.semester - 1, expected, gap])
+            : tx(locale, 'anforderungen.richtwert')}
         </Text>
       </Card>
       {program.areas.map((area) => {
@@ -47,7 +39,7 @@ export default function RequirementsScreen() {
             <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{pick(area.title, locale)}</Text>
             <Text style={{ color: colors.inkSoft }}>
               {progress.earned} / {area.ects} ECTS
-              {progress.active ? tx(locale, ` · ${progress.active} belegt`, ` · ${progress.active} enrolled`) : ''}
+              {progress.active ? tx(locale, 'anforderungen.belegt', [progress.active]) : ''}
             </Text>
             <Meter value={progress.earned} max={area.ects} />
           </Card>

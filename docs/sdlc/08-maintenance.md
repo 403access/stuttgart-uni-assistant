@@ -11,7 +11,7 @@ Keep the demonstration true after the first build: the numbers, the disclaimer, 
 | Expo SDK | A new SDK changes file-system, router, and picker APIs | Read the versioned docs for the SDK in `package.json` before editing those calls. Install with `npx expo install` |
 | The xAI model id | The quickstart names the current model | Before changing `server/index.mjs`, re-read the text-generation quickstart and copy the model id and the request shape |
 | The curriculum story | A module added by hand breaks 180 ECTS | Run `npm run check`. Fix the catalog or the expectation in the same change |
-| Copy | A new screen forgets English or the demonstration label | German and English strings ship together. Credit surfaces keep the word Demonstration |
+| Copy | A new screen forgets English or the demonstration label | German and English ship together in `src/i18n/de.ts` and `src/i18n/en.ts`. Add the key to both; English is typed against the German keys, so `npm run check` fails when one is missing ([i18n.md](../engineering/i18n.md)). Credit surfaces keep the word Demonstration |
 | Dependencies | `npm audit` reports issues in the Expo tree | Don't force-upgrade past the SDK pin. Take the Expo-compatible bump |
 
 ## Operating rules

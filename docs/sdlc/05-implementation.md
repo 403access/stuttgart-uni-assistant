@@ -33,6 +33,9 @@ src/assistant/context.ts     localized fact input
 src/assistant/remote.ts      optional call to the server
 src/state/AppState.tsx       persistence
 src/documents/io.ts          picker and export
+src/i18n/de.ts               German copy, source of truth for the key set
+src/i18n/en.ts               English copy, typed against the German keys
+src/i18n/index.ts            the tx(locale, key, values?) lookup
 ```
 
 The root layout keeps the splash up until storage has loaded and the route matches the session: login when signed out, the tabs when signed in.
@@ -51,7 +54,7 @@ The check script expects that suggestion to be exactly 30 ECTS and to include nu
 
 ## Assistant
 
-`buildAnswerInput` localizes the record. `buildLocalAnswer` scores intents (deadlines, schedule, credits, sequence, rooms, people, documents, reviews, exams, news, transfer, summary, module) and writes the answer. A module named in the question wins over a weak intent, which is why "Kann ich Maschinelles Lernen jetzt belegen?" returns the module and its lock instead of a generic plan.
+`buildAnswerInput` localizes the record. `buildLocalAnswer` scores intents (deadlines, schedule, credits, sequence, rooms, people, documents, reviews, exams, news, transfer, summary, module) and writes the answer through the keyed catalogs in `src/i18n/` ([i18n.md](../engineering/i18n.md)) — every sentence is a key, not an inline German/English pair. A module named in the question wins over a weak intent, which is why "Kann ich Maschinelles Lernen jetzt belegen?" returns the module and its lock instead of a generic plan.
 
 `renderFacts` flattens the same input for the server. The server wraps it in a system message, sends `store: false`, and returns `output_text` or the message blocks inside `output`.
 

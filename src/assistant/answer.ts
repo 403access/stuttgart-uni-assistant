@@ -1,5 +1,5 @@
 import { asBullets, summarize } from '@/src/assistant/summarize';
-import { formatDate, formatGrade, hay, weekdays } from '@/src/text';
+import { formatDate, formatGrade, hay, tx, weekdays } from '@/src/text';
 import type { Locale } from '@/src/types';
 
 export interface AnswerModule {
@@ -110,72 +110,54 @@ function matchModule(question: string, modules: AnswerModule[]): AnswerModule | 
 }
 
 function sourceLine(locale: Locale): string {
-  return locale === 'de'
-    ? 'Quelle: Demonstrationsstand auf diesem Gerät, nicht live aus C@MPUS.'
-    : 'Source: demonstration record on this device, not a live C@MPUS extract.';
+  return tx(locale, 'assistantAnswer.quelle');
 }
 
 function statusWord(status: AnswerModule['status'], locale: Locale): string {
-  if (locale === 'de') return status === 'passed' ? 'bestanden' : status === 'enrolled' ? 'belegt' : 'offen';
-  return status === 'passed' ? 'passed' : status === 'enrolled' ? 'enrolled' : 'open';
+  if (status === 'passed') return tx(locale, 'common.bestanden');
+  if (status === 'enrolled') return tx(locale, 'common.belegt');
+  return tx(locale, 'curriculumNodeDetail.offen');
 }
 
 function moduleAnswer(input: AnswerInput, module: AnswerModule): Answer {
+  const locale = input.locale;
+  const status = statusWord(module.status, locale);
+  const source = sourceLine(locale);
   const grade =
-    typeof module.grade === 'number'
-      ? input.locale === 'de'
-        ? `, Note ${formatGrade(module.grade, 'de')}`
-        : `, grade ${formatGrade(module.grade, 'en')}`
-      : '';
+    typeof module.grade === 'number' ? tx(locale, 'assistantAnswer.note', [formatGrade(module.grade, locale)]) : '';
   const lock =
     module.lock === null
-      ? input.locale === 'de'
-        ? 'Die Voraussetzungen für eine Belegung sind erfüllt oder das Modul ist schon im Plan.'
-        : 'The prerequisites for taking it are met, or it is already on the plan.'
+      ? tx(locale, 'assistantAnswer.voraussetzungen')
       : module.lock.startsWith('min:')
-        ? input.locale === 'de'
-          ? `Dafür braucht der Demonstrationsplan mindestens ${module.lock.slice(4)} bestandene ECTS. Aktuell sind es ${input.earned}.`
-          : `The demonstration plan requires at least ${module.lock.slice(4)} passed ECTS. You currently have ${input.earned}.`
-        : input.locale === 'de'
-          ? `Noch nicht belegbar. ${module.prerequisiteText}`
-          : `Not open for enrollment yet. ${module.prerequisiteText}`;
-  const text =
-    input.locale === 'de'
-      ? `${module.title} · ${module.code}\n${module.ects} ECTS · ${module.area} · ${statusWord(module.status, 'de')}${grade}\n\n${module.summary}\nThemen: ${module.topics}\nDozent: ${module.lecturer}\n${lock}\n\n${sourceLine('de')}`
-      : `${module.title} · ${module.code}\n${module.ects} ECTS · ${module.area} · ${statusWord(module.status, 'en')}${grade}\n\n${module.summary}\nTopics: ${module.topics}\nLecturer: ${module.lecturer}\n${lock}\n\n${sourceLine('en')}`;
+        ? tx(locale, 'assistantAnswer.dafuer', [module.lock.slice(4), input.earned])
+        : tx(locale, 'assistantAnswer.belegbar', [module.prerequisiteText]);
+  const text = tx(locale, 'assistantAnswer.ects', [module.title, module.code, module.ects, module.area, status, grade, module.summary, module.topics, module.lecturer, lock, source]);
   return { text, sources: [module.code, module.lecturer] };
 }
 
 function documentAnswer(input: AnswerInput): Answer | null {
   if (!input.focus) return null;
+  const locale = input.locale;
   const lines = summarize(input.focus.text, 4);
   const wantsTranslation = hay(input.question).includes('ubersetz') || hay(input.question).includes('translate');
   if (wantsTranslation && input.focus.alternate) {
-    const text =
-      input.locale === 'de'
-        ? `Übersetzung aus dem mitgelieferten Sprachpaar für „${input.focus.title}“:\n\n${input.focus.alternate}`
-        : `Translation from the bundled language pair for “${input.focus.title}”:\n\n${input.focus.alternate}`;
+    const text = tx(locale, 'assistantAnswer.uebersetzung', [input.focus.title, input.focus.alternate]);
     return { text, sources: [input.focus.title] };
   }
   if (wantsTranslation) {
-    const text =
-      input.locale === 'de'
-        ? `Für „${input.focus.title}“ liegt keine zweite Sprachfassung vor. Eine freie Übersetzung übernimmt Grok, sobald der Assistenz-Server läuft. Bis dahin die Kurzfassung:\n\n${asBullets(lines)}`
-        : `“${input.focus.title}” has no second bundled language. Grok can translate it when the assistant server is running. Until then, the short form is:\n\n${asBullets(lines)}`;
+    const text = tx(locale, 'assistantAnswer.liegt', [input.focus.title, asBullets(lines)]);
     return { text, sources: [input.focus.title] };
   }
-  const lead =
-    input.locale === 'de'
-      ? `Kurzfassung von „${input.focus.title}“:`
-      : `Short account of “${input.focus.title}”:`;
+  const lead = tx(locale, 'assistantAnswer.kurzfassung', [input.focus.title]);
   return { text: `${lead}\n\n${asBullets(lines)}`, sources: [input.focus.title] };
 }
 
 export function buildLocalAnswer(input: AnswerInput): Answer {
   const question = hay(input.question);
+  const locale = input.locale;
   const intent = topIntent(question);
   const matched = matchModule(question, input.modules);
-  const de = input.locale === 'de';
+  const source = sourceLine(locale);
 
   if (input.focus && (intent.id === 'summary' || intent.score < 8)) {
     const fromDocument = documentAnswer(input);
@@ -187,52 +169,43 @@ export function buildLocalAnswer(input: AnswerInput): Answer {
   }
 
   if (intent.id === 'deadlines' || question.includes('prufung')) {
-    const rows = input.deadlines.slice(0, 6).map((item) => `• ${formatDate(item.date, input.locale)} · ${item.title} (${item.source})`);
+    const rows = input.deadlines.slice(0, 6).map((item) => `• ${formatDate(item.date, locale)} · ${item.title} (${item.source})`);
     const next = input.deadlines[0];
-    const text = de
-      ? `Nächste Frist: ${next ? `${next.title} am ${formatDate(next.date, 'de')}` : 'keine'}.\n${next?.detail ?? ''}\n\n${rows.join('\n')}\n\n${sourceLine('de')}`
-      : `Next deadline: ${next ? `${next.title} on ${formatDate(next.date, 'en')}` : 'none'}.\n${next?.detail ?? ''}\n\n${rows.join('\n')}\n\n${sourceLine('en')}`;
+    const nextText = next
+      ? tx(locale, 'assistantAnswer.am', [next.title, formatDate(next.date, locale)])
+      : tx(locale, 'common.keine');
+    const text = tx(locale, 'assistantAnswer.naechste', [nextText, next?.detail ?? '', rows.join('\n'), source]);
     return { text, sources: ['C@MPUS', 'ILIAS', 'SDG Campus'] };
   }
 
   if (intent.id === 'schedule') {
     const dayName = weekdays[input.locale][input.weekday] ?? '';
+    const today = formatDate(input.nowIso, locale);
     const rows = input.today.map((item) => `• ${item.time} · ${item.title} · ${item.kind} · ${item.room}`);
-    const text = de
-      ? rows.length
-        ? `${dayName}, ${formatDate(input.nowIso, 'de')}\n${rows.join('\n')}`
-        : `${dayName}, ${formatDate(input.nowIso, 'de')}: keine Lehrveranstaltung im Demonstrationsplan.`
-      : rows.length
-        ? `${dayName}, ${formatDate(input.nowIso, 'en')}\n${rows.join('\n')}`
-        : `${dayName}, ${formatDate(input.nowIso, 'en')}: no class in the demonstration timetable.`;
+    const text = rows.length
+      ? `${dayName}, ${today}\n${rows.join('\n')}`
+      : tx(locale, 'assistantAnswer.lehrveranstaltung_demonstrationsplan', [dayName, today]);
     return { text, sources: ['C@MPUS · Stundenplan'] };
   }
 
   if (intent.id === 'credits') {
     const gaps = input.areas
       .filter((area) => area.earned < area.required)
-      .map((area) => `• ${area.title}: ${area.earned}/${area.required}${area.active ? (de ? `, dazu ${area.active} belegt` : `, plus ${area.active} enrolled`) : ''}`);
-    const average = input.average === null ? '–' : formatGrade(input.average, input.locale);
+      .map((area) => `• ${area.title}: ${area.earned}/${area.required}${area.active ? tx(locale, 'assistantAnswer.dazu', [area.active]) : ''}`);
+    const average = input.average === null ? '–' : formatGrade(input.average, locale);
     const pace = input.earned - input.expected;
-    const paceText = de
-      ? pace >= 0
-        ? `Damit liegst du ${pace} ECTS über dem Richtwert von ${input.expected} nach ${input.semester - 1} Semestern.`
-        : `Der Richtwert nach ${input.semester - 1} Semestern liegt bei ${input.expected} ECTS. Dir fehlen dazu ${-pace}.`
-      : pace >= 0
-        ? `That is ${pace} ECTS above the guide value of ${input.expected} after ${input.semester - 1} semesters.`
-        : `The guide value after ${input.semester - 1} semesters is ${input.expected} ECTS. You are ${-pace} short of that.`;
-    const text = de
-      ? `${input.studentName} hat ${input.earned} von ${input.total} ECTS bestanden. ${input.active} ECTS sind belegt, ${input.open} sind noch offen. Gewichteter Schnitt: ${average}.\n\n${paceText}\n\nOffene Bereiche:\n${gaps.join('\n')}\n\n${sourceLine('de')}`
-      : `${input.studentName} has passed ${input.earned} of ${input.total} ECTS. ${input.active} ECTS are enrolled and ${input.open} are still open. Weighted average: ${average}.\n\n${paceText}\n\nOpen areas:\n${gaps.join('\n')}\n\n${sourceLine('en')}`;
+    const paceText =
+      pace >= 0
+        ? tx(locale, 'assistantAnswer.damit', [pace, input.expected, input.semester - 1])
+        : tx(locale, 'assistantAnswer.richtwert', [input.semester - 1, input.expected, -pace]);
+    const text = tx(locale, 'assistantAnswer.hat', [input.studentName, input.earned, input.total, input.active, input.open, average, paceText, gaps.join('\n'), source]);
     return { text, sources: ['Prüfungsordnung · Demonstration'] };
   }
 
   if (intent.id === 'sequence') {
     const rows = input.suggestion.map((item) => `• ${item.title} · ${item.code} · ${item.ects} ECTS`);
     const sum = input.suggestion.reduce((count, item) => count + item.ects, 0);
-    const text = de
-      ? `Vorschlag für das nächste Semester, ${sum} ECTS, nur aus Modulen mit erfüllten Voraussetzungen:\n${rows.join('\n')}\n\nMaschinelles Lernen wartet auf die bestandene KI-Grundlagenvorlesung. Die Bachelorarbeit wartet auf 120 bestandene ECTS.\n\n${sourceLine('de')}`
-      : `Suggestion for next semester, ${sum} ECTS, using only modules whose prerequisites are met:\n${rows.join('\n')}\n\nMachine Learning waits until Foundations of Artificial Intelligence is passed. The bachelor thesis waits for 120 passed ECTS.\n\n${sourceLine('en')}`;
+    const text = tx(locale, 'assistantAnswer.vorschlag', [sum, rows.join('\n'), source]);
     return { text, sources: ['Modulplan · Demonstration'] };
   }
 
@@ -259,27 +232,23 @@ export function buildLocalAnswer(input: AnswerInput): Answer {
   if (intent.id === 'people') {
     const hit = input.people.find((person) => question.includes(hay(person.name).split(' ').pop() ?? '---'));
     if (hit) {
-      const text = de
-        ? `${hit.title} ${hit.name}\n${hit.institute}\nSprechstunde: ${hit.hours}\nRaum: ${hit.room}\n${hit.email}\n${hit.research}`
-        : `${hit.title} ${hit.name}\n${hit.institute}\nOffice hour: ${hit.hours}\nRoom: ${hit.room}\n${hit.email}\n${hit.research}`;
+      const text = tx(locale, 'assistantAnswer.sprechstunde', [hit.title, hit.name, hit.institute, hit.hours, hit.room, hit.email, hit.research]);
       return { text, sources: [hit.name] };
     }
     const rows = input.people.slice(0, 4).map((person) => `• ${person.title} ${person.name}: ${person.hours}`);
-    const text = de ? `Sprechstunden im Demonstrationsplan:\n${rows.join('\n')}` : `Office hours in the demonstration plan:\n${rows.join('\n')}`;
+    const text = tx(locale, 'assistantAnswer.sprechstunden', [rows.join('\n')]);
     return { text, sources: ['Dozierende · Demonstration'] };
   }
 
   if (intent.id === 'documents') {
     const rows = input.documents.map((doc) => `• ${doc.title} · ${doc.source} · ${doc.course}`);
-    const text = de
-      ? `Material im Dokumentenstapel:\n${rows.join('\n')}\n\nILIAS-Dateien lassen sich in der Demo auf das Gerät legen. Die Texte der Vorlesungsfolien sind mitgeliefert, damit Zusammenfassung und Fragen ohne Universitätslogin funktionieren.`
-      : `Material in the document stack:\n${rows.join('\n')}\n\nILIAS files can be saved onto the device in this demo. Lecture text is bundled so summaries and questions work without a university login.`;
+    const text = tx(locale, 'assistantAnswer.material', [rows.join('\n')]);
     return { text, sources: ['ILIAS · Demonstration'] };
   }
 
   if (intent.id === 'reviews') {
     const rows = input.reviews.slice(0, 4).map((review) => `• ${review.module}: ${review.rating.toFixed(1)} · ${review.workload} h/Woche · ${review.comment}`);
-    const text = de ? `Einschätzungen aus dem Demonstrationskreis:\n${rows.join('\n')}` : `Notes from the demonstration cohort:\n${rows.join('\n')}`;
+    const text = tx(locale, 'assistantAnswer.einschaetzungen', [rows.join('\n')]);
     return { text, sources: ['Kommilitonen · Demonstration'] };
   }
 
@@ -297,9 +266,7 @@ export function buildLocalAnswer(input: AnswerInput): Answer {
   }
 
   if (intent.id === 'transfer') {
-    const text = de
-      ? 'Eine Anrechnung läuft über den Prüfungsausschuss, nicht über diese App. Der Assistent sammelt Herkunft, ECTS und ein passendes Zielmodul und listet die Unterlagen: Transcript, Modulbeschreibung und bei Auslandsaufenthalt das Learning Agreement. Entwürfe bleiben auf dem Gerät.'
-      : 'Credit recognition goes through the examinations board, not through this app. The assistant collects the origin, the ECTS, and a likely target module, then lists the papers: transcript, module description, and a learning agreement for study abroad. Drafts stay on the device.';
+    const text = tx(locale, 'assistantAnswer.anrechnung');
     return { text, sources: ['Anrechnung · Leitfaden'] };
   }
 
@@ -311,9 +278,11 @@ export function buildLocalAnswer(input: AnswerInput): Answer {
 
   const next = input.deadlines[0];
   const today = input.today[0];
-  const text = de
-    ? `Ich lese den Demonstrationsstand von ${input.studentName}, ${input.program}, ${input.semester}. Semester.\n\nHeute: ${today ? `${today.time} ${today.title} in ${today.room}` : 'keine Lehrveranstaltung'}.\nNächste Frist: ${next ? `${next.title} am ${formatDate(next.date, 'de')}` : 'keine'}.\nBestanden: ${input.earned} von ${input.total} ECTS.\n\nFrag nach Fristen, Stundenplan, ECTS, einem Modul, einem Raum, Sprechstunden, ILIAS, Empfehlungen oder Altklausur-Themen.`
-    : `I am reading the demonstration record of ${input.studentName}, ${input.program}, semester ${input.semester}.\n\nToday: ${today ? `${today.time} ${today.title} in ${today.room}` : 'no class'}.\nNext deadline: ${next ? `${next.title} on ${formatDate(next.date, 'en')}` : 'none'}.\nPassed: ${input.earned} of ${input.total} ECTS.\n\nAsk about deadlines, the timetable, ECTS, a module, a room, office hours, ILIAS, recommendations, or past-exam topics.`;
+  const todayText = today ? `${today.time} ${today.title} in ${today.room}` : tx(locale, 'assistantAnswer.lehrveranstaltung');
+  const nextText = next
+    ? tx(locale, 'assistantAnswer.am', [next.title, formatDate(next.date, locale)])
+    : tx(locale, 'common.keine');
+  const text = tx(locale, 'assistantAnswer.ich', [input.studentName, input.program, input.semester, todayText, nextText, input.earned, input.total]);
   return { text, sources: ['Demonstrationsstand'] };
 }
 

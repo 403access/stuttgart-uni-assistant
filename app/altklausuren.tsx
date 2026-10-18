@@ -9,9 +9,9 @@ export default function ExamsScreen() {
   const { locale } = useApp();
   return (
     <Screen
-      kicker={tx(locale, 'Index', 'Index')}
-      subtitle={tx(locale, 'Themen und Schwerpunkte aus dem Demonstrationskreis. Keine Prüfungs-PDFs.', 'Topics and focus from the demonstration cohort. No exam PDFs.')}>
-      <Stack.Screen options={{ title: tx(locale, 'Altklausuren', 'Past exams') }} />
+      kicker={tx(locale, 'altklausuren.index')}
+      subtitle={tx(locale, 'altklausuren.themen')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.altklausuren') }} />
       {exams.map((exam) => {
         const module = modules.find((item) => item.id === exam.moduleId);
         return (

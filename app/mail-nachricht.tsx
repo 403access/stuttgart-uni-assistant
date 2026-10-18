@@ -68,21 +68,21 @@ export default function MailMessageScreen() {
 
   return (
     <Screen flush>
-      <Stack.Screen options={{ title: tx(locale, 'Nachricht', 'Message') }} />
+      <Stack.Screen options={{ title: tx(locale, 'mailNachricht.nachricht') }} />
       <Card square>
-        <Text style={styles.subject}>{message?.subject || tx(locale, '(ohne Betreff)', '(no subject)')}</Text>
+        <Text style={styles.subject}>{message?.subject || tx(locale, 'common.ohne')}</Text>
         <Text style={styles.line} selectable>
           {message?.from || '–'}
         </Text>
-        {message?.to ? <Text style={styles.line}>{tx(locale, 'An: ', 'To: ')}{message.to}</Text> : null}
+        {message?.to ? <Text style={styles.line}>{tx(locale, 'mailNachricht.an')}{message.to}</Text> : null}
         <Text style={styles.meta}>
           {message?.date ? new Date(message.date).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : '–'} · {folderLabel(folder, locale)}
         </Text>
-        {message && !message.seen ? <Pill tone="wait" label={tx(locale, 'Neu', 'New')} /> : null}
+        {message && !message.seen ? <Pill tone="wait" label={tx(locale, 'mailNachricht.neu')} /> : null}
       </Card>
 
       {invalidUid && !error ? <Text style={styles.error}>{mailMessage(locale, 'bad_uid')}</Text> : null}
-      {loading && !invalidUid ? <Text style={styles.hint}>{tx(locale, 'Nachricht lädt …', 'Message loading …')}</Text> : null}
+      {loading && !invalidUid ? <Text style={styles.hint}>{tx(locale, 'mailNachricht.nachricht_laedt')}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {!loading && !invalidUid && !error ? (
@@ -90,15 +90,11 @@ export default function MailMessageScreen() {
           {body?.text ? (
             <MailBody text={body.text} locale={locale} />
           ) : (
-            <Text style={styles.hint}>{tx(locale, 'Kein Textteil übermittelt.', 'No text body delivered.')}</Text>
+            <Text style={styles.hint}>{tx(locale, 'mailNachricht.textteil')}</Text>
           )}
           {body?.truncated ? (
             <Text style={styles.hint}>
-              {tx(
-                locale,
-                'Anzeige auf die ersten Zeichen begrenzt — vollständig im Webmail unter https://mail.uni-stuttgart.de/.',
-                'View capped to the first characters — read it fully in the webmail at https://mail.uni-stuttgart.de/.',
-              )}
+              {tx(locale, 'mailNachricht.anzeige')}
             </Text>
           ) : null}
         </Card>
@@ -110,25 +106,21 @@ export default function MailMessageScreen() {
             secondary
             label={
               showHtml
-                ? tx(locale, 'HTML ausblenden — Text zeigen', 'Hide HTML — show text')
-                : tx(locale, 'HTML anzeigen', 'Show HTML')
+                ? tx(locale, 'mailNachricht.html_ausblenden')
+                : tx(locale, 'mailNachricht.html_anzeigen')
             }
             onPress={() => setShowHtml((value) => !value)}
           />
           <Card square>
             <Text style={styles.note}>
-              {tx(
-                locale,
-                'Die HTML-Ansicht lädt den Mail-Inhalt ohne Scripts, ohne Fortschaltung (meta-refresh) und ohne Navigation zu Links. Eine umgeformte fremde Mail kann trotzdem täuschen — prüfe Absender und Inhalte kritisch.',
-                'The HTML view loads the mail content without scripts, without meta-refresh forwarding, and without following links. A cleverly styled foreign mail can still deceive — judge sender and contents critically.',
-              )}
+              {tx(locale, 'mailNachricht.html')}
             </Text>
           </Card>
           {showHtml ? (
             <View style={styles.webviewShell}>
               <View style={styles.webviewBar}>
-                <Text style={styles.webviewLabel}>{tx(locale, 'Abgesicherte HTML-Ansicht', 'Sandboxed HTML view')}</Text>
-                <Text style={styles.webviewFlag}>JS {tx(locale, 'aus', 'off')} · {tx(locale, 'kein Link-Ziel', 'no link targets')}</Text>
+                <Text style={styles.webviewLabel}>{tx(locale, 'mailNachricht.abgesicherte')}</Text>
+                <Text style={styles.webviewFlag}>JS {tx(locale, 'mailNachricht.aus')} · {tx(locale, 'mailNachricht.link')}</Text>
               </View>
               <WebView
                 source={{ html: framedHtml }}
@@ -142,7 +134,7 @@ export default function MailMessageScreen() {
                 onShouldStartLoadWithRequest={() => false}
                 setSupportMultipleWindows={false}
                 showsHorizontalScrollIndicator={false}
-                accessibilityLabel={tx(locale, 'HTML-Ansicht der Nachricht', 'HTML view of the message')}
+                accessibilityLabel={tx(locale, 'mailNachricht.html_ansicht')}
               />
             </View>
           ) : null}

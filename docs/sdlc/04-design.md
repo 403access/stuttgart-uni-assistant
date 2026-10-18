@@ -47,7 +47,7 @@ Past papers are an index: term, topics, focus, hint. The design refuses a file s
 
 Light only. White cards on mist `#F3F6F8`, anthracite text, mid blue for actions and section labels, light blue as a small second circle and a highlight. Hairline borders, no drop shadows, 18 px card radius. The mark is two overlapping circles drawn in the app, so there is no logo file to misuse.
 
-German copy is the source. English is a full second string, not a machine pass left in the bundle. System names are not translated.
+German copy is the source. English is a full second string, not a machine pass left in the bundle. Both live in the keyed catalogs in `src/i18n/` ([i18n.md](../engineering/i18n.md)); no screen carries a German and an English sentence inline. System names are not translated.
 
 ## What design refused
 

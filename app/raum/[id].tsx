@@ -18,8 +18,8 @@ export default function RoomScreen() {
   const place = places.find((item) => item.id === one(params.id));
   if (!place) {
     return (
-      <Screen kicker={tx(locale, 'Ort fehlt', 'Place missing')} subtitle={tx(locale, 'Kein Ort mit dieser Kennung.', 'No place with this id.')}>
-        <Stack.Screen options={{ title: tx(locale, 'Ort fehlt', 'Place missing') }} />
+      <Screen kicker={tx(locale, 'raum.ort_fehlt')} subtitle={tx(locale, 'raum.ort')}>
+        <Stack.Screen options={{ title: tx(locale, 'raum.ort_fehlt') }} />
       </Screen>
     );
   }
@@ -34,8 +34,8 @@ export default function RoomScreen() {
         <Text style={{ color: colors.inkSoft, lineHeight: 21 }}>{pick(place.note, locale)}</Text>
         <Text style={{ color: colors.inkSoft }}>
           {place.campus === 'vaihingen'
-            ? tx(locale, 'Stadtbahn bis Haltestelle Universität, dann zu Fuß über den Campus.', 'Stadtbahn to Universität, then walk across campus.')
-            : tx(locale, 'Stadtbahn Stadtmitte, dann Richtung Keplerstraße oder Holzgartenstraße.', 'Stadtbahn to Stadtmitte, then toward Keplerstraße or Holzgartenstraße.')}
+            ? tx(locale, 'raum.stadtbahn')
+            : tx(locale, 'raum.stadtbahn_stadtmitte')}
         </Text>
       </Card>
       {sessions.map(({ module, session }) => (

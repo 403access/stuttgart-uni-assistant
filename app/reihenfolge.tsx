@@ -15,12 +15,12 @@ export default function SequenceScreen() {
   const semesters = [1, 2, 3, 4, 5, 6];
   return (
     <Screen
-      kicker={tx(locale, 'Abhängigkeiten', 'Dependencies')}
-      subtitle={tx(locale, 'Zuerst werden fast volle Bereiche geschlossen, dann die größten Lücken.', 'Nearly finished areas close first, then the largest gaps.')}>
-      <Stack.Screen options={{ title: tx(locale, 'Reihenfolge', 'Sequence') }} />
+      kicker={tx(locale, 'reihenfolge.abhaengigkeiten')}
+      subtitle={tx(locale, 'reihenfolge.zuerst')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.reihenfolge') }} />
       <Card>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
-          {tx(locale, `Vorschlag nächstes Semester · ${sum} ECTS`, `Suggested next semester · ${sum} ECTS`)}
+          {tx(locale, 'reihenfolge.vorschlag', [sum])}
         </Text>
         {suggestion.map((item) => (
           <Text key={item.id} style={{ color: colors.anthracite }}>
@@ -28,7 +28,7 @@ export default function SequenceScreen() {
           </Text>
         ))}
       </Card>
-      <Section title={tx(locale, 'Noch gesperrt', 'Still locked')} />
+      <Section title={tx(locale, 'reihenfolge.gesperrt')} />
       {modules
         .filter((item) => item.status === 'open' && lockReason(item, modules))
         .map((item) => (
@@ -38,8 +38,8 @@ export default function SequenceScreen() {
             meta={item.code}
             detail={
               lockReason(item, modules)?.startsWith('min:')
-                ? tx(locale, `Ab ${item.minEarned} bestandenen ECTS`, `From ${item.minEarned} passed ECTS`)
-                : tx(locale, 'Voraussetzung noch nicht bestanden', 'Prerequisite not passed yet')
+                ? tx(locale, 'reihenfolge.ab', [item.minEarned])
+                : tx(locale, 'reihenfolge.voraussetzung')
             }
             onPress={() => router.push({ pathname: '/modul/[id]', params: { id: item.id } })}
           />
@@ -47,8 +47,8 @@ export default function SequenceScreen() {
       {semesters.map((semester) => (
         <Card key={semester}>
           <Text style={{ color: colors.blue, fontWeight: '700' }}>
-            {semester}. {tx(locale, 'Semester', 'semester')}
-            {semester === 5 ? tx(locale, ' · jetzt', ' · now') : ''}
+            {semester}. {tx(locale, 'common.semester')}
+            {semester === 5 ? tx(locale, 'reihenfolge.jetzt') : ''}
           </Text>
           {modules
             .filter((item) => item.recommendedSemester === semester)

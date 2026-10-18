@@ -14,15 +14,15 @@ const statusOrder: HistoryStatus[] = ['all', 'ok', 'failed'];
 const sortOrder: HistorySort[] = ['new', 'old', 'slow'];
 
 function statusLabel(status: HistoryStatus, locale: Locale): string {
-  if (status === 'all') return tx(locale, 'Alle', 'All');
+  if (status === 'all') return tx(locale, 'common.alle');
   if (status === 'ok') return 'OK';
-  return tx(locale, 'Fehler', 'Errors');
+  return tx(locale, 'apiHistory.fehler');
 }
 
 function sortLabel(sort: HistorySort, locale: Locale): string {
-  if (sort === 'new') return tx(locale, 'Neueste', 'Newest');
-  if (sort === 'old') return tx(locale, 'Älteste', 'Oldest');
-  return tx(locale, 'Langsamste', 'Slowest');
+  if (sort === 'new') return tx(locale, 'common.neueste');
+  if (sort === 'old') return tx(locale, 'common.aelteste');
+  return tx(locale, 'apiHistory.langsamste');
 }
 
 export interface ApiHistoryProps {
@@ -64,11 +64,11 @@ export function ApiHistory({ entries, locale, selectedUid, onSelect }: ApiHistor
   }, [entries, query, status, op, sort]);
 
   if (entries.length === 0) {
-    return <Muted>{tx(locale, 'Noch keine Aufrufe in dieser Sitzung.', 'No calls in this session yet.')}</Muted>;
+    return <Muted>{tx(locale, 'apiHistory.aufrufe_sitzung')}</Muted>;
   }
   return (
     <View style={{ gap: 10 }}>
-      <SearchField value={query} onChangeText={setQuery} placeholder={tx(locale, 'Suchen …', 'Search …')} />
+      <SearchField value={query} onChangeText={setQuery} placeholder={tx(locale, 'common.suchen')} />
       <View style={styles.pills}>
         {statusOrder.map((item) => (
           <Pressable key={item} onPress={() => setStatus(item)}>
@@ -82,7 +82,7 @@ export function ApiHistory({ entries, locale, selectedUid, onSelect }: ApiHistor
         ))}
         {op !== 'all' || status !== 'all' ? (
           <Pressable onPress={() => { setOp('all'); setStatus('all'); }}>
-            <Pill label={tx(locale, 'Zurücksetzen', 'Reset')} />
+            <Pill label={tx(locale, 'common.zuruecksetzen')} />
           </Pressable>
         ) : null}
       </View>
@@ -95,8 +95,8 @@ export function ApiHistory({ entries, locale, selectedUid, onSelect }: ApiHistor
       </View>
       <Muted>
         {shown.length === entries.length
-          ? tx(locale, `${entries.length} Aufrufe`, `${entries.length} calls`)
-          : tx(locale, `${shown.length} von ${entries.length} Aufrufen`, `${shown.length} of ${entries.length} calls`)}
+          ? tx(locale, 'apiHistory.aufrufe', [entries.length])
+          : tx(locale, 'apiHistory.aufrufen', [shown.length, entries.length])}
       </Muted>
       {shown.map((entry) => (
         <View key={entry.uid} style={entry.uid === selectedUid ? styles.selected : undefined}>

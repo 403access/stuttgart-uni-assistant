@@ -71,19 +71,15 @@ export function CampusHeadlessModal({
           pointerEvents="none"
         />
         <View style={styles.progress}>
-          <Text style={styles.title}>{tx(locale, 'Automatische Anmeldung', 'Automated sign-in')}</Text>
+          <Text style={styles.title}>{tx(locale, 'campusHeadlessModal.automatische')}</Text>
           <SigningIn
             locale={locale}
             phase={phase}
             detail={
               profileLoading
-                ? tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')
+                ? tx(locale, 'common.studien')
                 : busy
-                  ? tx(
-                      locale,
-                      'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
-                      'Checking credentials against C@MPUS … this can take up to a minute.',
-                    )
+                  ? tx(locale, 'common.pruefe')
                   : detail || undefined
             }
           />
@@ -95,11 +91,11 @@ export function CampusHeadlessModal({
           </ScrollView>
         ) : null}
         <View style={styles.footer}>
-          <Button secondary label={tx(locale, 'Seite ausgeben', 'Dump page')} onPress={onDump} />
+          <Button secondary label={tx(locale, 'campusHeadlessModal.seite')} onPress={onDump} />
           {error ? (
-            <Button secondary label={tx(locale, 'Im sichtbaren Browser anmelden', 'Sign in in the visible browser')} onPress={onFallback} />
+            <Button secondary label={tx(locale, 'campusHeadlessModal.sichtbaren')} onPress={onFallback} />
           ) : null}
-          <Button secondary label={tx(locale, 'Abbrechen', 'Cancel')} onPress={onCancel} />
+          <Button secondary label={tx(locale, 'common.abbrechen')} onPress={onCancel} />
         </View>
       </View>
     </Modal>

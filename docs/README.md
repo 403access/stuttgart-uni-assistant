@@ -61,6 +61,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/assistant-tunnel.md](engineering/assistant-tunnel.md) | Reaching the assistant from a phone off the LAN: the two tunnels, the quick hostname, the `.env` write |
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
 | [engineering/design-system.md](engineering/design-system.md) | Color, type, mark, and screen patterns |
+| [engineering/i18n.md](engineering/i18n.md) | The keyed German/English catalogs, `tx`, placeholder values, and how to add a string |
 
 ## Delivery
 

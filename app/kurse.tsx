@@ -143,8 +143,8 @@ export default function KurseScreen() {
       } catch (caught) {
         const reason = caught instanceof Error ? caught.message : 'unbekannt';
         if (current()) {
-          setSaveError(tx(locale, `Kurse konnten nicht gespeichert werden (${reason}).`, `Courses could not be saved (${reason}).`));
-          showToast({ tone: 'error', title: tx(locale, 'Cache-Speichern fehlgeschlagen', 'Cache save failed'), message: reason });
+          setSaveError(tx(locale, 'kurse.kurse_konnten', [reason]));
+          showToast({ tone: 'error', title: tx(locale, 'kurse.cache_speichern'), message: reason });
         }
       }
       // The device-store keys own the list: write the fresh rows, the
@@ -156,10 +156,10 @@ export default function KurseScreen() {
       if (!current()) return;
       setFailedIds(job.failedIds);
       if (job.state === 'cancelled') {
-        setSaveError(tx(locale, 'Abgebrochen — Teilergebnisse sind gespeichert.', 'Cancelled — partial results are stored.'));
+        setSaveError(tx(locale, 'kurse.abgebrochen'));
       } else if (job.failedIds.length > 0) {
         showFetchAlert(locale, {
-          title: tx(locale, `${job.failedIds.length} Elemente übersprungen`, `${job.failedIds.length} elements skipped`),
+          title: tx(locale, 'kurse.elemente_uebersprungen', [job.failedIds.length]),
           code: 'campus_failed',
           onRetry: loadAll,
         });
@@ -170,10 +170,10 @@ export default function KurseScreen() {
       const code = caught instanceof Error ? caught.message : 'sync_failed';
       const detail = campusDetail(caught);
       setSaveError(
-        tx(locale, `Kurs-Sync fehlgeschlagen (${code}${detail ? `, ${detail}` : ''}).`, `Course sync failed (${code}${detail ? `, ${detail}` : ''}).`),
+        tx(locale, 'kurse.kurs_sync', [code, detail ? `, ${detail}` : '']),
       );
       showFetchAlert(locale, {
-        title: tx(locale, 'Kurs-Sync fehlgeschlagen', 'Course sync failed'),
+        title: tx(locale, 'kurse.kurs_sync_fehlgeschlagen'),
         code,
         detail: detail || undefined,
         onRetry: loadAll,
@@ -191,11 +191,11 @@ export default function KurseScreen() {
     queryClient.setQueryData(keys.coursesSync(studyId), null);
   }
 
-  const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'Ohne Typ', 'No type')))].sort(), [courses, locale]);
+  const types = useMemo(() => [...new Set(courses.map((course) => course.courseType || tx(locale, 'common.ohne_typ')))].sort(), [courses, locale]);
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const filtered = courses.filter((course) => {
-      if (typeFilter !== 'all' && (course.courseType || tx(locale, 'Ohne Typ', 'No type')) !== typeFilter) return false;
+      if (typeFilter !== 'all' && (course.courseType || tx(locale, 'common.ohne_typ')) !== typeFilter) return false;
       if (needle) {
         const haystack = `${course.title} ${course.courseNumber} ${course.lecturers.join(' ')} ${course.roomName}`.toLowerCase();
         if (!haystack.includes(needle)) return false;
@@ -214,49 +214,37 @@ export default function KurseScreen() {
       kicker="C@MPUS"
       subtitle={
         study
-          ? `${study.name} · ${courses.length} ${tx(locale, 'Kurse', 'courses')} · ${fetchedIds.length}/${elementCount} ${tx(locale, 'Elemente gelesen', 'elements read')}`
-          : tx(locale, 'Alle Lehrveranstaltungen eines Studiengangs.', 'All courses of a study.')
+          ? `${study.name} · ${courses.length} ${tx(locale, 'kurse.kurse')} · ${fetchedIds.length}/${elementCount} ${tx(locale, 'kurse.elemente')}`
+          : tx(locale, 'kurse.alle_lehrveranstaltungen')
       }>
-      <Stack.Screen options={{ title: tx(locale, 'Kurse', 'Courses') }} />
+      <Stack.Screen options={{ title: tx(locale, 'common.kurse') }} />
       <StudySelector />
       {study === null ? (
         <Card>
           <Muted>
-            {tx(
-              locale,
-              'Melden Sie sich mit dem C@MPUS-Token an, um Kurse zu laden.',
-              'Sign in with the C@MPUS token to load courses.',
-            )}
+            {tx(locale, 'kurse.melden')}
           </Muted>
         </Card>
       ) : (
         <>
           <Card>
             <Text style={{ color: colors.anthracite, fontWeight: '700' }}>
-              {tx(
-                locale,
-                'Liest die Kurse aller Strukturelemente dieses Studiengangs.',
-                'Reads the courses of every structure element of this study.',
-              )}
+              {tx(locale, 'kurse.liest')}
             </Text>
             <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
-              {tx(locale, `Struktur-Cache: ${elementCount} Knoten`, `Structure cache: ${elementCount} nodes`)}
+              {tx(locale, 'kurse.struktur_cache', [elementCount])}
             </Text>
             {elementCount === 0 && !running ? (
               <>
                 <Muted>
-                  {tx(
-                    locale,
-                    'Keine Struktur zwischengespeichert. Der Knopf lädt zuerst die Struktur und danach die Kurse.',
-                    'No structure cached. The button loads the structure first, then the courses.',
-                  )}
+                  {tx(locale, 'kurse.struktur')}
                 </Muted>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   <Button secondary label="C@MPUS" onPress={() => router.push('/campus-info')} />
                   {Platform.OS === 'web' ? (
                     <Button
                       secondary
-                      label={tx(locale, 'Struktur-Browser', 'Structure browser')}
+                      label={tx(locale, 'kurse.struktur_browser')}
                       onPress={() => router.push('/strukturen')}
                     />
                   ) : null}
@@ -265,12 +253,12 @@ export default function KurseScreen() {
             ) : null}
             {running ? (
               <Text style={{ color: colors.blue, fontWeight: '700' }}>
-                {tx(locale, `${progress.fetched} Abfragen · ${progress.courseCount} Kurse`, `${progress.fetched} calls · ${progress.courseCount} courses`)}
+                {tx(locale, 'kurse.abfragen', [progress.fetched, progress.courseCount])}
               </Text>
             ) : null}
             {failedIds.length > 0 ? (
               <Text style={{ color: colors.warning, fontSize: 14, lineHeight: 20 }}>
-                {tx(locale, `${failedIds.length} Elemente übersprungen — Weiter lädt nur den Rest.`, `${failedIds.length} elements skipped — continue loads only the rest.`)}
+                {tx(locale, 'kurse.elemente_uebersprungen_weiter', [failedIds.length])}
               </Text>
             ) : null}
             {saveError ? (
@@ -278,30 +266,26 @@ export default function KurseScreen() {
             ) : null}
             {coursesSync ? (
               <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
-                {tx(locale, `Cache: ${coursesSync.courseCount} Kurse`, `Cache: ${coursesSync.courseCount} courses`)}
-                {coursesSync.finishedAt ? ` · ${formatDay(coursesSync.finishedAt, locale)}, ${formatTime(coursesSync.finishedAt)} ${tx(locale, 'Uhr', "o'clock")}` : ''}
-                {coursesSync.complete ? '' : ` · ${tx(locale, 'unvollständig', 'incomplete')}`}
+                {tx(locale, 'kurse.cache', [coursesSync.courseCount])}
+                {coursesSync.finishedAt ? ` · ${formatDay(coursesSync.finishedAt, locale)}, ${formatTime(coursesSync.finishedAt)} ${tx(locale, 'common.uhr')}` : ''}
+                {coursesSync.complete ? '' : ` · ${tx(locale, 'common.unvollstaendig')}`}
               </Text>
             ) : fetchedIds.length === 0 && !running ? (
               <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
-                {tx(
-                  locale,
-                  'Für diesen Studiengang wurden noch keine Kurse geladen.',
-                  'No courses loaded for this study yet.',
-                )}
+                {tx(locale, 'kurse.diesen')}
               </Text>
             ) : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {running ? (
-                <Button secondary label={tx(locale, 'Abbrechen', 'Cancel')} onPress={() => (cancelRun.current = true)} />
+                <Button secondary label={tx(locale, 'common.abbrechen')} onPress={() => (cancelRun.current = true)} />
               ) : study.elementId != null ? (
                 <Button
-                  label={fetchedIds.length > 0 ? tx(locale, 'Weiter laden', 'Continue loading') : tx(locale, 'Alle Kurse laden', 'Load all courses')}
+                  label={fetchedIds.length > 0 ? tx(locale, 'common.weiter') : tx(locale, 'kurse.alle')}
                   onPress={loadAll}
                 />
               ) : null}
               {!running && courses.length > 0 ? (
-                <Button secondary label={tx(locale, 'Kurs-Cache leeren', 'Clear course cache')} onPress={clearCourseCache} />
+                <Button secondary label={tx(locale, 'kurse.kurs')} onPress={clearCourseCache} />
               ) : null}
             </View>
           </Card>
@@ -310,13 +294,13 @@ export default function KurseScreen() {
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder={tx(locale, 'Titel, Dozent, Nummer, Raum …', 'Title, lecturer, number, room …')}
+                placeholder={tx(locale, 'kurse.titel')}
                 placeholderTextColor={colors.mute}
                 style={inputStyle}
               />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <Pressable onPress={() => setTypeFilter('all')}>
-                  <Pill label={tx(locale, 'Alle Typen', 'All types')} active={typeFilter === 'all'} />
+                  <Pill label={tx(locale, 'kurse.alle_typen')} active={typeFilter === 'all'} />
                 </Pressable>
                 {types.map((type) => (
                   <Pressable key={type} onPress={() => setTypeFilter(typeFilter === type ? 'all' : type)}>
@@ -328,13 +312,13 @@ export default function KurseScreen() {
                 {(['title', 'type', 'time'] as CourseSort[]).map((item) => (
                   <Pressable key={item} onPress={() => setSort(item)}>
                     <Pill
-                      label={item === 'title' ? tx(locale, 'Titel', 'Title') : item === 'type' ? tx(locale, 'Typ', 'Type') : tx(locale, 'Termin', 'Date')}
+                      label={item === 'title' ? tx(locale, 'common.titel') : item === 'type' ? tx(locale, 'common.typ') : tx(locale, 'common.termin')}
                       active={sort === item}
                     />
                   </Pressable>
                 ))}
               </View>
-              <Section title={tx(locale, `${visible.length} Kurse`, `${visible.length} courses`)} />
+              <Section title={tx(locale, 'kurse.kurse_2', [visible.length])} />
               {visible.map((course) => (
                 <InfoRow
                   key={course.id}
@@ -345,7 +329,7 @@ export default function KurseScreen() {
                     course.startTime ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)}${course.endTime ? `–${formatTime(course.endTime)}` : ''}` : '',
                     course.roomName,
                     course.registrationStatus,
-                    course.elementNames.length > 1 ? `${course.elementNames.length} ${tx(locale, 'Bereiche', 'sections')}` : '',
+                    course.elementNames.length > 1 ? `${course.elementNames.length} ${tx(locale, 'common.bereiche')}` : '',
                   ]
                     .filter(Boolean)
                     .join(' · ')}

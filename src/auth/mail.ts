@@ -238,12 +238,12 @@ export function folderKind(name: string): FolderKind {
  */
 export function folderLabel(name: string, locale: 'de' | 'en'): string {
   const kind = folderKind(name);
-  if (kind === 'inbox') return tx(locale, 'Posteingang', 'Inbox');
-  if (kind === 'sent') return tx(locale, 'Gesendet', 'Sent');
-  if (kind === 'drafts') return tx(locale, 'Entwürfe', 'Drafts');
-  if (kind === 'trash') return tx(locale, 'Papierkorb', 'Trash');
-  if (kind === 'junk') return tx(locale, 'Junk', 'Junk');
-  if (kind === 'archive') return tx(locale, 'Archiv', 'Archive');
+  if (kind === 'inbox') return tx(locale, 'mail.posteingang');
+  if (kind === 'sent') return tx(locale, 'mail.gesendet');
+  if (kind === 'drafts') return tx(locale, 'mail.entwuerfe');
+  if (kind === 'trash') return tx(locale, 'mail.papierkorb');
+  if (kind === 'junk') return tx(locale, 'mail.junk');
+  if (kind === 'archive') return tx(locale, 'mail.archiv');
   const segments = name.split(/[/.]/).filter(Boolean);
   return segments[segments.length - 1] ?? name;
 }
@@ -269,31 +269,19 @@ export async function forgetMail(): Promise<void> {
 export function mailMessage(locale: 'de' | 'en', code: string, detail = ''): string {
   const suffix = detail ? ` ${detail}` : '';
   if (code === 'server_unreachable') {
-    return tx(
-      locale,
-      'Der Assistenz-Server auf http://127.0.0.1:8787 antwortet nicht. Starte im Projektordner: npm run assistant',
-      'The assistant server at http://127.0.0.1:8787 is not answering. In the project directory run: npm run assistant',
-    );
+    return tx(locale, 'mail.assistenz');
   }
   if (code === 'missing_password' || code === 'bad_account') {
-    return tx(locale, 'Bitte kurz Nutzerkennung (st…/ac…) und Passwort eintragen.', 'Enter the short user id (st…/ac…) and the password.');
+    return tx(locale, 'mail.bitte');
   }
   if (code === 'mail_not_configured') {
-    return tx(locale, 'Noch keine Anmeldedaten hinterlegt. Erst verbinden, danach lädt der Posteingang.', 'No credentials held yet. Connect first; the inbox loads afterwards.');
+    return tx(locale, 'mail.anmeldedaten');
   }
   if (code === 'mail_auth_failed') {
-    return tx(
-      locale,
-      `Der IMAP-Dienst des TIK hat das Paar aus Nutzerkennung und Passwort abgelehnt.${suffix}`,
-      `The TIK IMAP service rejected the user id and password pair.${suffix}`,
-    );
+    return tx(locale, 'mail.imap', [suffix]);
   }
   if (code === 'mail_network' || code === 'mail_disconnected' || code === 'imap_timeout') {
-    return tx(
-      locale,
-      `Die Verbindung zu imap.uni-stuttgart.de brach ab (${code}). VPN oder Netz prüfen und erneut versuchen.${suffix}`,
-      `The connection to imap.uni-stuttgart.de dropped (${code}). Check VPN or network and retry.${suffix}`,
-    );
+    return tx(locale, 'mail.verbindung', [code, suffix]);
   }
-  return tx(locale, `UniMail nicht abgeschlossen (${code}).${suffix}`, `UniMail did not finish (${code}).${suffix}`);
+  return tx(locale, 'mail.unimail', [code, suffix]);
 }

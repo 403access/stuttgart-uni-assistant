@@ -10,8 +10,8 @@ export default function FeedScreen() {
   const { locale } = useApp();
   const rows = [...news].sort((a, b) => b.date.localeCompare(a.date));
   return (
-    <Screen kicker={tx(locale, 'Kommunikationsquellen', 'Channels')}>
-      <Stack.Screen options={{ title: tx(locale, 'Meldungen', 'Notices') }} />
+    <Screen kicker={tx(locale, 'feed.kommunikationsquellen')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.meldungen') }} />
       {rows.map((item) => (
         <InfoRow
           key={item.id}

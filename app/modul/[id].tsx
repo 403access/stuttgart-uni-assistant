@@ -24,8 +24,8 @@ export default function ModuleScreen() {
   const [workload, setWorkload] = useState('8');
   if (!module) {
     return (
-      <Screen kicker={tx(locale, 'Modul fehlt', 'Module missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
-        <Stack.Screen options={{ title: tx(locale, 'Modul fehlt', 'Module missing') }} />
+      <Screen kicker={tx(locale, 'modul.modul')} subtitle={tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'modul.modul') }} />
       </Screen>
     );
   }
@@ -46,7 +46,7 @@ export default function ModuleScreen() {
     addReview({
       id: uid('rev'),
       moduleId: current.id,
-      author: tx(locale, 'Du', 'You'),
+      author: tx(locale, 'modul.du'),
       term: 'WiSe 2026/27',
       rating: Math.min(5, Math.max(1, score)),
       workload: Math.max(0, hours),
@@ -62,7 +62,7 @@ export default function ModuleScreen() {
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         <Pill label={moduleStatus(module.status, locale)} tone={module.status === 'passed' ? 'ok' : module.status === 'enrolled' ? 'blue' : 'wait'} />
         {typeof module.grade === 'number' ? <Pill label={formatGrade(module.grade, locale)} tone="ok" /> : null}
-        {plannedIds.includes(module.id) ? <Pill label={tx(locale, 'Vorgemerkt', 'Planned')} tone="blue" /> : null}
+        {plannedIds.includes(module.id) ? <Pill label={tx(locale, 'modul.vorgemerkt')} tone="blue" /> : null}
       </View>
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 16, lineHeight: 23 }}>{pick(module.summary, locale)}</Text>
@@ -76,22 +76,22 @@ export default function ModuleScreen() {
         <Card>
           <Text style={{ color: colors.warning, fontWeight: '700' }}>
             {locked.startsWith('min:')
-              ? tx(locale, `Wartet auf ${module.minEarned} bestandene ECTS.`, `Waits for ${module.minEarned} passed ECTS.`)
-              : tx(locale, 'Eine Voraussetzung ist noch nicht bestanden.', 'A prerequisite is not passed yet.')}
+              ? tx(locale, 'modul.wartet', [module.minEarned])
+              : tx(locale, 'modul.voraussetzung')}
           </Text>
         </Card>
       ) : null}
       {module.status === 'open' ? (
         <Button
-          label={plannedIds.includes(module.id) ? tx(locale, 'Vormerkung lösen', 'Remove from plan') : tx(locale, 'Für später vormerken', 'Plan for later')}
+          label={plannedIds.includes(module.id) ? tx(locale, 'modul.vormerkung') : tx(locale, 'modul.spaeter')}
           onPress={() => togglePlanned(module.id)}
           secondary={plannedIds.includes(module.id)}
         />
       ) : null}
       <Card>
-        <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'Voraussetzungen', 'Prerequisites')}</Text>
+        <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'modul.voraussetzungen')}</Text>
         {module.prerequisites.length === 0 && !module.minEarned ? (
-          <Text style={{ color: colors.inkSoft }}>{tx(locale, 'Keine harten Voraussetzungen im Demonstrationsplan.', 'No hard prerequisites in the demonstration plan.')}</Text>
+          <Text style={{ color: colors.inkSoft }}>{tx(locale, 'modul.harten')}</Text>
         ) : (
           module.prerequisites.map((id) => {
             const required = modules.find((item) => item.id === id);
@@ -124,13 +124,13 @@ export default function ModuleScreen() {
         );
       })}
       {groups.map((group) => (
-        <InfoRow key={group.id} title={group.group} meta={group.enrolled ? tx(locale, 'belegt', 'enrolled') : `${group.taken}/${group.seats}`} detail={group.tutor} />
+        <InfoRow key={group.id} title={group.group} meta={group.enrolled ? tx(locale, 'common.belegt') : `${group.taken}/${group.seats}`} detail={group.tutor} />
       ))}
       {relatedDocs.map((document) => (
-        <InfoRow key={document.id} title={pick(document.title, locale)} meta={document.source === 'ilias' ? 'ILIAS' : tx(locale, 'Notiz', 'Note')} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: document.id } })} />
+        <InfoRow key={document.id} title={pick(document.title, locale)} meta={document.source === 'ilias' ? 'ILIAS' : tx(locale, 'common.notiz')} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: document.id } })} />
       ))}
       {relatedExams.map((exam) => (
-        <InfoRow key={exam.id} title={exam.term} meta={tx(locale, 'Themen', 'Topics')} onPress={() => router.push({ pathname: '/pruefung/[id]', params: { id: exam.id } })} />
+        <InfoRow key={exam.id} title={exam.term} meta={tx(locale, 'modul.themen')} onPress={() => router.push({ pathname: '/pruefung/[id]', params: { id: exam.id } })} />
       ))}
       {relatedReviews.map((review) => (
         <Card key={review.id}>
@@ -141,11 +141,11 @@ export default function ModuleScreen() {
         </Card>
       ))}
       <Card>
-        <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'Eigene Einschätzung', 'Your note')}</Text>
+        <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'modul.eigene')}</Text>
         <TextInput value={rating} onChangeText={setRating} keyboardType="decimal-pad" style={input} placeholder="1–5" placeholderTextColor={colors.mute} />
-        <TextInput value={workload} onChangeText={setWorkload} keyboardType="decimal-pad" style={input} placeholder={tx(locale, 'Stunden pro Woche', 'Hours per week')} placeholderTextColor={colors.mute} />
-        <TextInput value={comment} onChangeText={setComment} multiline style={[input, { minHeight: 80 }]} placeholder={tx(locale, 'Tipp für Kommilitonen', 'A tip for other students')} placeholderTextColor={colors.mute} />
-        <Button label={tx(locale, 'Auf diesem Gerät speichern', 'Save on this device')} onPress={publish} />
+        <TextInput value={workload} onChangeText={setWorkload} keyboardType="decimal-pad" style={input} placeholder={tx(locale, 'modul.stunden')} placeholderTextColor={colors.mute} />
+        <TextInput value={comment} onChangeText={setComment} multiline style={[input, { minHeight: 80 }]} placeholder={tx(locale, 'modul.tipp')} placeholderTextColor={colors.mute} />
+        <Button label={tx(locale, 'modul.diesem')} onPress={publish} />
       </Card>
     </Screen>
   );

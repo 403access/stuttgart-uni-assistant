@@ -8,14 +8,14 @@ import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
 function sortLabel(sort: CurriculumSortKey, locale: Locale): string {
-  return sort === 'name' ? tx(locale, 'Name', 'Name') : sort === 'designation' ? tx(locale, 'Kennung', 'Code') : 'ID';
+  return sort === 'name' ? tx(locale, 'curriculumToolbar.name') : sort === 'designation' ? tx(locale, 'common.kennung') : 'ID';
 }
 
 function statusLabel(status: CurriculumStatusFilter, locale: Locale): string {
-  if (status === 'all') return tx(locale, 'Alle', 'All');
-  if (status === 'open') return tx(locale, 'Offen', 'Open');
-  if (status === 'progress') return tx(locale, 'In Arbeit', 'In progress');
-  return tx(locale, 'Abgeschlossen', 'Completed');
+  if (status === 'all') return tx(locale, 'common.alle');
+  if (status === 'open') return tx(locale, 'common.offen');
+  if (status === 'progress') return tx(locale, 'curriculumToolbar.arbeit');
+  return tx(locale, 'curriculumToolbar.abgeschlossen');
 }
 
 const statusOrder: CurriculumStatusFilter[] = ['all', 'open', 'progress', 'done'];
@@ -62,7 +62,7 @@ export function CurriculumToolbar({
         <SearchField
           value={query}
           onChangeText={onQueryChange}
-          placeholder={tx(locale, 'Suchen …', 'Search …')}
+          placeholder={tx(locale, 'common.suchen')}
           compact
           style={styles.search}
         />
@@ -70,24 +70,24 @@ export function CurriculumToolbar({
           <Pill label={`${sortLabel(sort, locale)} ▾`} active />
         </Pressable>
         <Pressable onPress={() => setFiltersOpen((open) => !open)}>
-          <Pill label={activeCount > 0 ? `${tx(locale, 'Filter', 'Filter')} · ${activeCount}` : `${tx(locale, 'Filter', 'Filter')} ▾`} active={filtersOpen || activeCount > 0} />
+          <Pill label={activeCount > 0 ? `${tx(locale, 'curriculumToolbar.filter')} · ${activeCount}` : `${tx(locale, 'curriculumToolbar.filter')} ▾`} active={filtersOpen || activeCount > 0} />
         </Pressable>
         <Pressable onPress={onExpandAll}>
-          <Pill label={tx(locale, '+ Alle', '+ All')} />
+          <Pill label={tx(locale, 'curriculumToolbar.alle')} />
         </Pressable>
         <Pressable onPress={onCollapseAll}>
-          <Pill label={tx(locale, '− Alle', '− All')} />
+          <Pill label={tx(locale, 'curriculumToolbar.alle_2')} />
         </Pressable>
         <Pressable onPress={onToggleRoot}>
-          <Pill label={tx(locale, 'Wurzel', 'Root')} active={showRoot} />
+          <Pill label={tx(locale, 'common.wurzel')} active={showRoot} />
         </Pressable>
       </View>
       {filtersOpen ? (
         <View style={styles.filterPanel}>
-          <Text style={styles.filterTitle}>{tx(locale, 'Typ', 'Type')}</Text>
+          <Text style={styles.filterTitle}>{tx(locale, 'common.typ')}</Text>
           <View style={styles.pills}>
             <Pressable onPress={() => onTypeChange('all')}>
-              <Pill label={tx(locale, 'Alle', 'All')} active={typeFilter === 'all'} />
+              <Pill label={tx(locale, 'common.alle')} active={typeFilter === 'all'} />
             </Pressable>
             {types.map((type) => (
               <Pressable key={type} onPress={() => onTypeChange(typeFilter === type ? 'all' : type)}>
@@ -95,7 +95,7 @@ export function CurriculumToolbar({
               </Pressable>
             ))}
           </View>
-          <Text style={styles.filterTitle}>{tx(locale, 'Stand', 'Status')}</Text>
+          <Text style={styles.filterTitle}>{tx(locale, 'common.stand')}</Text>
           <View style={styles.pills}>
             {statusOrder.map((item) => (
               <Pressable key={item} onPress={() => onStatusChange(item)}>
@@ -105,7 +105,7 @@ export function CurriculumToolbar({
           </View>
           {activeCount > 0 ? (
             <Pressable onPress={() => { onTypeChange('all'); onStatusChange('all'); }}>
-              <Text style={styles.filterReset}>{tx(locale, 'Zurücksetzen', 'Reset')}</Text>
+              <Text style={styles.filterReset}>{tx(locale, 'common.zuruecksetzen')}</Text>
             </Pressable>
           ) : null}
         </View>

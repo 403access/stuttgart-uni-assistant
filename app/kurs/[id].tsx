@@ -34,29 +34,25 @@ export default function CourseScreen() {
   if (!course) {
     return (
       <Screen kicker="C@MPUS">
-        <Stack.Screen options={{ title: tx(locale, 'Kurs fehlt', 'Course missing') }} />
+        <Stack.Screen options={{ title: tx(locale, 'kurs.kurs_fehlt') }} />
         <Muted>
-          {tx(
-            locale,
-            'Dieser Kurs ist nicht im Zwischenspeicher. Öffne ihn über die Kurse eines Strukturknotens im C@MPUS-Tab.',
-            'This course is not cached. Open it from the courses of a structure node in the C@MPUS tab.',
-          )}
+          {tx(locale, 'kurs.kurs')}
         </Muted>
       </Screen>
     );
   }
   const when =
     course.startTime && course.endTime
-      ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)}–${formatTime(course.endTime)} ${tx(locale, 'Uhr', "o'clock")}`
+      ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)}–${formatTime(course.endTime)} ${tx(locale, 'common.uhr')}`
       : course.startTime
-        ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)} ${tx(locale, 'Uhr', "o'clock")}`
+        ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)} ${tx(locale, 'common.uhr')}`
         : '';
   return (
     <Screen kicker={course.courseType || 'C@MPUS'} subtitle={course.semester}>
       <Stack.Screen options={{ title: course.title }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>
-          {course.courseNumber || tx(locale, 'Ohne Nummer', 'No number')}
+          {course.courseNumber || tx(locale, 'kurs.ohne')}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
           {[course.courseTypeShort || course.courseType, course.duration !== null ? `${course.duration} SWS` : '', course.semester]
@@ -67,13 +63,13 @@ export default function CourseScreen() {
       {course.lecturers.length ? (
         <InfoRow
           title={course.lecturers.join(', ')}
-          meta={tx(locale, course.lecturers.length === 1 ? 'Dozent*in' : 'Dozierende', course.lecturers.length === 1 ? 'Lecturer' : 'Lecturers')}
+          meta={course.lecturers.length === 1 ? tx(locale, 'common.dozent') : tx(locale, 'common.dozierende')}
         />
       ) : null}
       {course.registrationStatus ? (
         <InfoRow
           title={course.registrationStatus}
-          meta={tx(locale, 'Anmeldung', 'Registration')}
+          meta={tx(locale, 'common.anmeldung')}
           detail={course.registrationAction || undefined}
           onPress={
             course.registrationUrl
@@ -85,16 +81,16 @@ export default function CourseScreen() {
       {when ? (
         <InfoRow
           title={when}
-          meta={tx(locale, 'Nächster Termin', 'Next appointment')}
+          meta={tx(locale, 'kurs.naechster')}
           detail={course.roomName || undefined}
         />
       ) : course.roomName ? (
-        <InfoRow title={course.roomName} meta={tx(locale, 'Raum', 'Room')} />
+        <InfoRow title={course.roomName} meta={tx(locale, 'kurs.raum')} />
       ) : null}
       {course.detailUrl ? (
         <Button
           secondary
-          label={tx(locale, 'Detailseite in C@MPUS öffnen', 'Open detail page in C@MPUS')}
+          label={tx(locale, 'kurs.detailseite')}
           onPress={() => WebBrowser.openBrowserAsync(course.detailUrl).catch(() => undefined)}
         />
       ) : null}

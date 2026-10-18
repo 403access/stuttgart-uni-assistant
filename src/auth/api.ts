@@ -1,4 +1,5 @@
 import { assistantUrl } from '@/src/assistant/remote';
+import { tx } from '@/src/text';
 
 export interface ApiOperation {
   id: string;
@@ -81,8 +82,8 @@ export async function sendApiOperation(
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify({
       locale,
-      question: locale === 'de' ? 'Was kann diese Studienassistenz?' : 'What can this study assistant do?',
-      facts: locale === 'de' ? 'Dies ist ein studentisches Demonstrationsprojekt.' : 'This is a student demonstration project.',
+      question: tx(locale, 'api.kann'),
+      facts: tx(locale, 'api.dies'),
       history: [],
     });
   } else if (operation.method === 'POST') {

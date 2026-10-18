@@ -7,6 +7,7 @@ import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, read
 import { cancelSyncJob, getSyncJob, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
+import { t } from './i18n/index.mjs';
 
 loadEnv(new URL('../.env', import.meta.url));
 warnIfPasswordPresent();
@@ -487,10 +488,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  const system =
-    locale === 'de'
-      ? 'Du bist die Studienassistenz in einem studentischen Demonstrationsprojekt für die Universität Stuttgart. Antworte auf Deutsch. Nutze nur den Faktenblock. Erfinde keine Noten, Räume, Fristen oder ECTS. Wenn etwas fehlt, sag das. Weise nicht vor, ein amtliches Universitätssystem zu sein. Antworte knapp, mit kurzen Absätzen oder Listen.'
-      : 'You are the study assistant in a student demonstration project for the University of Stuttgart. Reply in English. Use only the FACTS block. Do not invent grades, rooms, deadlines, or ECTS. If something is missing, say so. Do not pretend to be an official university system. Be concise, with short paragraphs or lists.';
+  const system = t(locale, 'assist.systemPrompt');
 
   const input = [
     { role: 'system', content: system },

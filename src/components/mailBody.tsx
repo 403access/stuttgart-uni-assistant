@@ -33,11 +33,11 @@ function QuoteBlock({ lines, locale }: { lines: string[]; locale: Locale }) {
       <Pressable
         hitSlop={6}
         onPress={() => setOpen((value) => !value)}
-        accessibilityLabel={open ? tx(locale, 'Zitat ausblenden', 'Hide quote') : tx(locale, `Zitat anzeigen (${lines.length} Zeilen)`, `Show quote (${lines.length} lines)`)}
+        accessibilityLabel={open ? tx(locale, 'mailBody.zitat_ausblenden') : tx(locale, 'mailBody.zitat', [lines.length])}
         accessibilityRole="button"
         style={({ pressed }) => [styles.quoteToggle, pressed && styles.pressed]}
       >
-        <Text style={styles.quoteToggleText}>{open ? tx(locale, 'Zitat ausblenden', 'Hide quote') : tx(locale, `Zitat anzeigen (${lines.length} Zeilen)`, `Show quote (${lines.length} lines)`)}</Text>
+        <Text style={styles.quoteToggleText}>{open ? tx(locale, 'mailBody.zitat_ausblenden') : tx(locale, 'mailBody.zitat', [lines.length])}</Text>
       </Pressable>
       {open ? (
         <Text style={styles.quoteBody} selectable>

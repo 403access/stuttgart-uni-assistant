@@ -17,12 +17,12 @@ import { tx } from '@/src/text';
 
 type Locale = 'de' | 'en';
 
-const PHASE_LABELS: Record<CampusLoginPhase, { de: string; en: string }> = {
-  connect: { de: 'Verbindung zu C@MPUS', en: 'Connecting to C@MPUS' },
-  identify: { de: 'Anmeldung', en: 'Signing in' },
-  adopt: { de: 'Sitzung übernehmen', en: 'Adopting the session' },
-  profile: { de: 'Studiengänge laden', en: 'Loading your studies' },
-};
+function phaseLabel(phase: CampusLoginPhase, locale: Locale): string {
+  if (phase === 'connect') return tx(locale, 'signingIn.verbindung');
+  if (phase === 'identify') return tx(locale, 'signingIn.anmeldung');
+  if (phase === 'adopt') return tx(locale, 'signingIn.sitzung');
+  return tx(locale, 'signingIn.studiengaenge');
+}
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -167,7 +167,7 @@ export function SigningIn({
 }) {
   const reduced = useReducedMotion();
   const animate = !reduced;
-  const label = tx(locale, PHASE_LABELS[phase].de, PHASE_LABELS[phase].en);
+  const label = phaseLabel(phase, locale);
 
   if (compact) {
     return (
@@ -192,7 +192,7 @@ export function SigningIn({
         {CAMPUS_LOGIN_PHASES.map((item) => (
           <PhaseRow
             key={item}
-            label={tx(locale, PHASE_LABELS[item].de, PHASE_LABELS[item].en)}
+            label={phaseLabel(item, locale)}
             done={isPhaseDone(item, phase)}
             active={item === phase}
             animate={animate}

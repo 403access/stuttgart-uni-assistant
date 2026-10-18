@@ -10,7 +10,7 @@ export function TutorialsList() {
   const { locale } = useApp();
   if (tutorials.length === 0) {
     return (
-      <Muted>{tx(locale, 'Keine Tutorien im Demonstrationsstand.', 'No tutorials in the demonstration record.')}</Muted>
+      <Muted>{tx(locale, 'tutorialsList.tutorien')}</Muted>
     );
   }
   return (
@@ -18,7 +18,7 @@ export function TutorialsList() {
       {tutorials.map((item) => {
         const module = modules.find((entry) => entry.id === item.moduleId);
         const room = places.find((entry) => entry.id === item.roomId);
-        const meta = item.enrolled ? tx(locale, 'belegt', 'enrolled') : `${item.taken}/${item.seats}`;
+        const meta = item.enrolled ? tx(locale, 'common.belegt') : `${item.taken}/${item.seats}`;
         return (
           <InfoRow
             key={item.id}

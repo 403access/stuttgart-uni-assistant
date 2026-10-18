@@ -55,9 +55,9 @@ export function buildHarvest(parsed: HarvestMessage, nativeCookieHeader: string)
 export function diagnoseLines(locale: Locale, parsed: HarvestMessage, nativeCookieNames: string[]): string[] {
   const names = (value: unknown): string => (Array.isArray(value) && value.length ? value.map(String).join(', ') : '–');
   return [
-    `${tx(locale, 'Seite', 'Page')}: ${typeof parsed.url === 'string' ? parsed.url.slice(0, 120) : '–'}`,
-    `${tx(locale, 'Cookies (JavaScript)', 'Cookies (JavaScript)')}: ${names(parsed.cookies)}`,
-    `${tx(locale, 'Cookies (nativ, inkl. HttpOnly)', 'Cookies (native, incl. HttpOnly)')}: ${nativeCookieNames.length ? nativeCookieNames.join(', ') : '–'}`,
+    `${tx(locale, 'campusHarvest.seite')}: ${typeof parsed.url === 'string' ? parsed.url.slice(0, 120) : '–'}`,
+    `${tx(locale, 'campusHarvest.cookies')}: ${names(parsed.cookies)}`,
+    `${tx(locale, 'campusHarvest.cookies_nativ')}: ${nativeCookieNames.length ? nativeCookieNames.join(', ') : '–'}`,
     `localStorage: ${names(parsed.local)}`,
     `sessionStorage: ${names(parsed.session)}`,
   ];

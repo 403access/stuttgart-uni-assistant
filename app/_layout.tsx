@@ -64,7 +64,7 @@ function Gate() {
           contentStyle: { backgroundColor: colors.mist },
           headerTintColor: colors.blue,
           headerTitleStyle: { color: colors.anthracite, fontWeight: '700', fontSize: 17 },
-          headerBackTitle: tx(locale, 'Zurück', 'Back'),
+          headerBackTitle: tx(locale, 'layout.zurueck'),
           headerShadowVisible: false,
         }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

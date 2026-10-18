@@ -99,28 +99,24 @@ export default function StrukturenScreen() {
       if (job.failedIds.length > 0) {
         const code = 'campus_failed';
         setFetchError(
-          tx(
-            locale,
-            `${job.failedIds.length} Knoten übersprungen (3 Versuche je Knoten) — Weiter laden versucht nur den Rest.`,
-            `${job.failedIds.length} nodes skipped (3 attempts each) — continue loads only the rest.`,
-          ),
+          tx(locale, 'strukturen.knoten', [job.failedIds.length]),
         );
         showFetchAlert(locale, {
-          title: tx(locale, `${job.failedIds.length} Knoten übersprungen`, `${job.failedIds.length} nodes skipped`),
+          title: tx(locale, 'common.knoten_uebersprungen', [job.failedIds.length]),
           code,
           onRetry: () => fetchMutation.mutate(vars),
         });
       } else if (job.state === 'done' && job.fetched === 0) {
         setSyncNote(
-          tx(locale, 'Keine neuen Abfragen — alles aus dem Server-Cache.', 'No new calls — everything from the server cache.'),
+          tx(locale, 'strukturen.neuen'),
         );
       }
     },
     onError: (caught, vars) => {
       const code = caught instanceof Error ? caught.message : 'sync_failed';
-      setFetchError(tx(locale, `Struktur-Sync nicht gestartet (${code}).`, `Structure sync did not start (${code}).`));
+      setFetchError(tx(locale, 'strukturen.struktur_sync', [code]));
       showFetchAlert(locale, {
-        title: tx(locale, 'Struktur-Sync fehlgeschlagen', 'Structure sync failed'),
+        title: tx(locale, 'common.struktur_sync'),
         code,
         onRetry: () => fetchMutation.mutate(vars),
       });
@@ -248,11 +244,7 @@ export default function StrukturenScreen() {
       <Screen kicker="Web">
         <Card>
           <Muted>
-            {tx(
-              locale,
-              'Der Struktur-Browser ist nur im Web verfügbar. Öffne die App mit Expo im Browser.',
-              'The structure browser is only available on web. Open the app with Expo in the browser.',
-            )}
+            {tx(locale, 'strukturen.struktur')}
           </Muted>
         </Card>
       </Screen>
@@ -264,11 +256,7 @@ export default function StrukturenScreen() {
       <Screen kicker="Web">
         <Card>
           <Muted>
-            {tx(
-              locale,
-              'Melden Sie sich mit dem C@MPUS-Token an, um die zwischengespeicherten Strukturen zu durchsuchen.',
-              'Sign in with the C@MPUS token to browse the cached structures.',
-            )}
+            {tx(locale, 'strukturen.melden')}
           </Muted>
         </Card>
       </Screen>
@@ -281,17 +269,13 @@ export default function StrukturenScreen() {
   return (
     <Screen
       kicker="Web"
-      subtitle={tx(
-        locale,
-        'Alle zwischengespeicherten Studiengänge. Blättern lädt nichts nach — nur die Knöpfe holen Daten.',
-        'All cached degree programs. Browsing never refetches — only the buttons fetch.',
-      )}
+      subtitle={tx(locale, 'strukturen.alle_zwischengespeicherten')}
       scroll={!isWeb}>
-      <Stack.Screen options={{ title: tx(locale, 'Strukturen', 'Structures') }} />
+      <Stack.Screen options={{ title: tx(locale, 'strukturen.strukturen') }} />
       <View style={[pageStyles.columns, isWeb && pageStyles.columnsWeb]}>
         <View style={[pageStyles.columnMain, isWeb && pageStyles.columnScroll]}>
-          <Section title={tx(locale, 'Studiengänge', 'Degree programs')} />
-          <Button secondary label={tx(locale, 'Alle Caches leeren', 'Clear all caches')} onPress={clearAll} />
+          <Section title={tx(locale, 'common.studiengaenge')} />
+          <Button secondary label={tx(locale, 'strukturen.alle')} onPress={clearAll} />
           {campusStudies.map((study) => (
             <StudyCacheCard
               key={study.studyId}
@@ -317,8 +301,8 @@ export default function StrukturenScreen() {
                 <Text style={{ color: colors.anthracite, fontSize: 17, fontWeight: '700' }}>
                   {selectedStudy.name}
                   <Text style={{ color: colors.inkSoft, fontWeight: '400', fontSize: 13 }}>
-                    {studyMeta.elementId ? ` · Element ${studyMeta.elementId}` : ''} · {studyMeta.topLevel} {tx(locale, 'Bereiche', 'sections')} · {studyMeta.total}{' '}
-                    {tx(locale, 'Knoten', 'nodes')}
+                    {studyMeta.elementId ? ` · Element ${studyMeta.elementId}` : ''} · {studyMeta.topLevel} {tx(locale, 'common.bereiche')} · {studyMeta.total}{' '}
+                    {tx(locale, 'common.knoten')}
                   </Text>
                 </Text>
               )}
@@ -340,23 +324,19 @@ export default function StrukturenScreen() {
               />
               <Button
                 secondary
-                label={tx(locale, 'Alle Kurse dieses Studiengangs', 'All courses of this study')}
+                label={tx(locale, 'strukturen.alle_kurse')}
                 onPress={() => router.push('/kurse')}
               />
               {nodes.length === 0 ? (
                 <Muted>
-                  {tx(
-                    locale,
-                    'Kein Cache für diesen Studiengang. Lade die Struktur über den Knopf oben.',
-                    'No cache for this study. Load the structure with the button above.',
-                  )}
+                  {tx(locale, 'strukturen.cache')}
                 </Muted>
               ) : searching ? (
                 <>
                   <Muted>
                     {visible.length > SEARCH_LIMIT
-                      ? tx(locale, `${SEARCH_LIMIT} von ${visible.length} Treffern`, `${SEARCH_LIMIT} of ${visible.length} matches`)
-                      : tx(locale, `${visible.length} Treffer`, `${visible.length} matches`)}
+                      ? tx(locale, 'strukturen.treffern', [SEARCH_LIMIT, visible.length])
+                      : tx(locale, 'strukturen.treffer', [visible.length])}
                   </Muted>
                   {shown.map((node) => (
                     <InfoRow
@@ -385,11 +365,11 @@ export default function StrukturenScreen() {
           ) : null}
         </View>
         <View style={[pageStyles.columnSide, isWeb && pageStyles.columnScroll]}>
-          <Section title={tx(locale, `API-Verlauf (${history.length})`, `API history (${history.length})`)} />
+          <Section title={tx(locale, 'strukturen.api', [history.length])} />
           {history.length > 0 ? (
             <Button
               secondary
-              label={tx(locale, 'Verlauf löschen', 'Clear history')}
+              label={tx(locale, 'strukturen.verlauf')}
               onPress={() => {
                 clearSessionLog();
                 queryClient.setQueryData(keys.apiLog(500), []);

@@ -4,6 +4,8 @@ The catalog is TypeScript in `src/data/`. Types live in `src/types.ts`. The devi
 
 This curriculum is a simplified fictional B.Sc. Informatik plan. It is not the legal Prüfungsordnung of the University of Stuttgart.
 
+Record content is bilingual with the `Localized` type (`{ de, en }`) and read with `pick(value, locale)`. That is deliberately separate from interface copy, which lives in the keyed catalogs in `src/i18n/` and is read with `tx(locale, key)` ([i18n.md](i18n.md)).
+
 ## Program
 
 `src/data/program.ts`

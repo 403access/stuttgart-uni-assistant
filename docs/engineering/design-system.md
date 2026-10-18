@@ -41,7 +41,7 @@ System font. German copy uses the local conventions in `src/text.ts`:
 - Dates: `13.10.2026` in German, `13 Oct 2026` in English.
 - Grades: a comma in German (`1,9`), a point in English (`1.9`).
 
-Strings that the student sees are `Localized` objects (`de` and `en`) or they pass through `tx`. The language toggle in Einstellungen is the only switch. German is the default when storage is empty.
+Interface strings are requested by key through `tx(locale, key, values?)`, backed by the catalogs in `src/i18n/de.ts` and `src/i18n/en.ts` ([i18n.md](i18n.md)). Record content — module titles, place notes, document pages — stays a `Localized` `{ de, en }` object read with `pick`. The language toggle in Einstellungen is the only switch. German is the default when storage is empty.
 
 ## Components
 
@@ -95,4 +95,4 @@ The phase mapping is pure and covered by `scripts/campus-progress.test.mjs`, whi
 
 ## Writing
 
-Short labels. German is the voice of the default interface: "Anforderungen", "Anrechnung", "Altklausuren", "Kommilitonen", "Fristen". English is a full second set of the same strings, not a partial overlay. The assistant answers in the active language in both engines.
+Short labels. German is the voice of the default interface: "Anforderungen", "Anrechnung", "Altklausuren", "Kommilitonen", "Fristen". English is a full second set of the same strings, not a partial overlay. Both sets live in the keyed catalogs in `src/i18n/` ([i18n.md](i18n.md)); no screen carries a German and an English sentence inline. The assistant answers in the active language in both engines.

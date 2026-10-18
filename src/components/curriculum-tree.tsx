@@ -48,7 +48,7 @@ function TreeNode({
         designation={node.designation || undefined}
         elementType={node.elementType || undefined}
         status={status}
-        meta={kids.length ? `${kids.length} ${tx(locale, 'Unterpunkte', 'children')}` : undefined}
+        meta={kids.length ? `${kids.length} ${tx(locale, 'curriculumTree.unterpunkte')}` : undefined}
         toggle={toggle}
         onPress={onSelect ? () => onSelect(node.id) : undefined}
         onToggle={toggle && onToggle ? () => onToggle(node.id, !open) : undefined}

@@ -176,33 +176,21 @@ export function useCampusHeadlessLogin({
     }
     if (step === 'too-many-attempts' || step === 'submit-failed' || step === 'error') {
       setError(
-        tx(
-          locale,
-          'Die automatische Anmeldung kam nicht durch. Prüfe Kennung und Passwort oder melde dich im sichtbaren Browser an.',
-          'The automated sign-in did not get through. Check the account id and password, or sign in in the visible browser.',
-        ),
+        tx(locale, 'useCampusHeadlessLogin.automatische'),
       );
       return;
     }
     if (step === 'rejected') {
       stopTimers();
       setError(
-        tx(
-          locale,
-          `C@MPUS hat Kennung oder Passwort abgelehnt${typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : ''}. Speichere die Anmeldung neu oder nutze den sichtbaren Browser.`,
-          `C@MPUS rejected the account id or password${typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : ''}. Store the sign-in again or use the visible browser.`,
-        ),
+        tx(locale, 'useCampusHeadlessLogin.c_mpus', [typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : '']),
       );
       return;
     }
     if (step === 'broker-exhausted') {
       stopTimers();
       setError(
-        tx(
-          locale,
-          'Die Anmeldung über die Universität ließ sich nicht starten. Versuche es erneut oder melde dich im sichtbaren Browser an.',
-          'The sign-in through the university could not be started. Try again or sign in in the visible browser.',
-        ),
+        tx(locale, 'useCampusHeadlessLogin.anmeldung'),
       );
     }
   }
@@ -226,10 +214,10 @@ export function useCampusHeadlessLogin({
     if (options.save) {
       const ok = await saveLogin(
         { account: accountValue, password: passwordValue, biometrics: options.biometrics },
-        tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'),
+        tx(locale, 'useCampusHeadlessLogin.c'),
       ).catch(() => false);
       if (ok) setSavedLogin({ account: accountValue.trim(), biometrics: options.biometrics });
-      else setError(tx(locale, 'Der Gerätespeicher nimmt die Anmeldung nicht an.', 'The device vault refused the entry.'));
+      else setError(tx(locale, 'useCampusHeadlessLogin.geraetespeicher'));
     }
     setOpen(true);
     setAttempt((value) => value + 1);
@@ -239,14 +227,14 @@ export function useCampusHeadlessLogin({
     }, POLL_MS);
     timers.current.timeout = setTimeout(() => {
       stopTimers();
-      setError(tx(locale, 'Zeitüberschreitung der automatischen Anmeldung.', 'The automated sign-in timed out.'));
+      setError(tx(locale, 'useCampusHeadlessLogin.zeitueberschreitung'));
     }, TIMEOUT_MS);
   }
 
   function start() {
     const trimmed = account.trim();
     if (trimmed.length < 3 || !password) {
-      setError(tx(locale, 'Bitte Kennung und Passwort eintragen.', 'Enter the account id and the password.'));
+      setError(tx(locale, 'useCampusHeadlessLogin.bitte'));
       return;
     }
     return run(trimmed, password, { save: remember, biometrics: biometrics && biometricsReady });
@@ -256,12 +244,12 @@ export function useCampusHeadlessLogin({
   async function startStoredLogin() {
     setError('');
     const stored = await readLogin(
-      tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'),
+      tx(locale, 'useCampusHeadlessLogin.c'),
       savedLogin?.biometrics ?? false,
     );
     if (!stored) {
       setSavedLogin(null);
-      setError(tx(locale, 'Die gespeicherte Anmeldung ist nicht mehr verfügbar.', 'The stored sign-in is no longer available.'));
+      setError(tx(locale, 'useCampusHeadlessLogin.gespeicherte'));
       return;
     }
     setAccount(stored.account);

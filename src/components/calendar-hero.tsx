@@ -7,18 +7,13 @@ import { activeStudy } from '@/src/auth/campus';
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { formatDay, formatTime, tx, weekdays } from '@/src/text';
+import { formatDay, formatTime, shortMonths, tx, weekdays } from '@/src/text';
 import type { BulkCourse } from '@/src/types';
 
 /** Assigned to the student: the portal marks it with a fixed place (`Fixplatz zugewiesen`). */
 function isAssigned(status: string): boolean {
   return /fixplatz/i.test(status);
 }
-
-const shortMonths = {
-  de: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
-  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-} as const;
 
 function monthShort(iso: string, locale: 'de' | 'en'): string {
   const index = Number(iso.slice(5, 7)) - 1;
@@ -78,12 +73,12 @@ export function CalendarHero() {
             {Number(today.slice(8, 10))}. {monthShort(today, locale)}
           </Text>
           <Text style={styles.heroSub}>
-            {tx(locale, `${upcomingCount} anstehende Termine`, `${upcomingCount} upcoming appointments`)}
+            {tx(locale, 'calendarHero.anstehende', [upcomingCount])}
           </Text>
         </View>
         {nextUp ? (
           <Pressable style={styles.heroNext} onPress={() => handleCoursePress(nextUp)}>
-            <Text style={styles.heroNextKicker}>{tx(locale, 'Als Nächstes', 'Up next')}</Text>
+            <Text style={styles.heroNextKicker}>{tx(locale, 'calendarHero.naechstes')}</Text>
             <Text style={styles.heroNextTitle} numberOfLines={2}>
               {nextUp.title}
             </Text>
@@ -93,12 +88,12 @@ export function CalendarHero() {
           </Pressable>
         ) : (
           <View style={styles.heroNext}>
-            <Text style={styles.heroNextKicker}>{tx(locale, 'Stand', 'Status')}</Text>
+            <Text style={styles.heroNextKicker}>{tx(locale, 'common.stand')}</Text>
             <Text style={styles.heroNextTitle}>
-              {tx(locale, `${fixedCount} Fixplätze`, `${fixedCount} fixed places`)}
+              {tx(locale, 'calendarHero.fixplaetze', [fixedCount])}
             </Text>
             <Text style={styles.heroNextMeta} numberOfLines={1}>
-              {tx(locale, `${dated.length} Termine gesamt`, `${dated.length} appointments total`)}
+              {tx(locale, 'calendarHero.termine', [dated.length])}
             </Text>
           </View>
         )}

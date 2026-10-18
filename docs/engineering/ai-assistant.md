@@ -52,7 +52,7 @@ Summaries of bundled pages use `src/assistant/summarize.ts`: split sentences, th
 - Loads `../.env` without overriding existing environment variables.
 - `GET /health` → `{ ok: true, model: "grok-4.7", configured: boolean }`.
 - Missing key → `503 { error: "missing_key" }`.
-- System prompt, German or English: answer from the FACTS block only, invent no grades, rooms, deadlines, or ECTS, say when something is missing, do not pretend to be an official university system, stay short.
+- System prompt, German or English: answer from the FACTS block only, invent no grades, rooms, deadlines, or ECTS, say when something is missing, do not pretend to be an official university system, stay short. The prompt is keyed in `server/i18n/` and read with `t(locale, 'assist.systemPrompt')` ([i18n.md](i18n.md)).
 - User turn: `FACTS:` then the sheet, then `QUESTION:`.
 - Request body: `{ model: "grok-4.7", store: false, input }`. Timeout 50 seconds.
 - The reply is `output_text`, or the `output_text` blocks inside `output` messages.

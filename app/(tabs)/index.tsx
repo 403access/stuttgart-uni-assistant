@@ -27,14 +27,14 @@ export default function TodayScreen() {
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
   const subtitle = study
     ? `${study.name}${study.intendedDegree ? ` · ${study.intendedDegree}` : ''}${study.versionIdentifier ? ` · ${study.versionIdentifier}` : ''}`
-    : `${student.name} · ${tx(locale, 'Demonstration', 'Demonstration')} · ${student.semester}. ${tx(locale, 'Semester', 'semester')}`;
+    : `${student.name} · ${tx(locale, 'tabsIndex.demonstration')} · ${student.semester}. ${tx(locale, 'common.semester')}`;
   const degreePill = study ? study.name : `${program.degree.de.split(' ')[0]} ${pick(program.title, locale)}`;
 
   return (
     <Screen
       topInset
       kicker="University Assistant"
-      title={sessionMode === 'campus' && sessionName ? sessionName : tx(locale, 'Guten Tag', 'Good day')}
+      title={sessionMode === 'campus' && sessionName ? sessionName : tx(locale, 'tabsIndex.guten')}
       subtitle={subtitle}>
       <StudySelector />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -43,31 +43,27 @@ export default function TodayScreen() {
       </View>
       <CalendarHero />
       <Card onPress={() => router.push('/anforderungen')}>
-        <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'Bestandene Leistung', 'Credits passed')}</Text>
+        <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'tabsIndex.bestandene')}</Text>
         <Text style={{ color: colors.anthracite, fontSize: 28, fontWeight: '700' }}>
           {credit.earned}
           <Text style={{ fontSize: 16, color: colors.inkSoft }}> / {program.totalEcts} ECTS</Text>
         </Text>
         <Meter value={credit.earned} max={program.totalEcts} />
         <Text style={{ color: colors.inkSoft }}>
-          {tx(
-            locale,
-            `${credit.active} ECTS in diesem Semester · Schnitt ${average === null ? '–' : formatGrade(average, locale)}`,
-            `${credit.active} ECTS this semester · average ${average === null ? '–' : formatGrade(average, locale)}`,
-          )}
+          {tx(locale, 'tabsIndex.ects', [credit.active, average === null ? '–' : formatGrade(average, locale)])}
         </Text>
       </Card>
 
       <Card onPress={() => router.push('/studium')}>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
-          {tx(locale, 'Studium öffnen', 'Open Study')}
+          {tx(locale, 'tabsIndex.studium')}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
-          {tx(locale, 'Module, Struktur, Tutorien, Dozierende', 'Modules, structure, tutorials, lecturers')}
+          {tx(locale, 'tabsIndex.module')}
         </Text>
       </Card>
 
-      <Section title={weekdays[locale][now.getDay()] ?? ''} action={tx(locale, 'Campus', 'Campus')} onAction={() => router.push('/campus')} />
+      <Section title={weekdays[locale][now.getDay()] ?? ''} action={tx(locale, 'common.campus')} onAction={() => router.push('/campus')} />
       {sessions.length ? (
         sessions.map((row) => (
           <InfoRow
@@ -80,11 +76,11 @@ export default function TodayScreen() {
         ))
       ) : (
         <Card>
-          <Text style={{ color: colors.inkSoft }}>{tx(locale, 'Heute steht keine Lehrveranstaltung im Plan.', 'No class on today’s timetable.')}</Text>
+          <Text style={{ color: colors.inkSoft }}>{tx(locale, 'tabsIndex.heute')}</Text>
         </Card>
       )}
 
-      <Section title={tx(locale, 'Fristen', 'Deadlines')} action={tx(locale, 'Alle', 'All')} onAction={() => router.push('/fristen')} />
+      <Section title={tx(locale, 'common.fristen')} action={tx(locale, 'common.alle')} onAction={() => router.push('/fristen')} />
       {upcoming.map((item) => (
         <InfoRow
           key={item.id}
@@ -95,7 +91,7 @@ export default function TodayScreen() {
         />
       ))}
 
-      <Section title={tx(locale, 'Meldungen', 'Notices')} action={tx(locale, 'Feed', 'Feed')} onAction={() => router.push('/feed')} />
+      <Section title={tx(locale, 'common.meldungen')} action={tx(locale, 'tabsIndex.feed')} onAction={() => router.push('/feed')} />
       {latest.map((item) => (
         <InfoRow
           key={item.id}

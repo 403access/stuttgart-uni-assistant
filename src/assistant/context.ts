@@ -1,7 +1,7 @@
 import { deadlines, documents, exams, modules, news, people, places, program, reviews, student } from '@/src/data';
 import { areaTotals, lockReason, prerequisitesMet, scheduleForDay, suggestNextSemester, totals, weightedAverage } from '@/src/domain/plan';
 import type { AnswerInput, AnswerModule } from '@/src/assistant/answer';
-import { pick } from '@/src/text';
+import { pick, tx } from '@/src/text';
 import type { ImportedDocument, Locale, ModuleItem, StudyDocument } from '@/src/types';
 
 function moduleLockText(module: ModuleItem, locale: Locale): string {
@@ -9,7 +9,12 @@ function moduleLockText(module: ModuleItem, locale: Locale): string {
   if (!names.length) return '';
   return names
     .map((item) => {
-      const state = item.status === 'passed' ? (locale === 'de' ? 'bestanden' : 'passed') : item.status === 'enrolled' ? (locale === 'de' ? 'belegt, noch nicht bestanden' : 'enrolled, not yet passed') : locale === 'de' ? 'offen' : 'open';
+      const state =
+        item.status === 'passed'
+          ? tx(locale, 'common.bestanden')
+          : item.status === 'enrolled'
+            ? tx(locale, 'assistantContext.belegt')
+            : tx(locale, 'curriculumNodeDetail.offen');
       return `${pick(item.title, locale)} (${state})`;
     })
     .join(', ');
@@ -18,6 +23,7 @@ function moduleLockText(module: ModuleItem, locale: Locale): string {
 function toAnswerModule(module: ModuleItem, locale: Locale): AnswerModule {
   const lecturer = people.find((person) => person.id === module.lecturerId);
   const area = program.areas.find((item) => item.id === module.area);
+  const prerequisiteList = moduleLockText(module, locale) || tx(locale, 'common.keine');
   return {
     id: module.id,
     code: module.code,
@@ -31,10 +37,7 @@ function toAnswerModule(module: ModuleItem, locale: Locale): AnswerModule {
     lecturer: lecturer ? `${pick(lecturer.title, locale)} ${lecturer.name}` : '',
     aliases: module.aliases.join(' '),
     lock: module.status === 'open' ? lockReason(module, modules) : null,
-    prerequisiteText:
-      locale === 'de'
-        ? `Voraussetzungen: ${moduleLockText(module, locale) || 'keine'}.`
-        : `Prerequisites: ${moduleLockText(module, locale) || 'none'}.`,
+    prerequisiteText: tx(locale, 'assistantContext.voraussetzungen', [prerequisiteList]),
   };
 }
 

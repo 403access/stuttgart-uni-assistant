@@ -63,6 +63,7 @@ const sidebars = {
         'engineering/assistant-tunnel',
         'engineering/security-and-privacy',
         'engineering/design-system',
+        'engineering/i18n',
       ],
     },
     {

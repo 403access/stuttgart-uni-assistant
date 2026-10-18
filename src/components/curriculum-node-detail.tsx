@@ -64,27 +64,27 @@ export function CurriculumNodeDetail({ node, study, nodes, locale, onSelect, onC
       setCoursesSync(await getCoursesSyncInfo(study.studyId).catch(() => null));
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setCoursesError(tx(locale, `Kurse nicht geladen (${code}).`, `Courses not loaded (${code}).`));
+      setCoursesError(tx(locale, 'curriculumNodeDetail.kurse_geladen', [code]));
     } finally {
       setCoursesBusy(false);
     }
   }
 
   const rows: [string, string][] = [
-    [tx(locale, 'Kennung', 'Code'), node.designation || '–'],
+    [tx(locale, 'common.kennung'), node.designation || '–'],
     [
-      tx(locale, 'Stand', 'Status'),
-      node.completed ? tx(locale, 'abgeschlossen', 'completed') : node.inProgress ? tx(locale, 'in Arbeit', 'in progress') : tx(locale, 'offen', 'open'),
+      tx(locale, 'common.stand'),
+      node.completed ? tx(locale, 'common.abgeschlossen') : node.inProgress ? tx(locale, 'common.arbeit') : tx(locale, 'curriculumNodeDetail.offen'),
     ],
-    [tx(locale, 'Studiengang', 'Study'), study.name],
-    [tx(locale, 'Element-ID', 'Element ID'), String(node.id)],
-    [tx(locale, 'Überpunkt', 'Parent'), parent ? parent.name : tx(locale, 'Wurzel', 'Root')],
-    [tx(locale, 'Unterpunkte', 'Children'), kids.length ? String(kids.length) : '–'],
+    [tx(locale, 'curriculumNodeDetail.studiengang'), study.name],
+    [tx(locale, 'curriculumNodeDetail.element'), String(node.id)],
+    [tx(locale, 'curriculumNodeDetail.ueberpunkt'), parent ? parent.name : tx(locale, 'common.wurzel')],
+    [tx(locale, 'curriculumNodeDetail.unterpunkte'), kids.length ? String(kids.length) : '–'],
   ];
 
   return (
     <View style={{ gap: 10 }}>
-      <Section title={node.elementType || tx(locale, 'Knoten', 'Node')} action={tx(locale, 'Schließen', 'Close')} onAction={onClose} />
+      <Section title={node.elementType || tx(locale, 'curriculumNodeDetail.knoten')} action={tx(locale, 'common.schliessen')} onAction={onClose} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 17, fontWeight: '700' }}>{node.name}</Text>
         {rows.map(([label, value]) => (
@@ -96,7 +96,7 @@ export function CurriculumNodeDetail({ node, study, nodes, locale, onSelect, onC
       </Card>
       {kids.length > 0 ? (
         <>
-          <Section title={tx(locale, 'Unterpunkte', 'Children')} />
+          <Section title={tx(locale, 'curriculumNodeDetail.unterpunkte')} />
           {kids.map((kid) => (
             <Card key={kid.id} onPress={() => onSelect(kid.id)}>
               <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{kid.name}</Text>
@@ -105,23 +105,19 @@ export function CurriculumNodeDetail({ node, study, nodes, locale, onSelect, onC
           ))}
         </>
       ) : null}
-      <Section title={tx(locale, 'Kurse', 'Courses')} />
+      <Section title={tx(locale, 'common.kurse')} />
       {courses === null && !coursesError ? (
         <>
           {coursesSync ? (
             <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
-              {tx(
-                locale,
-                `Kurs-Cache: ${coursesSync.courseCount} Kurse aus ${coursesSync.elementsFetched} Elementen — dieses Element fehlt noch.`,
-                `Course cache: ${coursesSync.courseCount} courses from ${coursesSync.elementsFetched} elements — this element is still missing.`,
-              )}
+              {tx(locale, 'curriculumNodeDetail.kurs', [coursesSync.courseCount, coursesSync.elementsFetched])}
             </Text>
           ) : null}
-          <Button secondary label={coursesBusy ? '…' : tx(locale, 'Kurse laden', 'Load courses')} onPress={loadNodeCourses} />
+          <Button secondary label={coursesBusy ? '…' : tx(locale, 'curriculumNodeDetail.kurse')} onPress={loadNodeCourses} />
         </>
       ) : null}
       {coursesError ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{coursesError}</Text> : null}
-      {courses && courses.length === 0 ? <Muted>{tx(locale, 'Keine Lehrveranstaltungen an diesem Knoten.', 'No courses on this node.')}</Muted> : null}
+      {courses && courses.length === 0 ? <Muted>{tx(locale, 'common.lehrveranstaltungen')}</Muted> : null}
       {courses?.map((course) => (
         <InfoRow
           key={course.id}

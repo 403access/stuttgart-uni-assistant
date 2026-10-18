@@ -10,7 +10,7 @@ export function LecturersList() {
   const { locale } = useApp();
   return (
     <View style={{ gap: 8 }}>
-      <Muted>{tx(locale, 'Erfundene Profile für die Demonstration.', 'Fictional profiles for the demonstration.')}</Muted>
+      <Muted>{tx(locale, 'lecturersList.erfundene')}</Muted>
       {people.map((person) => (
         <InfoRow
           key={person.id}

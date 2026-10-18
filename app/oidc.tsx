@@ -11,12 +11,8 @@ export default function OidcReturnScreen() {
   return (
     <Screen
       topInset
-      title={tx(locale, 'Anmeldung', 'Sign-in')}
-      subtitle={tx(
-        locale,
-        'Wenn sich dieses Fenster nicht schließt, wechsle zurück zur App. Die Universität hat die Anmeldung an diese Adresse zurückgeschickt.',
-        'If this window does not close, switch back to the app. The university sent the sign-in back to this address.',
-      )}
+      title={tx(locale, 'common.anmeldung_2')}
+      subtitle={tx(locale, 'oidc.wenn')}
     >
       {null}
     </Screen>

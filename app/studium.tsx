@@ -17,10 +17,10 @@ import type { ModuleStatus } from '@/src/types';
 const filters: (ModuleStatus | 'all')[] = ['all', 'enrolled', 'open', 'passed'];
 
 const segments = [
-  { key: 'module', de: 'Module', en: 'Modules' },
-  { key: 'structure', de: 'Struktur', en: 'Structure' },
-  { key: 'tutorials', de: 'Tutorien', en: 'Tutorials' },
-  { key: 'lecturers', de: 'Dozierende', en: 'Lecturers' },
+  { key: 'module', label: (locale: 'de' | 'en') => tx(locale, 'studium.module') },
+  { key: 'structure', label: (locale: 'de' | 'en') => tx(locale, 'campusInfoView.struktur') },
+  { key: 'tutorials', label: (locale: 'de' | 'en') => tx(locale, 'studium.tutorien') },
+  { key: 'lecturers', label: (locale: 'de' | 'en') => tx(locale, 'common.dozierende') },
 ] as const;
 
 type SegmentKey = (typeof segments)[number]['key'];
@@ -37,11 +37,11 @@ export default function StudyScreen() {
   }, [filter, query]);
 
   return (
-    <Screen kicker={tx(locale, 'Modulplan', 'Module plan')} title={tx(locale, 'Studium', 'Study')} subtitle={pick(program.title, locale)}>
+    <Screen kicker={tx(locale, 'studium.modulplan')} title={tx(locale, 'common.studium')} subtitle={pick(program.title, locale)}>
       <View style={segmentRow}>
         {segments.map((item) => (
           <Pressable key={item.key} onPress={() => setSegment(item.key)}>
-            <Pill label={tx(locale, item.de, item.en)} active={segment === item.key} />
+            <Pill label={item.label(locale)} active={segment === item.key} />
           </Pressable>
         ))}
       </View>
@@ -54,19 +54,19 @@ export default function StudyScreen() {
             <Meter value={credit.earned} max={program.totalEcts} />
           </Card>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <Shortcut label={tx(locale, 'Anforderungen', 'Requirements')} onPress={() => router.push('/anforderungen')} />
-            <Shortcut label={tx(locale, 'Reihenfolge', 'Sequence')} onPress={() => router.push('/reihenfolge')} />
+            <Shortcut label={tx(locale, 'common.anforderungen')} onPress={() => router.push('/anforderungen')} />
+            <Shortcut label={tx(locale, 'common.reihenfolge')} onPress={() => router.push('/reihenfolge')} />
           </View>
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder={tx(locale, 'Modul, Thema oder Code', 'Module, topic, or code')}
+            placeholder={tx(locale, 'studium.modul')}
             placeholderTextColor={colors.mute}
             style={inputStyle}
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {filters.map((item) => {
-              const label = item === 'all' ? tx(locale, 'Alle', 'All') : moduleStatus(item, locale);
+              const label = item === 'all' ? tx(locale, 'common.alle') : moduleStatus(item, locale);
               return (
                 <Pressable key={item} onPress={() => setFilter(item)}>
                   <Pill label={label} active={filter === item} />
@@ -80,7 +80,7 @@ export default function StudyScreen() {
               key={item.id}
               title={pick(item.title, locale)}
               meta={`${item.ects} ECTS`}
-              detail={`${item.code} · ${moduleStatus(item.status, locale)}${plannedIds.includes(item.id) ? ` · ${tx(locale, 'vorgemerkt', 'planned')}` : ''}`}
+              detail={`${item.code} · ${moduleStatus(item.status, locale)}${plannedIds.includes(item.id) ? ` · ${tx(locale, 'studium.vorgemerkt')}` : ''}`}
               onPress={() => router.push({ pathname: '/modul/[id]', params: { id: item.id } })}
             />
           ))}

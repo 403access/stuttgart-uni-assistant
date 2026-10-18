@@ -1,8 +1,8 @@
 import type { Locale, Localized } from '@/src/types';
 
-export function tx(locale: Locale, de: string, en: string): string {
-  return locale === 'de' ? de : en;
-}
+// Locale strings live in `src/i18n`; re-exported here so existing imports of `tx`
+// keep working. Prefer importing from `@/src/i18n` in new code.
+export { t, tx, type TranslationKey, type TranslateValues } from '@/src/i18n';
 
 export function pick(value: Localized, locale: Locale): string {
   return value[locale];
@@ -12,11 +12,10 @@ export function formatDate(iso: string, locale: Locale): string {
   const [year, month, day] = iso.split('-');
   if (!year || !month || !day) return iso;
   if (locale === 'de') return `${day}.${month}.${year}`;
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${Number(day)} ${months[Number(month) - 1]} ${year}`;
+  return `${Number(day)} ${shortMonths.en[Number(month) - 1]} ${year}`;
 }
 
-const shortMonths: Record<Locale, string[]> = {
+export const shortMonths: Record<Locale, string[]> = {
   de: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };

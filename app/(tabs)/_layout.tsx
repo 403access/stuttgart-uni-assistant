@@ -39,14 +39,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: tx(locale, 'Dashboard', 'Dashboard'),
+          title: tx(locale, 'tabsLayout.dashboard'),
           tabBarIcon: ({ color }) => <BarIcon symbol="house.fill" material="home" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="kalender"
         options={{
-          title: tx(locale, 'Kalender', 'Calendar'),
+          title: tx(locale, 'tabsLayout.kalender'),
           tabBarIcon: ({ color }) => <BarIcon symbol="calendar" material="calendar-today" color={color as string} />,
         }}
       />
@@ -60,14 +60,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="mail"
         options={{
-          title: tx(locale, 'Nachrichten', 'Messages'),
+          title: tx(locale, 'tabsLayout.nachrichten'),
           tabBarIcon: ({ color }) => <BarIcon symbol="envelope.fill" material="mail" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="mehr"
         options={{
-          title: tx(locale, 'Campus', 'Campus'),
+          title: tx(locale, 'common.campus'),
           tabBarIcon: ({ color }) => <BarIcon symbol="ellipsis.circle.fill" material="more-horiz" color={color as string} />,
         }}
       />

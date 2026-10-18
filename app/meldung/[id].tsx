@@ -18,8 +18,8 @@ export default function NewsDetailScreen() {
   const item = news.find((entry) => entry.id === one(id));
   if (!item) {
     return (
-      <Screen kicker={tx(locale, 'Meldung fehlt', 'Notice missing')} subtitle={tx(locale, 'Kein Eintrag mit dieser Kennung.', 'No entry with this id.')}>
-        <Stack.Screen options={{ title: tx(locale, 'Meldung fehlt', 'Notice missing') }} />
+      <Screen kicker={tx(locale, 'meldung.meldung')} subtitle={tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'meldung.meldung') }} />
       </Screen>
     );
   }

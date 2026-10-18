@@ -11,24 +11,12 @@ import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { MailStatus, PlatformId } from '@/src/types';
 
-const copy: Record<PlatformId, { de: string; en: string }> = {
-  campus: {
-    de: 'Stundenplan, Noten, Prüfungsanmeldung, Modulhandbuch und amtliche Hinweise. In dieser Fassung ein lokaler Abzug.',
-    en: 'Timetable, grades, exam registration, module handbook, and official notices. In this build, a local extract.',
-  },
-  ilias: {
-    de: 'Folien, Übungsblätter und Forenhinweise der belegten Kurse. Synchronisieren legt sie als offline markiert ab.',
-    en: 'Slides, exercise sheets, and forum notes from enrolled courses. Sync marks them as saved offline.',
-  },
-  sdg: {
-    de: 'FÜSQ-Katalog und Belegung der Schlüsselqualifikationen, darunter der Nachhaltigkeitskurs.',
-    en: 'Key-competency catalogue and enrollment, including the sustainability course.',
-  },
-  siam: {
-    de: 'Nutzerkonto im Identitätsmanagement. Die Anmeldung öffnet den OIDC-Endpunkt des TIK, https://idp.uni-stuttgart.de/idp/profile/oidc/authorize. C@MPUS unter https://campus.uni-stuttgart.de/ verwendet denselben Provider.',
-    en: 'Account in the identity management. Sign-in opens the TIK OIDC endpoint, https://idp.uni-stuttgart.de/idp/profile/oidc/authorize. C@MPUS at https://campus.uni-stuttgart.de/ uses the same provider.',
-  },
-};
+function platformCopy(id: PlatformId, locale: 'de' | 'en'): string {
+  if (id === 'campus') return tx(locale, 'plattformen.stundenplan');
+  if (id === 'ilias') return tx(locale, 'plattformen.folien');
+  if (id === 'sdg') return tx(locale, 'plattformen.fuesq');
+  return tx(locale, 'plattformen.nutzerkonto');
+}
 
 export default function PlatformsScreen() {
   const { locale, syncAt, syncPlatform, sessionAccount, sessionMode } = useApp();
@@ -44,46 +32,40 @@ export default function PlatformsScreen() {
     };
   }, []);
   return (
-    <Screen kicker={tx(locale, 'Anbindung', 'Connections')} subtitle={tx(locale, 'C@MPUS, ILIAS und SDG Campus bleiben lokal. SIAM öffnet den Identity Provider im Browser.', 'C@MPUS, ILIAS, and SDG Campus stay local. SIAM opens the identity provider in the browser.')}>
-      <Stack.Screen options={{ title: tx(locale, 'Plattformen', 'Platforms') }} />
+    <Screen kicker={tx(locale, 'plattformen.anbindung')} subtitle={tx(locale, 'plattformen.c')}>
+      <Stack.Screen options={{ title: tx(locale, 'common.plattformen') }} />
       {ids.map((id) => (
         <Card key={id}>
           <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>{platformName(id)}</Text>
-          <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>{copy[id][locale]}</Text>
+          <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>{platformCopy(id, locale)}</Text>
           <Text style={{ color: colors.blue, fontWeight: '700' }}>
             {id === 'siam'
-              ? tx(
-                  locale,
-                  sessionMode === 'oidc' ? `Konto ${sessionAccount ?? '–'} · IdP` : `Konto ${sessionAccount ?? '–'} · Demonstration`,
-                  sessionMode === 'oidc' ? `Account ${sessionAccount ?? '–'} · IdP` : `Account ${sessionAccount ?? '–'} · demonstration`,
-                )
+              ? sessionMode === 'oidc'
+                ? tx(locale, 'plattformen.konto_idp', [sessionAccount ?? '–'])
+                : tx(locale, 'plattformen.konto', [sessionAccount ?? '–'])
               : syncAt[id]
-                ? tx(locale, `Zuletzt markiert ${new Date(syncAt[id] as string).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB')}`, `Last marked ${new Date(syncAt[id] as string).toLocaleString('en-GB')}`)
-                : tx(locale, 'Noch nicht synchronisiert', 'Not synced yet')}
+                ? tx(locale, 'plattformen.zuletzt', [new Date(syncAt[id] as string).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB')])
+                : tx(locale, 'plattformen.synchronisiert')}
           </Text>
           {id === 'campus' ? (
-            <Button label={tx(locale, 'C@MPUS öffnen', 'Open C@MPUS')} onPress={() => openOfficialCampus().catch(() => undefined)} secondary />
+            <Button label={tx(locale, 'plattformen.c_mpus')} onPress={() => openOfficialCampus().catch(() => undefined)} secondary />
           ) : null}
-          {id === 'siam' ? null : <Button label={tx(locale, 'Jetzt synchronisieren', 'Sync now')} onPress={() => syncPlatform(id)} secondary />}
+          {id === 'siam' ? null : <Button label={tx(locale, 'plattformen.jetzt')} onPress={() => syncPlatform(id)} secondary />}
         </Card>
       ))}
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
         <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
-          {tx(
-            locale,
-            'Uni-E-Mail über https://mail.uni-stuttgart.de/. Hier Anmeldedaten hinterlegen, dann liest die App den Posteingang über den IMAP-Dienst des TIK.',
-            'University e-mail at https://mail.uni-stuttgart.de/. Store credentials here, then the app reads the inbox over the TIK IMAP service.',
-          )}
+          {tx(locale, 'plattformen.uni')}
         </Text>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>
           {mail === null
-            ? tx(locale, 'Der Assistenz-Server antwortet noch nicht.', 'The assistant server is not answering.')
+            ? tx(locale, 'plattformen.assistenz')
             : mail.configured
-              ? tx(locale, `Konto ${mail.account ?? '–'} · IMAP`, `Account ${mail.account ?? '–'} · IMAP`)
-              : tx(locale, 'Noch keine Anmeldedaten hinterlegt', 'No credentials stored yet')}
+              ? tx(locale, 'plattformen.konto_imap', [mail.account ?? '–'])
+              : tx(locale, 'plattformen.anmeldedaten')}
         </Text>
-        <Button label={tx(locale, 'UniMail eintragen', 'Set up UniMail')} onPress={() => router.push('/mail')} secondary />
+        <Button label={tx(locale, 'plattformen.unimail')} onPress={() => router.push('/mail')} secondary />
       </Card>
     </Screen>
   );

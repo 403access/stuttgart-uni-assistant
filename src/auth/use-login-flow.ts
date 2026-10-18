@@ -47,11 +47,7 @@ export function useLoginFlow() {
       // between the wait and the home tabs.
       headless.setPhase('profile');
       setCampusLog(
-        tx(
-          locale,
-          `Browser-Anmeldung übernommen (${result.studies} Studiengänge). Lade Profil …`,
-          `Browser sign-in adopted (${result.studies} studies). Loading profile …`,
-        ),
+        tx(locale, 'common.browser', [result.studies]),
       );
       campusSignIn.mutate();
     },
@@ -73,16 +69,12 @@ export function useLoginFlow() {
     mutationFn: signInWithCampusToken,
     onMutate: () => {
       setError('');
-      setCampusLog(tx(locale, `Rufe ${assistantUrl}/v1/campus/login auf …`, `Calling ${assistantUrl}/v1/campus/login …`));
+      setCampusLog(tx(locale, 'common.rufe', [assistantUrl]));
     },
     onSuccess: (profile) => {
       const names = profile.studies.map((item) => item.name).join(', ');
       setCampusLog(
-        tx(
-          locale,
-          `Angemeldet als ${profile.name} (${profile.account}). ${profile.nodes.length} Knoten, ${profile.studies.length} ${profile.studies.length === 1 ? 'Studiengang' : 'Studiengänge'}: ${names}.`,
-          `Signed in as ${profile.name} (${profile.account}). ${profile.nodes.length} nodes, ${profile.studies.length} ${profile.studies.length === 1 ? 'study' : 'studies'}: ${names}.`,
-        ),
+        tx(locale, 'common.angemeldet', [profile.name, profile.account, profile.nodes.length, profile.studies.length, profile.studies.length === 1 ? 'Studiengang' : 'Studiengänge', names]),
       );
       // Deliberately no close() here: the session update and the navigation land
       // in the same tick, so hiding the waiting view now would render one frame
@@ -100,7 +92,7 @@ export function useLoginFlow() {
       headless.close();
       browser.close();
       showFetchAlert(locale, {
-        title: tx(locale, 'C@MPUS-Anmeldung fehlgeschlagen', 'C@MPUS sign-in failed'),
+        title: tx(locale, 'common.c'),
         code,
         detail: campusDetail(caught) || undefined,
         onRetry: () => campusSignIn.mutate(),

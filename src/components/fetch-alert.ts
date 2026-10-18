@@ -20,7 +20,7 @@ export function showFetchAlert(locale: Locale, alert: FetchAlert): void {
     tone: 'error',
     title: alert.title,
     message: [alert.code, alert.detail].filter(Boolean).join('\n'),
-    actionLabel: alert.onRetry ? tx(locale, 'Erneut versuchen', 'Retry') : undefined,
+    actionLabel: alert.onRetry ? tx(locale, 'fetchAlert.erneut') : undefined,
     onAction: alert.onRetry,
   });
 }
