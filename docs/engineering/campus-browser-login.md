@@ -49,6 +49,8 @@ Observed end to end on 18 October 2026 with a real student credential: `sso-clic
 
 The credential never leaves the device: the fill and submit happen in the app's own WebView against the university page, and only the resulting session goes to `POST /v1/campus/credentials`. Failure shows inside the modal with a button to fall back to the visible browser. While the hidden browser works, the modal shows the phases of the sign-in (`connect`, `identify`, `adopt`, `profile`) from `src/auth/campus-progress.ts` through `src/components/signing-in.tsx`, rather than an empty spinner — see [design-system.md](design-system.md#waiting-states).
 
+The wait uses the whole display: the title sits at the top and the mark, current phase and step list spread evenly down to the footer. The hidden `WebView` must stay out of that layout — pass the off-screen style through `containerStyle`, not `style`. `react-native-webview` applies `style` to its inner native view and keeps a `flex: 1` wrapper, so styling only `style` leaves the wrapper in flow and splits the height with the progress.
+
 The waiting view is deliberately **not** dismissed when the session is adopted. The session update and the route change land in the same tick, so hiding the modal at that moment renders one frame of the bare login screen before the tabs arrive. It stays up through `profile` and disappears with the login screen when the gate swaps in the tabs, so the visible transition is waiting view → home.
 
 ## Manual browser sign-in (Beta)

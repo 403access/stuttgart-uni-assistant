@@ -497,6 +497,7 @@ export const de = {
   "reihenfolge.vorschlag": "Vorschlag nächstes Semester · {0} ECTS",
   "reihenfolge.zuerst": "Zuerst werden fast volle Bereiche geschlossen, dann die größten Lücken.",
   "signingIn.anmeldung": "Anmeldung",
+  "signingIn.initialisierung": "Initialisierung …",
   "signingIn.sitzung": "Sitzung übernehmen",
   "signingIn.studiengaenge": "Studiengänge laden",
   "signingIn.verbindung": "Verbindung zu C@MPUS",

@@ -58,6 +58,10 @@ export function CampusHeadlessModal({
   return (
     <Modal visible={visible} presentationStyle="fullScreen" animationType="fade" onRequestClose={onCancel}>
       <View style={[styles.screen, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 16) }]}>
+        {/* The waiting WebView stays mounted (it drives the sign-in), but it must
+            not take layout space. `style` only reaches the inner native view;
+            `containerStyle` is the flex-1 wrapper, so the hidden frame goes
+            there — otherwise it splits the height with the progress. */}
         <WebView
           key={attempt}
           ref={webview}
@@ -68,6 +72,7 @@ export function CampusHeadlessModal({
           onMessage={onMessage}
           onLoadEnd={onLoadEnd}
           style={styles.hidden}
+          containerStyle={styles.hidden}
           pointerEvents="none"
         />
         <View style={styles.progress}>
@@ -91,7 +96,8 @@ export function CampusHeadlessModal({
           </ScrollView>
         ) : null}
         <View style={styles.footer}>
-          <Button secondary label={tx(locale, 'campusHeadlessModal.seite')} onPress={onDump} />
+          {/* The page dump is a debugging aid, so its trigger stays in dev builds. */}
+          {__DEV__ ? <Button secondary label={tx(locale, 'campusHeadlessModal.seite')} onPress={onDump} /> : null}
           {error ? (
             <Button secondary label={tx(locale, 'campusHeadlessModal.sichtbaren')} onPress={onFallback} />
           ) : null}
@@ -104,7 +110,9 @@ export function CampusHeadlessModal({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.mist },
-  progress: { flex: 1, justifyContent: 'center', gap: 20, paddingHorizontal: 24 },
+  // The step list fills the whole surface: the title sits at the top and the
+  // progress spreads down to the footer instead of hanging in the middle.
+  progress: { flex: 1, gap: 16, paddingHorizontal: 24, paddingTop: 8 },
   title: { color: colors.anthracite, fontSize: 20, fontWeight: '700', textAlign: 'center' },
   dump: { maxHeight: 200, marginHorizontal: 24 },
   dumpText: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo' },

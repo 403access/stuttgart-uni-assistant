@@ -498,6 +498,7 @@ export const en: Record<TranslationKey, string> = {
   "reihenfolge.vorschlag": "Suggested next semester · {0} ECTS",
   "reihenfolge.zuerst": "Nearly finished areas close first, then the largest gaps.",
   "signingIn.anmeldung": "Signing in",
+  "signingIn.initialisierung": "Initializing …",
   "signingIn.sitzung": "Adopting the session",
   "signingIn.studiengaenge": "Loading your studies",
   "signingIn.verbindung": "Connecting to C@MPUS",
