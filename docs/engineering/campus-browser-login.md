@@ -6,16 +6,25 @@ Temporary workaround until the university approves the OIDC client: sign in with
 
 `Automatisch anmelden` on the login screen takes the account id and the password, optionally stores them in the device vault ([vault.ts](../../src/auth/vault.ts)), and runs the sign-in in a hidden `WebView`. The script builders live in [campus-browser-scripts.ts](../../src/auth/campus-browser-scripts.ts), free of React Native imports so `scripts/campus-headless.test.mjs` can drive them against fixtures in `jsdom`.
 
-Two real login pages appear on that path, and the script covers both: the CAMPUSonline Keycloak form (`#username`, `#password`, `#kc-login`, posted to `login-actions/authenticate`, also reachable through the `data-test="id_brm-pm-dtop_login_*_input"` hooks) and a Shibboleth form (`j_username`, `j_password`, `_eventId_proceed`). A form dump from the real page pinned the details: the echoed account is overwritten with the stored one, the form disables its own submit button on submit, and a rejected credential re-renders the form with `#input-error` and `aria-invalid="true"`. What happens:
+The C@MPUS shell presents **two** sign-ins on the same page: the realm's own account form, embedded in the shell document (the URL stays `/cusonline/`), and a link to the brokered university sign-in. A student's st-account only exists at the broker, so the script takes that entry first:
 
-1. The hidden WebView opens `https://campus.uni-stuttgart.de/cusonline/`. The C@MPUS shell forwards to the Keycloak realm under `/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/`.
-2. On every load, and on a three-second poll for late-rendered single-page forms, the script looks for a password field, prefers the named username fields, fills both, and clicks the form's own submit control (falling back to `requestSubmit()`, then `submit()`). A "sign in" call to action is clicked when the login sits behind one — the C@MPUS shell page renders no form at all.
-3. Fillability is decided by computed style (`display`, `visibility`), never by rectangle size: the hidden WebView reports zero-sized rectangles for every element, and an earlier size check rejected the real Keycloak password field. Only the size-independent check reached it.
-4. A submit button left disabled by the page is re-enabled before the click, because a disabled control ignores `click()` and would swallow a retry.
-5. A rejected credential is detected from the re-rendered form (`#input-error` text or `aria-invalid` on the password field) and reported as the `rejected` step instead of spending the rest of the budget on the same pair.
-6. Submits are throttled (five seconds apart, three per page, six per run; a navigation or a new attempt restores the page budget) so a wrong password cannot loop. The whole attempt times out after 90 seconds.
-7. Signed in means the `cusonline_co.login.accessToken` value exists in web storage **and** the URL is not the `#/login` route. The desktop login route also contains `/desktop/`, and treating it as signed in harvested an empty session.
-8. The harvest below then runs unchanged: the token from web storage plus the natively read `HttpOnly` cookies.
+```
+/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/broker/oidc/login?client_id=co-iam-idp-connector&tab_id=…
+  → https://idp.uni-stuttgart.de/idp/profile/oidc/authorize?execution=e1s1
+  → https://idp.uni-stuttgart.de/idp/profile/oidc/authorize?execution=e1s2   (the sign-in form)
+```
+
+Filling the embedded local form instead is what produced Keycloak's generic "Benutzername oder Kennwort ungültig" with a correct student credential — that realm has never heard of the account. The step order is:
+
+1. The hidden WebView opens `https://campus.uni-stuttgart.de/cusonline/`.
+2. On the shell, a `Zur Anmeldung`/broker entry (`/broker/oidc/login`, else any `/broker/*/login`) is clicked before any password form is filled. This is the `sso-click` step.
+3. On `idp.uni-stuttgart.de` the Shibboleth form is filled (`j_username`, `j_password`, `_eventId_proceed` — a `<button>`, not an `<input>`). The CAMPUSonline Keycloak form (`#username`, `#password`, `#kc-login`, or the `data-test="id_brm-pm-dtop_login_*_input"` hooks) is still covered for the realm's own accounts.
+4. Fillability is decided by computed style (`display`, `visibility`), never by rectangle size: the hidden WebView reports zero-sized rectangles for every element.
+5. A submit button left disabled by the page is re-enabled before the click, and the stored account always overwrites the portal's echoed prefill.
+6. A portal-reported refusal stops the run: the `rejected` step carries the portal's own text, from Keycloak's `#input-error`/`aria-invalid` or the identity provider's `p.output-message.output--error` ("Invalid authentication credentials."). Retrying a refused credential is what locks accounts, so it does not happen.
+7. Submits are otherwise throttled (five seconds apart, three per page, six per run; a navigation or a new attempt restores the page budget); the whole attempt times out after 90 seconds.
+8. Signed in means the `cusonline_co.login.accessToken` value exists in web storage **and** the URL is not the `#/login` route. The desktop login route also contains `/desktop/`, and treating it as signed in harvested an empty session.
+9. The harvest below then runs unchanged: the token from web storage plus the natively read `HttpOnly` cookies.
 
 Every step posts back and is logged as `[campus-headless] <step> <url>`, with `user=`/`submit=` on `filled`, `label=` on `cta-click`, `reason=` on `rejected`, and `passwordInputs`/`display`/`size`/`readyState` on `no-form`. The modal has a `Seite ausgeben` button that posts a redacted dump of the current page's forms and controls (`[campus-headless-dump]`) for pinning selectors against a page that changes.
 

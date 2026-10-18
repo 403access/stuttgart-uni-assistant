@@ -180,6 +180,7 @@ export default function LoginScreen() {
     url?: unknown;
     title?: unknown;
     label?: unknown;
+    href?: unknown;
     reason?: unknown;
     user?: unknown;
     submit?: unknown;
@@ -289,6 +290,9 @@ export default function LoginScreen() {
     }
     if (step === 'cta-click') {
       console.info('[campus-headless]', `label=${String(parsed.label ?? '?')}`);
+    }
+    if (step === 'sso-click') {
+      console.info('[campus-headless]', `href=${String(parsed.href ?? '?')}`);
     }
     if (step === 'rejected') {
       console.info('[campus-headless]', `reason=${String(parsed.reason ?? '?')}`);

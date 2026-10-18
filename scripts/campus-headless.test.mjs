@@ -79,6 +79,53 @@ const CHOOSER_HTML = `<!doctype html><html><body>
   <button type="button">Anmelden mit st-Konto</button>
 </body></html>`;
 
+/**
+ * The real C@MPUS shell: the realm's own account form is embedded in the page
+ * while the URL stays /cusonline/, next to the brokered sign-in entries. The
+ * st-account only exists at the broker, so the entries must win.
+ */
+const CAMPUS_SHELL_HTML = `<!doctype html><html><body>
+  <form id="kc-form-login" action="/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/login-actions/authenticate?session_code=x" method="post">
+    <input id="username" name="username" type="text" />
+    <input id="password" name="password" type="password" />
+    <input name="login" id="kc-login" type="submit" value="Sign In" />
+  </form>
+  <a href="/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/broker/Anmeldung/login?client_id=co-iam-idp-connector&amp;tab_id=x">Alternative Anmeldung</a>
+  <a href="/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/broker/oidc/login?client_id=co-iam-idp-connector&amp;tab_id=x">Zur Anmeldung</a>
+  <a href="https://www.uni-stuttgart.de/datenschutz/">Datenschutz</a>
+</body></html>`;
+
+/** Where the broker entry lands: the university identity provider. */
+const SHIBBOLETH_OIDC_HTML = `<!doctype html><html><head><title>Web Login Service</title></head><body>
+  <form action="/idp/profile/oidc/authorize?execution=e1s2" method="post">
+    <input type="hidden" name="csrf_token" value="csrf-hint" />
+    <input name="j_username" type="text" />
+    <input name="j_password" type="password" />
+    <input type="checkbox" name="donotcache" checked />
+    <button name="_eventId_proceed" type="submit">Anmelden</button>
+  </form>
+</body></html>`;
+
+/** The same form as the identity provider re-renders it after a refusal. */
+const SHIBBOLETH_REJECTED_HTML = `<!doctype html><html><head><title>Web Login Service</title></head><body>
+  <form action="/idp/profile/oidc/authorize?execution=e1s3" method="post">
+    <input type="hidden" name="csrf_token" value="csrf-hint" />
+    <input name="j_username" type="text" />
+    <input name="j_password" type="password" />
+    <p class="output-message output--error">Invalid authentication credentials.</p>
+    <button name="_eventId_proceed" type="submit">Anmelden</button>
+  </form>
+</body></html>`;
+
+/** The realm's own form, prefilled with the account from a previous attempt. */
+const KEYCLOAK_PREFILLED_HTML = `<!doctype html><html><body>
+  <form id="kc-form-login" action="/login-actions/authenticate?execution=x" method="post">
+    <input id="username" name="username" type="text" value="st206509@stud.uni-stuttgart.de" />
+    <input id="password" name="password" type="password" />
+    <input id="kc-login" name="login" type="submit" value="Sign In" />
+  </form>
+</body></html>`;
+
 const EMPTY_HTML = '<!doctype html><html><body><p>nothing to fill</p></body></html>';
 
 function open(html, url) {
@@ -220,13 +267,15 @@ test('a new run id and a new URL both restore the submit budget', async () => {
   assert.equal(last(navigated).step, 'filled');
 });
 
-test('the real rejected Keycloak form: the echoed account is overwritten, not kept', async () => {
-  const page = open(KEYCLOAK_REJECTED_HTML, KEYCLOAK_URL);
+test('the prefilled account from a previous attempt is overwritten, not kept', async () => {
+  const page = open(KEYCLOAK_PREFILLED_HTML, KEYCLOAK_URL);
   await inject(page, autofill('st123456', 'secret-password'));
 
   assert.equal(last(page).step, 'filled');
   assert.equal(page.window.document.querySelector('#username').value, 'st123456');
   assert.equal(page.window.document.querySelector('#password').value, 'secret-password');
+  assert.equal(last(page).userLength, 8);
+  assert.equal(last(page).passwordLength, 15);
   assert.equal(page.submits.length, 1);
 });
 
@@ -242,18 +291,15 @@ test('a rejection is reported instead of spending the submit budget', async () =
   assert.equal(page.submits.length, 0);
 });
 
-test('a submit on an earlier page does not count as a rejection here', async () => {
+test('a portal-reported rejection is honoured without spending an attempt', async () => {
   const page = open(KEYCLOAK_REJECTED_HTML, KEYCLOAK_URL);
   page.window.sessionStorage.setItem('campus_autofill_run', 'run-1');
-  page.window.sessionStorage.setItem('campus_autofill_url', 'https://campus.uni-stuttgart.de/cusonline/previous');
-  page.window.sessionStorage.setItem('campus_autofill_submits', '2');
-  page.window.sessionStorage.setItem('campus_autofill_total', '2');
-  await inject(page, autofill('st123456', 'secret-password'));
+  page.window.sessionStorage.setItem('campus_autofill_url', KEYCLOAK_URL);
+  await inject(page, autofill(), 50);
 
-  assert.equal(last(page).step, 'filled');
-  assert.equal(last(page).userLength, 8);
-  assert.equal(last(page).passwordLength, 15);
-  assert.equal(page.submits.length, 1);
+  assert.equal(last(page).step, 'rejected');
+  assert.match(String(last(page).reason), /invalid/i);
+  assert.equal(page.submits.length, 0);
 });
 
 test('the form disables its own submit button; a retry still submits', async () => {
@@ -284,6 +330,38 @@ test('data-test hooks identify the fields when the ids do not', async () => {
   assert.equal(page.window.document.querySelector('#field-b').value, 'secret-password');
   assert.equal(last(page).passwordIndex, 0);
   assert.equal(page.submits.length, 1);
+});
+
+test('the C@MPUS shell: the brokered st-account entry wins over the embedded local form', async () => {
+  const page = open(CAMPUS_SHELL_HTML, 'https://campus.uni-stuttgart.de/cusonline/');
+  await inject(page, autofill(), 350);
+
+  assert.equal(last(page).step, 'sso-click');
+  assert.match(String(last(page).href), /\/broker\/oidc\/login/);
+  assert.equal(page.submits.length, 0);
+  assert.equal(page.window.document.querySelector('#password').value, '');
+});
+
+test('the identity-provider form behind the broker entry is filled', async () => {
+  const page = open(SHIBBOLETH_OIDC_HTML, 'https://idp.uni-stuttgart.de/idp/profile/oidc/authorize?execution=e1s2');
+  await inject(page, autofill());
+
+  assert.equal(last(page).step, 'filled');
+  assert.equal(last(page).userField, 'j_username');
+  assert.equal(last(page).passwordField, 'j_password');
+  assert.equal(last(page).submitField, '_eventId_proceed');
+  assert.equal(page.window.document.querySelector('input[name=j_username]').value, 'st123456');
+  assert.equal(page.window.document.querySelector('input[name=j_password]').value, 'secret-password');
+  assert.equal(page.submits.length, 1);
+});
+
+test('the identity-provider refusal is reported, not retried', async () => {
+  const page = open(SHIBBOLETH_REJECTED_HTML, 'https://idp.uni-stuttgart.de/idp/profile/oidc/authorize?execution=e1s3');
+  await inject(page, autofill(), 50);
+
+  assert.equal(last(page).step, 'rejected');
+  assert.match(String(last(page).reason), /Invalid authentication credentials/);
+  assert.equal(page.submits.length, 0);
 });
 
 test('dump: keeps structure, redacts password and token values', async () => {  const page = open(KEYCLOAK_HTML, KEYCLOAK_URL);

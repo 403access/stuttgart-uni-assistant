@@ -95,13 +95,32 @@ export function headlessAutofillScript(account: string, password: string, runId:
     function tokenPresent(){
       try { return Boolean(localStorage.getItem('cusonline_co.login.accessToken')); } catch (e) { return false; }
     }
+    // The C@MPUS shell embeds the realm's own account form AND links to the
+    // brokered university sign-in. A student's st-account lives at the broker
+    // (idp.uni-stuttgart.de), so that entry has to win over filling a local form
+    // that would refuse the credential with a generic "invalid" message.
+    function brokerEntry(){
+      var fallback = null;
+      try {
+        var nodes = document.querySelectorAll('a[href],[role=button]');
+        for (var i = 0; i < nodes.length; i++) {
+          var href = String(nodes[i].getAttribute('href') || '');
+          if (href.indexOf('/broker/') < 0 || href.indexOf('/login') < 0) continue;
+          if (href.indexOf('/broker/oidc/') >= 0) return nodes[i];
+          if (!fallback) fallback = nodes[i];
+        }
+      } catch (e) {}
+      return fallback;
+    }
     // The portal marks a failed credential on the re-rendered form. Its
-    // message is preferred over the bare aria-invalid flag.
+    // message is preferred over the bare aria-invalid flag. Keycloak uses
+    // #input-error, the university identity provider uses
+    // p.output-message.output--error ("Invalid authentication credentials.").
     function rejectionText(passwordEl){
       try {
-        var node = document.querySelector('#input-error, #kc-feedback, .alert.alert-error, .pf-c-alert.pf-m-danger');
+        var node = document.querySelector('#input-error, #kc-feedback, .alert.alert-error, .pf-c-alert.pf-m-danger, p.output-message, .output--error');
         var text = node ? String(node.textContent || '').replace(/\\s+/g, ' ').trim() : '';
-        if (text && /invalid|incorrect|falsch|ung(ü|u)ltig|fehlgeschlagen|failed/i.test(text)) return text.slice(0, 140);
+        if (text && /invalid|incorrect|falsch|ung(ü|u)ltig|fehlgeschlagen|failed|denied|gesperrt|locked/i.test(text)) return text.slice(0, 140);
         if (passwordEl && passwordEl.getAttribute('aria-invalid') === 'true') return 'aria-invalid';
       } catch (e) {}
       return '';
@@ -128,6 +147,15 @@ export function headlessAutofillScript(account: string, password: string, runId:
     // '/desktop/', and harvesting there adopts an empty session.
     if (tokenPresent() && location.href.indexOf('#/login') < 0) { post({ step: 'signed-in' }); return true; }
 
+    // Prefer the brokered university sign-in over any local account form.
+    var broker = brokerEntry();
+    if (broker && count('campus_autofill_clicks') < 4) {
+      write('campus_autofill_clicks', String(count('campus_autofill_clicks') + 1));
+      post({ step: 'sso-click', href: String(broker.getAttribute('href') || '').slice(0, 160) });
+      setTimeout(function(){ try { broker.click(); } catch (e) {} }, 200);
+      return true;
+    }
+
     var passwords = document.querySelectorAll('input[type=password]');
     var passwordField = bySelector([
       '#password',
@@ -144,14 +172,11 @@ export function headlessAutofillScript(account: string, password: string, runId:
 
     if (passwordField) {
       var pageSubmits = count('campus_autofill_submits');
-      // A rejected credential is final for this page: submitting the same pair
-      // again only burns the budget. The portal re-renders the form with the
-      // error. Scoped to the page, because the counters survive a same-origin
-      // navigation (sessionStorage) and a previous page must not poison this one.
-      if (pageSubmits > 0) {
-        var rejection = rejectionText(passwordField);
-        if (rejection) { post({ step: 'rejected', reason: rejection }); return true; }
-      }
+      // The portal's own error markup is authoritative: it only appears on a
+      // re-rendered form after a refused credential. Reporting it instead of
+      // retrying keeps a wrong password from burning attempts (and accounts).
+      var rejection = rejectionText(passwordField);
+      if (rejection) { post({ step: 'rejected', reason: rejection }); return true; }
       var perRun = count('campus_autofill_total');
       if (pageSubmits >= MAX_PER_PAGE || perRun >= MAX_PER_RUN) {
         post({ step: 'too-many-attempts', submits: pageSubmits, total: perRun });
@@ -188,6 +213,7 @@ export function headlessAutofillScript(account: string, password: string, runId:
         'input[data-test="id_brm-pm-dtop_login_submitbutton"]',
         'input[name=login][type=submit]',
         'input[name=_eventId_proceed]',
+        'button[name=_eventId_proceed]',
         '#loginButton'
       ]);
       if (!submit && form) submit = form.querySelector('input[type=submit],button[type=submit],button:not([type])');

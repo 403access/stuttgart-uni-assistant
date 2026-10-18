@@ -143,9 +143,11 @@ function pageWithScripts(html, url) {
 }
 
 function rejectionFrom(document) {
-  const node = document.querySelector('#input-error, #kc-feedback, .pf-c-alert.pf-m-danger');
+  const node = document.querySelector(
+    '#input-error, #kc-feedback, .pf-c-alert.pf-m-danger, p.output-message, .output--error',
+  );
   const text = node ? String(node.textContent || '').replace(/\s+/g, ' ').trim() : '';
-  if (text && /invalid|incorrect|falsch|ung(ü|u)ltig|fehlgeschlagen|failed/i.test(text)) return text.slice(0, 200);
+  if (text && /invalid|incorrect|falsch|ung(ü|u)ltig|fehlgeschlagen|failed|denied|gesperrt|locked/i.test(text)) return text.slice(0, 200);
   const password = document.querySelector('input[type=password][aria-invalid="true"]');
   return password ? 'aria-invalid' : '';
 }
@@ -292,8 +294,13 @@ const digest = (text) => createHash('sha256').update(String(text ?? '')).digest(
  */
 function proofFromPost(post, user, password) {
   if (!post) return null;
-  const sentUser = post.fields.includes('username') ? post.params.get('username') : null;
-  const sentPassword = post.params.get('password');
+  const pick = (...names) => {
+    for (const name of names) if (post.fields.includes(name)) return post.params.get(name);
+    return null;
+  };
+  // Keycloak uses username/password, the university identity provider j_username/j_password.
+  const sentUser = pick('username', 'j_username');
+  const sentPassword = pick('password', 'j_password');
   return {
     url: post.url,
     fields: post.fields,
@@ -342,7 +349,7 @@ export async function runBrowserLogin({
     page.on('request', (request) => {
       if (request.method() !== 'POST') return;
       const url = request.url();
-      if (!/login-actions|\/auth\//.test(url)) return;
+      if (!/login-actions|\/auth\/|oidc\/authorize|SAML2/i.test(url)) return;
       const body = request.postData() ?? '';
       const params = new URLSearchParams(body);
       loginPost = { url, fields: [...params.keys()], params };
@@ -368,6 +375,7 @@ export async function runBrowserLogin({
           );
         }
         if (last.step === 'rejected') log(`        reason=${String(last.reason ?? '').slice(0, 160)}`);
+        if (last.step === 'sso-click') log(`        href=${String(last.href ?? '').slice(0, 160)}`);
       }
       lastMessage = last ?? lastMessage;
       if (last?.step === 'rejected') {
