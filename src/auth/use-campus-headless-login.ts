@@ -148,7 +148,10 @@ export function useCampusHeadlessLogin({
       console.info('[campus-headless]', `label=${String(parsed.label ?? '?')}`);
     }
     if (step === 'sso-click') {
-      console.info('[campus-headless]', `href=${String(parsed.href ?? '?')}`);
+      console.info('[campus-headless]', `try=${String(parsed.attempt ?? '?')} href=${String(parsed.href ?? '?')}`);
+    }
+    if (step === 'broker-exhausted') {
+      console.info('[campus-headless]', `href=${String(parsed.href ?? '?')} clicks=${String(parsed.clicks ?? '?')}`);
     }
     if (step === 'rejected') {
       console.info('[campus-headless]', `reason=${String(parsed.reason ?? '?')}`);
@@ -188,6 +191,17 @@ export function useCampusHeadlessLogin({
           locale,
           `C@MPUS hat Kennung oder Passwort abgelehnt${typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : ''}. Speichere die Anmeldung neu oder nutze den sichtbaren Browser.`,
           `C@MPUS rejected the account id or password${typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : ''}. Store the sign-in again or use the visible browser.`,
+        ),
+      );
+      return;
+    }
+    if (step === 'broker-exhausted') {
+      stopTimers();
+      setError(
+        tx(
+          locale,
+          'Die Anmeldung über die Universität ließ sich nicht starten. Versuche es erneut oder melde dich im sichtbaren Browser an.',
+          'The sign-in through the university could not be started. Try again or sign in in the visible browser.',
         ),
       );
     }

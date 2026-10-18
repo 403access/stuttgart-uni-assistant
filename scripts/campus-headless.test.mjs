@@ -6,6 +6,7 @@ import { JSDOM } from 'jsdom';
 import {
   DIAGNOSE_JS,
   HARVEST_JS,
+  HEADLESS_MAX_BROKER_CLICKS,
   HEADLESS_MAX_SUBMITS_PER_PAGE,
   HEADLESS_MAX_SUBMITS_PER_RUN,
   headlessAutofillScript,
@@ -340,6 +341,70 @@ test('the C@MPUS shell: the brokered st-account entry wins over the embedded loc
   assert.match(String(last(page).href), /\/broker\/oidc\/login/);
   assert.equal(page.submits.length, 0);
   assert.equal(page.window.document.querySelector('#password').value, '');
+});
+
+test('the poll does not restart the brokered flow by clicking the same entry again', async () => {
+  const page = open(CAMPUS_SHELL_HTML, 'https://campus.uni-stuttgart.de/cusonline/');
+  const entry = page.window.document.querySelector('a[href*="/broker/oidc/login"]');
+  const clicks = [];
+  entry.addEventListener('click', (event) => {
+    clicks.push(event.target.href);
+    event.preventDefault();
+  });
+
+  await inject(page, autofill(), 350);
+  assert.equal(last(page).step, 'sso-click');
+  assert.equal(clicks.length, 1);
+
+  // The three-second poll runs while the click's navigation is in flight.
+  page.messages.length = 0;
+  await inject(page, autofill(), 350);
+  assert.deepEqual(page.messages, [], 'a repeated poll must stay quiet');
+  assert.equal(clicks.length, 1, 'and must not restart the flow');
+
+  // After the grace period the same entry may be retried: the first click may
+  // have been a no-op on a page whose own scripts had not run yet.
+  page.window.sessionStorage.setItem('campus_autofill_broker_at', String(Date.now() - 9000));
+  page.messages.length = 0;
+  await inject(page, autofill(), 350);
+  assert.equal(last(page).step, 'sso-click');
+  assert.equal(clicks.length, 2);
+});
+
+test('a new page may click the entry again, and the attempt budget is a backstop', async () => {
+  const page = open(CAMPUS_SHELL_HTML, 'https://campus.uni-stuttgart.de/cusonline/');
+  await inject(page, autofill(), 350);
+  assert.equal(page.window.sessionStorage.getItem('campus_autofill_brokers'), '1');
+
+  // A different page (the identity provider hop in between) is a new pair.
+  page.window.history.pushState({}, '', '/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/protocol/openid-connect/auth');
+  page.messages.length = 0;
+  await inject(page, autofill(), 350);
+  assert.equal(last(page).step, 'sso-click');
+  assert.equal(page.window.sessionStorage.getItem('campus_autofill_brokers'), '2');
+  assert.equal(last(page).attempt, 2);
+
+  // The hard backstop reports once, then the poll stays quiet.
+  page.window.sessionStorage.setItem('campus_autofill_brokers', String(HEADLESS_MAX_BROKER_CLICKS));
+  page.window.sessionStorage.removeItem('campus_autofill_broker_key');
+  page.messages.length = 0;
+  await inject(page, autofill(), 350);
+  assert.equal(last(page).step, 'broker-exhausted');
+  assert.equal(last(page).clicks, HEADLESS_MAX_BROKER_CLICKS);
+
+  page.messages.length = 0;
+  await inject(page, autofill(), 350);
+  assert.deepEqual(page.messages, [], 'the stop is reported once per attempt');
+});
+
+test('a new attempt restores the broker budget', async () => {
+  const page = open(CAMPUS_SHELL_HTML, 'https://campus.uni-stuttgart.de/cusonline/');
+  page.window.sessionStorage.setItem('campus_autofill_run', 'old-run');
+  page.window.sessionStorage.setItem('campus_autofill_brokers', String(HEADLESS_MAX_BROKER_CLICKS));
+  await inject(page, autofill('st123456', 'secret-password', 'new-run'), 350);
+
+  assert.equal(last(page).step, 'sso-click');
+  assert.equal(page.window.sessionStorage.getItem('campus_autofill_brokers'), '1');
 });
 
 test('the identity-provider form behind the broker entry is filled', async () => {

@@ -16,6 +16,8 @@ export interface HarvestMessage {
   title?: unknown;
   label?: unknown;
   href?: unknown;
+  attempt?: unknown;
+  clicks?: unknown;
   reason?: unknown;
   user?: unknown;
   submit?: unknown;

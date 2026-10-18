@@ -17,7 +17,7 @@ The C@MPUS shell presents **two** sign-ins on the same page: the realm's own acc
 Filling the embedded local form instead is what produced Keycloak's generic "Benutzername oder Kennwort ungültig" with a correct student credential — that realm has never heard of the account. The step order is:
 
 1. The hidden WebView opens `https://campus.uni-stuttgart.de/cusonline/`.
-2. On the shell, a `Zur Anmeldung`/broker entry (`/broker/oidc/login`, else any `/broker/*/login`) is clicked before any password form is filled. This is the `sso-click` step.
+2. On the shell, a `Zur Anmeldung`/broker entry (`/broker/oidc/login`, else any `/broker/*/login`) is clicked before any password form is filled. This is the `sso-click` step. The same page/entry pair is clicked **once**: the poll runs every three seconds while that click's navigation is still in flight, and clicking again restarts the brokered OIDC flow. A different page, or the same page after eight seconds, may click again, and four clicks per attempt is the backstop — after that the run reports `broker-exhausted` instead of clicking forever.
 3. On `idp.uni-stuttgart.de` the Shibboleth form is filled (`j_username`, `j_password`, `_eventId_proceed` — a `<button>`, not an `<input>`). The CAMPUSonline Keycloak form (`#username`, `#password`, `#kc-login`, or the `data-test="id_brm-pm-dtop_login_*_input"` hooks) is still covered for the realm's own accounts.
 4. Fillability is decided by computed style (`display`, `visibility`), never by rectangle size: the hidden WebView reports zero-sized rectangles for every element.
 5. A submit button left disabled by the page is re-enabled before the click, and the stored account always overwrites the portal's echoed prefill.
@@ -26,7 +26,7 @@ Filling the embedded local form instead is what produced Keycloak's generic "Ben
 8. Signed in means the `cusonline_co.login.accessToken` value exists in web storage **and** the URL is not the `#/login` route. The desktop login route also contains `/desktop/`, and treating it as signed in harvested an empty session.
 9. The harvest below then runs unchanged: the token from web storage plus the natively read `HttpOnly` cookies.
 
-Every step posts back and is logged as `[campus-headless] <step> <url>`, with `user=`/`submit=` on `filled`, `label=` on `cta-click`, `reason=` on `rejected`, and `passwordInputs`/`display`/`size`/`readyState` on `no-form`. The modal has a `Seite ausgeben` button that posts a redacted dump of the current page's forms and controls (`[campus-headless-dump]`) for pinning selectors against a page that changes.
+Every step posts back and is logged as `[campus-headless] <step> <url>`, with `user=`/`submit=`/`lengths=` on `filled`, `try=` on `sso-click`, `href=`/`clicks=` on `broker-exhausted`, `label=` on `cta-click`, `reason=` on `rejected`, and `passwordInputs`/`display`/`size`/`readyState` on `no-form`. The modal has a `Seite ausgeben` button that posts a redacted dump of the current page's forms and controls (`[campus-headless-dump]`) for pinning selectors against a page that changes.
 
 ## Terminal probe
 

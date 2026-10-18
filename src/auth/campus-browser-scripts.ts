@@ -32,6 +32,14 @@ export const HEADLESS_MAX_SUBMITS_PER_PAGE = 3;
 export const HEADLESS_MAX_SUBMITS_PER_RUN = 6;
 /** Milliseconds between two submits on the same page. */
 export const HEADLESS_SUBMIT_COOLDOWN_MS = 5000;
+/**
+ * Broker-entry clicks per attempt (hard backstop), and the grace period before
+ * the same page/entry pair may be clicked again. Clicking the entry again
+ * restarts the brokered OIDC flow, so the three-second poll must not do it: the
+ * first click's navigation can still be in flight.
+ */
+export const HEADLESS_MAX_BROKER_CLICKS = 4;
+export const HEADLESS_BROKER_RETRY_MS = 8000;
 
 /**
  * Fill the university sign-in form with the vaulted credential and submit it.
@@ -58,6 +66,8 @@ export function headlessAutofillScript(account: string, password: string, runId:
     var MAX_PER_PAGE = ${HEADLESS_MAX_SUBMITS_PER_PAGE};
     var MAX_PER_RUN = ${HEADLESS_MAX_SUBMITS_PER_RUN};
     var COOLDOWN_MS = ${HEADLESS_SUBMIT_COOLDOWN_MS};
+    var MAX_BROKER_CLICKS = ${HEADLESS_MAX_BROKER_CLICKS};
+    var BROKER_RETRY_MS = ${HEADLESS_BROKER_RETRY_MS};
 
     function read(key){ try { return sessionStorage.getItem(key) || ''; } catch (e) { return ''; } }
     function write(key, value){ try { sessionStorage.setItem(key, value); } catch (e) {} }
@@ -134,6 +144,10 @@ export function headlessAutofillScript(account: string, password: string, runId:
       drop('campus_autofill_last');
       drop('campus_autofill_clicks');
       drop('campus_autofill_url');
+      drop('campus_autofill_brokers');
+      drop('campus_autofill_broker_key');
+      drop('campus_autofill_broker_at');
+      drop('campus_autofill_broker_stop');
     }
     // A navigation is a new page: fresh per-page budget, the run budget stays.
     if (read('campus_autofill_url') !== location.href) {
@@ -147,12 +161,37 @@ export function headlessAutofillScript(account: string, password: string, runId:
     // '/desktop/', and harvesting there adopts an empty session.
     if (tokenPresent() && location.href.indexOf('#/login') < 0) { post({ step: 'signed-in' }); return true; }
 
-    // Prefer the brokered university sign-in over any local account form.
+    // Prefer the brokered university sign-in over any local account form. The
+    // same page/entry pair is clicked once: the poll runs every three seconds
+    // while the click's navigation is still in flight, and clicking again
+    // restarts the brokered OIDC flow. A different page, or the same page after
+    // BROKER_RETRY_MS, may click again — the first click may have been a no-op
+    // on a page whose own scripts had not run yet.
     var broker = brokerEntry();
-    if (broker && count('campus_autofill_clicks') < 4) {
-      write('campus_autofill_clicks', String(count('campus_autofill_clicks') + 1));
-      post({ step: 'sso-click', href: String(broker.getAttribute('href') || '').slice(0, 160) });
-      setTimeout(function(){ try { broker.click(); } catch (e) {} }, 200);
+    if (broker) {
+      var brokerHref = String(broker.getAttribute('href') || '');
+      var brokerKey = location.href + '|' + brokerHref;
+      var brokerClicks = count('campus_autofill_brokers');
+      if (brokerClicks >= MAX_BROKER_CLICKS) {
+        // Report once per attempt; after that the poll stays quiet and the
+        // parent shows the failure with the visible-browser fallback.
+        if (read('campus_autofill_broker_stop') !== runId) {
+          write('campus_autofill_broker_stop', runId);
+          post({ step: 'broker-exhausted', clicks: brokerClicks, href: brokerHref.slice(0, 160) });
+        }
+        return true;
+      }
+      var sameEntry = read('campus_autofill_broker_key') === brokerKey
+        && Date.now() - Number(read('campus_autofill_broker_at')) < BROKER_RETRY_MS;
+      if (!sameEntry) {
+        write('campus_autofill_broker_key', brokerKey);
+        write('campus_autofill_broker_at', String(Date.now()));
+        write('campus_autofill_brokers', String(brokerClicks + 1));
+        post({ step: 'sso-click', href: brokerHref.slice(0, 160), attempt: brokerClicks + 1 });
+        setTimeout(function(){ try { broker.click(); } catch (e) {} }, 200);
+      }
+      // Whether or not this poll clicked: never fall through to the realm's own
+      // account form, which cannot authenticate a student account.
       return true;
     }
 
