@@ -46,7 +46,7 @@ export function CampusBrowserModal({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} presentationStyle="fullScreen" animationType="slide" onRequestClose={onClose}>
       <View style={[styles.shell, { paddingTop: insets.top }]}>
         <View style={styles.bar}>
           <Text style={styles.title}>{tx(locale, 'C@MPUS-Anmeldung (Beta)', 'C@MPUS sign-in (Beta)')}</Text>

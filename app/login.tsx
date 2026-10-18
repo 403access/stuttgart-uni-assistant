@@ -66,11 +66,7 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.welcome}>{tx(locale, 'Willkommen zurück', 'Welcome back')}</Text>
           <Text style={styles.lead}>
-            {tx(
-              locale,
-              'Melde dich mit deinem st-Konto an, um deine C@MPUS-Daten zu laden.',
-              'Sign in with your st-account to load your C@MPUS data.',
-            )}
+            {tx(locale, 'Melde dich mit deinem st-Konto an.', 'Sign in with your st-account.')}
           </Text>
 
           {serverDown ? (
@@ -93,7 +89,7 @@ export default function LoginScreen() {
               onChangeText={headless.setAccount}
               textContentType="username"
               autoCapitalize="none"
-              placeholder="st123456"
+              placeholder="st123456@stud.uni-stuttgart.de"
             />
             <Field
               label={tx(locale, 'Passwort', 'Password')}

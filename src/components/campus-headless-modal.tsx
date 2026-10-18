@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,7 +14,9 @@ import type { Locale } from '@/src/types';
 
 /**
  * The automated sign-in: a hidden WebView drives the real C@MPUS pages, and the
- * screen shows the phases of that work instead of a blank wait.
+ * screen shows the phases of that work instead of a blank wait. It is a
+ * full-screen surface of its own — the progress takes the display, the escape
+ * actions sit in a footer — rather than a dialog over the login form.
  */
 export function CampusHeadlessModal({
   visible,
@@ -54,8 +56,8 @@ export function CampusHeadlessModal({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible={visible} animationType="fade" onRequestClose={onCancel}>
-      <View style={[styles.shell, { paddingTop: insets.top }]}>
+    <Modal visible={visible} presentationStyle="fullScreen" animationType="fade" onRequestClose={onCancel}>
+      <View style={[styles.screen, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 16) }]}>
         <WebView
           key={attempt}
           ref={webview}
@@ -68,14 +70,8 @@ export function CampusHeadlessModal({
           style={styles.hidden}
           pointerEvents="none"
         />
-        <View style={styles.bar}>
+        <View style={styles.progress}>
           <Text style={styles.title}>{tx(locale, 'Automatische Anmeldung', 'Automated sign-in')}</Text>
-          <Pressable onPress={onCancel} hitSlop={8}>
-            <Text style={styles.close}>✕</Text>
-          </Pressable>
-        </View>
-        <View style={styles.body}>
-          {error ? <ErrorText>{error}</ErrorText> : null}
           <SigningIn
             locale={locale}
             phase={phase}
@@ -91,11 +87,14 @@ export function CampusHeadlessModal({
                   : detail || undefined
             }
           />
-          {dump ? (
-            <ScrollView style={styles.dump}>
-              <Text style={styles.dumpText}>{dump}</Text>
-            </ScrollView>
-          ) : null}
+          {error ? <ErrorText>{error}</ErrorText> : null}
+        </View>
+        {dump ? (
+          <ScrollView style={styles.dump}>
+            <Text style={styles.dumpText}>{dump}</Text>
+          </ScrollView>
+        ) : null}
+        <View style={styles.footer}>
           <Button secondary label={tx(locale, 'Seite ausgeben', 'Dump page')} onPress={onDump} />
           {error ? (
             <Button secondary label={tx(locale, 'Im sichtbaren Browser anmelden', 'Sign in in the visible browser')} onPress={onFallback} />
@@ -108,12 +107,11 @@ export function CampusHeadlessModal({
 }
 
 const styles = StyleSheet.create({
-  shell: { flex: 1, backgroundColor: colors.paper },
-  bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
-  title: { color: colors.anthracite, fontSize: 17, fontWeight: '700' },
-  close: { color: colors.blue, fontSize: 20, fontWeight: '700' },
-  body: { flex: 1, padding: 16, gap: 12, justifyContent: 'center' },
-  dump: { maxHeight: 240 },
+  screen: { flex: 1, backgroundColor: colors.mist },
+  progress: { flex: 1, justifyContent: 'center', gap: 20, paddingHorizontal: 24 },
+  title: { color: colors.anthracite, fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  dump: { maxHeight: 200, marginHorizontal: 24 },
   dumpText: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo' },
+  footer: { paddingHorizontal: 24, gap: 10 },
   hidden: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: 0 },
 });
