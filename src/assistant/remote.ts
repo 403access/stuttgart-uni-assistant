@@ -1,22 +1,39 @@
+import Constants from 'expo-constants';
+
+import { resolveAssistantBaseUrl } from '@/src/assistant/endpoints';
 import type { Locale } from '@/src/types';
 
 /**
- * Where the assistant server lives.
+ * Where the assistant server lives. Resolved in `src/assistant/endpoints.ts`:
+ * the tunnel URL wins while `npm run assistant:tunnel` holds one, an explicit
+ * non-loopback `EXPO_PUBLIC_ASSISTANT_URL` wins next, and otherwise the Metro
+ * dev-server host is reused on the assistant port. That last rule is what lets
+ * the simulator and a phone on the same Wi-Fi both reach the server without
+ * editing `.env`: the phone already talks to that host for its bundle.
  *
- * `EXPO_PUBLIC_ASSISTANT_URL` is the base URL set by hand — `127.0.0.1` on a
- * simulator, the machine's LAN address on a phone. `npm run assistant:tunnel`
- * writes the public hostname to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` while the
- * tunnel is up and blanks it again when the tunnel stops, so a phone off the
- * LAN is pointed at Cloudflare without clobbering the local value. The tunnel
- * wins while it is set, and `off` still disables the remote engine.
- *
- * Both are inlined into the bundle at build time, so Expo has to be restarted
- * after a change.
+ * The env values are inlined into the bundle at build time, so Expo has to be
+ * restarted after a change to them. In a release build there is no dev-server
+ * host, so the explicit URL is required (or `off`, which disables the remote
+ * engine).
  */
-const baseUrl = process.env.EXPO_PUBLIC_ASSISTANT_URL || 'http://127.0.0.1:8787';
-const tunnelUrl = process.env.EXPO_PUBLIC_ASSISTANT_TUNNEL_URL || '';
+function devServerHostUri(): string | null {
+  try {
+    return (
+      Constants.expoConfig?.hostUri ??
+      Constants.expoGoConfig?.debuggerHost ??
+      Constants.experienceUrl ??
+      null
+    );
+  } catch {
+    return null;
+  }
+}
 
-export const assistantUrl = baseUrl === 'off' ? 'off' : tunnelUrl || baseUrl;
+export const assistantUrl = resolveAssistantBaseUrl({
+  envUrl: process.env.EXPO_PUBLIC_ASSISTANT_URL,
+  tunnelUrl: process.env.EXPO_PUBLIC_ASSISTANT_TUNNEL_URL,
+  hostUri: devServerHostUri(),
+});
 
 export async function askGrok(input: {
   locale: Locale;

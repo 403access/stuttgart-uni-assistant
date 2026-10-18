@@ -6,10 +6,12 @@ The app and the assistant are two processes: Expo serves the bundle, `server/ind
 
 | Variable | Set by | Purpose |
 | --- | --- | --- |
-| `EXPO_PUBLIC_ASSISTANT_URL` | you, by hand | The base URL: `http://127.0.0.1:8787` on a simulator, `http://<computer-lan-ip>:8787` on a phone on the same Wi-Fi. The tunnel script never changes it. |
+| `EXPO_PUBLIC_ASSISTANT_URL` | you, by hand | Optional override. `off` disables the remote engine. A non-loopback value (a fixed LAN IP, another host) is used as-is. The default `http://127.0.0.1:8787` lets the app reuse the Metro dev-server host instead. The tunnel script never changes it. |
 | `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` | `npm run assistant:tunnel` | The `https://<words>.trycloudflare.com` hostname while a tunnel is up. It wins over the base URL while it is set, and the script blanks it again when the tunnel stops. |
 
-`src/assistant/remote.ts` reads both at bundle time and uses the tunnel URL when it is non-empty, otherwise the base URL. `off` in the base variable still disables the remote engine.
+`src/assistant/endpoints.ts` resolves the base URL, and `src/assistant/remote.ts` feeds it `Constants.expoConfig.hostUri`. Order, highest first: `off` disables the engine; the tunnel URL wins while set; an explicit non-loopback base URL wins next; otherwise the Metro dev-server host (`hostUri`, for example `192.168.1.23:8081`) is reused on the assistant port (`PORT`, default 8787).
+
+That last rule is what makes the default `.env` work for both targets. On a phone the dev-server host is the machine's LAN address, so no `.env` edit is needed; on the simulator it is loopback, which resolves to the same machine. A release build has no dev-server host, so it needs an explicit `EXPO_PUBLIC_ASSISTANT_URL`.
 
 The split is what keeps a stopped tunnel from poisoning a local run. Before it, the script wrote the public hostname over the base URL and nothing wrote the local value back, so the next `bun run ios` called a dead `trycloudflare.com` host until someone edited `.env` by hand.
 
@@ -20,7 +22,7 @@ The split is what keeps a stopped tunnel from poisoning a local run. Before it, 
 | Expo dev server | 8081 | `npm run tunnel` (`expo start --tunnel`) | The bundle, over `exp://`, from any network |
 | Assistant server | 8787 | `npm run assistant` + `npm run assistant:tunnel` | `https://<words>.trycloudflare.com`, from any network |
 
-The LAN path stays the simpler one and does not need Cloudflare: with `npx expo start` (no `--tunnel`) and `EXPO_PUBLIC_ASSISTANT_URL=http://<computer-lan-ip>:8787`, a phone on the same Wi-Fi reaches the assistant directly. The tunnel path is for a phone on mobile data, a different network, or a demonstration away from the office.
+The LAN path stays the simpler one and does not need Cloudflare: with `npx expo start` (no `--tunnel`) the app reuses the Metro dev-server host on port 8787, so a phone on the same Wi-Fi reaches the assistant directly with the default `.env`. Setting `EXPO_PUBLIC_ASSISTANT_URL=http://<computer-lan-ip>:8787` is only needed for a non-default port or a server on another machine. The tunnel path is for a phone on mobile data, a different network, or a demonstration away from the office.
 
 ## Start order
 
