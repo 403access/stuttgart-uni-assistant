@@ -45,6 +45,8 @@ Two engines:
 
 A wrong credential is a useful run: it should print `filled` then `rejected` with the portal's own message, which proves the fill and submit reached the real form.
 
+Observed end to end on 18 October 2026 with a real student credential: `sso-click` on the broker entry, `filled` on `idp.uni-stuttgart.de` with `j_username` carrying the full `st…@stud.uni-stuttgart.de` address (the identity provider accepts it; the short `st`-account works too), `PSESSIONID` back at 64 characters, and the assistant server answering `{ ok: true, studies: 2, activeStudyId: 339485 }`. The probe also captured the CAMPUSonline service-provider realm exchanging the authorization code (`code`, `grant_type`, `client_id`, `redirect_uri`, `code_verifier`), so the PKCE round trip happens in the browser exactly as it would for a person.
+
 The credential never leaves the device: the fill and submit happen in the app's own WebView against the university page, and only the resulting session goes to `POST /v1/campus/credentials`. Failure shows inside the modal with a button to fall back to the visible browser.
 
 ## Manual browser sign-in (Beta)
