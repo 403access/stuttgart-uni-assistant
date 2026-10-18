@@ -64,7 +64,7 @@ The check script expects that suggestion to be exactly 30 ECTS and to include nu
 
 ## Identity of the build
 
-`app.json` names the app Stuttgart Uni, pins the light interface, and uses the bundle id `dev.demo.stuttgartuniassistant` so the binary is not presented as an official university application.
+`app.json` names the app University Assistant, pins the light interface, and uses the bundle id `dev.demo.universityassistant` so the binary is not presented as an official university application.
 
 ## Exit check
 

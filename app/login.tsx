@@ -234,7 +234,7 @@ export default function LoginScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.hero}>
         <Mark size={48} />
-        <Text style={styles.brand}>Stuttgart Uni</Text>
+        <Text style={styles.brand}>University Assistant</Text>
         <Text style={styles.heroText}>{tx(locale, 'Studienassistenz für den Campusalltag', 'A study assistant for campus life')}</Text>
       </View>
       <ScrollView style={styles.sheet} contentContainerStyle={[styles.sheetContent, { paddingBottom: insets.bottom + 24 }]}>

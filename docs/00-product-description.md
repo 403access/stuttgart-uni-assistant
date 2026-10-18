@@ -1,6 +1,6 @@
 # Product description
 
-**Stuttgart Uni AI Assistant.** An intelligent, AI-driven digital companion tailored for students at the University of Stuttgart. The app combines central academic systems (C@MPUS, ILIAS, SDG Campus) with collaborative, student-sourced intelligence to answer questions, structure study workflows, and manage campus administrative requirements.
+**University Assistant.** An intelligent, AI-driven digital companion tailored for students at the University of Stuttgart. The app combines central academic systems (C@MPUS, ILIAS, SDG Campus) with collaborative, student-sourced intelligence to answer questions, structure study workflows, and manage campus administrative requirements.
 
 This file is the product description the app is built from. Later documents record how that description was turned into a demonstration client. Where a live university system cannot be called from this repository, the screen still exists and the data is labeled as a demonstration record.
 

@@ -42,7 +42,7 @@ Without a key the server answers `/v1/assist` with 503 and the client keeps the 
 
 ## What stays on the device
 
-Async Storage key `stuttgart-uni-assistant/v1` holds language, session account, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
+Async Storage key `university-assistant/v1` holds language, session account, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
 
 Async Storage is not an encrypted vault. On a shared phone, the notes are readable to someone who can open the app sandbox. Reset in Einstellungen deletes that payload except language and session. Uninstalling the app drops it with the sandbox.
 
@@ -64,7 +64,7 @@ The server listens on `0.0.0.0` so a phone on the same LAN can connect. CORS all
 
 ## Identity of the binary
 
-`app.json` uses the display name "Stuttgart Uni" and the bundle id `dev.demo.stuttgartuniassistant` on iOS and Android. The id is deliberately not a `uni-stuttgart.de` identifier. The mark in `src/components/ui.tsx` is two original circles. The university signet is not in the asset catalog. Univers is not embedded.
+`app.json` uses the display name "University Assistant" and the bundle id `dev.demo.universityassistant` on iOS and Android. The id is deliberately not a `uni-stuttgart.de` identifier. The mark in `src/components/ui.tsx` is two original circles. The university signet is not in the asset catalog. Univers is not embedded.
 
 The web shell (`app/+html.tsx`) sets `lang="de"` and a light page background. It does not present itself as an official university host.
 

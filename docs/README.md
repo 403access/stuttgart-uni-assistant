@@ -1,6 +1,6 @@
 # Documentation map
 
-Stuttgart Uni is documented as a product, as a system, and as a lifecycle. The files below are the record of how the demonstration was framed, designed, built, checked, and what remains before a real university integration.
+University Assistant is documented as a product, as a system, and as a lifecycle. The files below are the record of how the demonstration was framed, designed, built, checked, and what remains before a real university integration.
 
 ## User guide
 

@@ -33,7 +33,7 @@ export default function TodayScreen() {
   return (
     <Screen
       topInset
-      kicker="Stuttgart Uni"
+      kicker="University Assistant"
       title={sessionMode === 'campus' && sessionName ? sessionName : tx(locale, 'Guten Tag', 'Good day')}
       subtitle={subtitle}>
       <StudySelector />

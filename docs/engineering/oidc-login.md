@@ -94,7 +94,7 @@ The redirect URI the app will use is shown on the login screen. It must be regis
 
 | Environment | Redirect the app generates |
 | --- | --- |
-| Development build or a store binary | `stuttgartuniassistant://oidc` |
+| Development build or a store binary | `universityassistant://oidc` |
 | Expo Go | an `exp://…/--/oidc` URL from `makeRedirectUri` |
 | Web dev server | `http://localhost:<port>/oidc` or `http://127.0.0.1:<port>/oidc` |
 

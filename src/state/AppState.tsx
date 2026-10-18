@@ -15,7 +15,7 @@ import type {
   TransferDraft,
 } from '@/src/types';
 
-const STORAGE_KEY = 'stuttgart-uni-assistant/v1';
+const STORAGE_KEY = 'university-assistant/v1';
 
 const empty: PersistedState = {
   locale: 'de',

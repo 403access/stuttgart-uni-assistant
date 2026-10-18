@@ -1,4 +1,4 @@
-# Stuttgart Uni
+# University Assistant
 
 A study assistant for students at the University of Stuttgart. The app brings the timetable, degree progress, course material, campus orientation, and peer notes into one Expo app, and answers questions about that record in German or English.
 

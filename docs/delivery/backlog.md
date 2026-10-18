@@ -33,7 +33,7 @@ The order is the order a follow-up should use. Each item stays inside the demo b
 5. **Import of a real text file on a phone.** Confirm `expo-file-system` dynamic import on iOS and Android. Web already exports.
 6. **Stronger search.** Add embeddings only after the lexical checks still pass. The campus engine remains the fallback when the network is down.
 7. **PDF text.** A later reader may extract a text layer. Until then the honest note stays. Do not add a viewer that implies the file was understood.
-8. **EAS preview.** Add `eas.json` when someone needs a binary. Keep the bundle id `dev.demo.stuttgartuniassistant`.
+8. **EAS preview.** Add `eas.json` when someone needs a binary. Keep the bundle id `dev.demo.universityassistant`.
 9. **Backend boundary.** The first server feature that is not the xAI proxy should be session and fact-sheet assembly, still on the fictional record, so the client stops shipping the whole catalog only when a connector exists.
 10. **University connectors.** Only with an agreement, server-side OIDC, and no password in the app. Spec is in [integrations](../engineering/integrations.md).
 

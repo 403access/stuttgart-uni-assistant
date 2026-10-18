@@ -25,7 +25,7 @@ test('authorize URL targets the university IdP and carries PKCE', () => {
   const url = new URL(
     buildAuthorizeUrl({
       authorizationEndpoint: references.authorize,
-      redirectUri: 'stuttgartuniassistant://oidc',
+      redirectUri: 'universityassistant://oidc',
       state: 'state-1',
       nonce: 'nonce-1',
       challenge,
@@ -45,16 +45,16 @@ test('authorize URL targets the university IdP and carries PKCE', () => {
 });
 
 test('dev redirects are limited to this app and localhost', () => {
-  assert.equal(allowRedirect('stuttgartuniassistant://oidc'), true);
+  assert.equal(allowRedirect('universityassistant://oidc'), true);
   assert.equal(allowRedirect('http://127.0.0.1:8081/oidc'), true);
   assert.equal(allowRedirect('http://localhost:19006/oidc'), true);
   assert.equal(allowRedirect('https://evil.example/oidc'), false);
   assert.equal(allowRedirect('https://idp.uni-stuttgart.de/idp/profile/oidc/authorize'), false);
-  assert.equal(allowRedirect('stuttgartuniassistant://other'), false);
+  assert.equal(allowRedirect('universityassistant://other'), false);
 });
 
 test('start refuses to run without a registered client', async () => {
-  await assert.rejects(() => startLogin('stuttgartuniassistant://oidc'), /oidc_unconfigured/);
+  await assert.rejects(() => startLogin('universityassistant://oidc'), /oidc_unconfigured/);
 });
 
 test('a password in the environment is not copied into the authorize URL', async () => {
@@ -62,7 +62,7 @@ test('a password in the environment is not copied into the authorize URL', async
   process.env.OIDC_CLIENT_SECRET = 'example-secret';
   process.env.OIDC_PASSWORD = 'not-used';
   process.env.OIDC_LOGIN_HINT = 'st123456';
-  const started = await startLogin('stuttgartuniassistant://oidc');
+  const started = await startLogin('universityassistant://oidc');
   assert.match(started.authorizationUrl, new RegExp(`^${references.authorize}\\?`));
   assert.equal(started.authorizationUrl.includes('not-used'), false);
   assert.equal(started.authorizationUrl.includes('example-secret'), false);

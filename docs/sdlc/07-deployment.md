@@ -18,10 +18,10 @@ This phase is specified. The app has not been submitted to TestFlight, the Play 
 
 ## Configuration
 
-`app.json` holds the display name Stuttgart Uni, the scheme `stuttgartuniassistant`, the light interface, tablet support, and the demo bundle identifiers:
+`app.json` holds the display name University Assistant, the scheme `universityassistant`, the light interface, tablet support, and the demo bundle identifiers:
 
-- iOS: `dev.demo.stuttgartuniassistant`
-- Android: `dev.demo.stuttgartuniassistant`
+- iOS: `dev.demo.universityassistant`
+- Android: `dev.demo.universityassistant`
 
 The file-system plugin turns on opening documents in place and file sharing, so a later binary can see imports from the Files app. The splash color is mid blue `#004191`.
 

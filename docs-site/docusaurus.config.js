@@ -2,7 +2,7 @@
 // Note: type annotations allow type checking and autocomplete!
 
 const config = /** @type {import('@docusaurus/types').Config} */ ({
-  title: 'Stuttgart Uni',
+  title: 'University Assistant',
   tagline: 'A study assistant for University of Stuttgart students',
   favicon: 'img/favicon.ico',
 
@@ -11,8 +11,8 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
   // /<baseUrl>/pathname under which the site is served.
   baseUrl: '/',
 
-  organizationName: 'olivermolnar',
-  projectName: 'stuttgart-uni-assistant',
+  organizationName: '403access',
+  projectName: 'university-assistant',
 
   onBrokenLinks: 'warn',
   markdown: {
@@ -37,7 +37,7 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
           path: '../docs',
           routeBasePath: 'docs',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/olivermolnar/stuttgart-uni-assistant/edit/main/docs-site/',
+          editUrl: 'https://github.com/403access/stuttgart-uni-assistant/edit/main/docs-site/',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
         },
@@ -57,14 +57,14 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
         respectPrefersColorScheme: true,
       },
       navbar: {
-        title: 'Stuttgart Uni',
+        title: 'University Assistant',
         items: [
           { to: '/docs', label: 'Product', position: 'left' },
           { to: '/docs/sdlc/overview', label: 'Lifecycle', position: 'left' },
           { to: '/docs/engineering/architecture', label: 'Engineering', position: 'left' },
           { to: '/docs/delivery/backlog', label: 'Delivery', position: 'left' },
           {
-            href: 'https://github.com/olivermolnar/stuttgart-uni-assistant',
+            href: 'https://github.com/403access/stuttgart-uni-assistant',
             label: 'GitHub',
             position: 'right',
           },
@@ -72,7 +72,7 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
       },
       footer: {
         style: 'dark',
-        copyright: `Copyright © ${new Date().getFullYear()} Stuttgart Uni (student demonstration, not affiliated with the University of Stuttgart). Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} University Assistant (student demonstration, not affiliated with the University of Stuttgart). Built with Docusaurus.`,
       },
       prism: {
         theme: require('prism-react-renderer').themes.githubLight,

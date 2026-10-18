@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Stuttgart Uni",
-    "slug": "stuttgart-uni-assistant",
+    "name": "University Assistant",
+    "slug": "university-assistant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "stuttgartuniassistant",
+    "scheme": "universityassistant",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.demo.stuttgartuniassistant"
+      "bundleIdentifier": "dev.demo.universityassistant"
     },
     "android": {
-      "package": "dev.demo.stuttgartuniassistant",
+      "package": "dev.demo.universityassistant",
       "adaptiveIcon": {
         "backgroundColor": "#004191",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

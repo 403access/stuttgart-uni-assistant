@@ -40,8 +40,8 @@ export default function SettingsScreen() {
         <Text style={{ color: colors.anthracite, lineHeight: 22 }}>
           {tx(
             locale,
-            'Stuttgart Uni ist ein studentisches Demonstrationsprojekt. Es ist kein Angebot der Universität Stuttgart und verwendet nicht das amtliche Logo.',
-            'Stuttgart Uni is a student demonstration project. It is not a service of the University of Stuttgart and does not use the official logo.',
+            'University Assistant ist ein studentisches Demonstrationsprojekt. Es ist kein Angebot der Universität Stuttgart und verwendet nicht das amtliche Logo.',
+            'University Assistant is a student demonstration project. It is not a service of the University of Stuttgart and does not use the official logo.',
           )}
         </Text>
       </Card>

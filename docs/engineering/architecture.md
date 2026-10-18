@@ -1,6 +1,6 @@
 # Architecture
 
-Stuttgart Uni is a single Expo client plus an optional Node proxy. The academic record is compiled into the client. Screens and the assistant read that record. The client calls the local server for two things: the optional Grok rewrite, and the OpenID Connect start, code exchange, and logout. The browser, not the app, talks to `https://idp.uni-stuttgart.de`.
+University Assistant is a single Expo client plus an optional Node proxy. The academic record is compiled into the client. Screens and the assistant read that record. The client calls the local server for two things: the optional Grok rewrite, and the OpenID Connect start, code exchange, and logout. The browser, not the app, talks to `https://idp.uni-stuttgart.de`.
 
 ```text
 app/                         Expo Router screens
@@ -59,7 +59,7 @@ Document summary and plain language follow the same pair: extractive text first 
 
 ## Persistence
 
-One Async Storage key, `stuttgart-uni-assistant/v1`. The shape is `PersistedState` in `src/types.ts`. Writes happen after the first successful load, so an empty initial state does not wipe a stored record. `sanitize` drops unexpected shapes on read. Chat is capped at 40 messages. Imports are capped at 40. Reset clears notes, reviews, transfers, downloads, sync stamps, planned modules, and chat, and keeps the language and the session.
+One Async Storage key, `university-assistant/v1`. The shape is `PersistedState` in `src/types.ts`. Writes happen after the first successful load, so an empty initial state does not wipe a stored record. `sanitize` drops unexpected shapes on read. Chat is capped at 40 messages. Imports are capped at 40. Reset clears notes, reviews, transfers, downloads, sync stamps, planned modules, and chat, and keeps the language and the session.
 
 The password never enters this object.
 

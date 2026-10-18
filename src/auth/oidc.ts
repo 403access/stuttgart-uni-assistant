@@ -39,7 +39,7 @@ export interface OidcStatus {
 
 export function universityRedirectUri(): string {
   return AuthSession.makeRedirectUri({
-    scheme: 'stuttgartuniassistant',
+    scheme: 'universityassistant',
     path: 'oidc',
   });
 }

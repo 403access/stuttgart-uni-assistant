@@ -116,7 +116,7 @@ Reviews carry `rating`, `workload` (hours per week), and `difficulty`. Tutorials
 
 ## Device record
 
-Key: `stuttgart-uni-assistant/v1`.
+Key: `university-assistant/v1`.
 
 ```ts
 interface PersistedState {

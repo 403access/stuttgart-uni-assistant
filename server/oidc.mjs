@@ -101,7 +101,7 @@ export function allowRedirect(uri) {
     .filter(Boolean);
   if (extras.includes(uri)) return true;
   if (process.env.OIDC_ALLOW_DEV_REDIRECTS === 'false') return false;
-  if (url.protocol === 'stuttgartuniassistant:' && url.hostname === 'oidc') return true;
+  if (url.protocol === 'universityassistant:' && url.hostname === 'oidc') return true;
   if (url.protocol === 'exp:' || url.protocol === 'exps:') return true;
   const localHost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
   const localProtocol = url.protocol === 'http:' || url.protocol === 'https:';

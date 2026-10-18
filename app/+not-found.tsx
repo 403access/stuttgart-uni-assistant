@@ -6,7 +6,7 @@ import { colors } from '@/src/theme';
 export default function NotFoundScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: 'Stuttgart Uni', headerShown: false }} />
+      <Stack.Screen options={{ title: 'University Assistant', headerShown: false }} />
       <View style={styles.container}>
         <Text style={styles.title}>Diese Seite gibt es nicht.</Text>
         <Link href="/" style={styles.link}>

@@ -32,7 +32,7 @@ The product is a companion that reads those sources and answers in the student's
 
 Proceed with a local-first Expo prototype for one fictional student in B.Sc. Informatik, Faculty 5, with both campuses, both languages, and an assistant that prefers the bundled record over a free-form model.
 
-Name the app **Stuttgart Uni**. Say, in the product and on the sign-in screen, that it is not an offer of the university.
+Name the app **University Assistant**. Say, in the product and on the sign-in screen, that it is not an offer of the university.
 
 ## Exit check
 
