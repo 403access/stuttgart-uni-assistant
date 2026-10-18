@@ -10,6 +10,7 @@
  * The credential is never stored and never printed. `--password-stdin` keeps it
  * out of the shell history and the process list.
  */
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 import { JSDOM } from 'jsdom';
@@ -282,6 +283,27 @@ const HARVEST_STORAGE_SCRIPT = `(function(){
   return out;
 })()`;
 
+const digest = (text) => createHash('sha256').update(String(text ?? '')).digest('hex');
+
+/**
+ * Compare the credential that actually left the browser with the one that was
+ * supplied, without printing either. Booleans plus lengths are enough to tell an
+ * automation fault from a credential the portal refuses.
+ */
+function proofFromPost(post, user, password) {
+  if (!post) return null;
+  const sentUser = post.fields.includes('username') ? post.params.get('username') : null;
+  const sentPassword = post.params.get('password');
+  return {
+    url: post.url,
+    fields: post.fields,
+    userMatch: sentUser !== null ? digest(sentUser) === digest(user) : null,
+    passwordMatch: sentPassword !== null ? digest(sentPassword) === digest(password) : null,
+    userLength: (sentUser ?? '').length,
+    passwordLength: (sentPassword ?? '').length,
+  };
+}
+
 /**
  * Drive the login in a real browser engine.
  *
@@ -316,6 +338,15 @@ export async function runBrowserLogin({
     const context = await browser.newContext({ userAgent: USER_AGENT });
     const page = await context.newPage();
     const started = Date.now();
+    let loginPost = null;
+    page.on('request', (request) => {
+      if (request.method() !== 'POST') return;
+      const url = request.url();
+      if (!/login-actions|\/auth\//.test(url)) return;
+      const body = request.postData() ?? '';
+      const params = new URLSearchParams(body);
+      loginPost = { url, fields: [...params.keys()], params };
+    });
     await page.goto(startUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
 
     while (Date.now() - started < timeoutMs) {
@@ -351,7 +382,17 @@ export async function runBrowserLogin({
       for (const cookie of await context.cookies()) jar.update([`${cookie.name}=${cookie.value}`]);
       if (jar.value('PSESSIONID')) {
         storage = await page.evaluate(HARVEST_STORAGE_SCRIPT).catch(() => ({}));
-        return { ok: true, reason: 'signed-in', engine: 'browser', finalUrl: page.url(), jar, storage, steps, lastMessage };
+        return {
+          ok: true,
+          reason: 'signed-in',
+          engine: 'browser',
+          finalUrl: page.url(),
+          jar,
+          storage,
+          steps,
+          lastMessage,
+          proof: proofFromPost(loginPost, user, password),
+        };
       }
       await page.waitForTimeout(pollMs);
     }
@@ -365,6 +406,7 @@ export async function runBrowserLogin({
       storage,
       steps,
       lastMessage,
+      proof: proofFromPost(loginPost, user, password),
     };
   } catch (error) {
     const message = String(error?.message ?? error);
@@ -555,6 +597,11 @@ async function main() {
   log(`engine: ${result.engine ?? 'http'}`);
   log(`steps: ${result.steps.join(' → ') || '(none)'}`);
   if (result.finalUrl) log(`final: ${result.finalUrl}`);
+  if (result.proof) {
+    log(
+      `posted: fields=${result.proof.fields.join(',')} userMatch=${result.proof.userMatch} passwordMatch=${result.proof.passwordMatch} (lengths ${result.proof.userLength}/${result.proof.passwordLength})`,
+    );
+  }
 
   let verification = null;
   if (options.verify && result.jar.value('PSESSIONID')) {
@@ -587,6 +634,7 @@ async function main() {
           reason: result.lastMessage.reason ?? null,
         }
       : null,
+    proof: result.proof ?? null,
     verify: verification,
   };
 

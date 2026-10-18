@@ -247,6 +247,9 @@ test('the browser engine drives the same flow in Chromium', { timeout: 60_000 },
   assert.equal(result.reason, 'signed-in');
   assert.equal(result.jar.value('PSESSIONID').length, 44);
   assert.deepEqual(result.steps, ['filled', 'no-form']);
+  assert.equal(result.proof.passwordMatch, true);
+  assert.equal(result.proof.userMatch, true);
+  assert.match(result.proof.url, /login-actions\/authenticate/);
 });
 
 test('the browser engine reports a rejected credential', { timeout: 60_000 }, async (context) => {
@@ -266,4 +269,8 @@ test('the browser engine reports a rejected credential', { timeout: 60_000 }, as
   assert.equal(result.ok, false);
   assert.equal(result.reason, 'rejected');
   assert.match(result.rejection, /Username or password invalid|aria-invalid/);
+  // The rejected value is still the value that was supplied, byte for byte.
+  assert.equal(result.proof.passwordMatch, true);
+  assert.equal(result.proof.userMatch, true);
+  assert.equal(result.proof.passwordLength, 'wrong'.length);
 });
