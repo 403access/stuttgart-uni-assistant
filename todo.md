@@ -1,2 +1,5 @@
 - add the feature to "Kurse anrechnen" ("credit courses" maybe in English). basically, cross check courses within categories
 - wifi configuration on laptop
+- re-register the `universityassistant://oidc` redirect with TIK and update `OIDC_REDIRECT_URIS` in `.env` (dev-build/store sign-in fails until then)
+- rename the GitHub repo and update the `cd stuttgart-uni-assistant` lines in README.md and docs/delivery/release-and-operations.md
+- add `eas.json` (build profiles; `bunx eas-cli init` writes the project id)
