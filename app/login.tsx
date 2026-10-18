@@ -118,6 +118,10 @@ export default function LoginScreen() {
           `Signed in as ${profile.name} (${profile.account}). ${profile.nodes.length} nodes, ${profile.studies.length} ${profile.studies.length === 1 ? 'study' : 'studies'}: ${names}.`,
         ),
       );
+      // Deliberately no stopHeadless()/setBrowserOpen(false) here: the session
+      // update and the navigation land in the same tick, so hiding the waiting
+      // view now would render one frame of the bare login screen. It stays up
+      // and disappears with this screen when the gate swaps in the tabs.
       signInCampus(profile);
     },
     onError: (caught) => {
@@ -125,6 +129,10 @@ export default function LoginScreen() {
       const message = campusMessage(locale, code, campusDetail(caught));
       setCampusLog(message);
       setError(message);
+      // A failed profile load has no session to move to, so the waiting view
+      // gives way to the screen with the retry.
+      stopHeadless();
+      setBrowserOpen(false);
       showFetchAlert(locale, {
         title: tx(locale, 'C@MPUS-Anmeldung fehlgeschlagen', 'C@MPUS sign-in failed'),
         code,
@@ -152,8 +160,10 @@ export default function LoginScreen() {
     mutationFn: (harvest: { cookies: string; storage: Record<string, string> }) => submitBrowserCredentials(harvest),
     onMutate: () => setBrowserError(''),
     onSuccess: (result) => {
-      setBrowserOpen(false);
-      stopHeadless();
+      // Deliberately do not close the waiting view here. The session is not set
+      // until the profile loads, and hiding it now would flash the login screen
+      // between the wait and the home tabs.
+      setHeadlessPhase('profile');
       setCampusLog(
         tx(
           locale,
@@ -656,16 +666,20 @@ export default function LoginScreen() {
               </Text>
             ) : null}
             {browserDiag ? <Text style={styles.browserDiag}>{browserDiag}</Text> : null}
-            {harvestBusy ? (
+            {harvestBusy || campusSignIn.isPending ? (
               <SigningIn
                 compact
                 locale={locale}
-                phase="adopt"
-                detail={tx(
-                  locale,
-                  'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
-                  'Checking credentials against C@MPUS … this can take up to a minute.',
-                )}
+                phase={campusSignIn.isPending ? 'profile' : 'adopt'}
+                detail={
+                  campusSignIn.isPending
+                    ? tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')
+                    : tx(
+                        locale,
+                        'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
+                        'Checking credentials against C@MPUS … this can take up to a minute.',
+                      )
+                }
               />
             ) : null}
             {browserError ? <Text style={styles.error}>{browserError}</Text> : null}
@@ -724,13 +738,15 @@ export default function LoginScreen() {
               locale={locale}
               phase={headlessPhase}
               detail={
-                harvestBusy
-                  ? tx(
-                      locale,
-                      'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
-                      'Checking credentials against C@MPUS … this can take up to a minute.',
-                    )
-                  : headlessDetail || undefined
+                campusSignIn.isPending
+                  ? tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')
+                  : harvestBusy
+                    ? tx(
+                        locale,
+                        'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
+                        'Checking credentials against C@MPUS … this can take up to a minute.',
+                      )
+                    : headlessDetail || undefined
               }
             />
             {headlessDump ? (
