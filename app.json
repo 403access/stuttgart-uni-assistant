@@ -47,7 +47,8 @@
       "expo-sqlite",
       "expo-font",
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@preeternal/react-native-cookie-manager"
     ],
     "experiments": {
       "typedRoutes": true

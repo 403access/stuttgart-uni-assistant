@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
@@ -33,6 +33,56 @@ const DIAGNOSE_JS =
   'window.ReactNativeWebView.postMessage(JSON.stringify(out));' +
   'return true;})();';
 
+const CAMPUS_COOKIE_URL = 'https://campus.uni-stuttgart.de/cusonline/';
+
+interface NativeCookies {
+  header: string;
+  names: string[];
+}
+
+const NO_NATIVE_COOKIES: NativeCookies = { header: '', names: [] };
+
+/**
+ * Read the cookie store of the WebView natively. `document.cookie` never shows
+ * `HttpOnly` cookies, and C@MPUS needs `PSESSIONID` (HttpOnly) next to the
+ * bearer token. On iOS that store is the WebKit one the WebView itself uses.
+ */
+async function readNativeCampusCookies(): Promise<NativeCookies> {
+  if (Platform.OS === 'web') return NO_NATIVE_COOKIES;
+  try {
+    const { default: CookieManager } = await import('@preeternal/react-native-cookie-manager');
+    const cookies = await CookieManager.getAsArray(
+      CAMPUS_COOKIE_URL,
+      Platform.OS === 'ios' ? { iosCookieStore: 'webKit' } : undefined,
+    );
+    return {
+      header: cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; '),
+      names: cookies.map((cookie) => cookie.name),
+    };
+  } catch (caught) {
+    console.info('[campus-cookies] native read failed', caught instanceof Error ? caught.message : String(caught));
+    return NO_NATIVE_COOKIES;
+  }
+}
+
+/** Join cookie strings; the first value per name wins, so the native store fills the HttpOnly gaps. */
+function mergeCookieStrings(...parts: string[]): string {
+  const seen = new Set<string>();
+  const pairs: string[] = [];
+  for (const part of parts) {
+    for (const pair of part.split(';')) {
+      const trimmed = pair.trim();
+      if (!trimmed) continue;
+      const separator = trimmed.indexOf('=');
+      const name = (separator > 0 ? trimmed.slice(0, separator) : trimmed).trim().toLowerCase();
+      if (seen.has(name)) continue;
+      seen.add(name);
+      pairs.push(trimmed);
+    }
+  }
+  return pairs.join('; ');
+}
+
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { locale, setLocale, signInCampus, signInDemo, signInLocal, signInOidc } = useApp();
@@ -49,6 +99,7 @@ export default function LoginScreen() {
   const [browserUrl, setBrowserUrl] = useState('');
   const [browserDiag, setBrowserDiag] = useState('');
   const webview = useRef<WebView | null>(null);
+  const nativeCookies = useRef<NativeCookies>(NO_NATIVE_COOKIES);
   const redirectUri = universityRedirectUri();
 
   // Sign-ins as mutations: the retry toast targets `mutate`, pending states
@@ -141,9 +192,11 @@ export default function LoginScreen() {
     }
     if (parsed.diagnostic) {
       const names = (value: unknown): string => (Array.isArray(value) ? value.map(String).join(', ') : '–');
+      const native = nativeCookies.current.names;
       const lines = [
         `${tx(locale, 'Seite', 'Page')}: ${typeof parsed.url === 'string' ? parsed.url.slice(0, 120) : '–'}`,
-        `${tx(locale, 'Cookies', 'Cookies')}: ${names(parsed.cookies)}`,
+        `${tx(locale, 'Cookies (JavaScript)', 'Cookies (JavaScript)')}: ${names(parsed.cookies)}`,
+        `${tx(locale, 'Cookies (nativ, inkl. HttpOnly)', 'Cookies (native, incl. HttpOnly)')}: ${native.length ? native.join(', ') : '–'}`,
         `localStorage: ${names(parsed.local)}`,
         `sessionStorage: ${names(parsed.session)}`,
       ];
@@ -158,7 +211,23 @@ export default function LoginScreen() {
         if (typeof value === 'string' && value) storage[String(key).slice(0, 120)] = value.slice(0, 4000);
       }
     }
-    browserHarvest.mutate({ cookies: typeof parsed.cookies === 'string' ? parsed.cookies : '', storage });
+    const cookies = mergeCookieStrings(
+      typeof parsed.cookies === 'string' ? parsed.cookies : '',
+      nativeCookies.current.header,
+    );
+    browserHarvest.mutate({ cookies, storage });
+  }
+
+  // Read the WebView's HttpOnly cookies first, then run the in-page harvest.
+  async function adoptSignIn() {
+    setBrowserError('');
+    nativeCookies.current = await readNativeCampusCookies();
+    webview.current?.injectJavaScript(HARVEST_JS);
+  }
+
+  async function diagnoseStorage() {
+    nativeCookies.current = await readNativeCampusCookies();
+    webview.current?.injectJavaScript(DIAGNOSE_JS);
   }
 
   return (
@@ -338,12 +407,12 @@ export default function LoginScreen() {
             {browserError ? <Text style={styles.error}>{browserError}</Text> : null}
             <Button
               label={harvestBusy ? tx(locale, 'Übernahme läuft …', 'Adopting …') : tx(locale, 'Anmeldung übernehmen', 'Adopt sign-in')}
-              onPress={() => webview.current?.injectJavaScript(HARVEST_JS)}
+              onPress={() => void adoptSignIn()}
             />
             <Button
               secondary
               label={tx(locale, 'Speicher diagnostizieren', 'Diagnose storage')}
-              onPress={() => webview.current?.injectJavaScript(DIAGNOSE_JS)}
+              onPress={() => void diagnoseStorage()}
             />
           </View>
         </View>
