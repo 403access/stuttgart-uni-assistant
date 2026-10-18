@@ -14,7 +14,6 @@ module.exports = defineConfig([
     // React Native extension order tries `.web.ts` first, which makes `import/no-duplicates`
     // think the native and web implementations imported side by side are the same module.
     files: ["scripts/**"],
-    languageOptions: { globals: require("globals").node },
     settings: {
       "import/extensions": [".ts", ".tsx", ".mjs", ".js", ".cjs", ".json"],
       "import/resolver": {
