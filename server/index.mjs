@@ -216,8 +216,8 @@ const server = createServer(async (request, response) => {
       send(response, 200, result);
     } catch (error) {
       const code = error.message || 'campus_failed';
-      console.log(`[campus] credentials failed ${code}`);
-      send(response, Number(error.status) || 500, { error: code });
+      console.log(`[campus] credentials failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, Number(error.status) || 500, campusFailure(error));
     }
     return;
   }

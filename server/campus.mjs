@@ -907,6 +907,9 @@ export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
       return { ok: true, studies: studies.length, activeStudyId: pickActiveStudyId(studies, null) };
     } catch (error) {
       lastError = error;
+      console.log(
+        `[campus] credentials attempt session=${Boolean(attempt.session)} bearer=${Boolean(attempt.bearer)} failed ${error.message}${error.detail ? ` ${error.detail}` : ''}`,
+      );
     }
   }
   runtimeBearerToken = previousToken;
