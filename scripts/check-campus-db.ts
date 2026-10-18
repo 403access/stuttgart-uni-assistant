@@ -33,8 +33,7 @@ import {
   saveCourses as saveWebCourses,
   saveFullStructure as saveWebStructure,
 } from '../src/campus/db.web';
-import type { BulkCourse } from '../src/types';
-import type { CurriculumNode } from '../src/types';
+import type { BulkCourse, CurriculumNode } from '../src/types';
 
 // Runs under tsx with the resolve hooks from scripts/testing, which redirect
 // `expo-sqlite` to a real SQLite engine (node:sqlite, in-memory) and

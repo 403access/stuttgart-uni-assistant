@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'node:test';
 
+// Set before the imports below: these modules read the path at module scope, so the assignment
+// cannot be hoisted above them.
+/* eslint-disable import/first */
 process.env.CAMPUS_DB_PATH = ':memory:';
 
 import { apiCatalog } from './catalog.mjs';
 import { resetDbForTests } from './db.mjs';
 import { campusAuthorizationHeader, campusRequestHeaders, clearRuntimeToken, coursesFromPayload, coursesRequestUrl, courseGroupsRequestUrl, elementIdFromLink, extractRefreshedToken, groupsFromPayload, loadCourseGroups, loadCurriculumCourses, loadCurriculumStructure, parseCourseId, parseElementId, parseStudyId, portalMessage, portalUrl, profileFromCurriculum, proactiveCampusRefresh, proactiveRefreshMinutes, publicCampusStatus, refreshCampusToken, refreshRequestUrl, startCampusTokenRefresh, stopCampusTokenRefresh, studiesFromChooser } from './campus.mjs';
+/* eslint-enable import/first */
 
 beforeEach(() => {
   resetDbForTests();

@@ -35,6 +35,9 @@
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~58.0.4",
+    "globals": "^16.0.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
@@ -52,10 +55,13 @@
     "campus:secret": "node scripts/set-campus-secret.mjs",
     "campus:token": "node scripts/set-campus-secret.mjs token",
     "campus:session": "node scripts/set-campus-secret.mjs session",
-    "lint": "expo lint",
+    "lint": "expo lint src app server scripts",
     "docs": "cd docs-site && bun run start",
     "docs:build": "cd docs-site && bun run build",
     "docs:serve": "cd docs-site && bun run serve"
   },
-  "private": true
+  "private": true,
+  "patchedDependencies": {
+    "react-native-webview@14.0.1": "patches/react-native-webview@14.0.1.patch"
+  }
 }
