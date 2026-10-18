@@ -32,7 +32,7 @@ Official names stay official in both languages: C@MPUS, ILIAS, SIAM, SDG Campus,
 
 `Mark` in `src/components/ui.tsx` draws two circles: a mid-blue disc and a smaller light-blue disc. It is the splash and header motif. Do not replace it with the university logo.
 
-The generated Expo icons under `assets/images/` are the template icons tinted by the splash and adaptive background `#004191`. They are not the signet.
+The icons under `assets/images/` are built from that same mark, not a template. `scripts/generate-icons.mjs` (`bun run icons`) renders them with no image library: the large disc in white and the small disc in `colors.light`, on the `colors.blue` ground, so the pair stays legible on the splash and the adaptive background. The Android foreground and the theme monochrome keep the mark inside the launcher safe zone. It is an original mark, not the signet.
 
 ## Type
 

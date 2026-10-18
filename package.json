@@ -62,6 +62,7 @@
     "campus:session": "node scripts/set-campus-secret.mjs session",
     "campus:headless": "tsx scripts/campus-headless-login.mjs",
     "lint": "expo lint src app server scripts",
+    "icons": "node scripts/generate-icons.mjs",
     "docs": "cd docs-site && bun run start",
     "docs:build": "cd docs-site && bun run build",
     "docs:serve": "cd docs-site && bun run serve"
