@@ -11,6 +11,7 @@ import {
   DIAGNOSE_JS,
   HARVEST_JS,
   headlessAutofillScript,
+  headlessDumpScript,
   mergeCookieStrings,
   NO_NATIVE_COOKIES,
   readNativeCampusCookies,
@@ -52,9 +53,11 @@ export default function LoginScreen() {
   const [autoRemember, setAutoRemember] = useState(true);
   const [autoBiometrics, setAutoBiometrics] = useState(false);
   const [biometricsReady, setBiometricsReady] = useState(false);
-  const [savedLogin, setSavedLogin] = useState<{ account: string } | null>(null);  const [headlessOpen, setHeadlessOpen] = useState(false);
+  const [savedLogin, setSavedLogin] = useState<{ account: string; biometrics: boolean } | null>(null);
+  const [headlessOpen, setHeadlessOpen] = useState(false);
   const [headlessStatus, setHeadlessStatus] = useState('');
   const [headlessError, setHeadlessError] = useState('');
+  const [headlessDump, setHeadlessDump] = useState('');
   const [headlessAttempt, setHeadlessAttempt] = useState(0);
   const headless = useRef<WebView | null>(null);
   const headlessHarvesting = useRef(false);
@@ -175,10 +178,17 @@ export default function LoginScreen() {
     step?: unknown;
     error?: unknown;
     url?: unknown;
+    title?: unknown;
     cookies?: unknown;
     local?: unknown;
     session?: unknown;
     storage?: unknown;
+    passwordInputs?: unknown;
+    visiblePasswordInputs?: unknown;
+    formCount?: unknown;
+    readyState?: unknown;
+    forms?: unknown;
+    controls?: unknown;
   };
 
   function parseMessage(event: WebViewMessageEvent): HarvestMessage | null {
@@ -260,6 +270,19 @@ export default function LoginScreen() {
       return;
     }
     const step = typeof parsed.step === 'string' ? parsed.step : '';
+    console.info('[campus-headless]', step, typeof parsed.url === 'string' ? parsed.url.slice(0, 140) : '');
+    if (step === 'no-form') {
+      console.info(
+        '[campus-headless]',
+        `passwordInputs=${String(parsed.passwordInputs ?? '?')} visible=${String(parsed.visiblePasswordInputs ?? '?')} forms=${String(parsed.formCount ?? '?')} readyState=${String(parsed.readyState ?? '?')}`,
+      );
+    }
+    if (step === 'dump') {
+      const text = formatDump(parsed);
+      setHeadlessDump(text);
+      console.info(`[campus-headless-dump]\n${text}`);
+      return;
+    }
     if (step === 'signed-in') {
       if (headlessHarvesting.current) return;
       headlessHarvesting.current = true;
@@ -300,7 +323,7 @@ export default function LoginScreen() {
         { account, password, biometrics: remember.biometrics },
         tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'),
       ).catch(() => false);
-      if (ok) setSavedLogin({ account: account.trim() });
+      if (ok) setSavedLogin({ account: account.trim(), biometrics: remember.biometrics });
       else setError(tx(locale, 'Der Gerätespeicher nimmt die Anmeldung nicht an.', 'The device vault refused the entry.'));
     }
     setHeadlessOpen(true);
@@ -332,7 +355,10 @@ export default function LoginScreen() {
   async function openSavedLogin() {
     setError('');
     setHeadlessError('');
-    const stored = await readLogin(tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'));
+    const stored = await readLogin(
+      tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'),
+      savedLogin?.biometrics ?? false,
+    );
     if (!stored) {
       setSavedLogin(null);
       setError(tx(locale, 'Die gespeicherte Anmeldung ist nicht mehr verfügbar.', 'The stored sign-in is no longer available.'));
@@ -650,6 +676,16 @@ export default function LoginScreen() {
               </Text>
             ) : null}
             {headlessError ? <Text style={styles.error}>{headlessError}</Text> : null}
+            {headlessDump ? (
+              <ScrollView style={{ maxHeight: 260 }}>
+                <Text style={styles.browserDiag}>{headlessDump}</Text>
+              </ScrollView>
+            ) : null}
+            <Button
+              secondary
+              label={tx(locale, 'Seite ausgeben', 'Dump page')}
+              onPress={() => headless.current?.injectJavaScript(headlessDumpScript())}
+            />
             {headlessError ? (
               <Button
                 secondary
@@ -667,6 +703,25 @@ export default function LoginScreen() {
       </Modal>
     </View>
   );
+}
+
+/** Human-readable form of the identity-provider page dump for the log and the modal. */
+function formatDump(parsed: { url?: unknown; title?: unknown; forms?: unknown; controls?: unknown; error?: unknown }): string {
+  const forms = Array.isArray(parsed.forms) ? (parsed.forms as { action?: unknown; method?: unknown; html?: unknown }[]) : [];
+  const controls = Array.isArray(parsed.controls) ? parsed.controls.map(String) : [];
+  const lines = [
+    `URL: ${typeof parsed.url === 'string' ? parsed.url : '–'}`,
+    `TITLE: ${typeof parsed.title === 'string' ? parsed.title : '–'}`,
+    `ERROR: ${typeof parsed.error === 'string' ? parsed.error : '–'}`,
+    `CONTROLS:\n  ${controls.join('\n  ') || '–'}`,
+  ];
+  forms.forEach((form, index) => {
+    lines.push(
+      `FORM ${index + 1} method=${typeof form.method === 'string' ? form.method : '?'} action=${typeof form.action === 'string' ? form.action : '?'}`,
+      typeof form.html === 'string' ? form.html : '–',
+    );
+  });
+  return lines.join('\n');
 }
 
 function campusMessage(locale: 'de' | 'en', code: string, detail = ''): string {

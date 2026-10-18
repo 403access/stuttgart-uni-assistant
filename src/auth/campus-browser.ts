@@ -140,13 +140,69 @@ export function headlessAutofillScript(account: string, password: string, runId:
       }
     }
 
-    post({ step: 'no-form' });
+    var visiblePasswords = 0;
+    for (var v = 0; v < passwords.length; v++) { if (visible(passwords[v])) visiblePasswords += 1; }
+    post({
+      step: 'no-form',
+      passwordInputs: passwords.length,
+      visiblePasswordInputs: visiblePasswords,
+      formCount: document.querySelectorAll('form').length,
+      readyState: String(document.readyState)
+    });
     return true;
   } catch (error) {
     post({ step: 'error', error: String(error) });
     return true;
   }
 })();`;
+}
+
+/**
+ * Debug aid for the automated sign-in: post the page structure back so the
+ * selectors can be corrected against the real identity-provider form. Values of
+ * password and token fields are redacted; nothing else in the form is a secret
+ * the flow has not already put in the page.
+ */
+export function headlessDumpScript(): string {
+  return `(function(){
+  function redact(root){
+    try {
+      var inputs = root.querySelectorAll('input');
+      for (var i = 0; i < inputs.length; i++) {
+        var el = inputs[i];
+        var type = (el.getAttribute('type') || '').toLowerCase();
+        var name = (el.getAttribute('name') || '').toLowerCase();
+        if (type === 'password' || /pass|pwd|secret|token/.test(name)) el.setAttribute('value', 'REDACTED');
+      }
+    } catch (e) {}
+    return root;
+  }
+  var out = { headless: true, step: 'dump', url: location.href, title: document.title, forms: [], controls: [] };
+  try {
+    var forms = document.querySelectorAll('form');
+    for (var f = 0; f < forms.length; f++) {
+      var clone = forms[f].cloneNode(true);
+      redact(clone);
+      out.forms.push({
+        action: forms[f].getAttribute('action'),
+        method: forms[f].getAttribute('method'),
+        html: clone.outerHTML.slice(0, 6000)
+      });
+    }
+    var nodes = document.querySelectorAll('input,button,select,a[role=button]');
+    for (var c = 0; c < nodes.length && out.controls.length < 60; c++) {
+      var node = nodes[c];
+      out.controls.push([
+        node.tagName.toLowerCase(),
+        node.getAttribute('type') || '',
+        node.getAttribute('name') || '',
+        node.getAttribute('id') || '',
+        (node.textContent || '').trim().slice(0, 40)
+      ].join('|'));
+    }
+  } catch (e) { out.error = String(e); }
+  window.ReactNativeWebView.postMessage(JSON.stringify(out));
+  return true;})();`;
 }
 
 export interface NativeCookies {

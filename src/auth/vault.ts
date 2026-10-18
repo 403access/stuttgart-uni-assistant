@@ -19,7 +19,8 @@ const KEY = 'campus.autologin.v1';
 /**
  * Non-secret marker so the login screen can offer the vaulted login without
  * raising a biometric prompt just to find out that nothing is stored. Holds
- * only the account id, which the session record keeps in plain storage anyway.
+ * only the account id and whether the entry is biometric-gated; the account id
+ * is already in plain storage in the session record.
  */
 const HINT_KEY = 'campus.autologin.hint.v1';
 
@@ -85,37 +86,32 @@ export async function saveLogin(input: SaveLoginInput, prompt: string): Promise<
     savedAt: new Date().toISOString(),
   };
   await module.setItemAsync(KEY, JSON.stringify(payload), optionsFor(module, input.biometrics, prompt));
-  await AsyncStorage.setItem(HINT_KEY, JSON.stringify({ account: payload.account })).catch(() => undefined);
+  await AsyncStorage.setItem(HINT_KEY, JSON.stringify({ account: payload.account, biometrics: payload.biometrics })).catch(
+    () => undefined,
+  );
   return true;
 }
 
 /**
- * Read the vault. With biometrics enabled this raises the system prompt and can
- * reject for a user cancel, a lockout, or an entry invalidated by a biometric
- * change — every rejection means "no stored login", never a crash.
+ * Read the vault. `biometrics` comes from the non-secret hint: only a
+ * biometric-gated entry is read with `requireAuthentication`, so an entry
+ * without the gate never raises a prompt it does not need. A rejection for a
+ * user cancel, a lockout, or an invalidated entry means "no stored login".
  */
-export async function readLogin(prompt: string): Promise<StoredLogin | null> {
+export async function readLogin(prompt: string, biometrics: boolean): Promise<StoredLogin | null> {
   const module = await secureStore();
   if (!module) return null;
   let raw: string | null = null;
   try {
-    raw = await module.getItemAsync(KEY, { requireAuthentication: true, authenticationPrompt: prompt });
+    raw = await module.getItemAsync(KEY, biometrics ? { requireAuthentication: true, authenticationPrompt: prompt } : {});
   } catch {
     return null;
   }
-  if (raw) {
-    const parsed = parseLogin(raw);
-    if (parsed) return parsed;
-    await module.deleteItemAsync(KEY).catch(() => undefined);
-    return null;
-  }
-  // No biometric entry: fall back to the plain, passcode-protected one.
-  try {
-    const plain = await module.getItemAsync(KEY);
-    return plain ? parseLogin(plain) : null;
-  } catch {
-    return null;
-  }
+  if (!raw) return null;
+  const parsed = parseLogin(raw);
+  if (parsed) return parsed;
+  await module.deleteItemAsync(KEY).catch(() => undefined);
+  return null;
 }
 
 function parseLogin(raw: string): StoredLogin | null {
@@ -140,13 +136,14 @@ export async function clearLogin(): Promise<void> {
   await module.deleteItemAsync(KEY).catch(() => undefined);
 }
 
-/** Account id of a vaulted login, or `null`. Never reads the secret. */
-export async function storedLoginHint(): Promise<{ account: string } | null> {
+/** Account id and biometric flag of a vaulted login, or `null`. Never reads the secret. */
+export async function storedLoginHint(): Promise<{ account: string; biometrics: boolean } | null> {
   try {
     const raw = await AsyncStorage.getItem(HINT_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { account?: unknown };
-    return typeof parsed.account === 'string' && parsed.account ? { account: parsed.account } : null;
+    const parsed = JSON.parse(raw) as { account?: unknown; biometrics?: unknown };
+    if (typeof parsed.account !== 'string' || !parsed.account) return null;
+    return { account: parsed.account, biometrics: Boolean(parsed.biometrics) };
   } catch {
     return null;
   }
