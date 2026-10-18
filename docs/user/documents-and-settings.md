@@ -45,7 +45,7 @@ Settings has sign-out. It clears the session and returns to the sign-in screen. 
 | Session, profile answers, notes, reviews, chat, planned modules, recognition drafts | One AsyncStorage entry on this device, capped sizes (chat at 40 messages) |
 | C@MPUS curriculum and course caches | An on-device SQLite database (AsyncStorage on web), one entry per study |
 | University e-mail password | Server process memory only. Not on the device, not in `.env`, not logged. |
-| The university password for C@MPUS sign-in | Nowhere in this app. It is typed only on the university page. |
+| The university password for C@MPUS sign-in | The device vault, only if `Auf diesem Gerät speichern` was enabled: iOS keychain / Android Keystore, optionally behind biometrics, deleted on sign-out. Never sent to the assistant server. |
 | Grok answers | The request lives only for its duration; nothing is persisted server-side |
 
 The reset and the demonstration notice exist so that a reviewer can check these claims on the phone itself. The engineering side of this list is documented in [security-and-privacy](../engineering/security-and-privacy.md).

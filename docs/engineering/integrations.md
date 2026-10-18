@@ -2,7 +2,7 @@
 
 The product description names four university systems. C@MPUS, ILIAS, and SDG Campus are not called. SIAM sign-in is a real OpenID Connect authorization-code flow against the TIK identity provider, documented with every URL in [oidc-login.md](oidc-login.md).
 
-For SIAM and C@MPUS the app never stores or sends the university password. The student types it on `https://idp.uni-stuttgart.de`. Client id and client secret, issued by TIK, stay in the server `.env`. UniMail is the deliberate exception, documented in [mail.md](mail.md): the TIK publishes IMAP as the interface for mail clients, so the password goes from the app to the local assistant server (which proves and holds it in memory) and on to the TIK IMAP host — never to any other endpoint, never persisted.
+For SIAM the app never stores or sends the university password. The student types it on `https://idp.uni-stuttgart.de`. Client id and client secret, issued by TIK, stay in the server `.env`. Two deliberate exceptions exist. UniMail is documented in [mail.md](mail.md): the TIK publishes IMAP as the interface for mail clients, so the password goes from the app to the local assistant server (which proves and holds it in memory) and on to the TIK IMAP host — never to any other endpoint, never persisted. The C@MPUS automated sign-in is the second: the user may keep the st-account password in the device vault so a hidden WebView can fill the official form; it stays on the device, is deleted on sign-out, and only the harvested session reaches the assistant server — see [campus-browser-login.md](campus-browser-login.md).
 
 ## What sync does today
 
@@ -23,7 +23,7 @@ only the account id. Details: [mail.md](mail.md).
 
 ## Why there is no client
 
-C@MPUS, ILIAS, and SDG Campus are authenticated, personal, and not published as an open API for third-party mobile apps. A password field that posted to a university host would be the wrong design: the app would be handling a credential it should never see.
+C@MPUS, ILIAS, and SDG Campus are authenticated, personal, and not published as an open API for third-party mobile apps. The beta C@MPUS browser path is the compromise: it drives the official pages instead of a university API, and the automated variant keeps the credential only in the device vault. It is not a substitute for the registered `slc.cm.cs` reads the assistant server makes, and it is explicitly beta — see [campus-browser-login.md](campus-browser-login.md).
 
 SIAM is different because TIK publishes an identity provider for relying parties and asks services to use it instead of collecting passwords. This app is that relying party. It still needs a client id that TIK registers. It does not reuse the C@MPUS client, and it does not replay the `execution=` parameter that appears in the address bar after C@MPUS has already started a login. The login screen states that the project is not an official university app.
 

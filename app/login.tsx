@@ -1,11 +1,22 @@
-import { useRef, useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
 import { assistantUrl } from '@/src/assistant/remote';
 import { campusDetail, fetchCampusStatus, signInWithCampusToken, submitBrowserCredentials } from '@/src/auth/campus';
+import {
+  CAMPUS_START_URL,
+  DIAGNOSE_JS,
+  HARVEST_JS,
+  headlessAutofillScript,
+  mergeCookieStrings,
+  NO_NATIVE_COOKIES,
+  readNativeCampusCookies,
+  type NativeCookies,
+} from '@/src/auth/campus-browser';
+import { biometricUnlockAvailable, clearLogin, readLogin, saveLogin, storedLoginHint } from '@/src/auth/vault';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
@@ -14,74 +25,6 @@ import { keys } from '@/src/query/keys';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
-
-const HARVEST_JS =
-  "(function(){var out={cookies:'',storage:{}};" +
-  "try{out.cookies=document.cookie||'';}catch(e){}" +
-  'try{var i,k;' +
-  "for(i=0;i<localStorage.length;i++){k=localStorage.key(i);out.storage['local:'+k]=String(localStorage.getItem(k)).slice(0,4000);}" +
-  "for(i=0;i<sessionStorage.length;i++){k=sessionStorage.key(i);out.storage['session:'+k]=String(sessionStorage.getItem(k)).slice(0,4000);}" +
-  '}catch(e){out.error=String(e);}' +
-  'window.ReactNativeWebView.postMessage(JSON.stringify(out));' +
-  'return true;})();';
-
-const DIAGNOSE_JS =
-  '(function(){var out={diagnostic:true,url:location.href,cookies:[],local:[],session:[]};' +
-  'try{out.cookies=document.cookie.split(";").map(function(c){return c.split("=")[0].trim();}).filter(Boolean);}catch(e){}' +
-  'function keys(s){var r=[];try{for(var i=0;i<s.length;i++){var k=s.key(i);var v=String(s.getItem(k));r.push(k+"="+(v.length>200?v.slice(0,200)+"…(+"+(v.length-200)+")":v));}}catch(e){}return r;}' +
-  'out.local=keys(localStorage);out.session=keys(sessionStorage);' +
-  'window.ReactNativeWebView.postMessage(JSON.stringify(out));' +
-  'return true;})();';
-
-const CAMPUS_COOKIE_URL = 'https://campus.uni-stuttgart.de/cusonline/';
-
-interface NativeCookies {
-  header: string;
-  names: string[];
-}
-
-const NO_NATIVE_COOKIES: NativeCookies = { header: '', names: [] };
-
-/**
- * Read the cookie store of the WebView natively. `document.cookie` never shows
- * `HttpOnly` cookies, and C@MPUS needs `PSESSIONID` (HttpOnly) next to the
- * bearer token. On iOS that store is the WebKit one the WebView itself uses.
- */
-async function readNativeCampusCookies(): Promise<NativeCookies> {
-  if (Platform.OS === 'web') return NO_NATIVE_COOKIES;
-  try {
-    const { default: CookieManager } = await import('@preeternal/react-native-cookie-manager');
-    const cookies = await CookieManager.getAsArray(
-      CAMPUS_COOKIE_URL,
-      Platform.OS === 'ios' ? { iosCookieStore: 'webKit' } : undefined,
-    );
-    return {
-      header: cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join('; '),
-      names: cookies.map((cookie) => cookie.name),
-    };
-  } catch (caught) {
-    console.info('[campus-cookies] native read failed', caught instanceof Error ? caught.message : String(caught));
-    return NO_NATIVE_COOKIES;
-  }
-}
-
-/** Join cookie strings; the first value per name wins, so the native store fills the HttpOnly gaps. */
-function mergeCookieStrings(...parts: string[]): string {
-  const seen = new Set<string>();
-  const pairs: string[] = [];
-  for (const part of parts) {
-    for (const pair of part.split(';')) {
-      const trimmed = pair.trim();
-      if (!trimmed) continue;
-      const separator = trimmed.indexOf('=');
-      const name = (separator > 0 ? trimmed.slice(0, separator) : trimmed).trim().toLowerCase();
-      if (seen.has(name)) continue;
-      seen.add(name);
-      pairs.push(trimmed);
-    }
-  }
-  return pairs.join('; ');
-}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -101,6 +44,49 @@ export default function LoginScreen() {
   const webview = useRef<WebView | null>(null);
   const nativeCookies = useRef<NativeCookies>(NO_NATIVE_COOKIES);
   const redirectUri = universityRedirectUri();
+
+  // Automated sign-in: the credential is typed here, kept in the device vault,
+  // and only ever used by the hidden WebView on this device.
+  const [autoAccount, setAutoAccount] = useState('');
+  const [autoPassword, setAutoPassword] = useState('');
+  const [autoRemember, setAutoRemember] = useState(true);
+  const [autoBiometrics, setAutoBiometrics] = useState(false);
+  const [biometricsReady, setBiometricsReady] = useState(false);
+  const [savedLogin, setSavedLogin] = useState<{ account: string } | null>(null);  const [headlessOpen, setHeadlessOpen] = useState(false);
+  const [headlessStatus, setHeadlessStatus] = useState('');
+  const [headlessError, setHeadlessError] = useState('');
+  const [headlessAttempt, setHeadlessAttempt] = useState(0);
+  const headless = useRef<WebView | null>(null);
+  const headlessHarvesting = useRef(false);
+  const headlessCreds = useRef({ account: '', password: '', runId: '' });
+  const headlessTimers = useRef<{ timeout: ReturnType<typeof setTimeout> | null; poll: ReturnType<typeof setInterval> | null }>({
+    timeout: null,
+    poll: null,
+  });
+
+  useEffect(() => {
+    let active = true;
+    biometricUnlockAvailable()
+      .then((available) => {
+        if (active) setBiometricsReady(available);
+      })
+      .catch(() => undefined);
+    storedLoginHint()
+      .then((hint) => {
+        if (active && hint) setSavedLogin(hint);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(
+    () => () => {
+      stopHeadlessTimers();
+    },
+    [],
+  );
 
   // Sign-ins as mutations: the retry toast targets `mutate`, pending states
   // come from `isPending`, and the message/toast handling lives in the hooks.
@@ -161,6 +147,7 @@ export default function LoginScreen() {
     onMutate: () => setBrowserError(''),
     onSuccess: (result) => {
       setBrowserOpen(false);
+      stopHeadless();
       setCampusLog(
         tx(
           locale,
@@ -182,28 +169,28 @@ export default function LoginScreen() {
 
   const busy = campusSignIn.isPending || siamSignIn.isPending;
 
-  async function onBrowserMessage(event: WebViewMessageEvent) {
-    if (harvestBusy) return;
-    let parsed: { diagnostic?: boolean; url?: unknown; cookies?: unknown; local?: unknown; session?: unknown; cookiesRaw?: unknown; storage?: unknown } = {};
+  type HarvestMessage = {
+    diagnostic?: boolean;
+    headless?: boolean;
+    step?: unknown;
+    error?: unknown;
+    url?: unknown;
+    cookies?: unknown;
+    local?: unknown;
+    session?: unknown;
+    storage?: unknown;
+  };
+
+  function parseMessage(event: WebViewMessageEvent): HarvestMessage | null {
     try {
-      parsed = JSON.parse(event.nativeEvent.data) as typeof parsed;
+      return JSON.parse(event.nativeEvent.data) as HarvestMessage;
     } catch {
-      return;
+      return null;
     }
-    if (parsed.diagnostic) {
-      const names = (value: unknown): string => (Array.isArray(value) ? value.map(String).join(', ') : '–');
-      const native = nativeCookies.current.names;
-      const lines = [
-        `${tx(locale, 'Seite', 'Page')}: ${typeof parsed.url === 'string' ? parsed.url.slice(0, 120) : '–'}`,
-        `${tx(locale, 'Cookies (JavaScript)', 'Cookies (JavaScript)')}: ${names(parsed.cookies)}`,
-        `${tx(locale, 'Cookies (nativ, inkl. HttpOnly)', 'Cookies (native, incl. HttpOnly)')}: ${native.length ? native.join(', ') : '–'}`,
-        `localStorage: ${names(parsed.local)}`,
-        `sessionStorage: ${names(parsed.session)}`,
-      ];
-      console.info(`[campus-diagnose]\n${lines.join('\n')}`);
-      setBrowserDiag(lines.join('\n'));
-      return;
-    }
+  }
+
+  /** Send a harvest payload to the server; both browser modes end here. */
+  function submitHarvest(parsed: HarvestMessage) {
     setHarvestBusy(true);
     const storage: Record<string, string> = {};
     if (parsed.storage && typeof parsed.storage === 'object') {
@@ -218,6 +205,27 @@ export default function LoginScreen() {
     browserHarvest.mutate({ cookies, storage });
   }
 
+  async function onBrowserMessage(event: WebViewMessageEvent) {
+    if (harvestBusy) return;
+    const parsed = parseMessage(event);
+    if (!parsed) return;
+    if (parsed.diagnostic) {
+      const names = (value: unknown): string => (Array.isArray(value) ? value.map(String).join(', ') : '–');
+      const native = nativeCookies.current.names;
+      const lines = [
+        `${tx(locale, 'Seite', 'Page')}: ${typeof parsed.url === 'string' ? parsed.url.slice(0, 120) : '–'}`,
+        `${tx(locale, 'Cookies (JavaScript)', 'Cookies (JavaScript)')}: ${names(parsed.cookies)}`,
+        `${tx(locale, 'Cookies (nativ, inkl. HttpOnly)', 'Cookies (native, incl. HttpOnly)')}: ${native.length ? native.join(', ') : '–'}`,
+        `localStorage: ${names(parsed.local)}`,
+        `sessionStorage: ${names(parsed.session)}`,
+      ];
+      console.info(`[campus-diagnose]\n${lines.join('\n')}`);
+      setBrowserDiag(lines.join('\n'));
+      return;
+    }
+    submitHarvest(parsed);
+  }
+
   // Read the WebView's HttpOnly cookies first, then run the in-page harvest.
   async function adoptSignIn() {
     setBrowserError('');
@@ -228,6 +236,118 @@ export default function LoginScreen() {
   async function diagnoseStorage() {
     nativeCookies.current = await readNativeCampusCookies();
     webview.current?.injectJavaScript(DIAGNOSE_JS);
+  }
+
+  function stopHeadlessTimers() {
+    if (headlessTimers.current.timeout) clearTimeout(headlessTimers.current.timeout);
+    if (headlessTimers.current.poll) clearInterval(headlessTimers.current.poll);
+    headlessTimers.current = { timeout: null, poll: null };
+  }
+
+  function stopHeadless() {
+    stopHeadlessTimers();
+    headlessHarvesting.current = false;
+    setHeadlessOpen(false);
+    setHeadlessStatus('');
+  }
+
+  /** Messages from the automated WebView: autofill progress, then the harvest. */
+  async function onHeadlessMessage(event: WebViewMessageEvent) {
+    const parsed = parseMessage(event);
+    if (!parsed) return;
+    if (!parsed.headless) {
+      submitHarvest(parsed);
+      return;
+    }
+    const step = typeof parsed.step === 'string' ? parsed.step : '';
+    if (step === 'signed-in') {
+      if (headlessHarvesting.current) return;
+      headlessHarvesting.current = true;
+      setHeadlessStatus(tx(locale, 'Anmeldung erkannt, Sitzung wird übernommen …', 'Sign-in detected, adopting the session …'));
+      nativeCookies.current = await readNativeCampusCookies();
+      headless.current?.injectJavaScript(HARVEST_JS);
+      return;
+    }
+    if (step === 'filled' || step === 'cta-click') {
+      setHeadlessStatus(tx(locale, 'Anmeldedaten werden eingetragen …', 'Filling in the sign-in form …'));
+      return;
+    }
+    if (step === 'too-many-attempts' || step === 'submit-failed' || step === 'error') {
+      setHeadlessStatus('');
+      setHeadlessError(
+        tx(
+          locale,
+          'Die automatische Anmeldung kam nicht durch. Prüfe Kennung und Passwort oder melde dich im sichtbaren Browser an.',
+          'The automated sign-in did not get through. Check the account id and password, or sign in in the visible browser.',
+        ),
+      );
+    }
+  }
+
+  /**
+   * Run the credential sign-in: the hidden WebView opens C@MPUS, fills the
+   * university form, and the harvest above adopts the session. The credential
+   * stays on this device; the assistant server only sees the session.
+   */
+  async function runHeadless(account: string, password: string, remember: { enabled: boolean; biometrics: boolean }) {
+    setError('');
+    setHeadlessError('');
+    headlessHarvesting.current = false;
+    headlessCreds.current = { account, password, runId: String(Date.now()) };
+    setHeadlessStatus(tx(locale, 'Verbindung zu C@MPUS …', 'Connecting to C@MPUS …'));
+    if (remember.enabled) {
+      const ok = await saveLogin(
+        { account, password, biometrics: remember.biometrics },
+        tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'),
+      ).catch(() => false);
+      if (ok) setSavedLogin({ account: account.trim() });
+      else setError(tx(locale, 'Der Gerätespeicher nimmt die Anmeldung nicht an.', 'The device vault refused the entry.'));
+    }
+    setHeadlessOpen(true);
+    setHeadlessAttempt((value) => value + 1);
+    stopHeadlessTimers();
+    headlessTimers.current.poll = setInterval(() => {
+      const current = headlessCreds.current;
+      headless.current?.injectJavaScript(headlessAutofillScript(current.account, current.password, current.runId));
+    }, 3000);
+    headlessTimers.current.timeout = setTimeout(() => {
+      stopHeadlessTimers();
+      setHeadlessStatus('');
+      setHeadlessError(tx(locale, 'Zeitüberschreitung der automatischen Anmeldung.', 'The automated sign-in timed out.'));
+    }, 90_000);
+  }
+
+  function startHeadless() {
+    const account = autoAccount.trim();
+    if (account.length < 3 || !autoPassword) {
+      setError(tx(locale, 'Bitte Kennung und Passwort eintragen.', 'Enter the account id and the password.'));
+      return;
+    }
+    return runHeadless(account, autoPassword, {
+      enabled: autoRemember,
+      biometrics: autoBiometrics && biometricsReady,
+    });
+  }
+
+  async function openSavedLogin() {
+    setError('');
+    setHeadlessError('');
+    const stored = await readLogin(tx(locale, 'C@MPUS-Anmeldung entsperren', 'Unlock the C@MPUS sign-in'));
+    if (!stored) {
+      setSavedLogin(null);
+      setError(tx(locale, 'Die gespeicherte Anmeldung ist nicht mehr verfügbar.', 'The stored sign-in is no longer available.'));
+      return;
+    }
+    setAutoAccount(stored.account);
+    setAutoPassword(stored.password);
+    setAutoBiometrics(stored.biometrics);
+    await runHeadless(stored.account, stored.password, { enabled: false, biometrics: false });
+  }
+
+  async function forgetSavedLogin() {
+    await clearLogin();
+    setSavedLogin(null);
+    setAutoPassword('');
   }
 
   return (
@@ -246,12 +366,74 @@ export default function LoginScreen() {
             <Text style={[styles.langText, locale === 'en' && styles.langTextOn]}>English</Text>
           </Pressable>
         </View>
+        <Text style={styles.section}>{tx(locale, 'Automatische C@MPUS-Anmeldung (Beta)', 'Automated C@MPUS sign-in (Beta)')}</Text>
+        <Text style={styles.notice}>
+          {tx(
+            locale,
+            'Die Anmeldung läuft auf diesem Gerät in einem unsichtbaren Browser gegen die offizielle C@MPUS-Seite. Kennung und Passwort bleiben auf dem Gerät und werden nie an den Assistent-Server gesendet; der Server erhält nur die Sitzung.',
+            'Sign-in runs on this device in an invisible browser against the official C@MPUS page. The account id and password stay on the device and are never sent to the assistant server; the server only receives the session.',
+          )}
+        </Text>
+        <Text style={styles.label}>{tx(locale, 'Nutzerkennung', 'Account id')}</Text>
+        <TextInput
+          value={autoAccount}
+          onChangeText={setAutoAccount}
+          autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="username"
+          style={styles.input}
+          placeholder="st123456"
+          placeholderTextColor={colors.mute}
+        />
+        <Text style={styles.label}>{tx(locale, 'Passwort', 'Password')}</Text>
+        <TextInput
+          value={autoPassword}
+          onChangeText={setAutoPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          textContentType="password"
+          style={styles.input}
+          placeholder={tx(locale, 'Passwort des st-Kontos', 'st-account password')}
+          placeholderTextColor={colors.mute}
+        />
+        <View style={styles.toggleRow}>
+          <Pressable onPress={() => setAutoRemember((value) => !value)} style={[styles.langButton, autoRemember && styles.langOn]}>
+            <Text style={[styles.langText, autoRemember && styles.langTextOn]}>
+              {tx(locale, 'Auf diesem Gerät speichern', 'Store on this device')}
+            </Text>
+          </Pressable>
+          {biometricsReady ? (
+            <Pressable
+              onPress={() => setAutoBiometrics((value) => !value)}
+              style={[styles.langButton, autoBiometrics && styles.langOn]}>
+              <Text style={[styles.langText, autoBiometrics && styles.langTextOn]}>
+                {tx(locale, 'Mit Biometrie schützen', 'Protect with biometrics')}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <Button
+          label={headlessOpen ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Automatisch anmelden', 'Sign in automatically')}
+          onPress={() => void startHeadless()}
+        />
+        {savedLogin ? (
+          <Button
+            secondary
+            label={tx(locale, `Gespeicherte Anmeldung für ${savedLogin.account} verwenden`, `Use the stored sign-in for ${savedLogin.account}`)}
+            onPress={() => void openSavedLogin()}
+          />
+        ) : null}
+        {savedLogin ? (
+          <Button secondary label={tx(locale, 'Gespeicherte Anmeldung löschen', 'Delete the stored sign-in')} onPress={() => void forgetSavedLogin()} />
+        ) : null}
+        {headlessError ? <Text style={styles.error}>{headlessError}</Text> : null}
         <Text style={styles.section}>{tx(locale, 'Bestehendes Konto, ohne Registrierung', 'Existing account, no registration')}</Text>
         <Text style={styles.notice}>
           {tx(
             locale,
-            'Dein st-Konto und dein Passwort gelten auf der Anmeldeseite von C@MPUS. Die App muss dafür nicht beim TIK registriert sein. Das Passwort wird dort eingegeben, nicht in dieses Formular. Der Identity Provider nimmt ein Passwort von einer unregistrierten App nicht entgegen.',
-            'Your st-account and password work on the C@MPUS sign-in page. This app does not need to be registered with TIK for that. The password is entered there, not in this form. The identity provider does not accept a password from an unregistered app.',
+            'Dein st-Konto und dein Passwort gelten auf der Anmeldeseite von C@MPUS. Die App muss dafür nicht beim TIK registriert sein. Der Identity Provider nimmt ein Passwort von einer unregistrierten App nicht entgegen.',
+            'Your st-account and password work on the C@MPUS sign-in page. This app does not need to be registered with TIK for that. The identity provider does not accept a password from an unregistered app.',
           )}
         </Text>
         <Button
@@ -417,6 +599,72 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={headlessOpen}
+        animationType="fade"
+        onRequestClose={() => {
+          stopHeadless();
+        }}>
+        <View style={[styles.browserShell, { paddingTop: insets.top }]}>
+          <WebView
+            key={headlessAttempt}
+            ref={headless}
+            source={{ uri: CAMPUS_START_URL }}
+            sharedCookiesEnabled
+            thirdPartyCookiesEnabled
+            injectedJavaScript={headlessAutofillScript(
+              headlessCreds.current.account,
+              headlessCreds.current.password,
+              headlessCreds.current.runId,
+            )}
+            onMessage={onHeadlessMessage}
+            onLoadEnd={() => {
+              // Re-run after a load: a late-rendered SPA form may not exist yet.
+              const current = headlessCreds.current;
+              headless.current?.injectJavaScript(headlessAutofillScript(current.account, current.password, current.runId));
+            }}
+            style={styles.hiddenWebView}
+            pointerEvents="none"
+          />
+          <View style={styles.browserBar}>
+            <Text style={styles.browserTitle}>{tx(locale, 'Automatische Anmeldung', 'Automated sign-in')}</Text>
+            <Pressable
+              onPress={() => {
+                stopHeadless();
+              }}
+              hitSlop={8}>
+              <Text style={styles.browserClose}>✕</Text>
+            </Pressable>
+          </View>
+          <View style={{ flex: 1, padding: 16, gap: 12, justifyContent: 'center' }}>
+            <Text style={styles.browserHint}>
+              {headlessStatus || tx(locale, 'Anmeldung wird vorbereitet …', 'Preparing the sign-in …')}
+            </Text>
+            {harvestBusy ? (
+              <Text style={styles.browserHint}>
+                {tx(
+                  locale,
+                  'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
+                  'Checking credentials against C@MPUS … this can take up to a minute.',
+                )}
+              </Text>
+            ) : null}
+            {headlessError ? <Text style={styles.error}>{headlessError}</Text> : null}
+            {headlessError ? (
+              <Button
+                secondary
+                label={tx(locale, 'Im sichtbaren Browser anmelden', 'Sign in in the visible browser')}
+                onPress={() => {
+                  stopHeadless();
+                  setBrowserError('');
+                  setBrowserOpen(true);
+                }}
+              />
+            ) : null}
+            <Button secondary label={tx(locale, 'Abbrechen', 'Cancel')} onPress={() => stopHeadless()} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -490,6 +738,8 @@ const styles = StyleSheet.create({
   langOn: { backgroundColor: colors.blue, borderColor: colors.blue },
   langText: { color: colors.anthracite, fontWeight: '700' },
   langTextOn: { color: '#FFFFFF' },
+  toggleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  hiddenWebView: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: 0 },
   section: { color: colors.anthracite, fontSize: 18, fontWeight: '700', marginTop: 8 },
   notice: { backgroundColor: colors.lightSoft, color: colors.anthracite, borderRadius: 14, padding: 12, lineHeight: 20 },
   label: { color: colors.inkSoft, fontSize: 13, fontWeight: '700', marginTop: 4 },

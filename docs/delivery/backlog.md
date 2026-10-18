@@ -20,7 +20,7 @@ Status of the prototype on 13 October 2026. "Done" means the screen or script ex
 - Pointer click-through on web or a device in the session that produced this build.
 - A live call to Grok with a real key.
 - A development build or a store binary. No `eas.json`.
-- Encrypted storage, accounts, and moderation.
+- A store binary. No `eas.json`. Encrypted local storage and accounts, except the opt-in C@MPUS autologin vault in `expo-secure-store`.
 
 ## Next, in order
 
@@ -35,7 +35,7 @@ The order is the order a follow-up should use. Each item stays inside the demo b
 7. **PDF text.** A later reader may extract a text layer. Until then the honest note stays. Do not add a viewer that implies the file was understood.
 8. **EAS preview.** Add `eas.json` when someone needs a binary. Keep the bundle id `dev.demo.universityassistant`.
 9. **Backend boundary.** The first server feature that is not the xAI proxy should be session and fact-sheet assembly, still on the fictional record, so the client stops shipping the whole catalog only when a connector exists.
-10. **University connectors.** Only with an agreement, server-side OIDC, and no password in the app. Spec is in [integrations](../engineering/integrations.md).
+10. **University connectors.** Only with an agreement, server-side OIDC, and no password sent to the app backend. The beta C@MPUS vault stores the credential on the device only; replace it with the OIDC refresh token once TIK registers the client. Spec is in [integrations](../engineering/integrations.md).
 
 ## Won't in this repository without a new decision
 

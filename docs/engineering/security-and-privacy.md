@@ -4,7 +4,9 @@ This build is a demonstration on one device. The rules below are what the code d
 
 ## Credentials
 
-There is no password field. **C@MPUS öffnen** sends the student to `https://campus.uni-stuttgart.de/`, where they use the account they already have. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` once a client is registered. The app does not submit a SIAM password to either host. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Async Storage keeps the account, name, email, subject, and a local session id used only to ask this server to revoke that memory entry.
+There is no password field on the SIAM path. **C@MPUS öffnen** sends the student to `https://campus.uni-stuttgart.de/`, where they use the account they already have. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` once a client is registered. The app does not submit a SIAM password to either host. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Async Storage keeps the account, name, email, subject, and a local session id used only to ask this server to revoke that memory entry.
+
+One deliberate exception exists on the C@MPUS browser path: the opt-in `Automatisch anmelden` keeps the st-account password in the device vault (`expo-secure-store`, optional biometric gate) so the hidden WebView can fill the official form. The password never reaches the assistant server and never leaves the device; only the harvested session does. The vault is deleted on sign-out. This is beta-only, it is the one place in the project that stores a university password, and it is bounded by the rules in [campus-browser-login.md](campus-browser-login.md) and [08-maintenance.md](../sdlc/08-maintenance.md). The UniMail password remains server-memory-only (see [mail.md](mail.md)).
 
 `OIDC_LOGIN_HINT` may hold the account id so the identity provider can prefill its form. It is not accepted as a password. Environment variables named `OIDC_PASSWORD`, `PASSWORD`, `CAMPUS_PASSWORD`, `SIAM_PASSWORD`, and `UNI_PASSWORD` are ignored.
 
@@ -44,7 +46,7 @@ Without a key the server answers `/v1/assist` with 503 and the client keeps the 
 
 Async Storage key `university-assistant/v1` holds language, session account, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
 
-Async Storage is not an encrypted vault. On a shared phone, the notes are readable to someone who can open the app sandbox. Reset in Einstellungen deletes that payload except language and session. Uninstalling the app drops it with the sandbox.
+Async Storage is not an encrypted vault. On a shared phone, the notes are readable to someone who can open the app sandbox. The single exception is the opt-in C@MPUS autologin credential: it lives in `expo-secure-store` (iOS keychain, Android Keystore-encrypted `SharedPreferences`), optionally behind biometrics, deleted on sign-out, and the account id alone is mirrored to Async Storage as a non-secret hint. Reset in Einstellungen deletes the Async Storage payload except language and session. Uninstalling the app drops it with the sandbox, except the iOS keychain, which survives a reinstall with the same bundle id — so sign-out, not uninstall, is what removes the vault.
 
 Imports of binary PDFs store a name and a short explanation, not a promise of encrypted storage.
 

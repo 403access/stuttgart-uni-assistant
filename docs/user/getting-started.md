@@ -30,6 +30,7 @@ The sign-in screen groups the paths by what they check.
 
 | Button | What happens |
 | --- | --- |
+| **Automatisch anmelden** | A hidden browser fills the official C@MPUS form with the account id and password you typed. With **Auf diesem Gerät speichern** the password goes into the device vault (iOS keychain / Android Keystore), optionally behind biometrics, and is deleted when you sign out; it never reaches the assistant server. The app then adopts the session and loads your studies. Marked beta. |
 | **Mit C@MPUS-Token anmelden** | The local server reads the curriculum root of your enrolled studies with the bearer token and the `PSESSIONID` cookie from `.env`. Your name and studies come from C@MPUS. The app never shows a token field; the token stays on the server. |
 | **Im C@MPUS-Browser anmelden (Beta)** | An in-app browser opens the official C@MPUS login. You type the password on the university page only. The app picks up the signed-in session after you finish and loads your studies. Marked beta: if anything fails, use the token path or a fallback below. |
 | **C@MPUS öffnen und anmelden** | Opens `https://campus.uni-stuttgart.de` in the system browser. Nothing is harvested or stored; use the official site and come back. |

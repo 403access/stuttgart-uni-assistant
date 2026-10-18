@@ -1,0 +1,153 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+
+/**
+ * Device vault for the opt-in C@MPUS autologin credential. This is the only
+ * place in the project that keeps a university password, it is deleted on sign
+ * out, and it never leaves the device: the automated sign-in runs in the
+ * WebView on this device, the assistant server only ever sees the harvested
+ * session.
+ *
+ * Backing store is `expo-secure-store`: the iOS keychain (hardware-backed where
+ * the device has a Secure Enclave) and Android `SharedPreferences` encrypted
+ * with the Android Keystore. With biometrics enabled the entry additionally
+ * requires user authentication to read.
+ */
+
+const KEY = 'campus.autologin.v1';
+
+/**
+ * Non-secret marker so the login screen can offer the vaulted login without
+ * raising a biometric prompt just to find out that nothing is stored. Holds
+ * only the account id, which the session record keeps in plain storage anyway.
+ */
+const HINT_KEY = 'campus.autologin.hint.v1';
+
+export interface StoredLogin {
+  account: string;
+  password: string;
+  /** The entry is readable only after a successful biometric check. */
+  biometrics: boolean;
+  savedAt: string;
+}
+
+export interface SaveLoginInput {
+  account: string;
+  password: string;
+  biometrics: boolean;
+}
+
+type SecureStoreModule = typeof import('expo-secure-store');
+
+/** Native module on device, `null` on web where there is no keystore. */
+async function secureStore(): Promise<SecureStoreModule | null> {
+  if (Platform.OS === 'web') return null;
+  try {
+    const module = await import('expo-secure-store');
+    return (await module.isAvailableAsync()) ? module : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Whether the device can protect the entry with biometrics. `requireAuthentication`
+ * needs an enrolled, sufficiently strong biometric; a PIN alone is not enough.
+ */
+export async function biometricUnlockAvailable(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    const module = await import('expo-secure-store');
+    return module.canUseBiometricAuthentication();
+  } catch {
+    return false;
+  }
+}
+
+function optionsFor(module: SecureStoreModule, biometrics: boolean, prompt: string) {
+  if (!biometrics) {
+    return { keychainAccessible: module.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY };
+  }
+  return {
+    keychainAccessible: module.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+    requireAuthentication: true,
+    authenticationPrompt: prompt,
+  };
+}
+
+export async function saveLogin(input: SaveLoginInput, prompt: string): Promise<boolean> {
+  const module = await secureStore();
+  if (!module) return false;
+  const payload: StoredLogin = {
+    account: input.account.trim(),
+    password: input.password,
+    biometrics: input.biometrics,
+    savedAt: new Date().toISOString(),
+  };
+  await module.setItemAsync(KEY, JSON.stringify(payload), optionsFor(module, input.biometrics, prompt));
+  await AsyncStorage.setItem(HINT_KEY, JSON.stringify({ account: payload.account })).catch(() => undefined);
+  return true;
+}
+
+/**
+ * Read the vault. With biometrics enabled this raises the system prompt and can
+ * reject for a user cancel, a lockout, or an entry invalidated by a biometric
+ * change — every rejection means "no stored login", never a crash.
+ */
+export async function readLogin(prompt: string): Promise<StoredLogin | null> {
+  const module = await secureStore();
+  if (!module) return null;
+  let raw: string | null = null;
+  try {
+    raw = await module.getItemAsync(KEY, { requireAuthentication: true, authenticationPrompt: prompt });
+  } catch {
+    return null;
+  }
+  if (raw) {
+    const parsed = parseLogin(raw);
+    if (parsed) return parsed;
+    await module.deleteItemAsync(KEY).catch(() => undefined);
+    return null;
+  }
+  // No biometric entry: fall back to the plain, passcode-protected one.
+  try {
+    const plain = await module.getItemAsync(KEY);
+    return plain ? parseLogin(plain) : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseLogin(raw: string): StoredLogin | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<StoredLogin>;
+    if (typeof parsed.account !== 'string' || typeof parsed.password !== 'string' || !parsed.account || !parsed.password) return null;
+    return {
+      account: parsed.account,
+      password: parsed.password,
+      biometrics: Boolean(parsed.biometrics),
+      savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function clearLogin(): Promise<void> {
+  const module = await secureStore();
+  await AsyncStorage.removeItem(HINT_KEY).catch(() => undefined);
+  if (!module) return;
+  await module.deleteItemAsync(KEY).catch(() => undefined);
+}
+
+/** Account id of a vaulted login, or `null`. Never reads the secret. */
+export async function storedLoginHint(): Promise<{ account: string } | null> {
+  try {
+    const raw = await AsyncStorage.getItem(HINT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { account?: unknown };
+    return typeof parsed.account === 'string' && parsed.account ? { account: parsed.account } : null;
+  } catch {
+    return null;
+  }
+}

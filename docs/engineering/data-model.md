@@ -147,4 +147,4 @@ interface PersistedState {
 
 `sanitize` keeps only well-typed fields. Unknown JSON is ignored. ILIAS sync unions every `source: 'ilias'` document id into `downloadedIds` and sets `syncAt.ilias`. Other platforms only set their timestamp.
 
-Not stored: the password, the OIDC client secret, the C@MPUS bearer token, `PSESSIONID`, the API key, grades, the Informatik catalog, GPS, or anyone else's account. `oidcSessionId` only names a record in the server's memory. `curriculumNodes`, `curriculumStudyId`, `campusStudies`, and `activeStudyId` are cleared on sign-out.
+Not stored: the OIDC client secret, the C@MPUS bearer token, `PSESSIONID`, the API key, grades, the Informatik catalog, GPS, or anyone else's account. The university password is not stored either, with one opt-in beta exception: the C@MPUS autologin vault keeps it in `expo-secure-store` (see [campus-browser-login.md](campus-browser-login.md)), deleted on sign-out. `oidcSessionId` only names a record in the server's memory. `curriculumNodes`, `curriculumStudyId`, `campusStudies`, and `activeStudyId` are cleared on sign-out.

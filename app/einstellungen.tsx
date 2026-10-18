@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { endUniversitySession, universityUrls } from '@/src/auth/oidc';
+import { clearLogin } from '@/src/auth/vault';
 import { assistantUrl } from '@/src/assistant/remote';
 import { Button, Card, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
@@ -12,6 +13,7 @@ export default function SettingsScreen() {
   const { locale, setLocale, reset, signOut, oidcSessionId, sessionMode } = useApp();
   async function leave() {
     if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
+    await clearLogin();
     signOut();
   }
   return (

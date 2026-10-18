@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.demo.universityassistant"
+      "bundleIdentifier": "dev.demo.universityassistant",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "dev.demo.universityassistant",
@@ -48,7 +51,14 @@
       "expo-font",
       "expo-status-bar",
       "expo-web-browser",
-      "@preeternal/react-native-cookie-manager"
+      "@preeternal/react-native-cookie-manager",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true,
+          "faceIDPermission": "Face ID wird verwendet, um die gespeicherte C@MPUS-Anmeldung zu entsperren."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -16,8 +16,8 @@ Keep the demonstration true after the first build: the numbers, the disclaimer, 
 
 ## Operating rules
 
-- Do not add a client-side call that posts the university password. The authorize redirect in `server/oidc.mjs` is the login.
-- Do not store the password, even in Async Storage or `.env`.
+- Do not add a client-side call that posts the university password to a project server. The authorize redirect in `server/oidc.mjs` is the login for the SIAM path.
+- The C@MPUS automated sign-in is the one accepted exception that stores the university password: only in `expo-secure-store` via [vault.ts](../../src/auth/vault.ts), only after the user opts in, optionally behind biometrics, never in Async Storage, never in `.env`, never sent to the assistant server, and deleted on sign-out. Do not widen it — no logging, no copying to another store, no auto-retry with a second account.
 - Do not put `XAI_API_KEY` in `EXPO_PUBLIC_*` or in source.
 - Do not add exam PDFs to `src/data` or to the document hub.
 - Do not replace the drawn mark with the university signet.
@@ -37,4 +37,4 @@ The prototype should be retired, not slowly turned into a scraper, when a real i
 
 ## Exit check
 
-Maintenance is in force as long as this repository is the demonstration. The check is social as much as technical: a pull request that fetches official pages with a student's password does not get merged, regardless of how complete the feature looks.
+Maintenance is in force as long as this repository is the demonstration. The check is social as much as technical: a pull request that fetches official pages with a student's password outside the documented vault path does not get merged, regardless of how complete the feature looks. The vault path is bounded by [campus-browser-login.md](../engineering/campus-browser-login.md) and the operating rules above.

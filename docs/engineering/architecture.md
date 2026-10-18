@@ -61,7 +61,7 @@ Document summary and plain language follow the same pair: extractive text first 
 
 One Async Storage key, `university-assistant/v1`. The shape is `PersistedState` in `src/types.ts`. Writes happen after the first successful load, so an empty initial state does not wipe a stored record. `sanitize` drops unexpected shapes on read. Chat is capped at 40 messages. Imports are capped at 40. Reset clears notes, reviews, transfers, downloads, sync stamps, planned modules, and chat, and keeps the language and the session.
 
-The password never enters this object.
+The password never enters this object. The opt-in C@MPUS autologin credential is the only secret on the device: it lives beside the key in `expo-secure-store`, never in `PersistedState` and never in the assistant server — see [campus-browser-login.md](campus-browser-login.md).
 
 The curriculum, course, and API-call caches live outside that key in `campus-cache.db` (`expo-sqlite`, with the plugin in `app.json`), or in AsyncStorage on web where the native module is not bundled. The API log keeps the newest 1000 calls. Clearing a study drops its structures and courses; the call history has its own clear.
 
