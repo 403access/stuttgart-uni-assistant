@@ -4,12 +4,18 @@ Temporary workaround until the university approves the OIDC client: sign in with
 
 ## Automated sign-in (headless)
 
-`Automatisch anmelden` on the login screen takes the account id and the password, optionally stores them in the device vault ([vault.ts](../../src/auth/vault.ts)), and runs the sign-in in a hidden `WebView` (`headlessAutofillScript` in [campus-browser.ts](../../src/auth/campus-browser.ts)):
+`Automatisch anmelden` on the login screen takes the account id and the password, optionally stores them in the device vault ([vault.ts](../../src/auth/vault.ts)), and runs the sign-in in a hidden `WebView`. The script builders live in [campus-browser-scripts.ts](../../src/auth/campus-browser-scripts.ts), free of React Native imports so `scripts/campus-headless.test.mjs` can drive them against fixtures in `jsdom`.
 
-1. The hidden WebView opens `https://campus.uni-stuttgart.de/cusonline/`.
-2. On every load, and on a three-second poll for late-rendered single-page forms, the injected script looks for a visible `input[type=password]`, prefers the named Shibboleth/CAMPUSonline username fields, writes the account and the password, and submits the form it belongs to. A "sign in" call to action on the C@MPUS host is clicked when the login sits behind one.
-3. Submits are throttled (five seconds apart, at most three) so a wrong password cannot loop. The whole attempt times out after 90 seconds.
-4. Once `cusonline_co.login.accessToken` or a `/desktop/` URL appears, the harvest below runs unchanged: the token from web storage plus the natively read `HttpOnly` cookies.
+Two real login pages appear on that path, and the script covers both: the CAMPUSonline Keycloak form (`#username`, `#password`, `#kc-login`, posted to `login-actions/authenticate`) and a Shibboleth form (`j_username`, `j_password`, `_eventId_proceed`). What happens:
+
+1. The hidden WebView opens `https://campus.uni-stuttgart.de/cusonline/`. The C@MPUS shell forwards to the Keycloak realm under `/cusonline/co/public/sec/auth/realms/CAMPUSonline_IDP/`.
+2. On every load, and on a three-second poll for late-rendered single-page forms, the script looks for an `input[type=password]`, prefers the named username fields above, fills both, and clicks the form's own submit control (falling back to `requestSubmit()`, then `submit()`). A "sign in" call to action is clicked when the login sits behind one — the C@MPUS shell page renders no form at all.
+3. Fillability is decided by computed style (`display`, `visibility`), never by rectangle size: the hidden WebView reports zero-sized rectangles for every element, and an earlier size check rejected the real Keycloak password field. Only the size-independent check reached it.
+4. Submits are throttled (five seconds apart, three per page, six per run; a navigation or a new attempt restores the page budget) so a wrong password cannot loop. The whole attempt times out after 90 seconds.
+5. Signed in means the `cusonline_co.login.accessToken` value exists in web storage **and** the URL is not the `#/login` route. The desktop login route also contains `/desktop/`, and treating it as signed in harvested an empty session.
+6. The harvest below then runs unchanged: the token from web storage plus the natively read `HttpOnly` cookies.
+
+Every step posts back and is logged as `[campus-headless] <step> <url>`, with `user=`/`submit=` on `filled` and `passwordInputs`/`display`/`size`/`readyState` on `no-form`. The modal has a `Seite ausgeben` button that posts a redacted dump of the current page's forms and controls (`[campus-headless-dump]`) for pinning selectors against a page that changes.
 
 The credential never leaves the device: the fill and submit happen in the app's own WebView against the university page, and only the resulting session goes to `POST /v1/campus/credentials`. Failure shows inside the modal with a button to fall back to the visible browser.
 

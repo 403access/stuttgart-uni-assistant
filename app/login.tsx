@@ -179,14 +179,20 @@ export default function LoginScreen() {
     error?: unknown;
     url?: unknown;
     title?: unknown;
+    label?: unknown;
+    user?: unknown;
+    submit?: unknown;
     cookies?: unknown;
     local?: unknown;
     session?: unknown;
     storage?: unknown;
     passwordInputs?: unknown;
-    visiblePasswordInputs?: unknown;
     formCount?: unknown;
     readyState?: unknown;
+    passwordDisplay?: unknown;
+    passwordSize?: unknown;
+    submits?: unknown;
+    total?: unknown;
     forms?: unknown;
     controls?: unknown;
   };
@@ -274,8 +280,14 @@ export default function LoginScreen() {
     if (step === 'no-form') {
       console.info(
         '[campus-headless]',
-        `passwordInputs=${String(parsed.passwordInputs ?? '?')} visible=${String(parsed.visiblePasswordInputs ?? '?')} forms=${String(parsed.formCount ?? '?')} readyState=${String(parsed.readyState ?? '?')}`,
+        `passwordInputs=${String(parsed.passwordInputs ?? '?')} forms=${String(parsed.formCount ?? '?')} display=${String(parsed.passwordDisplay ?? '?')} size=${String(parsed.passwordSize ?? '?')} readyState=${String(parsed.readyState ?? '?')}`,
       );
+    }
+    if (step === 'filled') {
+      console.info('[campus-headless]', `user=${String(parsed.user ?? '?')} submit=${String(parsed.submit ?? '?')}`);
+    }
+    if (step === 'cta-click') {
+      console.info('[campus-headless]', `label=${String(parsed.label ?? '?')}`);
     }
     if (step === 'dump') {
       const text = formatDump(parsed);
