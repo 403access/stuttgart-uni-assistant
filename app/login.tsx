@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLoginFlow } from '@/src/auth/use-login-flow';
@@ -35,9 +36,12 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView
+      {/* KeyboardAwareScrollView scrolls the focused field above the
+          keyboard and animates the shift natively, iOS and Android. */}
+      <KeyboardAwareScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) }]}
+        bottomOffset={24}
         keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top + 28 }]}>
           <View style={styles.blobOne} pointerEvents="none" />
@@ -128,7 +132,7 @@ export default function LoginScreen() {
             {headless.error ? <Text style={styles.error}>{headless.error}</Text> : null}
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <CampusBrowserModal
         visible={browser.open}

@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
 import { View } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { AppStateProvider, useApp } from '@/src/state/AppState';
 import { ToastHost } from '@/src/components/toast';
@@ -25,9 +26,11 @@ export default function RootLayout() {
   return (
     <AppStateProvider>
       <QueryProvider>
-        <StatusBar style="dark" />
-        <Gate />
-        <ToastHost />
+        <KeyboardProvider>
+          <StatusBar style="dark" />
+          <Gate />
+          <ToastHost />
+        </KeyboardProvider>
       </QueryProvider>
     </AppStateProvider>
   );
