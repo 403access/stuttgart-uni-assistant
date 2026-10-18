@@ -320,6 +320,35 @@ test('browser credentials validate cookie plus bearer and keep the pair', async 
   campus.clearRuntimeSession();
 });
 
+test('a session cookie alone can mint the bearer and sign in', async () => {
+  delete process.env.CAMPUS_BEARER_TOKEN;
+  delete process.env.CAMPUS_SESSION_COOKIE;
+  const minted = 'minted-bearer-value';
+  const chooser = { resource: [{ content: { CmStudyInfoDto: { studyId: 9, name: { value: 'S' }, myStudyLink: { href: 'https://x/myStudies/9/myCurriculumElements/3' } } } }] };
+  const calls = [];
+  const fetchImpl = async (url, options = {}) => {
+    calls.push({ url: String(url), headers: options.headers });
+    if (String(url).includes('/auth/token/refresh')) {
+      assert.equal(options.headers.Cookie, 'PSESSIONID=good-cookie');
+      return { ok: true, status: 200, json: async () => ({ access_token: minted }) };
+    }
+    const auth = options.headers?.Authorization ?? '';
+    const cookie = options.headers?.Cookie ?? '';
+    if (auth === `Bearer ${minted}` && cookie === 'PSESSIONID=good-cookie') {
+      return { ok: true, status: 200, json: async () => chooser };
+    }
+    return { ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token' } } }] }) };
+  };
+
+  const result = await campus.loginWithBrowserCredentials({ cookies: 'PSESSIONID=good-cookie', storage: {} }, fetchImpl);
+  assert.equal(result.ok, true);
+  assert.equal(result.studies, 1);
+  assert.equal(calls[0].url.includes('/auth/token/refresh'), true);
+  assert.equal(campus.campusAuthorizationHeader(), `Bearer ${minted}`);
+  campus.clearRuntimeToken();
+  campus.clearRuntimeSession();
+});
+
 test('browser credentials reject an empty harvest and restore on failure', async () => {
   await assert.rejects(() => campus.loginWithBrowserCredentials({ cookies: '', storage: {} }), (error) => error.message === 'no_credentials_found');
   const failing = async () => ({ ok: false, status: 401, json: async () => ({ resource: [{ content: { coErrorDto: { message: 'invalid_token' } } }] }) });

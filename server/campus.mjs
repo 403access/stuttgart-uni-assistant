@@ -902,6 +902,16 @@ export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
     runtimeBearerToken = attempt.bearer;
     runtimeSessionCookie = attempt.session;
     try {
+      // A harvest may hold the portal session without a bearer: the SPA writes
+      // the token a moment later, or never. The session alone can mint one
+      // through the refresh endpoint, exactly like the signed-in browser.
+      if (!attempt.bearer && attempt.session) {
+        try {
+          await refreshCampusToken(fetchImpl);
+        } catch (refreshError) {
+          console.log(`[campus] credentials refresh from session failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
+        }
+      }
       const { studies } = await loadCampusStudies(fetchImpl);
       console.log(`[campus] browser credentials ok studies=${studies.length} session=${Boolean(attempt.session)}`);
       return { ok: true, studies: studies.length, activeStudyId: pickActiveStudyId(studies, null) };
