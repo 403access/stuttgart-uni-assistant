@@ -1,0 +1,2 @@
+- add the feature to "Kurse anrechnen" ("credit courses" maybe in English). basically, cross check courses within categories
+- wifi configuration on laptop
