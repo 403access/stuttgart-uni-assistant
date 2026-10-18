@@ -309,6 +309,7 @@ export async function runBrowserLogin({
   const steps = [];
   let rejection = '';
   let storage = {};
+  let lastMessage = null;
   let browser;
   try {
     browser = await chromium.launch({ headless });
@@ -327,8 +328,17 @@ export async function runBrowserLogin({
       const last = messages[messages.length - 1];
       if (last && last.step !== 'waiting' && steps[steps.length - 1] !== last.step) {
         steps.push(last.step);
-        log(`    [${last.step}] ${page.url()}`);
+        // `last.url` is the page the script actually ran in; page.url() can lag a
+        // navigation the single-page app started.
+        log(`    [${last.step}] ${last.url ?? page.url()}`);
+        if (last.step === 'filled') {
+          log(
+            `        user=${last.userField}(${last.userLength}) password=${last.passwordField}(${last.passwordLength}) submit=${last.submitField} forms=${last.formCount} action=${last.formAction || '(self)'}`,
+          );
+        }
+        if (last.step === 'rejected') log(`        reason=${String(last.reason ?? '').slice(0, 160)}`);
       }
+      lastMessage = last ?? lastMessage;
       if (last?.step === 'rejected') {
         rejection = String(last.reason ?? 'rejected');
         break;
@@ -341,7 +351,7 @@ export async function runBrowserLogin({
       for (const cookie of await context.cookies()) jar.update([`${cookie.name}=${cookie.value}`]);
       if (jar.value('PSESSIONID')) {
         storage = await page.evaluate(HARVEST_STORAGE_SCRIPT).catch(() => ({}));
-        return { ok: true, reason: 'signed-in', engine: 'browser', finalUrl: page.url(), jar, storage, steps };
+        return { ok: true, reason: 'signed-in', engine: 'browser', finalUrl: page.url(), jar, storage, steps, lastMessage };
       }
       await page.waitForTimeout(pollMs);
     }
@@ -354,6 +364,7 @@ export async function runBrowserLogin({
       jar,
       storage,
       steps,
+      lastMessage,
     };
   } catch (error) {
     const message = String(error?.message ?? error);
@@ -562,6 +573,20 @@ async function main() {
     tokenSeen: Object.keys(result.storage ?? {}).some((key) => key.endsWith('cusonline_co.login.accessToken')),
     hops: result.hops?.length ?? 0,
     steps: result.steps,
+    lastStep: result.lastMessage
+      ? {
+          step: result.lastMessage.step,
+          url: result.lastMessage.url ?? null,
+          userField: result.lastMessage.userField ?? null,
+          userLength: result.lastMessage.userLength ?? null,
+          passwordField: result.lastMessage.passwordField ?? null,
+          passwordLength: result.lastMessage.passwordLength ?? null,
+          submitField: result.lastMessage.submitField ?? null,
+          formAction: result.lastMessage.formAction ?? null,
+          formCount: result.lastMessage.formCount ?? null,
+          reason: result.lastMessage.reason ?? null,
+        }
+      : null,
     verify: verification,
   };
 

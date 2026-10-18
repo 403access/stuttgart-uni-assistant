@@ -234,12 +234,26 @@ test('a rejection is reported instead of spending the submit budget', async () =
   const page = open(KEYCLOAK_REJECTED_HTML, KEYCLOAK_URL);
   page.window.sessionStorage.setItem('campus_autofill_run', 'run-1');
   page.window.sessionStorage.setItem('campus_autofill_url', KEYCLOAK_URL);
-  page.window.sessionStorage.setItem('campus_autofill_total', '1');
+  page.window.sessionStorage.setItem('campus_autofill_submits', '1');
   await inject(page, autofill(), 50);
 
   assert.equal(last(page).step, 'rejected');
   assert.match(String(last(page).reason), /invalid/i);
   assert.equal(page.submits.length, 0);
+});
+
+test('a submit on an earlier page does not count as a rejection here', async () => {
+  const page = open(KEYCLOAK_REJECTED_HTML, KEYCLOAK_URL);
+  page.window.sessionStorage.setItem('campus_autofill_run', 'run-1');
+  page.window.sessionStorage.setItem('campus_autofill_url', 'https://campus.uni-stuttgart.de/cusonline/previous');
+  page.window.sessionStorage.setItem('campus_autofill_submits', '2');
+  page.window.sessionStorage.setItem('campus_autofill_total', '2');
+  await inject(page, autofill('st123456', 'secret-password'));
+
+  assert.equal(last(page).step, 'filled');
+  assert.equal(last(page).userLength, 8);
+  assert.equal(last(page).passwordLength, 15);
+  assert.equal(page.submits.length, 1);
 });
 
 test('the form disables its own submit button; a retry still submits', async () => {

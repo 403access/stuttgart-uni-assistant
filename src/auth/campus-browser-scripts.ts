@@ -143,16 +143,18 @@ export function headlessAutofillScript(account: string, password: string, runId:
     if (!passwordField && passwords.length) passwordField = passwords[0];
 
     if (passwordField) {
-      // A rejected credential is final: submitting the same pair again only
-      // burns the budget. The portal re-renders the form with the error.
-      if (count('campus_autofill_total') > 0) {
+      var pageSubmits = count('campus_autofill_submits');
+      // A rejected credential is final for this page: submitting the same pair
+      // again only burns the budget. The portal re-renders the form with the
+      // error. Scoped to the page, because the counters survive a same-origin
+      // navigation (sessionStorage) and a previous page must not poison this one.
+      if (pageSubmits > 0) {
         var rejection = rejectionText(passwordField);
         if (rejection) { post({ step: 'rejected', reason: rejection }); return true; }
       }
-      var perPage = count('campus_autofill_submits');
       var perRun = count('campus_autofill_total');
-      if (perPage >= MAX_PER_PAGE || perRun >= MAX_PER_RUN) {
-        post({ step: 'too-many-attempts', submits: perPage, total: perRun });
+      if (pageSubmits >= MAX_PER_PAGE || perRun >= MAX_PER_RUN) {
+        post({ step: 'too-many-attempts', submits: pageSubmits, total: perRun });
         return true;
       }
       var lastSubmit = Number(read('campus_autofill_last'));
@@ -196,7 +198,7 @@ export function headlessAutofillScript(account: string, password: string, runId:
         try { submit.disabled = false; } catch (e) {}
       }
 
-      write('campus_autofill_submits', String(perPage + 1));
+      write('campus_autofill_submits', String(pageSubmits + 1));
       write('campus_autofill_total', String(perRun + 1));
       write('campus_autofill_last', String(Date.now()));
       var passwordIndex = -1;
@@ -210,7 +212,12 @@ export function headlessAutofillScript(account: string, password: string, runId:
         userField: fieldName(userField),
         passwordField: fieldName(passwordField),
         submitField: fieldName(submit),
-        passwordIndex: passwordIndex
+        passwordIndex: passwordIndex,
+        formAction: form ? String(form.getAttribute('action') || '').slice(0, 200) : '',
+        formCount: document.querySelectorAll('form').length,
+        passwordInputs: passwords.length,
+        userLength: userField ? String(userField.value || '').length : 0,
+        passwordLength: String(passwordField.value || '').length
       });
       setTimeout(function(){
         try {
