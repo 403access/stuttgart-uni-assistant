@@ -33,8 +33,9 @@ interface SavedLogin {
 /**
  * The automated sign-in: the credential is typed on this screen, optionally
  * kept in the device vault, and used by a hidden WebView against the official
- * C@MPUS pages. The credential never leaves the device; only the harvested
- * session is handed over through `onHarvest`.
+ * C@MPUS pages. For C@MPUS only the harvested session is handed over through
+ * `onHarvest`; the same credential is then reused to connect UniMail (see
+ * `use-login-flow.ts`).
  */
 export function useCampusHeadlessLogin({
   locale,

@@ -399,6 +399,8 @@ export const de = {
   "loginLegacy.token": "Token ist gesetzt{0}. Der Server liest CAMPUS_BEARER_TOKEN und fragt die Curriculum-Struktur ab.",
   "loginLegacy.warte": "Warte auf die Universität …",
   "loginLegacy.wenn": "Wenn das TIK eine Client-ID vergeben hat, läuft die Anmeldung über den Identity Provider. Das Passwort bleibt auch dann auf der Seite der Universität.",
+  "loginMail.fehlgeschlagen": "UniMail-Anmeldung fehlgeschlagen",
+  "loginMail.verbunden": "UniMail mit denselben Zugangsdaten verbunden.",
   "loginMessages.anmeldung": "Anmeldung abgebrochen.",
   "loginMessages.anmeldung_abgeschlossen": "Anmeldung nicht abgeschlossen ({0}).",
   "loginMessages.anmeldungs": "Der Anmeldungs-Server ist nicht erreichbar. Läuft npm run assistant?",

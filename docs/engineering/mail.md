@@ -41,8 +41,12 @@ Student → app (read-only list) → assistant server (process memory) → imap.
 
 ## Flow
 
-1. **Enter credentials** (`app/(tabs)/mail.tsx`, the "Nachrichten"/"Messages" tab). The screen prefills the account from the
-   session and asks for the password. Both are `POST`ed to the assistant server.
+1. **Credentials** (`app/login.tsx` via `src/auth/use-login-flow.ts`, then
+   `app/(tabs)/mail.tsx`). A successful automated C@MPUS sign-in already holds the
+   st-account and password, so the flow posts them here automatically and the Messages
+   tab opens already connected; the same submission runs when the tab's credential form
+   is used, where the account is prefilled from the session and only the password is
+   asked for. Either way both values are `POST`ed to the assistant server.
 2. **Proof and keep** (`POST /v1/mail/credentials`, `server/mail.mjs`). The server
    normalizes the long form (`st123456@stud.uni-stuttgart.de` → `st123456`), then proves
    the pair by opening a TLS session and logging in. On success it keeps

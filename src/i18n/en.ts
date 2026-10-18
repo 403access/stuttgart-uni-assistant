@@ -400,6 +400,8 @@ export const en: Record<TranslationKey, string> = {
   "loginLegacy.token": "Token is set{0}. The server reads CAMPUS_BEARER_TOKEN and requests the curriculum structure.",
   "loginLegacy.warte": "Waiting for the university …",
   "loginLegacy.wenn": "Once TIK has issued a client id, sign-in runs through the identity provider. The password still stays on the university page.",
+  "loginMail.fehlgeschlagen": "UniMail sign-in failed",
+  "loginMail.verbunden": "UniMail connected with the same credentials.",
   "loginMessages.anmeldung": "Sign-in cancelled.",
   "loginMessages.anmeldung_abgeschlossen": "Sign-in did not finish ({0}).",
   "loginMessages.anmeldungs": "The sign-in server is unreachable. Is npm run assistant running?",

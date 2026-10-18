@@ -3,10 +3,11 @@ import { Platform } from 'react-native';
 
 /**
  * Device vault for the opt-in C@MPUS autologin credential. This is the only
- * place in the project that keeps a university password, it is deleted on sign
- * out, and it never leaves the device: the automated sign-in runs in the
- * WebView on this device, the assistant server only ever sees the harvested
- * session.
+ * place in the project that keeps a university password, and it is deleted on
+ * sign out. The automated sign-in runs in the WebView on this device and the
+ * assistant server sees only the harvested session; the same st-account and
+ * password are then reused to connect UniMail, whose IMAP proof does run on
+ * the server (see `use-login-flow.ts`).
  *
  * Backing store is `expo-secure-store`: the iOS keychain (hardware-backed where
  * the device has a Secure Enclave) and Android `SharedPreferences` encrypted

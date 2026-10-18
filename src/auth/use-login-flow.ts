@@ -1,16 +1,30 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { assistantUrl } from '@/src/assistant/remote';
 import { campusDetail, fetchCampusStatus, signInWithCampusToken, submitBrowserCredentials } from '@/src/auth/campus';
 import { campusMessage, messageFor } from '@/src/auth/login-messages';
+import { fetchMailStatus, mailDetail, mailMessage, submitMailCredentials } from '@/src/auth/mail';
 import { fetchOidcStatus, signInWithUniversity, universityRedirectUri } from '@/src/auth/oidc';
 import { useCampusBrowserLogin } from '@/src/auth/use-campus-browser-login';
 import { useCampusHeadlessLogin } from '@/src/auth/use-campus-headless-login';
 import { showFetchAlert } from '@/src/components/fetch-alert';
+import { showToast } from '@/src/components/toast';
 import { keys } from '@/src/query/keys';
 import { useApp } from '@/src/state/AppState';
 import { tx } from '@/src/text';
+
+/**
+ * The mail server stores the short account id (`st123456`); the sign-in form may
+ * carry the long e-mail form (`st123456@stud.uni-stuttgart.de`). Both name the
+ * same mailbox, so a connected account with either form is already this one.
+ */
+function sameAccount(stored: string | null, entered: string): boolean {
+  if (!stored) return false;
+  const account = stored.trim().toLowerCase();
+  const value = entered.trim().toLowerCase();
+  return account === value || account === value.split('@')[0];
+}
 
 /**
  * Everything the sign-in screen needs that is not layout: the two status
@@ -22,7 +36,7 @@ import { tx } from '@/src/text';
  * purpose — it is frozen, and this hook is where the live flow is maintained.
  */
 export function useLoginFlow() {
-  const { locale, signInCampus, signInOidc } = useApp();
+  const { locale, signInCampus, signInOidc, setMailAccount } = useApp();
   // The status probes resolve to null when the server is unreachable — the
   // screen renders unknown, not an error toast.
   const status = useQuery({ queryKey: keys.oidcStatus(), queryFn: () => fetchOidcStatus() }).data ?? null;
@@ -31,6 +45,11 @@ export function useLoginFlow() {
   const [campusLog, setCampusLog] = useState('');
   // One flag for both browser surfaces: they share the harvest mutation.
   const [harvestBusy, setHarvestBusy] = useState(false);
+  // Credentials of the automated sign-in, held only for this attempt: the C@MPUS
+  // st-account and password are the UniMail ones, so a successful sign-in reuses
+  // them for the Messages tab instead of asking for them twice. Null when the
+  // visible browser produced the session (there the password never reaches the app).
+  const loginCredentials = useRef<{ account: string; password: string } | null>(null);
   const redirectUri = universityRedirectUri();
 
   // Sign-ins as mutations: the retry toast targets `mutate`, pending states come
@@ -62,7 +81,7 @@ export function useLoginFlow() {
   });
 
   const browser = useCampusBrowserLogin({ locale, busy: harvestBusy, onHarvest: submitHarvest });
-  const headless = useCampusHeadlessLogin({ locale, onHarvest: submitHarvest });
+  const headless = useCampusHeadlessLogin({ locale, onHarvest: submitHeadlessHarvest });
 
   const campusSignIn = useMutation({
     mutationKey: ['campus-sign-in'],
@@ -81,6 +100,10 @@ export function useLoginFlow() {
       // of the bare login screen. It stays up and disappears with this screen
       // when the gate swaps in the tabs.
       signInCampus(profile);
+      // The st-account and password work for UniMail too; connect it so the
+      // Messages tab is ready. The mutation above is not held up by this.
+      const credentials = loginCredentials.current;
+      if (credentials) void connectMail(credentials);
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -111,10 +134,50 @@ export function useLoginFlow() {
     },
   });
 
-  /** Both browser modes hand their harvest to the same mutation. */
+  /**
+   * Both browser modes submit to the same harvest mutation, but only the
+   * automated one holds the credential on the device. Capturing it here — tied
+   * to the harvest that is actually adopted — keeps the visible browser's
+   * session from reusing an earlier form entry.
+   */
   function submitHarvest(harvest: { cookies: string; storage: Record<string, string> }) {
+    loginCredentials.current = null;
     setHarvestBusy(true);
     browserHarvest.mutate(harvest);
+  }
+
+  function submitHeadlessHarvest(harvest: { cookies: string; storage: Record<string, string> }) {
+    const account = headless.creds.account.trim();
+    loginCredentials.current = account && headless.creds.password ? { account, password: headless.creds.password } : null;
+    setHarvestBusy(true);
+    browserHarvest.mutate(harvest);
+  }
+
+  /**
+   * Reuse the C@MPUS credential for UniMail: the assistant server proves the same
+   * st-account and password against the TIK IMAP host and keeps the pair in
+   * process memory, so the Messages tab is connected without a second entry.
+   * Best effort — the sign-in neither waits for it nor fails with it.
+   */
+  async function connectMail(credentials: { account: string; password: string }) {
+    try {
+      const current = await fetchMailStatus();
+      if (current?.configured && sameAccount(current.account, credentials.account)) return;
+      const result = await submitMailCredentials(credentials);
+      setMailAccount(result.account);
+      showToast({
+        tone: 'success',
+        title: tx(locale, 'tabsMail.verbunden_2', [result.account]),
+        message: tx(locale, 'loginMail.verbunden'),
+      });
+    } catch (caught) {
+      const code = caught instanceof Error ? caught.message : 'mail_failed';
+      showToast({
+        tone: 'error',
+        title: tx(locale, 'loginMail.fehlgeschlagen'),
+        message: mailMessage(locale, code, mailDetail(caught)),
+      });
+    }
   }
 
   const busy = campusSignIn.isPending || siamSignIn.isPending;

@@ -29,8 +29,10 @@ The screen that greets you once the splash screen lifts offers the automated
 password, a hidden browser fills the official C@MPUS form, and the app adopts
 the session. With **Mit Biometrie schützen** the credential kept in the device
 vault (iOS keychain / Android Keystore) is unlocked with biometrics; it is
-deleted when you sign out and never reaches the assistant server. A loading
-indicator names the phase while the profile and curriculum load.
+deleted when you sign out. The same st-account and password are also used to
+connect UniMail on the assistant server, so your Messages tab is ready without a
+second entry. A loading indicator names the phase while the profile and
+curriculum load.
 
 The other paths still work but have moved to the deprecated `/login-legacy`
 screen, which the start screen no longer links to:
