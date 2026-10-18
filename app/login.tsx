@@ -28,7 +28,7 @@ const HARVEST_JS =
 const DIAGNOSE_JS =
   '(function(){var out={diagnostic:true,url:location.href,cookies:[],local:[],session:[]};' +
   'try{out.cookies=document.cookie.split(";").map(function(c){return c.split("=")[0].trim();}).filter(Boolean);}catch(e){}' +
-  'function keys(s){var r=[];try{for(var i=0;i<s.length;i++){var k=s.key(i);r.push(k+":"+String(s.getItem(k)).length);}}catch(e){}return r;}' +
+  'function keys(s){var r=[];try{for(var i=0;i<s.length;i++){var k=s.key(i);var v=String(s.getItem(k));r.push(k+"="+(v.length>200?v.slice(0,200)+"…(+"+(v.length-200)+")":v));}}catch(e){}return r;}' +
   'out.local=keys(localStorage);out.session=keys(sessionStorage);' +
   'window.ReactNativeWebView.postMessage(JSON.stringify(out));' +
   'return true;})();';
