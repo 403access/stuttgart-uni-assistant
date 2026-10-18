@@ -91,6 +91,16 @@ export function headlessAutofillScript(account: string, password: string, runId:
     function tokenPresent(){
       try { return Boolean(localStorage.getItem('cusonline_co.login.accessToken')); } catch (e) { return false; }
     }
+    // The portal marks a failed credential on the re-rendered form.
+    function rejectionText(passwordEl){
+      try {
+        if (passwordEl && passwordEl.getAttribute('aria-invalid') === 'true') return 'aria-invalid';
+        var node = document.querySelector('#input-error, #kc-feedback, .alert.alert-error, .pf-c-alert.pf-m-danger');
+        var text = node ? String(node.textContent || '').replace(/\\s+/g, ' ').trim() : '';
+        if (text && /invalid|incorrect|falsch|ung(ü|u)ltig|fehlgeschlagen|failed/i.test(text)) return text.slice(0, 140);
+      } catch (e) {}
+      return '';
+    }
 
     // A new attempt starts with clean counters.
     if (read('campus_autofill_run') !== runId) {
@@ -114,13 +124,26 @@ export function headlessAutofillScript(account: string, password: string, runId:
     if (tokenPresent() && location.href.indexOf('#/login') < 0) { post({ step: 'signed-in' }); return true; }
 
     var passwords = document.querySelectorAll('input[type=password]');
-    var passwordField = null;
-    for (var i = 0; i < passwords.length; i++) {
-      if (visible(passwords[i])) { passwordField = passwords[i]; break; }
+    var passwordField = bySelector([
+      '#password',
+      'input[name=password]',
+      'input[data-test="id_brm-pm-dtop_login_pw_input"]',
+      'input[type=password]'
+    ]);
+    if (!passwordField) {
+      for (var i = 0; i < passwords.length; i++) {
+        if (visible(passwords[i])) { passwordField = passwords[i]; break; }
+      }
     }
-    if (!passwordField) passwordField = passwords.length ? passwords[0] : null;
+    if (!passwordField && passwords.length) passwordField = passwords[0];
 
     if (passwordField) {
+      // A rejected credential is final: submitting the same pair again only
+      // burns the budget. The portal re-renders the form with the error.
+      if (count('campus_autofill_total') > 0) {
+        var rejection = rejectionText(passwordField);
+        if (rejection) { post({ step: 'rejected', reason: rejection }); return true; }
+      }
       var perPage = count('campus_autofill_submits');
       var perRun = count('campus_autofill_total');
       if (perPage >= MAX_PER_PAGE || perRun >= MAX_PER_RUN) {
@@ -133,8 +156,9 @@ export function headlessAutofillScript(account: string, password: string, runId:
       var form = passwordField.form || passwordField.closest('form');
       var userField = bySelector([
         'input[name=j_username]',
-        'input[name=username]',
         'input#username',
+        'input[name=username]',
+        'input[data-test="id_brm-pm-dtop_login_uname_input"]',
         'input[name=user]',
         'input[name=userid]',
         'input[name=login][type=text]',
@@ -147,17 +171,25 @@ export function headlessAutofillScript(account: string, password: string, runId:
         }
         if (!userField && texts.length) userField = texts[0];
       }
-      if (userField && !userField.value) setValue(userField, account);
+      // Overwrite the portal's own prefill: after a failed attempt it echoes the
+      // account that was sent, which may differ from the stored one.
+      if (userField && !userField.disabled && !userField.readOnly) setValue(userField, account);
       setValue(passwordField, password);
 
       var submit = bySelector([
         '#kc-login',
+        'input[data-test="id_brm-pm-dtop_login_submitbutton"]',
         'input[name=login][type=submit]',
         'input[name=_eventId_proceed]',
         '#loginButton'
       ]);
       if (!submit && form) submit = form.querySelector('input[type=submit],button[type=submit],button:not([type])');
       if (!submit) submit = document.querySelector('input[type=submit],button[type=submit]');
+      // Keycloak's form disables its own submit button on submit; a disabled
+      // control ignores click(), so a retry must re-enable it.
+      if (submit && submit.disabled) {
+        try { submit.disabled = false; } catch (e) {}
+      }
 
       write('campus_autofill_submits', String(perPage + 1));
       write('campus_autofill_total', String(perRun + 1));

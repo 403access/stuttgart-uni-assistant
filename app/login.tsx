@@ -180,6 +180,7 @@ export default function LoginScreen() {
     url?: unknown;
     title?: unknown;
     label?: unknown;
+    reason?: unknown;
     user?: unknown;
     submit?: unknown;
     cookies?: unknown;
@@ -289,6 +290,9 @@ export default function LoginScreen() {
     if (step === 'cta-click') {
       console.info('[campus-headless]', `label=${String(parsed.label ?? '?')}`);
     }
+    if (step === 'rejected') {
+      console.info('[campus-headless]', `reason=${String(parsed.reason ?? '?')}`);
+    }
     if (step === 'dump') {
       const text = formatDump(parsed);
       setHeadlessDump(text);
@@ -314,6 +318,18 @@ export default function LoginScreen() {
           locale,
           'Die automatische Anmeldung kam nicht durch. Prüfe Kennung und Passwort oder melde dich im sichtbaren Browser an.',
           'The automated sign-in did not get through. Check the account id and password, or sign in in the visible browser.',
+        ),
+      );
+      return;
+    }
+    if (step === 'rejected') {
+      stopHeadlessTimers();
+      setHeadlessStatus('');
+      setHeadlessError(
+        tx(
+          locale,
+          `C@MPUS hat Kennung oder Passwort abgelehnt${typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : ''}. Speichere die Anmeldung neu oder nutze den sichtbaren Browser.`,
+          `C@MPUS rejected the account id or password${typeof parsed.reason === 'string' && parsed.reason !== 'aria-invalid' ? `: ${parsed.reason}` : ''}. Store the sign-in again or use the visible browser.`,
         ),
       );
     }
