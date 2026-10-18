@@ -88,16 +88,21 @@ export function headlessAutofillScript(account: string, password: string, runId:
       }
       return null;
     }
+    function fieldName(el){
+      if (!el) return '';
+      return String(el.getAttribute('name') || el.getAttribute('id') || el.tagName.toLowerCase());
+    }
     function tokenPresent(){
       try { return Boolean(localStorage.getItem('cusonline_co.login.accessToken')); } catch (e) { return false; }
     }
-    // The portal marks a failed credential on the re-rendered form.
+    // The portal marks a failed credential on the re-rendered form. Its
+    // message is preferred over the bare aria-invalid flag.
     function rejectionText(passwordEl){
       try {
-        if (passwordEl && passwordEl.getAttribute('aria-invalid') === 'true') return 'aria-invalid';
         var node = document.querySelector('#input-error, #kc-feedback, .alert.alert-error, .pf-c-alert.pf-m-danger');
         var text = node ? String(node.textContent || '').replace(/\\s+/g, ' ').trim() : '';
         if (text && /invalid|incorrect|falsch|ung(ü|u)ltig|fehlgeschlagen|failed/i.test(text)) return text.slice(0, 140);
+        if (passwordEl && passwordEl.getAttribute('aria-invalid') === 'true') return 'aria-invalid';
       } catch (e) {}
       return '';
     }
@@ -194,7 +199,19 @@ export function headlessAutofillScript(account: string, password: string, runId:
       write('campus_autofill_submits', String(perPage + 1));
       write('campus_autofill_total', String(perRun + 1));
       write('campus_autofill_last', String(Date.now()));
-      post({ step: 'filled', user: userField ? 'yes' : 'no', submit: submit ? 'yes' : 'no' });
+      var passwordIndex = -1;
+      for (var p = 0; p < passwords.length; p++) {
+        if (passwords[p] === passwordField) { passwordIndex = p; break; }
+      }
+      post({
+        step: 'filled',
+        user: userField ? 'yes' : 'no',
+        submit: submit ? 'yes' : 'no',
+        userField: fieldName(userField),
+        passwordField: fieldName(passwordField),
+        submitField: fieldName(submit),
+        passwordIndex: passwordIndex
+      });
       setTimeout(function(){
         try {
           if (submit && submit.click) submit.click();

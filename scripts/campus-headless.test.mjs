@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { JSDOM } from 'jsdom';
 
 import {
+  DIAGNOSE_JS,
   HARVEST_JS,
   HEADLESS_MAX_SUBMITS_PER_PAGE,
   HEADLESS_MAX_SUBMITS_PER_RUN,
@@ -115,6 +116,10 @@ test('keycloak form: fills the named fields, leaves hidden inputs alone, submits
   assert.equal(last(page).step, 'filled');
   assert.equal(last(page).user, 'yes');
   assert.equal(last(page).submit, 'yes');
+  assert.equal(last(page).userField, 'username');
+  assert.equal(last(page).passwordField, 'password');
+  assert.equal(last(page).submitField, 'login');
+  assert.equal(last(page).passwordIndex, 0);
   assert.equal(page.window.document.querySelector('#username').value, 'st123456');
   assert.equal(page.window.document.querySelector('#password').value, 'secret-password');
   assert.equal(page.window.document.querySelector('#idp').value, 'idp-hint');
@@ -263,6 +268,7 @@ test('data-test hooks identify the fields when the ids do not', async () => {
   assert.equal(last(page).step, 'filled');
   assert.equal(page.window.document.querySelector('#field-a').value, 'st123456');
   assert.equal(page.window.document.querySelector('#field-b').value, 'secret-password');
+  assert.equal(last(page).passwordIndex, 0);
   assert.equal(page.submits.length, 1);
 });
 
@@ -284,6 +290,18 @@ test('dump: keeps structure, redacts password and token values', async () => {  
   await inject(shibboleth, headlessDumpScript(), 50);
   assert.doesNotMatch(last(shibboleth).forms[0].html, /csrf-hint/);
   assert.match(last(shibboleth).forms[0].html, /name="execution" value="e1s2"/);
+});
+
+test('every generated script compiles', () => {
+  const scripts = {
+    autofill: headlessAutofillScript('st123456', 'secret-password', 'run-1'),
+    dump: headlessDumpScript(),
+    harvest: HARVEST_JS,
+    diagnose: DIAGNOSE_JS,
+  };
+  for (const [name, script] of Object.entries(scripts)) {
+    assert.doesNotThrow(() => new Function(script), `${name} must compile`);
+  }
 });
 
 test('harvest script reads the cookie and both storages', async () => {

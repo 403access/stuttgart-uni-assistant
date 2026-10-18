@@ -19,6 +19,23 @@ Two real login pages appear on that path, and the script covers both: the CAMPUS
 
 Every step posts back and is logged as `[campus-headless] <step> <url>`, with `user=`/`submit=` on `filled`, `label=` on `cta-click`, `reason=` on `rejected`, and `passwordInputs`/`display`/`size`/`readyState` on `no-form`. The modal has a `Seite ausgeben` button that posts a redacted dump of the current page's forms and controls (`[campus-headless-dump]`) for pinning selectors against a page that changes.
 
+## Terminal probe
+
+`npm run campus:headless` runs the same sign-in from the command line, so a selector or flow change can be checked in seconds instead of a rebuild:
+
+```
+printf '%s' "$ST_PASSWORD" | npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin
+```
+
+`scripts/campus-headless-login.mjs` takes the credential per invocation — never from a file or the environment — and prints every step, the cookie names with their lengths, and a verdict. `--password-stdin` keeps the value out of the shell history and the process list; the value is never printed (`mask`), never stored, and the process leaves nothing behind. `--verify` (the default) mints a bearer from the session cookie through `/ee/rest/auth/token/refresh` and hands cookie plus bearer to the running assistant server's `POST /v1/campus/credentials`, which is the same validation the app triggers; `--no-verify` stops after the login, and `--json` prints a machine-readable summary.
+
+Two engines:
+
+- **browser** (default when Playwright is installed): a headless Chromium drives the real pages, so the C@MPUS shell can run its own JavaScript — the SSO redirect starts client-side, and no plain HTTP request reaches the Keycloak form. The probe re-uses the app's injected `headlessAutofillScript` through `page.evaluate`, then reads the cookie jar (including `PSESSIONID`) and web storage (including `cusonline_co.login.accessToken`). `--headed` shows the window for debugging. Install with `bun add -d playwright && bunx playwright install chromium`; the browser lives in the user cache, not the repository.
+- **http** (`--http`): `fetch` with a cookie jar, parsing each page with jsdom in `outside-only` mode. No browser download, and it terminates at the C@MPUS shell, which is why the browser engine is the default. It is the engine the offline tests exercise.
+
+A wrong credential is a useful run: it should print `filled` then `rejected` with the portal's own message, which proves the fill and submit reached the real form.
+
 The credential never leaves the device: the fill and submit happen in the app's own WebView against the university page, and only the resulting session goes to `POST /v1/campus/credentials`. Failure shows inside the modal with a button to fall back to the visible browser.
 
 ## Manual browser sign-in (Beta)
