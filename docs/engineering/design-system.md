@@ -74,7 +74,18 @@ Campus is not a map SDK. Dots are absolutely positioned from each place's `x` an
 
 ## Motion and splash
 
-The splash background is `#004191`. It hides only after storage has loaded and the route agrees with the session. There is no other entrance animation. Reanimated is a dependency of the Expo template and is not used for feature motion in this build.
+The splash background is `#004191`. It hides only after storage has loaded and the route agrees with the session. Entrance animation is limited to the toast slide in `src/components/toast.tsx`, core `Animated` with `useNativeDriver`. Reanimated is a dependency of the Expo template and is not used for feature motion in this build.
+
+## Waiting states
+
+A sign-in takes ten to thirty seconds when it runs in the hidden `WebView`, and a frozen screen reads as a broken app. `src/components/signing-in.tsx` covers that wait:
+
+- The mark from `ui.tsx` is rebuilt as an orbiting pair: the light circle sweeps around the blue one, with a halo that expands and fades on the same 2.6 s cycle. It is the app's own mark, not a generic spinner.
+- Below it, the four phases from `src/auth/campus-progress.ts` — `connect`, `identify`, `adopt`, `profile` — fill in as the page script reports its steps. Completed phases take a check, the active one pulses. Seeing *what* is running is what reduces the perceived wait, so the component is fed the real steps and not a timer.
+- `accessibilityRole="progressbar"` with the phase as the label, `accessibilityLiveRegion="polite"` on the visible status text, and no motion at all when the platform reports reduced motion (`AccessibilityInfo.isReduceMotionEnabled`): the phases and their checks stay, the orbit and the pulse stop.
+- A `compact` variant sits inline under a button for the shorter waits (token sign-in, the SIAM redirect, the visible browser's harvest).
+
+The phase mapping is pure and covered by `scripts/campus-progress.test.mjs`, which `bun run check` runs: a mis-mapped step would show a finished sign-in as still connecting, or move the progress backwards.
 
 ## Writing
 

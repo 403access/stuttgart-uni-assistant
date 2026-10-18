@@ -18,8 +18,10 @@ import {
   type NativeCookies,
 } from '@/src/auth/campus-browser';
 import { biometricUnlockAvailable, clearLogin, readLogin, saveLogin, storedLoginHint } from '@/src/auth/vault';
+import { isLoginFailureStep, phaseForStep, type CampusLoginPhase } from '@/src/auth/campus-progress';
 import { fetchOidcStatus, openOfficialCampus, signInWithUniversity, universityRedirectUri, universityUrls, type OidcStatus } from '@/src/auth/oidc';
 import { Button, Mark } from '@/src/components/ui';
+import { SigningIn } from '@/src/components/signing-in';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { student } from '@/src/data';
 import { keys } from '@/src/query/keys';
@@ -55,7 +57,8 @@ export default function LoginScreen() {
   const [biometricsReady, setBiometricsReady] = useState(false);
   const [savedLogin, setSavedLogin] = useState<{ account: string; biometrics: boolean } | null>(null);
   const [headlessOpen, setHeadlessOpen] = useState(false);
-  const [headlessStatus, setHeadlessStatus] = useState('');
+  const [headlessPhase, setHeadlessPhase] = useState<CampusLoginPhase>('connect');
+  const [headlessDetail, setHeadlessDetail] = useState('');
   const [headlessError, setHeadlessError] = useState('');
   const [headlessDump, setHeadlessDump] = useState('');
   const [headlessAttempt, setHeadlessAttempt] = useState(0);
@@ -266,7 +269,7 @@ export default function LoginScreen() {
     stopHeadlessTimers();
     headlessHarvesting.current = false;
     setHeadlessOpen(false);
-    setHeadlessStatus('');
+    setHeadlessDetail('');
   }
 
   /** Messages from the automated WebView: autofill progress, then the harvest. */
@@ -279,6 +282,10 @@ export default function LoginScreen() {
     }
     const step = typeof parsed.step === 'string' ? parsed.step : '';
     console.info('[campus-headless]', step, typeof parsed.url === 'string' ? parsed.url.slice(0, 140) : '');
+    if (!isLoginFailureStep(step) && step !== 'dump') {
+      setHeadlessPhase(phaseForStep(step));
+      setHeadlessDetail(hostOf(parsed.url));
+    }
     if (step === 'no-form') {
       console.info(
         '[campus-headless]',
@@ -306,17 +313,16 @@ export default function LoginScreen() {
     if (step === 'signed-in') {
       if (headlessHarvesting.current) return;
       headlessHarvesting.current = true;
-      setHeadlessStatus(tx(locale, 'Anmeldung erkannt, Sitzung wird übernommen …', 'Sign-in detected, adopting the session …'));
+      setHeadlessPhase('adopt');
       nativeCookies.current = await readNativeCampusCookies();
       headless.current?.injectJavaScript(HARVEST_JS);
       return;
     }
     if (step === 'filled' || step === 'cta-click') {
-      setHeadlessStatus(tx(locale, 'Anmeldedaten werden eingetragen …', 'Filling in the sign-in form …'));
+      setHeadlessPhase('identify');
       return;
     }
     if (step === 'too-many-attempts' || step === 'submit-failed' || step === 'error') {
-      setHeadlessStatus('');
       setHeadlessError(
         tx(
           locale,
@@ -328,7 +334,6 @@ export default function LoginScreen() {
     }
     if (step === 'rejected') {
       stopHeadlessTimers();
-      setHeadlessStatus('');
       setHeadlessError(
         tx(
           locale,
@@ -349,7 +354,8 @@ export default function LoginScreen() {
     setHeadlessError('');
     headlessHarvesting.current = false;
     headlessCreds.current = { account, password, runId: String(Date.now()) };
-    setHeadlessStatus(tx(locale, 'Verbindung zu C@MPUS …', 'Connecting to C@MPUS …'));
+    setHeadlessPhase('connect');
+    setHeadlessDetail('');
     if (remember.enabled) {
       const ok = await saveLogin(
         { account, password, biometrics: remember.biometrics },
@@ -367,7 +373,6 @@ export default function LoginScreen() {
     }, 3000);
     headlessTimers.current.timeout = setTimeout(() => {
       stopHeadlessTimers();
-      setHeadlessStatus('');
       setHeadlessError(tx(locale, 'Zeitüberschreitung der automatischen Anmeldung.', 'The automated sign-in timed out.'));
     }, 90_000);
   }
@@ -498,6 +503,14 @@ export default function LoginScreen() {
           label={busy ? tx(locale, 'Anmeldung läuft …', 'Signing in …') : tx(locale, 'Mit C@MPUS-Token anmelden', 'Sign in with C@MPUS token')}
           onPress={() => campusSignIn.mutate()}
         />
+        {campusSignIn.isPending ? (
+          <SigningIn
+            compact
+            locale={locale}
+            phase="profile"
+            detail={tx(locale, 'Studien und Curriculum werden geladen …', 'Loading your studies and curriculum …')}
+          />
+        ) : null}
         <Button
           secondary
           label={tx(locale, 'Im C@MPUS-Browser anmelden (Beta)', 'Sign in with the C@MPUS browser (Beta)')}
@@ -570,6 +583,14 @@ export default function LoginScreen() {
           }
           onPress={() => siamSignIn.mutate()}
         />
+        {siamSignIn.isPending ? (
+          <SigningIn
+            compact
+            locale={locale}
+            phase="identify"
+            detail={tx(locale, 'Warte auf die Universität …', 'Waiting for the university …')}
+          />
+        ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Text style={styles.footer}>
           {status === null
@@ -636,13 +657,16 @@ export default function LoginScreen() {
             ) : null}
             {browserDiag ? <Text style={styles.browserDiag}>{browserDiag}</Text> : null}
             {harvestBusy ? (
-              <Text style={styles.browserHint}>
-                {tx(
+              <SigningIn
+                compact
+                locale={locale}
+                phase="adopt"
+                detail={tx(
                   locale,
                   'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
                   'Checking credentials against C@MPUS … this can take up to a minute.',
                 )}
-              </Text>
+              />
             ) : null}
             {browserError ? <Text style={styles.error}>{browserError}</Text> : null}
             <Button
@@ -695,19 +719,20 @@ export default function LoginScreen() {
             </Pressable>
           </View>
           <View style={{ flex: 1, padding: 16, gap: 12, justifyContent: 'center' }}>
-            <Text style={styles.browserHint}>
-              {headlessStatus || tx(locale, 'Anmeldung wird vorbereitet …', 'Preparing the sign-in …')}
-            </Text>
-            {harvestBusy ? (
-              <Text style={styles.browserHint}>
-                {tx(
-                  locale,
-                  'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
-                  'Checking credentials against C@MPUS … this can take up to a minute.',
-                )}
-              </Text>
-            ) : null}
             {headlessError ? <Text style={styles.error}>{headlessError}</Text> : null}
+            <SigningIn
+              locale={locale}
+              phase={headlessPhase}
+              detail={
+                harvestBusy
+                  ? tx(
+                      locale,
+                      'Prüfe Anmeldedaten gegen C@MPUS … das kann bis zu einer Minute dauern.',
+                      'Checking credentials against C@MPUS … this can take up to a minute.',
+                    )
+                  : headlessDetail || undefined
+              }
+            />
             {headlessDump ? (
               <ScrollView style={{ maxHeight: 260 }}>
                 <Text style={styles.browserDiag}>{headlessDump}</Text>
@@ -735,6 +760,13 @@ export default function LoginScreen() {
       </Modal>
     </View>
   );
+}
+
+/** Host of a page URL for the progress detail, without relying on a URL polyfill. */
+function hostOf(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const match = /^https?:\/\/([^/?#]+)/i.exec(value);
+  return match ? match[1] : '';
 }
 
 /** Human-readable form of the identity-provider page dump for the log and the modal. */
