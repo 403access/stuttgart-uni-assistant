@@ -1,8 +1,7 @@
 import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { endUniversitySession, universityUrls } from '@/src/auth/oidc';
-import { clearLogin } from '@/src/auth/vault';
+import { universityUrls } from '@/src/auth/oidc';
 import { assistantUrl } from '@/src/assistant/remote';
 import { Button, Card, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
@@ -10,12 +9,7 @@ import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function SettingsScreen() {
-  const { locale, setLocale, reset, signOut, oidcSessionId, sessionMode } = useApp();
-  async function leave() {
-    if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
-    await clearLogin();
-    signOut();
-  }
+  const { locale, setLocale, reset } = useApp();
   return (
     <Screen kicker={tx(locale, 'App', 'App')}>
       <Stack.Screen options={{ title: tx(locale, 'Einstellungen', 'Settings') }} />
@@ -59,7 +53,6 @@ export default function SettingsScreen() {
         </Text>
       </Card>
       <Button label={tx(locale, 'Lokale Ergänzungen zurücksetzen', 'Reset local additions')} onPress={reset} secondary />
-      <Button label={tx(locale, 'Sitzung beenden', 'End session')} onPress={leave} />
     </Screen>
   );
 }

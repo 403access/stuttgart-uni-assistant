@@ -103,7 +103,7 @@ Four decisions the screen makes explicit:
    invalidates a gated entry. Onboarding says so, and the app must treat it as
    "no stored credential" and offer the sign-in again.
 4. **Removal** — `Sitzung beenden` clears the vault (already wired in
-   `app/einstellungen.tsx`); a separate `Nur die gespeicherte Anmeldung löschen`
+   `app/(tabs)/mehr.tsx`); a separate `Nur die gespeicherte Anmeldung löschen`
    control keeps the session. iOS keeps keychain entries across a reinstall with
    the same bundle id, so deletion cannot be left to uninstalling.
 

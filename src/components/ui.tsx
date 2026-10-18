@@ -223,11 +223,11 @@ export function Strong({ children }: { children: ReactNode }) {
   return <Text style={styles.strong}>{children}</Text>;
 }
 
-export function InfoRow({ title, meta, detail, onPress, position }: { title: string; meta?: string; detail?: string; onPress?: () => void; position?: CardPosition }) {
+export function InfoRow({ title, meta, detail, onPress, position, tone }: { title: string; meta?: string; detail?: string; onPress?: () => void; position?: CardPosition; tone?: 'danger' }) {
   return (
     <Card onPress={onPress} position={position}>
       <View style={styles.row}>
-        <Text style={[styles.strong, styles.flex]}>{title}</Text>
+        <Text style={[styles.strong, styles.flex, tone === 'danger' && styles.strongDanger]}>{title}</Text>
         {meta ? <Text style={styles.meta}>{meta}</Text> : null}
       </View>
       {detail ? <Text style={styles.muted}>{detail}</Text> : null}
@@ -278,6 +278,7 @@ const styles = StyleSheet.create({
   inputCompact: { paddingVertical: 8 },
   muted: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   strong: { color: colors.anthracite, fontSize: 16, fontWeight: '700' },
+  strongDanger: { color: colors.danger },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' },
   flex: { flex: 1 },
   meta: { color: colors.blue, fontSize: 13, fontWeight: '700' },

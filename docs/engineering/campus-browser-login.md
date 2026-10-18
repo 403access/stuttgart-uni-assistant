@@ -73,7 +73,7 @@ Credentials live in server memory only: `runtimeBearerToken`/`runtimeSessionCook
 
 The opt-in `Auf diesem Gerät speichern` writes `{ account, password, biometrics, savedAt }` through [vault.ts](../../src/auth/vault.ts) into `expo-secure-store`: the iOS keychain (`kSecClassGenericPassword`, hardware-backed where the device has a Secure Enclave) and Android `SharedPreferences` encrypted with the Android Keystore. With `Mit Biometrie schützen`, the entry carries `requireAuthentication` and an `authenticationPrompt`, so reading it raises the system biometric prompt; a biometric change invalidates the entry and it is treated as absent. `keychainAccessible` is `WHEN_PASSCODE_SET_THIS_DEVICE_ONLY`, so a removed passcode deletes the entry and it never migrates to a restored backup.
 
-The entry is device-only and local: the app deletes it on sign-out (`Einstellungen → Sitzung beenden`), the login screen has `Gespeicherte Anmeldung löschen`, and it never reaches the assistant server. The account id alone is mirrored to Async Storage as a non-secret hint, so the screen can offer the vaulted login without prompting first. iOS persists keychain entries across a reinstall with the same bundle id, which is why sign-out deletes rather than ignores.
+The entry is device-only and local: the app deletes it on sign-out (`Campus → App → Sitzung beenden`), the login screen has `Gespeicherte Anmeldung löschen`, and it never reaches the assistant server. The account id alone is mirrored to Async Storage as a non-secret hint, so the screen can offer the vaulted login without prompting first. iOS persists keychain entries across a reinstall with the same bundle id, which is why sign-out deletes rather than ignores.
 
 ## Limits of the workaround
 

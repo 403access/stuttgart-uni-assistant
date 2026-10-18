@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { activeStudy } from '@/src/auth/campus';
+import { endUniversitySession } from '@/src/auth/oidc';
+import { clearLogin } from '@/src/auth/vault';
 import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
@@ -13,14 +15,19 @@ import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
 type CampusHref = '/api' | '/campus' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/kalender-export';
-type CampusEntry = { title: string; detail: string; href: CampusHref; tags: string[] };
+type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
 export default function MoreScreen() {
-  const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId } = useApp();
+  const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId, signOut, oidcSessionId } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
+  async function leave() {
+    if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
+    await clearLogin();
+    signOut();
+  }
   const groups: CampusGroup[] = [
     {
       title: tx(locale, 'Campus', 'Campus'),
@@ -54,6 +61,13 @@ export default function MoreScreen() {
         ...(typeof __DEV__ !== 'undefined' && __DEV__
           ? [{ title: tx(locale, 'Schnittstelle', 'Interface'), detail: tx(locale, 'Aufrufe senden, Curriculum laden', 'Send calls, load the curriculum'), href: '/api' as CampusHref, tags: ['schnittstelle', 'interface', 'api', 'aufrufe', 'calls', 'curriculum'] }]
           : []),
+        {
+          title: tx(locale, 'Sitzung beenden', 'End session'),
+          detail: tx(locale, 'Abmelden und gespeicherte Anmeldung löschen', 'Sign out and delete the saved sign-in'),
+          onPress: leave,
+          tone: 'danger' as const,
+          tags: ['abmelden', 'sign out', 'logout', 'sitzung', 'session', 'beenden', 'end session', 'anmeldung', 'sign-in'],
+        },
       ],
     },
   ];
@@ -160,11 +174,12 @@ export default function MoreScreen() {
             <View>
               {group.entries.map((entry, index) => (
                 <InfoRow
-                  key={entry.href}
+                  key={entry.href ?? entry.title}
                   title={entry.title}
                   detail={entry.detail}
+                  tone={entry.tone}
                   position={listPosition(index, group.entries.length)}
-                  onPress={() => router.push(entry.href)}
+                  onPress={entry.href ? () => router.push(entry.href as CampusHref) : entry.onPress}
                 />
               ))}
             </View>
