@@ -409,7 +409,8 @@ Usage:
 Options:
   -u, --user <id>        st-account or email the portal expects (required)
   -p, --password <text>  password (lands in the shell history; prefer stdin)
-      --password-stdin   read the password from stdin, one line
+      --password-stdin   read the password from stdin; on a terminal it prompts
+                         without echoing, otherwise it reads until EOF
       --url <url>        override the start URL
       --browser          force the Playwright engine (default when installed)
       --http             force the plain HTTP engine, no browser download
@@ -420,6 +421,7 @@ Options:
   -h, --help             this text
 
 Examples:
+  npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin
   printf '%s' "$ST_PASSWORD" | npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin
   npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin --json
   npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin --headed
@@ -436,6 +438,50 @@ async function readStdin() {
   return chunks.join('').replace(/\r?\n$/, '');
 }
 
+/** Read one line without echoing it; a piped stdin is read to EOF instead. */
+async function promptPassword() {
+  if (!process.stdin.isTTY) return readStdin();
+  return new Promise((resolve, reject) => {
+    const stdin = process.stdin;
+    let value = '';
+    const cleanup = () => {
+      stdin.setRawMode(false);
+      stdin.pause();
+      stdin.off('data', onData);
+    };
+    const onData = (chunk) => {
+      for (const char of String(chunk)) {
+        if (char === '\r' || char === '\n') {
+          cleanup();
+          process.stdout.write('\n');
+          resolve(value);
+          return;
+        }
+        if (char === '\u0003') {
+          cleanup();
+          process.stdout.write('\n');
+          reject(new Error('cancelled'));
+          return;
+        }
+        if (char === '\u007f' || char === '\b') {
+          if (value) {
+            value = value.slice(0, -1);
+            process.stdout.write('\b \b');
+          }
+          continue;
+        }
+        value += char;
+        process.stdout.write('*');
+      }
+    };
+    process.stdout.write('Password: ');
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+    stdin.on('data', onData);
+  });
+}
+
 async function main() {
   let options;
   try {
@@ -450,7 +496,7 @@ async function main() {
     console.log(HELP);
     return;
   }
-  if (options.passwordStdin) options.password = await readStdin();
+  if (options.passwordStdin) options.password = await promptPassword();
   if (!options.user || !options.password) {
     console.error('Both --user and a password are required. Run with --help for usage.');
     process.exitCode = 2;

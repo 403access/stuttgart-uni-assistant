@@ -27,7 +27,7 @@ Every step posts back and is logged as `[campus-headless] <step> <url>`, with `u
 printf '%s' "$ST_PASSWORD" | npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin
 ```
 
-`scripts/campus-headless-login.mjs` takes the credential per invocation — never from a file or the environment — and prints every step, the cookie names with their lengths, and a verdict. `--password-stdin` keeps the value out of the shell history and the process list; the value is never printed (`mask`), never stored, and the process leaves nothing behind. `--verify` (the default) mints a bearer from the session cookie through `/ee/rest/auth/token/refresh` and hands cookie plus bearer to the running assistant server's `POST /v1/campus/credentials`, which is the same validation the app triggers; `--no-verify` stops after the login, and `--json` prints a machine-readable summary.
+`scripts/campus-headless-login.mjs` takes the credential per invocation — never from a file or the environment — and prints every step, the cookie names with their lengths, and a verdict. With `--password-stdin` and a terminal it prompts without echoing and reads a single line; with a pipe it reads to EOF, so `printf '%s' "$ST_PASSWORD" | …` also works and keeps the value out of the shell history entirely. The value is never printed (`mask`), never stored, and the process leaves nothing behind. `--verify` (the default) mints a bearer from the session cookie through `/ee/rest/auth/token/refresh` and hands cookie plus bearer to the running assistant server's `POST /v1/campus/credentials`, which is the same validation the app triggers; `--no-verify` stops after the login, and `--json` prints a machine-readable summary.
 
 Two engines:
 
