@@ -44,19 +44,4 @@ export async function readNativeCampusCookies(): Promise<NativeCookies> {
 }
 
 /** Join cookie strings; the first value per name wins, so the native store fills the HttpOnly gaps. */
-export function mergeCookieStrings(...parts: string[]): string {
-  const seen = new Set<string>();
-  const pairs: string[] = [];
-  for (const part of parts) {
-    for (const pair of part.split(';')) {
-      const trimmed = pair.trim();
-      if (!trimmed) continue;
-      const separator = trimmed.indexOf('=');
-      const name = (separator > 0 ? trimmed.slice(0, separator) : trimmed).trim().toLowerCase();
-      if (seen.has(name)) continue;
-      seen.add(name);
-      pairs.push(trimmed);
-    }
-  }
-  return pairs.join('; ');
-}
+export { mergeCookieStrings } from '@/src/auth/campus-harvest';
