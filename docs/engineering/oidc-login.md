@@ -60,7 +60,7 @@ Server → userinfo
 App  ←  account, name, email, subject, and a local session id
 ```
 
-Code lives in `server/oidc.mjs`, `src/auth/oidc.ts`, and `app/login.tsx`. The browser step uses `expo-web-browser` and `expo-auth-session` (`makeRedirectUri`). `WebBrowser.maybeCompleteAuthSession()` runs from `app/_layout.tsx` so a web popup can close when the code returns to `/oidc`.
+Code lives in `server/oidc.mjs`, `src/auth/oidc.ts`, and `src/auth/use-login-flow.ts` (rendered by `app/login.tsx`). The browser step uses `expo-web-browser` and `expo-auth-session` (`makeRedirectUri`). `WebBrowser.maybeCompleteAuthSession()` runs from `app/_layout.tsx` so a web popup can close when the code returns to `/oidc`.
 
 The university access token and the refresh token stay in the server process memory, keyed by the local session id. They are not written to Async Storage and not returned to the app. Sign-out calls `POST /v1/oidc/logout`, which revokes the refresh token (or the access token) at the revocation endpoint and drops the memory entry. Restarting the server drops every token. The profile cached on the device remains until the student signs out.
 

@@ -68,6 +68,12 @@ Tab icons in `app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small
 - Stack screens keep a back affordance in the screen header. The navigator header is hidden so the mark and the language stay consistent.
 - Empty chat explains that answers come from the demonstration record.
 
+## Sign-in screen
+
+`app/login.tsx` is the screen the gate shows once the splash screen lifts. It has two parts: a blue hero (the mark on a white tile, the brand, and three lines about what the app does) and a white sheet with the automated C@MPUS sign-in — account id, password, the biometrics switch, and the button. The other sign-in paths are not on this screen; they live on the deprecated `app/login-legacy.tsx`, which the start screen no longer links to.
+
+The state and the mutations behind the screen live in `src/auth/use-login-flow.ts`, not in the screen itself. `app/login-legacy.tsx` is the superseded long form: it is marked `@deprecated`, keeps its own copy of the wiring, and carries the token, visible-browser, SIAM, account-id, and demonstration paths. New sign-in work goes into the start screen, not the legacy one.
+
 ## Map
 
 Campus is not a map SDK. Dots are absolutely positioned from each place's `x` and `y`. The caption says the drawing is schematic. Addresses on the room screen are the orientation, not a walking route.

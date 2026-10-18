@@ -37,7 +37,7 @@ function Gate() {
   const { ready, sessionAccount, locale } = useApp();
   const segments = useSegments();
   const router = useRouter();
-  const onLogin = segments[0] === 'login' || segments[0] === 'oidc';
+  const onLogin = segments[0] === 'login' || segments[0] === 'login-legacy' || segments[0] === 'oidc';
   // Settled once the route matches the session; the effect below only performs the redirect.
   const settled = ready && (sessionAccount ? !onLogin : onLogin);
 
@@ -69,6 +69,7 @@ function Gate() {
         }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="login-legacy" options={{ headerShown: false }} />
         <Stack.Screen name="oidc" options={{ headerShown: false }} />
       </Stack>
     </View>

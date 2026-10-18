@@ -37,7 +37,7 @@ Other flows use one `useMutation` per screen:
 
 | Flow | Screen | Notes |
 | --- | --- | --- |
-| C@MPUS token sign-in, SIAM sign-in, browser harvest | `app/login.tsx` | Success commits to AppState; failure sets the inline message and the retry toast targets `mutate()`. |
+| C@MPUS token sign-in, SIAM sign-in, browser harvest | `src/auth/use-login-flow.ts` (rendered by `app/login.tsx`) | Success commits to AppState; failure sets the inline message and the retry toast targets `mutate()`. |
 | Study switch | `src/components/study-selector.tsx` | Commits only when the portal answered; `variables` names the pending study for the chip label. |
 | Calendar export and database sync | `app/(tabs)/kalender.tsx` | The download side effects (blob link, share sheet) live in the mutation function. |
 | API replays | `app/api.tsx` | Adopting nodes, studies, and a login from a portal response happens in `onSuccess`. |

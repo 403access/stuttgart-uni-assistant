@@ -265,7 +265,7 @@ export async function forgetMail(): Promise<void> {
   publish({ status: DISCONNECTED_STATUS, messages: [], folders: [], folder: 'INBOX' });
 }
 
-/** Locale-aware error text, mirroring the campus messages of login.tsx. */
+/** Locale-aware error text, mirroring the campus messages of the sign-in screen. */
 export function mailMessage(locale: 'de' | 'en', code: string, detail = ''): string {
   const suffix = detail ? ` ${detail}` : '';
   if (code === 'server_unreachable') {

@@ -18,7 +18,8 @@ Record what was built, with the paths a later change should start from.
 
 ```text
 app/_layout.tsx              session gate and stack
-app/login.tsx                demonstration sign-in
+app/login.tsx                sign-in start screen (hero, C@MPUS card, method rows)
+app/login-legacy.tsx         deprecated long-form sign-in, kept for reference
 app/(tabs)/                  Heute, Studium, Chat, Campus, Mehr
 app/modul/[id].tsx           module detail, plan mark, local review
 app/dokument/[id].tsx        reader, summary, export, share

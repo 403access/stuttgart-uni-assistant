@@ -24,33 +24,25 @@ npm run assistant
 
 ## Sign in
 
-The sign-in screen groups the paths by what they check.
+The screen that greets you once the splash screen lifts offers the automated
+**Mit C@MPUS anmelden** path and nothing else: you type the account id and the
+password, a hidden browser fills the official C@MPUS form, and the app adopts
+the session. With **Mit Biometrie schützen** the credential kept in the device
+vault (iOS keychain / Android Keystore) is unlocked with biometrics; it is
+deleted when you sign out and never reaches the assistant server. A loading
+indicator names the phase while the profile and curriculum load.
 
-**Existing account, no registration:**
+The other paths still work but have moved to the deprecated `/login-legacy`
+screen, which the start screen no longer links to:
 
 | Button | What happens |
 | --- | --- |
-| **Automatisch anmelden** | A hidden browser fills the official C@MPUS form with the account id and password you typed. With **Auf diesem Gerät speichern** the password goes into the device vault (iOS keychain / Android Keystore), optionally behind biometrics, and is deleted when you sign out; it never reaches the assistant server. The app then adopts the session and loads your studies. Marked beta. |
+| **Automatisch anmelden** | The same automated sign-in as the start screen, with the store-on-device switch. |
 | **Mit C@MPUS-Token anmelden** | The local server reads the curriculum root of your enrolled studies with the bearer token and the `PSESSIONID` cookie from `.env`. Your name and studies come from C@MPUS. The app never shows a token field; the token stays on the server. |
-| **Im C@MPUS-Browser anmelden (Beta)** | An in-app browser opens the official C@MPUS login. You type the password on the university page only. The app picks up the signed-in session after you finish and loads your studies. Marked beta: if anything fails, use the token path or a fallback below. |
+| **Im C@MPUS-Browser anmelden (Beta)** | An in-app browser opens the official C@MPUS login. You type the password on the university page only. The app picks up the signed-in session after you finish and loads your studies. |
 | **C@MPUS öffnen und anmelden** | Opens `https://campus.uni-stuttgart.de` in the system browser. Nothing is harvested or stored; use the official site and come back. |
-
-**Account id for this app:**
-
-| Button | What happens |
-| --- | --- |
 | **Mit dieser Nutzerkennung weiter** | Stores your account id, for example `st123456`, on the device. The password is not asked for and not checked. The study record stays the demonstration profile. |
-
-**Registered SIAM client:**
-
-| Button | What happens |
-| --- | --- |
 | **Mit SIAM anmelden** | The registered OpenID Connect client. The browser opens the university identity provider, the app receives only what the client is registered for. |
-
-**Demonstration:**
-
-| Button | What happens |
-| --- | --- |
 | **Demonstrationsprofil öffnen** | Loads the fictional student Lena Hartmann. Every bundled feature works on this record with no server and no university account. |
 
 Any path signs you in. The demonstration profile needs nothing; the token, browser, and SIAM paths expect the assistant server to be running.
