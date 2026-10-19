@@ -17,7 +17,7 @@ import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { MailStatus } from '@/src/types';
 
-/** Pushed from the gear icon of the Messages tab once UniMail is connected. */
+/** Opened from the E-Mail item on the Campus tab. */
 export default function MailConnectionScreen() {
   const { locale, setMailAccount, authToken, refreshUser } = useApp();
   const [status, setStatus] = useState<MailStatus | null>(() => getMailSnapshot().status);

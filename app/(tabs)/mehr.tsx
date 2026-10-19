@@ -14,7 +14,7 @@ import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -34,7 +34,7 @@ export default function MoreScreen() {
       entries: [
         { title: tx(locale, 'common.karte'), detail: tx(locale, 'tabsMehr.uni'), href: '/campus', tags: ['map', 'karte', 'lageplan', 'gebäude', 'gebaeude', 'building', 'standort', 'location', 'campus'] },
         { title: tx(locale, 'common.konto'), detail: 'C@MPUS · ILIAS · SDG · SIAM · UniMail', href: '/konto', tags: ['konto', 'account', 'plattformen', 'platforms', 'plattform', 'campus', 'ilias', 'sdg', 'siam', 'portal', 'anmeldung', 'sign-in', 'benutzer', 'user'] },
-        { title: tx(locale, 'tabsMehr.e'), detail: tx(locale, 'tabsMehr.unimail'), href: '/mail', tags: ['email', 'e-mail', 'mail', 'unimail', 'posteingang', 'inbox', 'nachrichten'] },
+        { title: tx(locale, 'tabsMehr.e'), detail: tx(locale, 'tabsMehr.unimail'), href: '/mail-verbindung', tags: ['email', 'e-mail', 'mail', 'unimail', 'posteingang', 'inbox', 'nachrichten', 'verbindung', 'verbinden', 'connection', 'settings', 'einstellungen'] },
         { title: tx(locale, 'vpn.title'), detail: tx(locale, 'tabsMehr.vpn'), href: '/vpn', tags: ['vpn', 'netz', 'network', 'tik', 'cisco', 'anyconnect', 'openconnect', 'wlan', 'unterwegs', 'remote', 'zugang', 'access'] },
         { title: tx(locale, 'drucker.drucken'), detail: tx(locale, 'tabsMehr.drucker'), href: '/drucker', tags: ['drucken', 'printing', 'print', 'drucker', 'printer', 'papercut', 'kopieren', 'copy', 'scannen', 'scan', 'stuvus', 'guthaben', 'credit', 'mobility'] },
       ],

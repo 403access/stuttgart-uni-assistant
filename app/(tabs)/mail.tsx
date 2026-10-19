@@ -434,9 +434,9 @@ export default function MailScreen() {
 
   /**
    * Sticky controls: one horizontally scrollable row — mailbox first, then search,
-   * filter, sort — plus the connection cog. The row stays pinned while the inbox
-   * scrolls under it, and the strip keeps every control at its natural width instead
-   * of squeezing five controls into one narrow screen width.
+   * filter, sort. The row stays pinned while the inbox scrolls under it, and the
+   * strip keeps every control at its natural width instead of squeezing five
+   * controls into one narrow screen width.
    */
   const controlsBar = connected ? (
     <View style={styles.stickyBar}>
@@ -475,19 +475,6 @@ export default function MailScreen() {
             <DropdownPicker hint={tx(locale, 'tabsMail.sortieren')} valueText={sortValueText} options={sortOptions} onSelect={applySortKey} />
           </>
         ) : null}
-        <Pressable
-          hitSlop={8}
-          onPress={() => router.push('/mail-verbindung')}
-          accessibilityLabel={tx(locale, 'tabsMail.verbindung_verwalten')}
-          accessibilityRole="button"
-          style={({ pressed }) => [pressed && styles.pressed]}
-        >
-          {Platform.OS === 'ios' ? (
-            <SymbolView name="gearshape.fill" size={20} tintColor={colors.blue} />
-          ) : (
-            <MaterialIcons name="settings" size={21} color={colors.blue} />
-          )}
-        </Pressable>
       </ScrollView>
     </View>
   ) : null;

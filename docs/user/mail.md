@@ -19,7 +19,8 @@ The sticky control bar is one row, scrollable horizontally:
 | Mailbox dropdown | Posteingang, Gesendet, Entwürfe, … — the real folder list as it comes from the server |
 | Search | Filter the loaded rows |
 | Filter and sort dropdowns | Newest, oldest, by sender, unread first — the options adapt to what is actually loaded |
-| Cog | Opens the connection screen with **Posteingang aktualisieren (refresh inbox)** and **Verbindung lösen (drop connection)** |
+
+Connection settings live on the **Campus** tab under **E-Mail**: it opens the same connection screen with **Posteingang aktualisieren (refresh inbox)** and **Verbindung lösen (drop connection)**.
 
 Rows refresh quietly every 60 seconds while connected. Browsing with `BODY.PEEK` never marks a message read — the university webmail stays the place where read state and flags really change.
 
