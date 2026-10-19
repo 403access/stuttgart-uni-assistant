@@ -2,9 +2,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { Button, Card } from '@/src/components/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useApp } from '@/src/state/AppState';
@@ -47,15 +48,17 @@ export default function SecurityScreen() {
       return;
     }
     setBusy(true);
-    const enabled = await enableBiometrics(
+    const result = await enableBiometrics(
       tx(locale, 'appLock.grund'),
       tx(locale, 'common.abbrechen'),
     );
     setBusy(false);
-    if (!enabled) setError(tx(locale, 'sicherheit.biometrie_fehler'));
+    if (!result.success) {
+      setError(isBiometricCancel(result.error) ? '' : biometricMessage(locale, result.error));
+    }
   }
 
-  const state = !biometricsHardware ? 'unavailable' : !biometricsAvailable ? 'setup' : biometricsEnabled ? 'active' : 'ready';
+  const state = biometricsEnabled ? 'active' : !biometricsHardware ? 'unavailable' : !biometricsAvailable ? 'setup' : 'ready';
   const status = {
     active: {
       label: tx(locale, 'sicherheit.status_aktiv'),
@@ -74,14 +77,14 @@ export default function SecurityScreen() {
       title: tx(locale, 'sicherheit.hero_nicht_verfuegbar'),
     },
   }[state];
-  const intro = biometricsAvailable
-    ? biometricsEnabled
-      ? tx(locale, 'sicherheit.biometrie_aktiv')
-      : tx(locale, 'sicherheit.biometrie_bereit')
-    : biometricsHardware
-      ? tx(locale, 'sicherheit.biometrie_nicht_eingerichtet')
-      : tx(locale, 'sicherheit.biometrie_nicht_verfuegbar');
-  const detail = !biometricsAvailable && biometricsHardware ? tx(locale, 'sicherheit.biometrie_einrichten') : '';
+  const intro = biometricsEnabled
+    ? tx(locale, 'sicherheit.biometrie_aktiv')
+    : biometricsAvailable
+      ? tx(locale, 'sicherheit.biometrie_bereit')
+      : biometricsHardware
+        ? tx(locale, 'sicherheit.biometrie_nicht_eingerichtet')
+        : tx(locale, 'sicherheit.biometrie_nicht_verfuegbar');
+  const detail = !biometricsEnabled && biometricsHardware && !biometricsAvailable ? tx(locale, 'sicherheit.biometrie_einrichten') : '';
   // Green only while the lock is actually protecting the app; every other
   // state is a red callout so the unprotected state reads immediately.
   const callout = state === 'active'
@@ -135,12 +138,19 @@ export default function SecurityScreen() {
               />
             </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <Button
+                secondary
+                label={tx(locale, 'onboarding.systemeinstellungen')}
+                onPress={() => void Linking.openSettings().catch(() => undefined)}
+              />
+            ) : null}
           </Card>
 
-          {detail || !biometricsAvailable ? (
+          {detail || (!biometricsEnabled && !biometricsAvailable) ? (
             <View style={styles.after}>
               {detail ? <Text style={styles.detail}>{detail}</Text> : null}
-              {!biometricsAvailable ? (
+              {!biometricsEnabled && !biometricsAvailable ? (
                 <Button secondary label={tx(locale, 'sicherheit.erneut_pruefen')} onPress={() => void refreshBiometrics()} />
               ) : null}
             </View>

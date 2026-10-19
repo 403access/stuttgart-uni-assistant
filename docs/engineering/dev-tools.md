@@ -65,6 +65,11 @@ defaults. A failed write is reported below the buttons and in the Metro log.
 onboarding screen no longer auto-completes when a probe flips to “not enrolled”
 after the redirect; it stays until the user skips or enables the lock.
 
+The system prompt logs `[biometrics] auth` with `requireBiometrics`, `success`,
+the error code, and a warning. Enabling onboarding or the Sicherheit switch uses
+`requireBiometrics: true`; unlocking the app uses the system default with the
+device-passcode fallback and logs under `[app-lock]`.
+
 ## Local state (`/dev/state`)
 
 A read-only snapshot for diagnosing the app record:

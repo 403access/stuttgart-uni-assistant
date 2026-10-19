@@ -116,7 +116,16 @@ function Gate() {
   const sessionKey = authToken ?? sessionAccount;
   const [unlockedKey, setUnlockedKey] = useState<string | null>(null);
   const unlocked = Boolean(sessionKey) && unlockedKey === sessionKey;
-  const lockable = Boolean(sessionAccount) && onboardingCompleted && biometricsEnabled && biometricsAvailable;
+  // The preference is the source of truth for the lock: a successful enable is
+  // stronger evidence than a probe that can be stale right after launch. If the
+  // sensor is gone, the system prompt can still fall back to the device
+  // passcode, and the lock screen always offers sign-out.
+  const lockable = Boolean(sessionAccount) && onboardingCompleted && biometricsEnabled;
+
+  useEffect(() => {
+    if (!__DEV__) return;
+    console.info('[app-lock]', { lockable, unlocked, settled, biometricsEnabled });
+  }, [lockable, unlocked, settled, biometricsEnabled]);
 
   useEffect(() => {
     if (!lockable) return;

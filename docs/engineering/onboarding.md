@@ -94,8 +94,16 @@ Availability is checked in `src/auth/biometrics.ts`:
   enrollment. The two signals are combined because platform versions disagree
   on them at the edges (for example a simulator with no enrollment yet).
 - A device passcode alone does not count.
-- `authenticateAsync()` is called with the localized prompt and allows the
-  system passcode fallback, so a failed sensor does not lock the user out.
+- `authenticateAsync()` is called with the localized prompt. Enabling the
+  feature sets `disableDeviceFallback: true`, so a device passcode cannot be
+  mistaken for a successful Face ID or fingerprint check. Unlocking the app
+  leaves the fallback enabled and therefore uses the system default (biometrics
+  first, passcode when the OS requires it); the lock screen always offers
+  sign-out.
+- A cancelled prompt is a decline and completes the onboarding. A hardware or
+  permission error (`not_available`, `not_enrolled`, `lockout`, …) keeps the
+  page open with the specific message and an **Open system settings** action,
+  so the user can fix Face ID and retry instead of being sent to the tabs.
 - A cancelled prompt or denied Face ID permission is treated as a decline, not
   as a blocking error: the page shows a short note and completes the flow.
   Settings can start the prompt again later.
@@ -113,8 +121,9 @@ signedIn && onboardingCompleted && biometricsEnabled && biometricsAvailable
   an offline sign-in), so a fresh sign-in does not inherit the previous unlock.
 - Cancelling the prompt leaves a retry button and a sign-out action on the lock
   screen. Signing out there also clears the stored C@MPUS login.
-- If the user removes all biometrics at OS level, availability becomes false and
-  the lock disappears rather than trapping them outside the app.
+- The lock is driven by the saved preference, not by the live probe. If the user
+  removes all biometrics at OS level, the system prompt can fall back to the
+  device passcode; the lock screen always offers sign-out.
 
 The app lock is a UI gate. It does not encrypt AsyncStorage. The separate
 C@MPUS autologin vault still uses `expo-secure-store` with its own optional

@@ -67,9 +67,10 @@ secret and not encrypted.
 
 The lock is a UI gate: it covers the navigator on launch and after a return from
 the background, but it does not encrypt AsyncStorage and does not replace the
-`expo-secure-store` session token. If the user removes all enrolled biometrics,
-availability becomes false and the lock stops applying rather than trapping the
-user outside the app. The Einstellungen switch can disable it at any time.
+`expo-secure-store` session token. It is armed whenever the saved preference is
+on. If the sensor is unavailable or all enrolled biometrics are removed, the
+system prompt can fall back to the device passcode; the lock screen always offers
+sign-out, and Einstellungen can disable the preference at any time.
 Implementation details are in [onboarding.md](onboarding.md).
 
 ## What leaves the device

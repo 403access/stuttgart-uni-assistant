@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
-import { authenticateWithBiometrics, biometricsStatus, type BiometricsStatus } from '@/src/auth/biometrics';
+import { authenticateWithBiometrics, biometricsStatus, type BiometricAuthResult, type BiometricsStatus } from '@/src/auth/biometrics';
 
 /**
  * First-run onboarding and the device-level biometric preference. These are
@@ -48,8 +48,8 @@ interface OnboardingContextValue {
   /** Re-read the stored record, e.g. when a sign-out should apply a pending dev reset. */
   reloadPreferences: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
-  /** Authenticate, then persist the preference. False when the user cancels or the sensor fails. */
-  enableBiometrics: (promptMessage: string, cancelLabel: string) => Promise<boolean>;
+  /** Authenticate, then persist the preference. A cancelled prompt returns a failure result without changing anything. */
+  enableBiometrics: (promptMessage: string, cancelLabel: string) => Promise<BiometricAuthResult>;
   disableBiometrics: () => Promise<void>;
 }
 
@@ -204,19 +204,18 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const enableBiometrics = useCallback(
     async (promptMessage: string, cancelLabel: string) => {
-      if (!biometrics.hardware) return false;
-      const success = await authenticateWithBiometrics(promptMessage, cancelLabel);
-      if (!success) return false;
+      const result = await authenticateWithBiometrics(promptMessage, cancelLabel, { requireBiometrics: true });
+      if (!result.success) return result;
       await persist({ ...preferencesRef.current, biometricsEnabled: true });
       // A successful prompt proves the sensor works even if a platform probe
       // is stale or reports the wrong enrollment state.
       biometricsTouched.current = true;
       lastVerifiedAt.current = Date.now();
-      setBiometrics((current) => (current.hardware ? { ...current, enrolled: true, available: true } : current));
+      setBiometrics((current) => ({ ...current, hardware: true, enrolled: true, available: true }));
       setJustEnabled(true);
-      return true;
+      return result;
     },
-    [biometrics.hardware, persist],
+    [persist],
   );
 
   const disableBiometrics = useCallback(async () => {

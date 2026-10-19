@@ -32,7 +32,9 @@ The **App** group has its own **Sicherheit / Security** item. It opens a dedicat
 | --- | --- |
 | Biometrie / Biometrics | Unlock the app with Face ID or a fingerprint after launch and when returning from the background. The screen leads with a state — **Aktiv**, **Nicht geschützt**, **Einrichtung fehlt**, or **Nicht verfügbar** — and the switch is always present. When no biometric is enrolled, the screen explains whether the device has no sensor or has one that is not set up yet. **Erneut prüfen / Check again** re-reads the device after returning from system settings. |
 
-If biometrics are removed later, the lock stops applying rather than trapping you outside the app. The preference can be turned off on the same screen.
+If biometrics are removed later, the lock is still driven by the saved preference; the system prompt can fall back to the device passcode, and sign-out stays available on the lock screen. The preference can be turned off on the same screen.
+
+Enabling the lock requires a real Face ID or fingerprint check. Unlocking follows the system default, so the OS may ask for the device passcode when biometrics are unavailable. If Face ID is disabled for the app or nothing is enrolled, the onboarding page stays open with the reason and a **Systemeinstellungen öffnen** action instead of silently skipping the step.
 
 ## Settings (Einstellungen)
 

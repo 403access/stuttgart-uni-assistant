@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authenticateWithBiometrics } from '@/src/auth/biometrics';
+import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { Button, Mark } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -26,17 +27,18 @@ export function AppLock({ onUnlock, onSignOut }: { onUnlock: () => void; onSignO
     prompting.current = true;
     setBusy(true);
     setError('');
-    const success = await authenticateWithBiometrics(
+    const result = await authenticateWithBiometrics(
       tx(locale, 'appLock.grund'),
       tx(locale, 'common.abbrechen'),
     );
     prompting.current = false;
     setBusy(false);
-    if (success) {
+    if (result.success) {
       onUnlock();
       return;
     }
-    setError(tx(locale, 'appLock.fehler'));
+    if (__DEV__) console.info('[app-lock] biometric result', result);
+    setError(isBiometricCancel(result.error) ? '' : biometricMessage(locale, result.error));
   }, [locale, onUnlock]);
 
   useEffect(() => {

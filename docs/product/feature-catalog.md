@@ -86,7 +86,7 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | --- | --- | --- |
 | German default, English toggle | Einstellungen, every bundled string | In this build |
 | First-run onboarding | `/onboarding` | In this build. One page after the first successful sign-in on a device with enrolled biometrics. Enabling the lock or choosing **Nicht jetzt** completes the flow; the record is device-level. Skipped without hardware/enrollment and not marked complete, so enrolling later can show it. Web skips it. |
-| Biometric app lock | `/onboarding`, `/sicherheit` | In this build. Face ID / fingerprint unlock on cold launch and after background. Cancelling leaves retry and sign-out; removing all biometrics disables the lock instead of locking the user out. Separate from the optional C@MPUS credential vault. |
+| Biometric app lock | `/onboarding`, `/sicherheit` | In this build. Face ID / fingerprint unlock on cold launch and after background. Cancelling leaves retry and sign-out. The lock is preference-driven; if biometrics are removed, the system prompt can fall back to the device passcode and sign-out remains available. Separate from the optional C@MPUS credential vault. |
 | Corporate palette, original circle mark | `src/theme.ts`, `Mark` | In this build |
 | Reset local notes, chat, reviews, drafts | Einstellungen | In this build. Language and the session stay. |
 | Live university connectors | — | Later. See [integrations](../engineering/integrations.md). |

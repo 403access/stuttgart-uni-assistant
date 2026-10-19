@@ -1,9 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { Button, Mark } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
@@ -22,6 +23,7 @@ export default function OnboardingScreen() {
   const { locale } = useApp();
   const { enableBiometrics, completeOnboarding } = useOnboarding();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const finishing = useRef(false);
 
   const finish = useCallback(async () => {
@@ -34,15 +36,19 @@ export default function OnboardingScreen() {
   async function enable() {
     if (busy) return;
     setBusy(true);
-    const enabled = await enableBiometrics(
+    setError('');
+    const result = await enableBiometrics(
       tx(locale, 'onboarding.systemgrund'),
       tx(locale, 'common.abbrechen'),
     );
     setBusy(false);
-    if (!enabled) {
-      // Cancelling the system prompt, or denying Face ID permission, is a
-      // decline. It must complete the flow like "Nicht jetzt"; otherwise the
-      // page greets the user again on every launch.
+    if (result.success) {
+      await finish();
+      return;
+    }
+    if (isBiometricCancel(result.error)) {
+      // Cancelling the prompt is a decline, not a failure. Complete the flow so
+      // it does not greet the user again on every launch.
       showToast({
         tone: 'info',
         title: tx(locale, 'onboarding.nicht_aktiviert'),
@@ -51,7 +57,7 @@ export default function OnboardingScreen() {
       await finish();
       return;
     }
-    await finish();
+    setError(biometricMessage(locale, result.error));
   }
 
   return (
@@ -85,11 +91,25 @@ export default function OnboardingScreen() {
             <Point text={tx(locale, 'onboarding.punkt2')} />
           </View>
 
+          {error ? (
+            <View style={styles.errorBox}>
+              <MaterialIcons name="error-outline" size={18} color={colors.danger} />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
           <View style={styles.actions}>
             <Button
               label={busy ? tx(locale, 'onboarding.aktivieren_laeuft') : tx(locale, 'onboarding.aktivieren')}
               onPress={() => void enable()}
             />
+            {error ? (
+              <Button
+                secondary
+                label={tx(locale, 'onboarding.systemeinstellungen')}
+                onPress={() => void Linking.openSettings().catch(() => undefined)}
+              />
+            ) : null}
             <Button secondary label={tx(locale, 'onboarding.nicht_jetzt')} onPress={() => void finish()} />
           </View>
           <Text style={styles.hint}>{tx(locale, 'onboarding.hinweis')}</Text>
@@ -189,6 +209,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   pointText: { flex: 1, color: colors.anthracite, fontSize: 14, lineHeight: 21 },
+  errorBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: colors.dangerSoft, borderRadius: 14, padding: 12 },
+  errorText: { flex: 1, color: colors.danger, fontSize: 13, lineHeight: 19 },
   actions: { gap: 10, marginTop: 4 },
   hint: { color: colors.mute, fontSize: 13, lineHeight: 19, textAlign: 'center' },
 });
