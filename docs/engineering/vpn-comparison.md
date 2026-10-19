@@ -111,14 +111,34 @@ The protocol is open and well served:
 
 | Piece | What it is | Notes |
 | --- | --- | --- |
-| `@aliakhgar1/react-native-openvpn` | MIT-licensed RN TurboModule | Android vendors `ics-openvpn` (GPL-2.0-derived); iOS drives `NETunnelProviderManager`. Autolinks (`react-native.config.js`). Published `1.0.0` (Aug 2025); repository active into Aug 2026; ~18 stars. |
+| `@aliakhgar1/react-native-openvpn` | declares MIT, but ships parts under other terms | Android redistributes OpenVPN 3 (`libovpn3.so`, AGPL-3.0-only or MPL-2.0), the OpenVPN 2 core (`libopenvpn.so`, GPLv2) and ics-openvpn-derived AIDL; iOS drives `NETunnelProviderManager`. Autolinks (`react-native.config.js`). Published `1.0.0` (Aug 2025); repository active into Aug 2026; ~18 stars. |
 | `react-native-simple-openvpn` | GPL-2.0 RN module | 184 stars, last push Oct 2024, `2.1.3`. Legacy bridge; needs `include ':vpnLib'` in `settings.gradle`, so a config plugin would be required. |
 | `ics-openvpn` | the Android OpenVPN GUI/core | GPL-2.0; the de-facto Android OpenVPN engine |
 | `OpenVPNAdapter` | the iOS framework the TurboModule uses | separate licence and SPM dependency; pulled into the app's extension target |
 
-Either wrapper makes the **app** effectively GPL-2.0 on distribution, because of
-the `ics-openvpn` core. Neither ships an iOS Packet Tunnel target — that is
-still the app author's work.
+Neither wrapper ships an iOS Packet Tunnel target — that is still the app
+author's work. Nor is either genuinely MIT in effect: both drag in
+`ics-openvpn`, whose licence is **GPLv2** and counts any use of its class
+hierarchy as derivative work. That is *incompatible with this repository's
+AGPL-3.0-or-later*.
+
+### Licensing of what is shipped
+
+The wrapper's declared licence is not the whole story, because the Android
+artefact bundles three separately-licensed things:
+
+| Shipped in the AAR | Licence | Effect here |
+| --- | --- | --- |
+| `libovpn3.so` — OpenVPN 3 | AGPL-3.0-only or **MPL-2.0** | Compatible with this repo's AGPL-3.0-or-later; MPL-2.0 is the weak-copyleft option |
+| `libopenvpn.so` — OpenVPN 2 core | GPLv2 | **GPLv2-only is incompatible with AGPLv3** |
+| vendored `de.blinkt.openvpn` AIDL/helpers | ics-openvpn, "GPL license version 2" | Same collision; its text treats the class hierarchy as derivative work |
+
+So the honest position is not merely that the app "becomes GPL-2.0". It puts
+GPLv2-only material inside an AGPLv3 work, which the licences do not permit. The
+realistic ways out: rely on OpenVPN 3's **MPL-2.0** option, ask ics-openvpn's
+author for the non-GPLv2 licence its own text offers, or do not ship the
+OpenVPN path.
+
 
 ### Cisco AnyConnect
 
@@ -148,7 +168,7 @@ neither unit advertises it. If that ever changes, it would be the cheapest path.
 | iOS engine available | ✗ | ✗ | ✓ (plus an extension target) |
 | Profile/config obtainable by the app | n/a (host) | ✗ (internal) | ✗ (internal, but user-importable) |
 | Credential model the app can hold | password | password + CA | password |
-| Licensing burden | none (guided setup) | none (guided setup) | GPL-2.0 |
+| Licensing burden | none (guided setup) | none (guided setup) | GPLv2-only parts, incompatible with this repo's AGPLv3 |
 | Extra platform work | — | — | iOS extension + Apple entitlement |
 
 ## The decision, and why
@@ -165,9 +185,13 @@ dropped precisely because no engine could be linked, especially on iOS.
 
 ## Consequences and risks
 
-1. **Licensing.** Supporting OpenVPN in-app makes the app effectively GPL-2.0
-   through `ics-openvpn`, against a repository that is currently MIT. A conscious
-   decision.
+1. **Licensing.** The packaged engine declares MIT but ships parts under other
+   terms: OpenVPN 3 (`libovpn3.so`, AGPL-3.0-only or MPL-2.0), the OpenVPN 2
+   core (`libopenvpn.so`, GPLv2), and ics-openvpn-derived interfaces ("GPL
+   license version 2", whose text counts any use of the `de.blinkt.openvpn`
+   hierarchy as derivative work). This repository is AGPL-3.0-or-later, which is
+   compatible with the AGPL/MPL offers but **not** with GPLv2-only code. Resolve
+   it with OpenVPN 3's MPL-2.0 option, or by not shipping the OpenVPN path.
 2. **iOS.** Requires a Packet Tunnel target, an App Group on both targets, the
    `OpenVPNAdapter` package, and Apple's `packet-tunnel-provider` entitlement.
    None of it is possible in Expo Go, and none of it is automatic.

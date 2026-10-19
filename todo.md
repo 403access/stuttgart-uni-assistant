@@ -6,6 +6,6 @@
 - VPN: prove the Android tunnel on a device — the consent dialog and real traffic — using a local `docker` OpenVPN server, so it can be tested without a CIP-pool account
 - VPN: add the iOS `PacketTunnel` extension target (App Group, `PacketTunnelProvider.swift`, OpenVPNAdapter) and get Apple's `packet-tunnel-provider` entitlement approved
 - VPN: ask the ZDI whether OpenVPN is open to all CIP-pool students, whether a third-party app may use it, and whether the tunnel reaches `drucken.stuvus.uni-stuttgart.de`
-- VPN: confirm the licensing consequence of the GPL-2.0-derived Android core (this repo is MIT today)
+- VPN: resolve the licence collision — the packaged Android engine ships GPLv2-only parts (OpenVPN 2 core, ics-openvpn) that are incompatible with this repo's AGPL-3.0-or-later; use OpenVPN 3's MPL-2.0 option, ask ics-openvpn for its non-GPLv2 licence, or drop the in-app OpenVPN path
 - VPN: drop `patches/@aliakhgar1+react-native-openvpn@1.0.0.patch` once upstream ships RN 0.88 support
 - VPN: decide whether to keep `modules/university-vpn` (it compiles, but is inert without an engine) — see `docs/engineering/vpn-tunnel.md`

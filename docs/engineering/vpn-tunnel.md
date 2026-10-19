@@ -51,9 +51,20 @@ bringing up a tunnel that would black-hole traffic.
 
 ## The engine
 
-`@aliakhgar1/react-native-openvpn` (MIT; Android vendors GPL-2.0-derived
-ics-openvpn, so the app is effectively GPL-2.0 on distribution — a conscious
-call for a repository that is currently MIT).
+`@aliakhgar1/react-native-openvpn` labels itself **MIT**, but that label does not
+cover what it ships. The Android side redistributes prebuilt OpenVPN cores and
+ics-openvpn-derived interfaces, each under its own terms:
+
+| Shipped artefact | Licence |
+| --- | --- |
+| `libovpn3.so` — OpenVPN 3 | AGPL-3.0-only **or** MPL-2.0 |
+| `libopenvpn.so` — the OpenVPN 2 core | GPLv2 |
+| vendored `de.blinkt.openvpn` AIDL and helpers | ics-openvpn: "GPL license version 2", which counts any use of that class hierarchy as derivative work |
+
+This repository is **AGPL-3.0-or-later**. That is compatible with OpenVPN 3's
+AGPL/MPL offers but **not** with the GPLv2-only parts, so the collision is real
+rather than resolved. OpenVPN 3's MPL-2.0 option is the escape hatch; see
+[vpn-comparison.md](vpn-comparison.md).
 
 `src/vpn/engine-openvpn.ts` wraps it and keeps the library out of every other
 file:
