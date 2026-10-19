@@ -19,13 +19,35 @@ bun install
 bun run start
 ```
 
+## Deployment
+
+The docs are one half of the GitHub Pages site. [`.github/workflows/pages.yml`](../.github/workflows/pages.yml)
+builds this folder and the landing page in [`site/`](../site) into a single artifact:
+
+| URL | Source |
+| --- | --- |
+| `/` | `site/` (the landing page) |
+| `/docs/` | this Docusaurus build |
+
+The workflow sets three environment variables that `docusaurus.config.js` reads, so a local
+`bun run docs` keeps its `/` defaults:
+
+| Variable | Value in the workflow |
+| --- | --- |
+| `DOCS_URL` | `https://403access.github.io` |
+| `DOCS_BASE_URL` | `/stuttgart-uni-assistant/` |
+| `DOCS_HOME_HREF` | `/stuttgart-uni-assistant/` (adds the “App” navbar link) |
+
+The repository's Pages source must be **GitHub Actions** (Settings → Pages → Source). The artifact
+is served as-is, so Jekyll no longer renders `docs/`.
+
 ## Layout
 
 | File | Purpose |
 | --- | --- |
-| `docusaurus.config.js` | Site metadata, navbar, footer, theme |
+| `docusaurus.config.js` | Site metadata, navbar, footer, theme, and the `DOCS_*` environment overrides |
 | `sidebars.js` | Sidebar tree mirroring the four sections of `docs/README.md` |
-| `src/pages/index.js` | Redirects `/` to `/docs/` (the rendered `docs/README.md`) |
-| `src/css/custom.css` | Green accent theme, light and dark |
+| `src/pages/index.js` | Redirects `/` to `/docs/` when the docs are served on their own |
+| `src/css/custom.css` | Theme accents, light and dark |
 
 Notes: filename number prefixes are stripped from URLs by Docusaurus (`docs/sdlc/01-initiation.md` is `/docs/sdlc/initiation`). Relative `.md` links between docs are rewritten to site routes automatically. `bun.lock` here is separate from the app's, on purpose — the Expo dependency tree is untouched.

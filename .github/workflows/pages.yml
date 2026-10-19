@@ -1,0 +1,75 @@
+# Publish one GitHub Pages site from this repository:
+#
+#   /            the static landing page in `site/`
+#   /docs/       the Docusaurus build of `docs/` (see `docs-site/`)
+#
+# The two are composed into a single artifact, so the Pages source must be
+# "GitHub Actions" (Settings → Pages → Source), not a branch folder.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'docs/**'
+      - 'docs-site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Build the documentation
+        working-directory: docs-site
+        env:
+          DOCS_URL: https://403access.github.io
+          DOCS_BASE_URL: /stuttgart-uni-assistant/
+          DOCS_HOME_HREF: /stuttgart-uni-assistant/
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Compose the site
+        run: |
+          mkdir -p public
+          # Docusaurus first: it writes the docs routes and its own assets/.
+          cp -R docs-site/build/. public/
+          # The landing page then owns `/` — its index.html replaces Docusaurus's
+          # redirect — and itself stays baseUrl-relative, so the two share assets/.
+          cp -R site/. public/
+          rm -f public/README.md
+          touch public/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

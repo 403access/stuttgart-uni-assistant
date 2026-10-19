@@ -1,15 +1,18 @@
 // @ts-check
 // Note: type annotations allow type checking and autocomplete!
 
+// The docs ship as the `/docs/` half of the GitHub Pages site (see
+// `.github/workflows/pages.yml`); a local `bun run docs` keeps the `/` default.
+const homeHref = process.env.DOCS_HOME_HREF;
+
 const config = /** @type {import('@docusaurus/types').Config} */ ({
   title: 'University Assistant',
   tagline: 'A study assistant for University of Stuttgart students',
   favicon: 'img/favicon.ico',
 
-  // Full URL if the docs site is deployed to a custom domain.
-  url: 'https://your-docusaurus-site.example.com',
-  // /<baseUrl>/pathname under which the site is served.
-  baseUrl: '/',
+  // Full URL and path prefix. Set in the Pages workflow; overridden for local runs.
+  url: process.env.DOCS_URL ?? 'http://localhost:3000',
+  baseUrl: process.env.DOCS_BASE_URL ?? '/',
 
   organizationName: '403access',
   projectName: 'university-assistant',
@@ -63,6 +66,7 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
           { to: '/docs/sdlc/overview', label: 'Lifecycle', position: 'left' },
           { to: '/docs/engineering/architecture', label: 'Engineering', position: 'left' },
           { to: '/docs/delivery/backlog', label: 'Delivery', position: 'left' },
+          ...(homeHref ? [{ href: homeHref, label: 'App', position: 'right' }] : []),
           {
             href: 'https://github.com/403access/stuttgart-uni-assistant',
             label: 'GitHub',
