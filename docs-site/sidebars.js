@@ -60,6 +60,8 @@ const sidebars = {
         'engineering/campus-course-groups',
         'engineering/campus-calendar-export',
         'engineering/campus-browser-login',
+        'engineering/onboarding',
+        'engineering/dev-tools',
         'engineering/campus-logging',
         'engineering/oidc-login',
         'engineering/ai-assistant',

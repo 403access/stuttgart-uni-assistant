@@ -41,7 +41,7 @@ System font. German copy uses the local conventions in `src/text.ts`:
 - Dates: `13.10.2026` in German, `13 Oct 2026` in English.
 - Grades: a comma in German (`1,9`), a point in English (`1.9`).
 
-Interface strings are requested by key through `tx(locale, key, values?)`, backed by the catalogs in `src/i18n/de.ts` and `src/i18n/en.ts` ([i18n.md](i18n.md)). Record content — module titles, place notes, document pages — stays a `Localized` `{ de, en }` object read with `pick`. The language toggle in Einstellungen is the only switch. German is the default when storage is empty.
+Interface strings are requested by key through `tx(locale, key, values?)`, backed by the catalogs in `src/i18n/de.ts` and `src/i18n/en.ts` ([i18n.md](i18n.md)). Record content — module titles, place notes, document pages — stays a `Localized` `{ de, en }` object read with `pick`. The language toggle in Einstellungen and the biometrics switch in Sicherheit are the only switches. German is the default when storage is empty.
 
 ## Components
 
@@ -73,6 +73,30 @@ Tab icons in `app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small
 `app/login.tsx` is the screen the gate shows once the splash screen lifts. It has two parts: a blue hero (the mark on a white tile, the brand, and three lines about what the app does) and a white sheet with the automated C@MPUS sign-in — account id, password, the biometrics switch, and the button. The other sign-in paths are not on this screen; they live on the deprecated `app/login-legacy.tsx`, which the start screen no longer links to.
 
 The state and the mutations behind the screen live in `src/auth/use-login-flow.ts`, not in the screen itself. `app/login-legacy.tsx` is the superseded long form: it is marked `@deprecated`, keeps its own copy of the wiring, and carries the token, visible-browser, SIAM, account-id, and demonstration paths. New sign-in work goes into the start screen, not the legacy one.
+
+## Onboarding and App Lock
+
+`app/onboarding.tsx` reuses the login composition: a blue hero with the mark, the
+brand, and a setup pill, then a white sheet with one biometrics card, two
+checkmark points, a primary **Biometrie aktivieren**, and a secondary **Nicht
+jetzt**. It has no header and disables the back gesture, because leaving it
+mid-flow would only send the gate to the same screen again.
+
+`src/components/app-lock.tsx` is the opaque counterpart shown over the
+navigator when the lock is armed. It keeps the same blue hero and white panel,
+with the fingerprint icon, a retry action, and a sign-out action. The underlying
+tabs stay mounted but covered, so unlocking does not rebuild the app state.
+
+Both screens use the standard `tx` keys (`onboarding.*`, `appLock.*`) and the
+same `Mark`, `Button`, and color tokens as the rest of the app. They do not add
+a second visual language for security.
+
+The control itself lives in its own **Sicherheit / Security** screen
+(`app/sicherheit.tsx`) under the **App** group on the Campus tab, not inside the
+general Einstellungen screen. It leads with a centered status hero — icon, state
+pill, headline, and one sentence — and keeps the switch in a compact card below.
+The palette is the login palette: blue hero, a large white shield-check icon, a
+green/red status badge, and a white sheet with the rounded top corners.
 
 ## Map
 

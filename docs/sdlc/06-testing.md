@@ -28,11 +28,12 @@ The assistant server is checked by starting it and requesting `GET /health`. Wit
 
 ## What was checked by building
 
-`npx expo export --platform web` bundles the client and statically renders every route, including login, the five tabs, and the dynamic screens (module, room, document, person, notice, exam). A broken import or a crash during render fails that export. It does not click through the app.
+`npx expo export --platform web` bundles the client and statically renders every route, including login, onboarding, the five tabs, and the dynamic screens (module, room, document, person, notice, exam). A broken import or a crash during render fails that export. It does not click through the app.
 
 ## What this pass does not prove
 
 - No device lab run on a physical iPhone or Android phone in this session.
+- No Face ID / fingerprint run of the onboarding page or App Lock. Both need a development build; Expo Go cannot test Face ID on iOS. The page and provider are covered by typecheck and lint, and the web route exports.
 - No browser click-through of sign-in, import, and chat. Those flows are implemented and typecheck, and the web bundle renders, but they were not exercised with a pointer.
 - No live call to Grok. The request body matches the Responses API quickstart (`model`, `input`, `store: false`). A call with a real key is a manual check once `XAI_API_KEY` is present.
 - No accessibility audit and no screenshot comparison against the corporate-design manual.

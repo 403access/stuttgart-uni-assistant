@@ -57,6 +57,21 @@ implemented yet. Details: [admin-dashboard.md](admin-dashboard.md).
 
 The server sends `Authorization: Bearer` to `https://api.x.ai/v1`. The client never sees that header.
 
+## App lock
+
+The optional App Lock uses `expo-local-authentication` and the device's own Face
+ID / fingerprint prompt. The operating system performs the match; the app only
+receives success or failure and never sees a biometric template. The preference
+is a boolean in the AsyncStorage key `university-assistant/onboarding.v2`, not a
+secret and not encrypted.
+
+The lock is a UI gate: it covers the navigator on launch and after a return from
+the background, but it does not encrypt AsyncStorage and does not replace the
+`expo-secure-store` session token. If the user removes all enrolled biometrics,
+availability becomes false and the lock stops applying rather than trapping the
+user outside the app. The Einstellungen switch can disable it at any time.
+Implementation details are in [onboarding.md](onboarding.md).
+
 ## What leaves the device
 
 | Data | Leaves the device? |
@@ -67,6 +82,7 @@ The server sends `Authorization: Bearer` to `https://api.x.ai/v1`. The client ne
 | Access token and refresh token | Stay in the server process. Not sent back to the app |
 | Account, name, email from UserInfo | Stored on the device so the profile can show them |
 | App session token | Sent as `Authorization: Bearer` on `/v1/auth/*` calls; stored hashed on the server, in the device keychain/Keystore (AsyncStorage on web) |
+| Biometric match (App Lock) | No. Face ID / fingerprint matching stays in the operating system; the app receives only success or failure |
 | Catalog grades, rooms, deadlines | Only inside the fact sheet, and only if the student asks a question while the assistant server is reachable |
 | Chat history (last six turns) | Same request, sliced |
 | Focused document text | Included in that fact sheet when a document is open |
@@ -82,6 +98,8 @@ Without a key the server answers `/v1/assist` with 503 and the client keeps the 
 ## What stays on the device
 
 Async Storage key `university-assistant/v1` holds language, session account, the server user record and its platform links, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
+
+Async Storage key `university-assistant/onboarding.v2` holds the one-time onboarding timestamp and the App Lock boolean. It is device-level rather than account-level, survives sign-out and a local reset, and contains no biometric data.
 
 The app session token is separate from that payload: `expo-secure-store` (iOS keychain, Android Keystore-encrypted `SharedPreferences`) on native, AsyncStorage on web where no secure store exists. The server stores only the SHA-256 hash of the token, so the database cannot be replayed as a login. Sign-out revokes the server session and deletes the device token.
 

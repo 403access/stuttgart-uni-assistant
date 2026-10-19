@@ -24,25 +24,36 @@
 
 **Campus → Meldungen** lists the news feed: items from the university, the faculty, an institute, stuvus, and SDG Campus. Tap an item for its own screen. On **Heute** the two newest items appear as a preview.
 
+## Security (Sicherheit)
+
+The **App** group has its own **Sicherheit / Security** item. It opens a dedicated screen with the biometric App Lock:
+
+| Control | What it does |
+| --- | --- |
+| Biometrie / Biometrics | Unlock the app with Face ID or a fingerprint after launch and when returning from the background. The screen leads with a state — **Aktiv**, **Nicht geschützt**, **Einrichtung fehlt**, or **Nicht verfügbar** — and the switch is always present. When no biometric is enrolled, the screen explains whether the device has no sensor or has one that is not set up yet. **Erneut prüfen / Check again** re-reads the device after returning from system settings. |
+
+If biometrics are removed later, the lock stops applying rather than trapping you outside the app. The preference can be turned off on the same screen.
+
 ## Settings (Einstellungen)
 
 | Setting | What it does |
 | --- | --- |
 | Sprache / Language | German or English. Every bundled string follows immediately; nothing reloads. |
-| Daten / Data | Reset local notes, chat history, reviews, recognition drafts, downloads, sync stamps, and planned modules. Language and the signed-in session stay. |
+| Daten / Data | Reset local notes, chat history, reviews, recognition drafts, downloads, sync stamps, and planned modules. Language, the signed-in session, onboarding completion, and the biometric preference stay. |
 | Hinweis | The demonstration notice, in the app itself: this is a student project and not a service of the University of Stuttgart, and it does not use the university logo. |
 
 **Campus → Schnittstelle (Interface)** is visible only in development builds. It lists the assistant server routes and can send the replayable ones — mostly useful when working on the server itself.
 
 ## Signing out
 
-Sign-out lives on the account screen (**Campus → Konto**) and in this list. It revokes the server session, deletes the device session token, clears the stored C@MPUS password, and returns to the sign-in screen. The language stays set. If the server holds mail credentials, signing out clears them from the server too.
+Sign-out lives on the account screen (**Campus → Konto**) and in this list. It revokes the server session, deletes the device session token, clears the stored C@MPUS password, and returns to the sign-in screen. The language stays set. If the server holds mail credentials, signing out clears them from the server too. Onboarding completion and the biometric app-lock preference are device settings, so they stay; a later sign-in on this device is covered by the same lock.
 
 ## What is stored about you
 
 | Data | Where it lives |
 | --- | --- |
 | Session, profile answers, notes, reviews, chat, planned modules, recognition drafts | One AsyncStorage entry on this device, capped sizes (chat at 40 messages) |
+| Onboarding completion and biometric app-lock preference | AsyncStorage key `university-assistant/onboarding.v2`. Device-level, not account-level; no biometric data is stored and nothing is sent to the server. |
 | C@MPUS curriculum and course caches | An on-device SQLite database (AsyncStorage on web), one entry per study |
 | University e-mail password | Server process memory only. Not on the device, not in `.env`, not logged. |
 | The university password for C@MPUS sign-in | The device vault, only if `Auf diesem Gerät speichern` was enabled: iOS keychain / Android Keystore, optionally behind biometrics, deleted on sign-out. Never sent to the assistant server. |

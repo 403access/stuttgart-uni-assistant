@@ -33,6 +33,8 @@ npm run tunnel   # from another network; the assistant needs its own tunnel too
 
 On the sign-in screen, **Mit C@MPUS-Token anmelden** loads the curriculum structure through the assistant server. The `.env` bearer token and `PSESSIONID` cookie stay on the server; a browser sign-in keeps that user's harvested session on the server too, never in the app bundle. **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann. Any path that reaches the server creates one user record and one session; **Campus → Konto** shows C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail as links on that account, per [docs/engineering/accounts.md](docs/engineering/accounts.md). C@MPUS credentials and every portal row are scoped to that user, so two accounts on one server do not share a timetable or a portal session. **Mehr → Schnittstelle** lists the server routes and can send them again. The request and the stored nodes are documented in [docs/engineering/campus-curriculum.md](docs/engineering/campus-curriculum.md), and the study chooser in [docs/engineering/campus-studies.md](docs/engineering/campus-studies.md).
 
+On a device with an enrolled fingerprint or face, the first successful sign-in opens a one-page onboarding before the tabs. It offers a biometric App Lock for launch and return from the background, and the same switch lives under **Campus → Sicherheit**. The flow is documented in [docs/engineering/onboarding.md](docs/engineering/onboarding.md). Face ID needs a development build; Expo Go cannot test it on iOS.
+
 ## Run the assistant server
 
 The chat and the document tools answer from the on-device record immediately. When the server below is running and `XAI_API_KEY` is set, those answers are rewritten by Grok (`grok-4.7`) through the xAI Responses API. The key stays in the server process.
@@ -80,6 +82,8 @@ npm run check
 | `src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
 | `src/assistant/` | Local answers, fact sheet, optional Grok call |
 | `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
+| `src/onboarding/` | First-run completion and the biometric app-lock preference |
+| `src/auth/biometrics.ts` | Device biometric availability and the system prompt |
 | `src/auth/session.ts` | The server user session: token storage and the `/v1/auth/*` calls |
 | `server/auth.mjs` | Server-side users, bearer sessions, and platform links |
 | `app/api.tsx` | API overview. Replays known server routes |

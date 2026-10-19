@@ -1,6 +1,6 @@
 # Backlog
 
-Status of the prototype on 13 October 2026. "Done" means the screen or script exists in this repository and matches [the feature catalog](../product/feature-catalog.md). It does not mean a store release or a live university connection.
+Status of the prototype on 20 October 2026. "Done" means the screen or script exists in this repository and matches [the feature catalog](../product/feature-catalog.md). It does not mean a store release or a live university connection.
 
 ## Done in this build
 
@@ -13,6 +13,7 @@ Status of the prototype on 13 October 2026. "Done" means the screen or script ex
 - Schematic campus for Vaihingen and Stadtmitte.
 - SIAM sign-in through the TIK identity provider (authorization code, secret on the server). Demonstration profile remains. See [oidc-login.md](../engineering/oidc-login.md).
 - Server-side users, bearer sessions, one account across C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail, per-user C@MPUS credentials and portal rows, and a token-protected operator dashboard at `/admin`. See [accounts.md](../engineering/accounts.md) and [admin-dashboard.md](../engineering/admin-dashboard.md).
+- First-run onboarding after sign-in with a biometrics page, optional App Lock, and a dedicated **Sicherheit** screen under the App group. The flow is device-level, is skipped when no biometric is enrolled, and is documented in [onboarding.md](../engineering/onboarding.md).
 - Documentation of the product, the lifecycle, and this engineering set.
 - `npm run typecheck`, `npm run check`, and a web export of the routes. `GET /health` without a key.
 
@@ -21,6 +22,7 @@ Status of the prototype on 13 October 2026. "Done" means the screen or script ex
 - Pointer click-through on web or a device in the session that produced this build.
 - A live call to Grok with a real key.
 - A development build or a store binary. No `eas.json`.
+- A device run of the biometric prompt and App Lock. The state and screens typecheck and the web route exports, but Face ID / fingerprint needs a development build on a device or simulator.
 - A store binary. No `eas.json`. Encrypted local storage and accounts, except the opt-in C@MPUS autologin vault in `expo-secure-store`.
 
 ## Next, in order

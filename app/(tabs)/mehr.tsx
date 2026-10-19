@@ -14,7 +14,7 @@ import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -59,10 +59,8 @@ export default function MoreScreen() {
     {
       title: tx(locale, 'common.app'),
       entries: [
+        { title: tx(locale, 'sicherheit.titel'), detail: tx(locale, 'sicherheit.untertitel'), href: '/sicherheit', tags: ['sicherheit', 'security', 'biometrie', 'biometrics', 'face id', 'fingerabdruck', 'fingerprint', 'app lock', 'entsperren', 'unlock'] },
         { title: tx(locale, 'common.einstellungen'), detail: tx(locale, 'tabsMehr.sprache'), href: '/einstellungen', tags: ['einstellungen', 'settings', 'sprache', 'language', 'daten', 'data', 'hinweis', 'notice'] },
-        ...(typeof __DEV__ !== 'undefined' && __DEV__
-          ? [{ title: tx(locale, 'common.schnittstelle'), detail: tx(locale, 'tabsMehr.aufrufe'), href: '/api' as CampusHref, tags: ['schnittstelle', 'interface', 'api', 'aufrufe', 'calls', 'curriculum'] }]
-          : []),
         {
           title: tx(locale, 'tabsMehr.sitzung'),
           detail: tx(locale, 'tabsMehr.abmelden'),
@@ -72,6 +70,33 @@ export default function MoreScreen() {
         },
       ],
     },
+    ...(typeof __DEV__ !== 'undefined' && __DEV__
+      ? [
+          {
+            title: tx(locale, 'tabsMehr.dev'),
+            entries: [
+              {
+                title: tx(locale, 'dev.onboarding.titel'),
+                detail: tx(locale, 'dev.onboarding.detail'),
+                href: '/dev/onboarding' as CampusHref,
+                tags: ['dev', 'onboarding', 'diagnose', 'debug', 'werte', 'values', 'biometrie', 'biometrics'],
+              },
+              {
+                title: tx(locale, 'dev.state.titel'),
+                detail: tx(locale, 'dev.state.detail'),
+                href: '/dev/state' as CampusHref,
+                tags: ['dev', 'zustand', 'state', 'storage', 'asyncstorage', 'sitzung', 'session', 'debug', 'diagnose'],
+              },
+              {
+                title: tx(locale, 'common.schnittstelle'),
+                detail: tx(locale, 'tabsMehr.aufrufe'),
+                href: '/api' as CampusHref,
+                tags: ['schnittstelle', 'interface', 'api', 'aufrufe', 'calls', 'curriculum', 'dev', 'debug'],
+              },
+            ],
+          },
+        ]
+      : []),
   ];
   const needle = query.trim().toLowerCase();
   const visibleGroups = needle

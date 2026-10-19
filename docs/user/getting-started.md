@@ -11,6 +11,8 @@ npx expo start
 
 Open the project in Expo Go, an iOS simulator, an Android emulator, or the browser. On a real phone, scan the QR code from the dev server. The phone and the computer need to be on the same network, because the app talks to the assistant server on the computer.
 
+The biometrics page and App Lock use `expo-local-authentication`, which is native code. Face ID does not work in Expo Go on iOS. Use a development build (`npx expo run:ios`, `npx expo run:android`, or an EAS development build) and rebuild after changing native modules; reloading only the JavaScript bundle is not enough.
+
 If you are on mobile data or another network, start Expo with `npm run tunnel` and put the assistant behind a tunnel of its own with `npm run assistant:tunnel`. Expo may start only after that, because the public address is baked into the app. The commands and the caveats are in [assistant-tunnel.md](../engineering/assistant-tunnel.md).
 
 If you also want live C@MPUS data and e-mail, start the assistant server first:
@@ -55,6 +57,26 @@ screen, which the start screen no longer links to:
 | **Demonstrationsprofil öffnen** | Loads the fictional student Lena Hartmann. Every bundled feature works on this record with no server and no university account. |
 
 Any path signs you in. The demonstration profile needs nothing; the token, browser, and SIAM paths expect the assistant server to be running.
+
+## First-run onboarding
+
+After a successful sign-in on a device with a fingerprint or face enrolled, the
+app shows a one-page setup screen before the tabs. It asks whether to enable
+biometrics for unlocking the app. The page is skipped when the device has no
+biometric hardware or no enrolled fingerprint/face.
+
+| Action | What happens |
+| --- | --- |
+| **Biometrie aktivieren** | The system Face ID / fingerprint prompt opens. After success, the app asks for that confirmation on launch and when it returns from the background. |
+| **Nicht jetzt** | The flow closes without enabling the lock. The same switch can be turned on later in **Campus → Sicherheit**. |
+| **Abbrechen** in the system prompt | Nothing is enabled. Dismissing the prompt or denying Face ID counts as a decline, so the flow closes like **Nicht jetzt**; the switch remains available in Settings. |
+
+The completion record belongs to this installation, not to one account. Signing
+out and signing in again does not replay onboarding, and resetting local data
+does not delete it. If biometrics are not available at first launch, the flow is
+not marked complete; enrolling a fingerprint or face later can bring the page
+back on the next launch. The web build skips the page because it does not use a
+browser biometric API.
 
 ## First minutes
 

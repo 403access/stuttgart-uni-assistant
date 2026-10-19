@@ -58,7 +58,13 @@
         "expo-secure-store",
         {
           "configureAndroidBackup": true,
-          "faceIDPermission": "Face ID wird verwendet, um die gespeicherte C@MPUS-Anmeldung zu entsperren."
+          "faceIDPermission": "Face ID wird verwendet, um die App und die gespeicherte C@MPUS-Anmeldung zu entsperren."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Face ID wird verwendet, um die App und die gespeicherte C@MPUS-Anmeldung zu entsperren."
         }
       ],
       [

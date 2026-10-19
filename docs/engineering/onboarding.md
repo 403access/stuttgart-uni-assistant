@@ -1,172 +1,227 @@
 # Onboarding
 
-Plan for the flow a user goes through after a successful sign-in. Written after
-the C@MPUS browser sign-in was verified end to end, so the security step below
-rests on a login that works ([campus-browser-login.md](campus-browser-login.md)).
+The first-run flow after a successful sign-in. The biometrics page is
+implemented; the wider step list from the original plan is still open.
 
-Status: **plan, nothing implemented**. Every file named here exists unless it is
-marked *new*.
+Status: **first page implemented**. Files named below exist unless marked
+*planned*.
 
-## Goal
+## What runs today
 
-A student who has just signed in should finish these in under three minutes, on
-first launch only, and every step must be skippable except the security gate:
+1. A sign-in succeeds and the gate in `app/_layout.tsx` sees a session.
+2. `src/onboarding/OnboardingState.tsx` reports whether this installation has
+   completed onboarding and whether the device has an enrolled biometric.
+3. If the record is due and biometrics are available — or a development override
+   is set — the gate replaces the route with `/onboarding`.
+4. `app/onboarding.tsx` asks the user to enable biometrics, or to skip with
+   **Nicht jetzt**.
+5. Enabling writes `biometricsEnabled` and `completedAt`. Skipping — or
+   dismissing/denying the system prompt — writes `completedAt` without enabling
+   the lock. The gate then moves to the tabs.
 
-1. understand what the app is (student project, not an official service),
-2. get the security decision right (device vault + biometrics),
-3. confirm who they are and which degree programme they are in,
-4. know what is live and what is demonstration data,
-5. optionally connect the things that need their input.
+The page is deliberately the only step in the flow for now. It is already gated
+behind a session and a completion record, so additional pages can be inserted
+without changing the navigation rule.
 
-## Gating
+## Gate
 
-`app/_layout.tsx` already redirects between `/login` and the tabs. Add the
-onboarding group to the same gate, using the SDK 58 protected routes rather than
-another manual redirect:
+`app/_layout.tsx` keeps the manual gate used for login. The onboarding condition
+is:
 
-```tsx
-<Stack.Protected guard={signedIn && !onboardingDone} redirectTo="/onboarding">
-  <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-</Stack.Protected>
-<Stack.Protected guard={signedIn && onboardingDone}>
-  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-</Stack.Protected>
+```ts
+const needsOnboarding =
+  Boolean(sessionAccount) &&
+  onboardingReady &&
+  !onboardingCompleted &&
+  (biometricsAvailable || forceOnboarding);
 ```
 
-State lives in `PersistedState` (`src/types.ts`), written through
-`AppStateProvider` (`src/state/AppState.tsx`):
+- A signed-in user without a completed record and with biometrics available is
+  sent to `/onboarding`.
+- A device without hardware or enrollment has no first page to show. The flow is
+  skipped and **not marked complete**. If the user enrolls a face or fingerprint
+  later, the provider refreshes availability and the page can appear on the next
+  foreground or launch.
+- A development override (`forceOnboarding`) shows the page even when the probe
+  reports no enrollment. It is set by the dev screen and cleared when onboarding
+  completes.
+- The completion record is per installation, not per account. Signing out and
+  signing in again does not replay onboarding, and `reset` in Einstellungen does
+  not delete it.
+- Direct access to `/onboarding` while signed out is redirected to `/login`.
+  Access while the flow is already complete redirects to the tabs.
 
-| Field | Meaning |
-| --- | --- |
-| `onboardingVersion` | number, currently 0; the app raises it when new steps ship, and a lower stored value re-opens onboarding |
-| `onboardingCompletedAt` | ISO string or null |
-| `onboardingSkipped` | string ids of skipped optional steps, so the UI can point at them later |
-| `vaultEnabled` | whether the device vault holds the C@MPUS autologin credential |
-| `vaultBiometrics` | whether that entry is biometric-gated |
-| `sessionRestoredFrom` | `'vault'` or null, for the "we signed you in from your stored credential" notice |
+## Storage
 
-The decision helpers are pure and live in a *new* `src/onboarding/steps.ts` with
-no React Native import, so they are unit-testable the way
-`src/auth/campus-browser-scripts.ts` is: `onboardingSteps(profile, state)` returns
-the ordered step list with each entry's `id`, `skippable` and `done` flag, and
-`shouldOnboard(state)` decides the gate. `reset` in Einstellungen keeps
-onboarding done; `signOut` clears the session but not the onboarding record.
+Onboarding preferences are separate from the signed-in `PersistedState`:
 
-## Steps
-
-| # | id | Screen | Skippable | Content |
-| --- | --- | --- | --- | --- |
-| 1 | `welcome` | `/onboarding` intro | no | One paragraph: student project, no official university service, what a signed-in read does. This is the honesty statement the copy rules require ([security-and-privacy.md](security-and-privacy.md)). |
-| 2 | `vault` | security | no (but `Ohne Speichern fortfahren` is allowed) | The device vault. Detailed below. |
-| 3 | `study` | programme | no | The C@MPUS studies from the sign-in response. Single study is pre-selected (`pickActiveStudyId`); several render the existing `src/components/study-selector.tsx` list. Writes `activeStudyId`. |
-| 4 | `live-data` | data boundary | yes | What comes from C@MPUS (structure, courses, calendar export) versus what is demonstration data (`src/data`, Lena Hartmann). Reuses the wording of [user/README.md](../user/README.md). |
-| 5 | `mail` | UniMail | yes | Offers the existing connection screen (`app/mail-verbindung.tsx`). Declining records `mail` in `onboardingSkipped`. |
-| 6 | `assistant` | assistant + offline | yes | Whether the assistant server answers (`GET /health`), what leaves the device, and that answers fall back to the local catalogue offline ([ai-assistant.md](ai-assistant.md)). |
-| 7 | `calendar` | calendar export | yes | A one-tap `POST /v1/campus/calendar-sync` using the session from step 3, with the range and the result count shown. |
-| 8 | `tour` | feature tour | yes | Four short cards: Heute, Kalender, Chat, Mehr. Each is `router.push`-able to the real screen. |
-| 9 | `done` | summary | no | What is on, what was skipped, and a link back into each skipped step. Writes `onboardingCompletedAt` and `onboardingVersion`. |
-
-`app/onboarding/index.tsx` holds the step machine (current step index, back
-navigation, progress dots); each step is a component under
-`src/components/onboarding/`. Copy goes through `tx(locale, key)` with keys in
-`src/i18n/de.ts` and `src/i18n/en.ts`, as everywhere else
-([i18n.md](i18n.md)).
-
-## Step 2: the security step (the important one)
-
-The vault already exists: [`src/auth/vault.ts`](https://github.com/403access/stuttgart-uni-assistant/blob/main/src/auth/vault.ts) writes the
-C@MPUS autologin credential through `expo-secure-store`. Onboarding must explain
-it and let the user turn it on, rather than leave it as a checkbox on the login
-screen.
-
-What the platform actually does, stated plainly so the copy stays honest:
-
-| | iOS | Android |
+| Storage | Key | Contents |
 | --- | --- | --- |
-| Store | Keychain, `kSecClassGenericPassword` | `SharedPreferences` encrypted with the Android Keystore |
-| Hardware | key material in the Secure Enclave where the device has one | Keystore, StrongBox where the device has one |
-| Gate | `requireAuthentication` uses `biometryCurrentSet` | `setUserAuthenticationRequired(true)`, API 23+ |
-| Accessibility | `WHEN_PASSCODE_SET_THIS_DEVICE_ONLY` | Keystore-bound, not restorable |
+| AsyncStorage | `university-assistant/onboarding.v2` | `{ completedAt: string \| null, biometricsEnabled: boolean, forceOnboarding: boolean }` |
 
-The Secure Enclave and StrongBox hold *keys*, not the credential itself — the
-value sits in the keychain/keystore store and is protected by hardware-backed
-key material. The copy must not claim more than that.
+`v2` replaced the short-lived `v1` key after the first implementation skipped the
+page on devices where biometrics were not yet enrolled. The stored record is not
+a secret and is not encrypted by AsyncStorage.
 
-Four decisions the screen makes explicit:
+`OnboardingState.tsx` exposes:
 
-1. **What is stored** — only the st-account and password for the automated
-   C@MPUS sign-in. The C@MPUS bearer token and `PSESSIONID` stay in the
-   assistant server's memory; they are not written to the device.
-2. **The biometric gate** — offered when `biometricUnlockAvailable()` is true
-   (`SecureStore.canUseBiometricAuthentication`). A rejected or cancelled prompt
-   is an outcome, not an error: fall back to the password form.
-3. **Invalidation** — a biometric change (new fingerprint, new face profile)
-   invalidates a gated entry. Onboarding says so, and the app must treat it as
-   "no stored credential" and offer the sign-in again.
-4. **Removal** — `Sitzung beenden` clears the vault (already wired in
-   `app/(tabs)/mehr.tsx`); a separate `Nur die gespeicherte Anmeldung löschen`
-   control keeps the session. iOS keeps keychain entries across a reinstall with
-   the same bundle id, so deletion cannot be left to uninstalling.
+| Value | Meaning |
+| --- | --- |
+| `ready` | Preferences and biometric availability have loaded |
+| `completed` | `completedAt` is set |
+| `completedAt` | The stored completion timestamp |
+| `forceOnboarding` | Development override that bypasses the availability check |
+| `biometricsEnabled` | The app-lock preference |
+| `biometricsHardware` | The device reports a fingerprint/face sensor |
+| `biometricsEnrolled` | A fingerprint or face is enrolled |
+| `biometricsAvailable` | Hardware plus an enrolled face/fingerprint |
+| `biometricsJustEnabled` | Suppresses the lock once, directly after opting in |
+| `refreshBiometrics()` | Re-runs the probe after system settings change |
+| `scheduleOnboardingForNextLaunch(clearBiometrics?)` | Writes a due record without changing the running session |
+| `reloadPreferences()` | Re-reads the stored record, used on sign-out |
+| `completeOnboarding()` | Writes `completedAt` and clears the dev override |
+| `enableBiometrics(prompt, cancel)` | Runs the system prompt, then stores `biometricsEnabled` |
+| `disableBiometrics()` | Clears the app-lock preference |
 
-`app.json` already carries `expo-secure-store` with `faceIDPermission` and
-`ios.config.usesNonExemptEncryption: false`; nothing new is needed there.
+## Biometrics and App Lock
 
-Also part of this step: **`--persist` for the terminal probe** (open item from
-the login work) so a verified session can be written into the server `.env`
-through `scripts/set-campus-secret.mjs` without printing the values.
+Availability is checked in `src/auth/biometrics.ts`:
 
-## Session persistence after onboarding
+- `expo-local-authentication` is imported dynamically and never on web.
+- Hardware and enrollment are probed together. `hasHardwareAsync()` or a
+  non-empty `supportedAuthenticationTypesAsync()` counts as hardware;
+  `isEnrolledAsync()` or an enrolled level of at least `BIOMETRIC_WEAK` counts as
+  enrollment. The two signals are combined because platform versions disagree
+  on them at the edges (for example a simulator with no enrollment yet).
+- A device passcode alone does not count.
+- `authenticateAsync()` is called with the localized prompt and allows the
+  system passcode fallback, so a failed sensor does not lock the user out.
+- A cancelled prompt or denied Face ID permission is treated as a decline, not
+  as a blocking error: the page shows a short note and completes the flow.
+  Settings can start the prompt again later.
 
-Two options; the plan recommends the second.
+When onboarding completes with biometrics enabled, `app/_layout.tsx` renders
+`src/components/app-lock.tsx` over the navigator whenever:
 
-1. **Store the harvested session in the vault** and replay it to
-   `POST /v1/campus/credentials` on launch. Zero taps after the first sign-in,
-   but it puts a live portal session (`PSESSIONID`, bearer) on the device and
-   stretches the reuse window of a single credential.
-2. **Re-run the automated sign-in from the vaulted password on launch** when the
-   server reports no session (`GET /v1/campus/config` → `tokenConfigured`). The
-   credential is already on the device for that purpose, the portal session is
-   minted fresh each time, and the server stays the only holder of the session.
-   The cost is one hidden WebView round trip (~10 s) and a failed-login path that
-   must be quiet: the shared script's `rejected` step stops after one attempt, so
-   a wrong stored password cannot lock the account.
+```ts
+signedIn && onboardingCompleted && biometricsEnabled && biometricsAvailable
+```
 
-Whichever is chosen, the state fields above record which path was used.
+- A cold launch with a restored session starts locked.
+- A return from the background starts locked again.
+- The unlocked session is keyed by the active bearer token (or the account id in
+  an offline sign-in), so a fresh sign-in does not inherit the previous unlock.
+- Cancelling the prompt leaves a retry button and a sign-out action on the lock
+  screen. Signing out there also clears the stored C@MPUS login.
+- If the user removes all biometrics at OS level, availability becomes false and
+  the lock disappears rather than trapping them outside the app.
+
+The app lock is a UI gate. It does not encrypt AsyncStorage. The separate
+C@MPUS autologin vault still uses `expo-secure-store` with its own optional
+biometric gate ([vault.ts](../../src/auth/vault.ts)); enabling the app lock does
+not move data into the vault.
+
+## Security screen
+
+`app/sicherheit.tsx` is a dedicated screen reached from the **App** group in
+`app/(tabs)/mehr.tsx` (`/sicherheit`). It is not part of the general
+`app/einstellungen.tsx` screen.
+
+- The top is a status hero: a large white shield-check icon, a state pill, a
+  headline, and one sentence. It uses the login palette: blue background, a
+  green/red status badge, and a white sheet below. The status callout is green
+  when the lock is active and red in every other state; the label identifies
+  whether the app is protected, unprotected, needs setup, or has no biometrics.
+- The biometric switch sits in its own compact card below the hero. It is
+  disabled only when the device has no sensor and the preference is off.
+- The hero sentence distinguishes the unprotected state (lock off), hardware
+  present but nothing enrolled, and no hardware.
+- **Erneut prüfen / Check again** re-runs the probe, and the screen also refreshes
+  on focus and when the app returns to the foreground, so enrolling Face ID in
+  system settings is picked up without a relaunch.
+- Turning the switch on runs the system prompt and authenticates before
+  persisting the preference. Turning it off takes effect immediately. A failed
+  prompt keeps the switch off and shows the error inline.
+
+## Native configuration
+
+`app.json` carries the `expo-local-authentication` config plugin with an iOS
+`faceIDPermission` string. The module is native code:
+
+- `bunx expo install expo-local-authentication` resolves the SDK-compatible
+  version.
+- Expo Go cannot test Face ID. Use a development build:
+  `npx expo run:ios`, `npx expo run:android`, or an EAS development build.
+- After adding the module, rebuild the native app before testing the page.
+  Reloading only the JavaScript bundle is not enough.
+
+The web build skips the flow because the app does not use a browser biometric
+API. The route still exports and redirects safely.
+
+In development builds, **Campus → Dev → Onboarding** shows the live values and
+can schedule the flow for the next launch without redirecting the current
+session. See [dev-tools.md](dev-tools.md).
+
+## Development check
+
+In a development build, Metro prints one line after the provider loads:
+
+```text
+[onboarding] { module, hardware, enrolled, available, completedAt, biometricsEnabled }
+```
+
+Use it to distinguish the three failure modes:
+
+| Log | Meaning |
+| --- | --- |
+| `module: false` | The running binary does not include `expo-local-authentication`; rebuild |
+| `enrolled: false` | No face/fingerprint is set up on the device (on the iOS Simulator: Features → Face ID → Enrolled) |
+| `available: true`, `completedAt: null` | The page should appear after sign-in |
+
+## Manual check
+
+1. Sign in on a device with an enrolled biometric and no stored onboarding
+   record. The biometrics page appears before the tabs.
+2. **Biometrie aktivieren** shows the system prompt, then lands on Heute.
+3. Repeat with a fresh record and cancel the system prompt instead. The flow
+   closes without enabling the lock and does not return on the next launch.
+4. Put the app in the background and open it again. The lock screen appears.
+5. Cancel the App Lock prompt once: the lock screen stays, with retry and
+   sign-out.
+6. Disable biometrics in **Sicherheit**, background the app, and reopen it. No
+   lock appears.
+7. Repeat on a device without enrollment: no onboarding page and no lock.
+8. Enroll biometrics while the app is installed, then reopen it. The page can
+   appear because the skipped flow was not marked complete.
+
+## Still planned
+
+The original flow proposed more pages after the security page. None of these are
+implemented yet:
+
+| Step | Content |
+| --- | --- |
+| `welcome` | Student project, not an official university service |
+| `vault` | Move the opt-in C@MPUS autologin vault off the login form and explain it |
+| `study` | Confirm the C@MPUS studies and `activeStudyId` |
+| `live-data` | What is live C@MPUS data and what is the demonstration record |
+| `mail` | Offer the existing UniMail connection screen |
+| `assistant` | What leaves the device for chat, and the offline fallback |
+| `calendar` | One-tap C@MPUS calendar sync |
+| `tour` | Short cards for Heute, Kalender, Chat, and Mehr |
+| `done` | Summary of what is on and what was skipped |
+
+The current implementation does not use `Stack.Protected`; the login and
+onboarding redirects share the existing manual gate. Onboarding completion is
+device-level, not versioned per account. Both can change when the remaining
+steps are built.
 
 ## Testing
 
-- `scripts/onboarding.test.mjs` (*new*, run inside `bun run check`): the pure
-  step logic — gate decisions for a fresh install, a resumed install, a bumped
-  `onboardingVersion`, a sign-out; skip and unskip; which steps are mandatory.
-- Vault behaviour with a fake `expo-secure-store` under `scripts/testing/`,
-  following the existing `fake-expo-sqlite.mjs` pattern: save, read with and
-  without the biometric flag, invalidation returns null, `clearLogin` removes.
-- `npx expo export --platform web` must still render every route; the onboarding
-  group is native-and-web, so it lands in the existing export check.
-
-## Implementation order
-
-1. `src/onboarding/steps.ts` + `scripts/onboarding.test.mjs` (gate, ordering) —
-   no UI, the part that must be right.
-2. `PersistedState` fields, `sanitize`, `reset`/`signOut` behaviour, and the
-   `Stack.Protected` gate.
-3. Step machine and screens 1, 3, 4, 9 (the mandatory spine).
-4. Step 2 (vault) with the biometric toggle and the honest copy.
-5. Optional steps 5–8, each a thin wrapper over a screen that already exists.
-6. Session restore per the decision above.
-7. `08-maintenance.md`, `user/getting-started.md`, `product/feature-catalog.md`
-   and this file updated in the same change as the code.
-
-## Open decisions
-
-1. **Vault on by default or opt-in?** Opt-in keeps the "we never asked for your
-   password" property of the project; on-by-default makes the app faster.
-   Recommendation: opt-in, with the reason for it stated on the screen.
-2. **Session persistence**: replay a stored session, or re-run the automated
-   sign-in. Recommendation: re-run.
-3. **Is `vault` really mandatory?** It cannot be, if the app must work without
-   storing the password. Recommendation: the step is mandatory, storing is not.
-4. **Notifications and calendar permissions** are not in this plan: no
-   notification module is installed, and the calendar export needs no permission.
-   Adding push would be its own change ([personas-and-journeys.md](../product/personas-and-journeys.md)
-   does not promise it).
+- `bun run typecheck` covers the provider, gate, screens, and translation keys.
+- `bun run lint` covers the hooks and React Native imports.
+- `bun run check` covers the existing domain and server checks; it does not
+  exercise the native biometric prompt.
+- `npx expo export --platform web` renders `/onboarding` and must keep working.
+- The biometric prompt, App Lock on background, and Face ID need a development
+  build on a device or simulator. They are not testable in Expo Go on iOS.

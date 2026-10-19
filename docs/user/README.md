@@ -8,7 +8,7 @@ The app speaks German by default, with an English toggle. Where a button or tab 
 
 | Step | Read |
 | --- | --- |
-| Install and run the app, sign in for the first time | [getting-started.md](getting-started.md) |
+| Install and run the app, sign in for the first time, enable biometrics | [getting-started.md](getting-started.md) |
 | The six tabs, today's plan, calendar, questions | [daily-screens.md](daily-screens.md) |
 | Studying: modules, requirements, planning, peers | [study.md](study.md) |
 | C@MPUS structures, courses, rooms, the map | [campus.md](campus.md) |

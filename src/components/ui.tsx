@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { StyleProp, TextInputProps, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -86,7 +86,10 @@ export function Screen({
     <View style={[styles.screen, topInset && { paddingTop: insets.top }]}>
       {scroll ? (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          // iOS adds the home-indicator inset (and, when the header floats over the
+          // content, the header inset) to the scroll content automatically.
+          contentContainerStyle={[styles.scroll, Platform.OS === 'android' && !topInset && { paddingBottom: 28 + insets.bottom }]}
+          contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
           stickyHeaderIndices={stickyHeader ? [0] : undefined}
         >

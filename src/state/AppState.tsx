@@ -32,7 +32,7 @@ import type {
   UserAccount,
 } from '@/src/types';
 
-const STORAGE_KEY = 'university-assistant/v1';
+export const APP_STATE_STORAGE_KEY = 'university-assistant/v1';
 
 const empty: PersistedState = {
   locale: 'de',
@@ -217,7 +217,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.getItem(STORAGE_KEY)
+    AsyncStorage.getItem(APP_STATE_STORAGE_KEY)
       .then((raw) => {
         if (!active) return;
         if (raw) setState(sanitize(JSON.parse(raw) as Partial<PersistedState>));
@@ -233,7 +233,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => undefined);
+    AsyncStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify(state)).catch(() => undefined);
   }, [ready, state]);
 
   // Restore the server session on launch. A rejected token is dropped, so a
