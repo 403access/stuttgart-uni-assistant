@@ -35,9 +35,14 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
+      # Docusaurus runs on Node; bun installs and drives it from `docs-site/`.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.4.3
 
       - name: Build the documentation
         working-directory: docs-site
