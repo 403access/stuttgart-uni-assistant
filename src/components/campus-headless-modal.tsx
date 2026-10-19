@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import type { RefObject } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
@@ -7,7 +8,7 @@ import { CAMPUS_START_URL } from '@/src/auth/campus-browser';
 import type { CampusLoginPhase } from '@/src/auth/campus-progress';
 import { ErrorText } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
-import { Button } from '@/src/components/ui';
+import { Button, Mark } from '@/src/components/ui';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
@@ -15,8 +16,9 @@ import type { Locale } from '@/src/types';
 /**
  * The automated sign-in: a hidden WebView drives the real C@MPUS pages, and the
  * screen shows the phases of that work instead of a blank wait. It is a
- * full-screen surface of its own — the progress takes the display, the escape
- * actions sit in a footer — rather than a dialog over the login form.
+ * full-screen surface of its own — a blue hero and white sheet like the login
+ * screen, with the progress taking the sheet and the escape actions in a footer
+ * — rather than a dialog over the login form.
  */
 export function CampusHeadlessModal({
   visible,
@@ -57,7 +59,8 @@ export function CampusHeadlessModal({
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} presentationStyle="fullScreen" animationType="fade" onRequestClose={onCancel}>
-      <View style={[styles.screen, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View style={styles.screen}>
+        <StatusBar style={visible ? 'light' : 'dark'} />
         {/* The waiting WebView stays mounted (it drives the sign-in), but it must
             not take layout space. `style` only reaches the inner native view;
             `containerStyle` is the flex-1 wrapper, so the hidden frame goes
@@ -75,8 +78,18 @@ export function CampusHeadlessModal({
           containerStyle={styles.hidden}
           pointerEvents="none"
         />
-        <View style={styles.progress}>
-          <Text style={styles.title}>{tx(locale, 'campusHeadlessModal.automatische')}</Text>
+
+        <View style={[styles.hero, { paddingTop: insets.top + 24 }]}>
+          <View style={styles.blobOne} pointerEvents="none" />
+          <View style={styles.blobTwo} pointerEvents="none" />
+          <View style={styles.markTile}>
+            <Mark size={34} />
+          </View>
+          <Text style={styles.brand}>University Assistant</Text>
+          <Text style={styles.heroTitle}>{tx(locale, 'campusHeadlessModal.automatische')}</Text>
+        </View>
+
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <SigningIn
             locale={locale}
             phase={phase}
@@ -89,19 +102,19 @@ export function CampusHeadlessModal({
             }
           />
           {error ? <ErrorText>{error}</ErrorText> : null}
-        </View>
-        {dump ? (
-          <ScrollView style={styles.dump}>
-            <Text style={styles.dumpText}>{dump}</Text>
-          </ScrollView>
-        ) : null}
-        <View style={styles.footer}>
-          {/* The page dump is a debugging aid, so its trigger stays in dev builds. */}
-          {__DEV__ ? <Button secondary label={tx(locale, 'campusHeadlessModal.seite')} onPress={onDump} /> : null}
-          {error ? (
-            <Button secondary label={tx(locale, 'campusHeadlessModal.sichtbaren')} onPress={onFallback} />
+          {dump ? (
+            <ScrollView style={styles.dump}>
+              <Text style={styles.dumpText}>{dump}</Text>
+            </ScrollView>
           ) : null}
-          <Button secondary label={tx(locale, 'common.abbrechen')} onPress={onCancel} />
+          <View style={styles.footer}>
+            {/* The page dump is a debugging aid, so its trigger stays in dev builds. */}
+            {__DEV__ ? <Button secondary label={tx(locale, 'campusHeadlessModal.seite')} onPress={onDump} /> : null}
+            {error ? (
+              <Button secondary label={tx(locale, 'campusHeadlessModal.sichtbaren')} onPress={onFallback} />
+            ) : null}
+            <Button secondary label={tx(locale, 'common.abbrechen')} onPress={onCancel} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -109,13 +122,58 @@ export function CampusHeadlessModal({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.mist },
-  // The step list fills the whole surface: the title sits at the top and the
-  // progress spreads down to the footer instead of hanging in the middle.
-  progress: { flex: 1, gap: 16, paddingHorizontal: 24, paddingTop: 8 },
-  title: { color: colors.anthracite, fontSize: 20, fontWeight: '700', textAlign: 'center' },
-  dump: { maxHeight: 200, marginHorizontal: 24 },
+  screen: { flex: 1, backgroundColor: colors.blue },
+  hero: {
+    paddingHorizontal: 24,
+    paddingBottom: 26,
+    alignItems: 'center',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  blobOne: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 220,
+    backgroundColor: 'rgba(0,190,255,0.16)',
+    top: -70,
+    right: -50,
+  },
+  blobTwo: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 150,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    bottom: -30,
+    left: -40,
+  },
+  markTile: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: colors.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#001A3A',
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+  brand: { color: '#CFE0F2', fontSize: 13, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
+  heroTitle: { color: '#FFFFFF', fontSize: 27, lineHeight: 32, fontWeight: '700', letterSpacing: -0.4, textAlign: 'center' },
+  sheet: {
+    flex: 1,
+    backgroundColor: colors.paper,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    gap: 12,
+  },
+  dump: { maxHeight: 160 },
   dumpText: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo' },
-  footer: { paddingHorizontal: 24, gap: 10 },
+  footer: { gap: 10 },
   hidden: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: 0 },
 });

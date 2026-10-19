@@ -115,7 +115,11 @@ A sign-in takes ten to thirty seconds when it runs in the hidden `WebView`, and 
 - `accessibilityRole="progressbar"` with the phase as the label, `accessibilityLiveRegion="polite"` on the visible status text, and no motion at all when the platform reports reduced motion (`AccessibilityInfo.isReduceMotionEnabled`): the phases and their checks stay, the orbit and the pulse stop.
 - A `compact` variant sits inline under a button for the shorter waits (token sign-in, the SIAM redirect, the visible browser's harvest).
 - The status line under the phase is never empty: it starts as `signingIn.initialisierung` ("Initializing …") and is replaced with the host or step detail, so the block does not jump when the first value arrives. It sits directly under the phase label, as one unit.
-- The full-screen variant fills the display: the screen title stays at the top and the mark, phase and step list spread evenly down to the footer. It is a progress surface, not a block centred in the middle of the screen.
+- The full-screen variant is the automated C@MPUS sign-in surface: a blue hero
+  with the mark and “Automatische Anmeldung”, then a white sheet with the same
+  rounded top corners as the login screen. The animated mark, phase, and step
+  list spread down the sheet, with the action buttons in a footer. The active
+  step carries a light-blue row, so the current phase is obvious at a glance.
 
 The phase mapping is pure and covered by `scripts/campus-progress.test.mjs`, which `bun run check` runs: a mis-mapped step would show a finished sign-in as still connecting, or move the progress backwards.
 

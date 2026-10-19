@@ -143,7 +143,7 @@ function PhaseRow({ label, done, active, animate }: { label: string; done: boole
   }, [active, animate, pulse]);
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, active && styles.rowActive]}>
       {done ? (
         <Text style={styles.check}>✓</Text>
       ) : (
@@ -188,7 +188,7 @@ export function SigningIn({
 
   return (
     <View style={styles.shell} accessible accessibilityRole="progressbar" accessibilityLabel={label}>
-      <OrbitingMark size={64} animate={animate} />
+      <OrbitingMark size={84} animate={animate} />
       <View style={styles.heading}>
         <Text style={styles.label} accessibilityLiveRegion="polite">
           {label}
@@ -212,19 +212,20 @@ export function SigningIn({
 
 const styles = StyleSheet.create({
   // The full-screen wait spreads the mark, the current phase and the step list
-  // across the whole height, so the surface reads as progress rather than as a
-  // block parked in the middle.
+  // across the available sheet, so the surface reads as progress rather than as
+  // a block parked in the middle.
   shell: { flex: 1, alignItems: 'center', justifyContent: 'space-evenly', gap: 14, paddingVertical: 12 },
   compact: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   compactLabel: { color: colors.anthracite, fontWeight: '700', fontSize: 14 },
   // The phase label and its detail are one unit, so the detail sits directly
   // under the label instead of being spread away from it.
-  heading: { alignItems: 'center' },
-  label: { color: colors.anthracite, fontWeight: '700', fontSize: 17, textAlign: 'center' },
+  heading: { alignItems: 'center', gap: 4 },
+  label: { color: colors.anthracite, fontWeight: '700', fontSize: 19, textAlign: 'center' },
   detail: { color: colors.inkSoft, fontSize: 13, lineHeight: 19, textAlign: 'center' },
-  phases: { alignSelf: 'stretch', gap: 8, paddingHorizontal: 8, paddingTop: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  check: { color: colors.success, fontWeight: '700', width: 16, textAlign: 'center' },
+  phases: { alignSelf: 'stretch', gap: 6, paddingTop: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14 },
+  rowActive: { backgroundColor: colors.blueSoft },
+  check: { color: colors.success, fontWeight: '700', width: 18, textAlign: 'center' },
   dot: {
     width: 10,
     height: 10,
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.line,
     backgroundColor: colors.paper,
-    marginHorizontal: 3,
+    marginHorizontal: 4,
   },
   dotActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
   rowLabel: { color: colors.mute, fontSize: 14 },
