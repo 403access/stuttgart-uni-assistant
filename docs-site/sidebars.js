@@ -20,6 +20,7 @@ const sidebars = {
         'user/campus',
         'user/mail',
         'user/documents-and-settings',
+        'user/vpn-and-printing',
       ],
     },
     {
@@ -62,6 +63,8 @@ const sidebars = {
         'engineering/ai-assistant',
         'engineering/assistant-tunnel',
         'engineering/security-and-privacy',
+        'engineering/vpn-comparison',
+        'engineering/vpn-tunnel',
         'engineering/design-system',
         'engineering/i18n',
       ],

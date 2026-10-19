@@ -15,6 +15,7 @@ For the person holding the phone: what each screen does and what stays on the de
 | [user/campus.md](user/campus.md) | Live C@MPUS structures and courses, rooms, the map |
 | [user/mail.md](user/mail.md) | UniMail: connecting, the inbox, reading a message |
 | [user/documents-and-settings.md](user/documents-and-settings.md) | Documents, notices, settings, and what is stored about you |
+| [user/vpn-and-printing.md](user/vpn-and-printing.md) | The VPN screen and the campus printers, which need the university network |
 
 ## Product
 
@@ -60,6 +61,8 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
 | [engineering/assistant-tunnel.md](engineering/assistant-tunnel.md) | Reaching the assistant from a phone off the LAN: the two tunnels, the quick hostname, the `.env` write |
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
+| [engineering/vpn-comparison.md](engineering/vpn-comparison.md) | The three university VPN endpoints, protocols, the engines available for each, and the evidence |
+| [engineering/vpn-tunnel.md](engineering/vpn-tunnel.md) | The TIK AnyConnect and ZDI OpenVPN services: screens, native control surface, and the engine seam |
 | [engineering/design-system.md](engineering/design-system.md) | Color, type, mark, and screen patterns |
 | [engineering/i18n.md](engineering/i18n.md) | The keyed German/English catalogs, `tx`, placeholder values, and how to add a string |
 
@@ -69,3 +72,4 @@ Read these in order. Each file states the decision for this project, the artifac
 | --- | --- |
 | [delivery/backlog.md](delivery/backlog.md) | What is in this build, and the ordered work after it |
 | [delivery/release-and-operations.md](delivery/release-and-operations.md) | Environments, release shape, and how to run it day to day |
+

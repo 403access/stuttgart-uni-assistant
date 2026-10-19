@@ -2,4 +2,10 @@
 - wifi configuration on laptop
 - re-register the `universityassistant://oidc` redirect with TIK and update `OIDC_REDIRECT_URIS` in `.env` (dev-build/store sign-in fails until then)
 - rename the GitHub repo and update the `cd stuttgart-uni-assistant` lines in README.md and docs/delivery/release-and-operations.md
-- add `eas.json` (build profiles; `bunx eas-cli init` writes the project id)
+- `eas.json` (build profiles; `bunx eas-cli init` writes the project id)
+- VPN: prove the Android tunnel on a device — the consent dialog and real traffic — using a local `docker` OpenVPN server, so it can be tested without a CIP-pool account
+- VPN: add the iOS `PacketTunnel` extension target (App Group, `PacketTunnelProvider.swift`, OpenVPNAdapter) and get Apple's `packet-tunnel-provider` entitlement approved
+- VPN: ask the ZDI whether OpenVPN is open to all CIP-pool students, whether a third-party app may use it, and whether the tunnel reaches `drucken.stuvus.uni-stuttgart.de`
+- VPN: confirm the licensing consequence of the GPL-2.0-derived Android core (this repo is MIT today)
+- VPN: drop `patches/@aliakhgar1+react-native-openvpn@1.0.0.patch` once upstream ships RN 0.88 support
+- VPN: decide whether to keep `modules/university-vpn` (it compiles, but is inert without an engine) — see `docs/engineering/vpn-tunnel.md`

@@ -69,6 +69,15 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | Reader, summary, plain language, questions | `/dokument/[id]` | In this build | Bundled pages are bilingual, so a language switch is immediate. Summary and plain language use an extractive fallback, then Grok when the server answers. Chat can be opened with `?doc=` so the next question is about that text. |
 | Import and export | `/dokumente`, reader | In this build | The system document picker reads text, Markdown, CSV, and JSON. A binary PDF is kept by name with a note that extraction is not in this build. Export writes a `.txt` through the share sheet, or a download on web. |
 
+## 7. Network and printing (Netz & Druck)
+
+| Capability | Screen | Status | What this build does |
+| --- | --- | --- | --- |
+| VPN provider choice | `/vpn` | In this build | Offers the two real services: ZDI **OpenVPN** (Fakultät 5, department/CIP-pool account) first, and the TIK **Cisco AnyConnect** access as the university-wide alternative. Each carries its own account rules, servers or files, and support link. |
+| OpenVPN profile import | `/vpn` | In this build | Picks a `.ovpn` / `.conf` file, validates it (`looksLikeOpenVpn`, tested), shows the name and `remote`, and stores it in the app's private sandbox — it may contain a key. Reset removes it. |
+| In-app tunnel | `/vpn` | Dev build | The OpenVPN engine is wired (`@aliakhgar1/react-native-openvpn` behind `src/vpn/engine-openvpn.ts`, with a six-line RN 0.88 patch), plus the Android manifest and iOS entitlements from `plugins/withVpnTunnel.js`. **Android builds and packages the engine** (`libopenvpn.so`/`libovpn3.so` for four ABIs); a development build on a device is what is still needed to prove traffic, and iOS still needs the `PacketTunnel` target plus Apple's `packet-tunnel-provider` grant. The TIK path has no engine. The screen never reports a false `connected`. See [vpn-tunnel.md](../engineering/vpn-tunnel.md). |
+| Campus printing | `/drucker` | In this build | Registration, credit, the exact prices, Mobility Print / Web Print / USB printing, releasing at the device, scanning, the device locations on both campuses, and the stuvus contacts. The screen states that the printers need the university WLAN or the VPN and links to `/vpn`. |
+
 ## Cross-cutting
 
 | Capability | Where | Status |

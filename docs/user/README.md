@@ -13,6 +13,7 @@ The app speaks German by default, with an English toggle. Where a button or tab 
 | Studying: modules, requirements, planning, peers | [study.md](study.md) |
 | C@MPUS structures, courses, rooms, the map | [campus.md](campus.md) |
 | University e-mail | [mail.md](mail.md) |
+| The VPN and the campus printers | [vpn-and-printing.md](vpn-and-printing.md) |
 | Documents, notices, settings, your data | [documents-and-settings.md](documents-and-settings.md) |
 
 ## The rule this guide keeps
