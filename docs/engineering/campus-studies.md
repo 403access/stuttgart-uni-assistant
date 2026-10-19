@@ -1,6 +1,6 @@
 # C@MPUS study chooser
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session. It lists the studies the student is enrolled in. Types live in `src/campus/studies.ts`. A reduced fixture is `src/campus/studies.sample.ts`. The assistant server calls this URL for `GET /v1/campus/studies`. The app stores the mapped list, not the raw portal body.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session. It lists the studies the student is enrolled in. Types live in `src/campus/studies.ts`. A reduced fixture is `src/campus/studies.sample.ts`. The assistant server calls this URL for `GET /v1/campus/studies`. The app stores the mapped list, not the raw portal body. The route requires the app bearer token, and the snapshot is stored per `user_id`.
 
 The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service, the same one as [campus-curriculum.md](campus-curriculum.md). This file records the one chooser operation that was returned, not a full catalog of C@MPUS.
 

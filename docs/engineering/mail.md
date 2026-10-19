@@ -51,7 +51,9 @@ Student → app (read-only list) → assistant server (process memory) → imap.
    normalizes the long form (`st123456@stud.uni-stuttgart.de` → `st123456`), then proves
    the pair by opening a TLS session and logging in. On success it keeps
    `{ username, password }` in process memory only — never logged, never echoed, never
-   persisted, never written to `.env`. `warnIfPasswordPresent` unaffected.
+   persisted, never written to `.env`. `warnIfPasswordPresent` unaffected. When the
+   request carries the app session token, the server also marks `mail` connected on that
+   user ([accounts.md](accounts.md)).
 3. **Read a mailbox** (`GET /v1/mail/messages?limit=25&folder=INBOX`). Each call makes one
    IMAP
    session: `LOGIN`, `SELECT` of the chosen folder (INBOX by default), then `FETCH` of the

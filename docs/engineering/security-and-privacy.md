@@ -4,15 +4,50 @@ This build is a demonstration on one device. The rules below are what the code d
 
 ## Credentials
 
-There is no password field on the SIAM path. **C@MPUS öffnen** sends the student to `https://campus.uni-stuttgart.de/`, where they use the account they already have. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` once a client is registered. The app does not submit a SIAM password to either host. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Async Storage keeps the account, name, email, subject, and a local session id used only to ask this server to revoke that memory entry.
+There is no password field on the SIAM path. **C@MPUS öffnen** sends the student to `https://campus.uni-stuttgart.de/`, where they use the account they already have. **Mit SIAM anmelden** opens `https://idp.uni-stuttgart.de/idp/profile/oidc/authorize` once a client is registered. The app does not submit a SIAM password to either host. The password is typed there. The server exchanges the authorization code with `OIDC_CLIENT_SECRET` from `.env` and then calls UserInfo. Access tokens and refresh tokens stay in server memory. Each sign-in also creates or refreshes a server-side user and mints an app session token ([accounts.md](accounts.md)); the token is kept in the device keychain/Keystore on native and in AsyncStorage on web, and Async Storage keeps the public account record (account, name, email, subject, platform links).
 
 One deliberate exception exists on the C@MPUS browser path: the opt-in `Automatisch anmelden` keeps the st-account password in the device vault (`expo-secure-store`, optional biometric gate) so the hidden WebView can fill the official form. The C@MPUS sign-in itself adopts only the harvested session: the password is never submitted to C@MPUS and never sent to the assistant server for it. Since the st-account is also the UniMail account, a successful automated sign-in reuses the same password to connect UniMail, and that proof runs on the assistant server against the TIK IMAP host — so the password does reach the server's process memory, exactly as a manual UniMail connect does (see [mail.md](mail.md)). It is never logged, echoed, or persisted. The vault is deleted on sign-out. This is beta-only, it is the one place in the project that stores a university password, and it is bounded by the rules in [campus-browser-login.md](campus-browser-login.md) and [08-maintenance.md](../sdlc/08-maintenance.md).
 
 `OIDC_LOGIN_HINT` may hold the account id so the identity provider can prefill its form. It is not accepted as a password. Environment variables named `OIDC_PASSWORD`, `PASSWORD`, `CAMPUS_PASSWORD`, `SIAM_PASSWORD`, and `UNI_PASSWORD` are ignored.
 
+## C@MPUS portal credentials
+
+The C@MPUS portal credential is per account. A browser harvest is validated by
+`POST /v1/campus/credentials` and kept in process memory behind a one-shot
+ticket (10 minutes); `/v1/campus/login` attaches it to the user id that the
+profile creates. Nothing about that credential is written to SQLite. A server
+restart drops it, and the account has to reconnect C@MPUS.
+
+The operator `.env` credential is not copied into a per-user row. `user_campus`
+records only that the account signed in with it, and the server reads
+`CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` from the environment on each
+call. If that account is A, account B cannot use A's `.env` credential by
+accident: `resolveCampusCredential` answers `409 campus_credentials_missing`
+unless B has its own harvest or its own `user_campus` row.
+
+Every `/v1/campus/*` route except `config`, `credentials`, and `login` requires
+the app bearer token, and the store rows are keyed by that user id. A sync job id
+from another account is a 404, and `/v1/campus/tree`, `/v1/campus/courses/all`,
+and `/v1/campus/calls` answer only from the caller's rows.
+
 The demonstration button still opens Lena Hartmann's record without contacting the identity provider. Anyone who can open the app can reach that fictional record.
 
 The flow, the discovery URLs, and the TIK registration step are in [oidc-login.md](oidc-login.md).
+
+## Admin dashboard
+
+`DASHBOARD_TOKEN` gates the operator dashboard at `/admin`. If it is unset, the
+page shows setup instructions and every `/v1/admin/*` route returns
+`503 admin_unconfigured`. The login form compares the token with a
+constant-time SHA-256 digest and sets `ua_admin` as an `HttpOnly`,
+`SameSite=Strict` cookie for 12 hours (`Secure` when the request arrived over
+HTTPS). The token is never logged, never placed in an `EXPO_PUBLIC_` variable,
+and never stored in the page or `localStorage`.
+
+The dashboard shows account metadata, sessions, platform links, and portal
+counts. It never returns a C@MPUS bearer token, `PSESSIONID`, or a password.
+Destructive actions are confirmed in the UI; an action audit log is not
+implemented yet. Details: [admin-dashboard.md](admin-dashboard.md).
 
 ## API key
 
@@ -31,6 +66,7 @@ The server sends `Authorization: Bearer` to `https://api.x.ai/v1`. The client ne
 | Authorization code | Sent once to this server, then exchanged. Not stored |
 | Access token and refresh token | Stay in the server process. Not sent back to the app |
 | Account, name, email from UserInfo | Stored on the device so the profile can show them |
+| App session token | Sent as `Authorization: Bearer` on `/v1/auth/*` calls; stored hashed on the server, in the device keychain/Keystore (AsyncStorage on web) |
 | Catalog grades, rooms, deadlines | Only inside the fact sheet, and only if the student asks a question while the assistant server is reachable |
 | Chat history (last six turns) | Same request, sliced |
 | Focused document text | Included in that fact sheet when a document is open |
@@ -45,7 +81,9 @@ Without a key the server answers `/v1/assist` with 503 and the client keeps the 
 
 ## What stays on the device
 
-Async Storage key `university-assistant/v1` holds language, session account, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
+Async Storage key `university-assistant/v1` holds language, session account, the server user record and its platform links, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
+
+The app session token is separate from that payload: `expo-secure-store` (iOS keychain, Android Keystore-encrypted `SharedPreferences`) on native, AsyncStorage on web where no secure store exists. The server stores only the SHA-256 hash of the token, so the database cannot be replayed as a login. Sign-out revokes the server session and deletes the device token.
 
 Async Storage is not an encrypted vault. On a shared phone, the notes are readable to someone who can open the app sandbox. The single exception is the opt-in C@MPUS autologin credential: it lives in `expo-secure-store` (iOS keychain, Android Keystore-encrypted `SharedPreferences`), optionally behind biometrics, deleted on sign-out, and the account id alone is mirrored to Async Storage as a non-secret hint. Reset in Einstellungen deletes the Async Storage payload except language and session. Uninstalling the app drops it with the sandbox, except the iOS keychain, which survives a reinstall with the same bundle id — so sign-out, not uninstall, is what removes the vault.
 
@@ -63,7 +101,7 @@ Peer sharing sets `shared: true` on the local import. It does not upload. A futu
 
 ## Network surface of the proxy
 
-The server listens on `0.0.0.0` so a phone on the same LAN can connect. CORS allows any origin. That matches Expo web on a different port during development. A public host should restrict the origin, terminate TLS, and not leave the process open on a raw port without authentication. The demo server has no auth on `/v1/assist`. Anyone who can reach it and who has placed a key in the environment can spend that key. Run it on localhost unless you intend the LAN demo.
+The server listens on `0.0.0.0` so a phone on the same LAN can connect. CORS allows any origin. That matches Expo web on a different port during development. A public host should restrict the origin, terminate TLS, and not leave the process open on a raw port without authentication. The demo server has no auth on `/v1/assist`. It also has no auth on `POST /v1/auth/session`, which creates a `demo` or `local` user; campus and OIDC users are only created by their verified routes. Every other campus route requires the app bearer token and reads only that user's rows. Anyone who can reach the server and who has placed a key in the environment can spend that key. The operator dashboard is gated by `DASHBOARD_TOKEN`; leave it unset to keep the dashboard disabled, and do not expose `/admin` or `/v1/admin/*` on a public host without TLS. Run it on localhost unless you intend the LAN demo.
 
 ## Identity of the binary
 

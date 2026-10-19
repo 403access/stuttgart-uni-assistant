@@ -134,14 +134,17 @@ export async function fetchMailStatus(): Promise<MailStatus | null> {
  * Hand the st-account and password to the assistant server. The server proves the pair
  * against the TIK IMAP service before keeping it; the app doesn't store the secret.
  */
-export async function submitMailCredentials(input: { account: string; password: string }): Promise<{ account: string; address: string }> {
+export async function submitMailCredentials(input: { account: string; password: string }, token?: string | null): Promise<{ account: string; address: string }> {
   const url = endpoint('/v1/mail/credentials');
   console.info('[mail-credentials] POST', url);
   let response: Response;
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ account: input.account.trim(), password: input.password }),
     });
   } catch {
@@ -249,12 +252,12 @@ export function folderLabel(name: string, locale: 'de' | 'en'): string {
 }
 
 /** Drop the held credentials on the server. */
-export async function forgetMail(): Promise<void> {
+export async function forgetMail(token?: string | null): Promise<void> {
   const url = endpoint('/v1/mail/logout');
   console.info('[mail-logout] POST', url);
   let response: Response;
   try {
-    response = await fetch(url, { method: 'POST' });
+    response = await fetch(url, { method: 'POST', ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}) });
   } catch {
     throw new Error('server_unreachable');
   }

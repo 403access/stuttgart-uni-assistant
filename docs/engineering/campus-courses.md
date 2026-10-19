@@ -1,6 +1,6 @@
 # C@MPUS curriculum-element courses
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session for study `339485` (Philosophie) and element `287785`. It lists the courses (`Lehrveranstaltungen`) grouped under one curriculum node. Types live in `src/campus/courses.ts`. A reduced fixture is `src/campus/courses.sample.ts`. The assistant server calls this URL for `POST /v1/campus/courses`. The app shows the mapped list per node and does not store it.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session for study `339485` (Philosophie) and element `287785`. It lists the courses (`Lehrveranstaltungen`) grouped under one curriculum node. Types live in `src/campus/courses.ts`. A reduced fixture is `src/campus/courses.sample.ts`. The assistant server calls this URL for `POST /v1/campus/courses`. The app shows the mapped list per node and does not store it. The route requires the app bearer token, and the server store is per `user_id`.
 
 The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service, the same one as [campus-curriculum.md](campus-curriculum.md). This file records the one courses operation that was returned, not a full catalog of C@MPUS.
 

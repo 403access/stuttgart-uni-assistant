@@ -6,7 +6,7 @@
  * Do not add features here; put them in the new login screen.
  */
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +42,7 @@ export default function LoginScreen() {
   const [campusLog, setCampusLog] = useState('');
   // One flag for both browser surfaces: they share the harvest mutation.
   const [harvestBusy, setHarvestBusy] = useState(false);
+  const ticketRef = useRef<string | null>(null);
   const redirectUri = universityRedirectUri();
 
   // Sign-ins as mutations: the retry toast targets `mutate`, pending states come
@@ -57,10 +58,11 @@ export default function LoginScreen() {
       // until the profile loads, and hiding it now would flash the login screen
       // between the wait and the home tabs.
       headless.setPhase('profile');
+      ticketRef.current = result.ticket ?? null;
       setCampusLog(
         tx(locale, 'common.browser', [result.studies]),
       );
-      campusSignIn.mutate();
+      campusSignIn.mutate(result.ticket);
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -77,7 +79,7 @@ export default function LoginScreen() {
 
   const campusSignIn = useMutation({
     mutationKey: ['campus-sign-in'],
-    mutationFn: signInWithCampusToken,
+    mutationFn: (ticket?: string) => signInWithCampusToken(ticket),
     onMutate: () => {
       setError('');
       setCampusLog(tx(locale, 'common.rufe', [assistantUrl]));
@@ -92,12 +94,14 @@ export default function LoginScreen() {
       // of the bare login screen. It stays up and disappears with this screen
       // when the gate swaps in the tabs.
       signInCampus(profile);
+      ticketRef.current = null;
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const message = campusMessage(locale, code, campusDetail(caught));
       setCampusLog(message);
       setError(message);
+      ticketRef.current = null;
       // A failed profile load has no session to move to, so the waiting views
       // give way to the screen with the retry.
       headless.close();
@@ -106,7 +110,7 @@ export default function LoginScreen() {
         title: tx(locale, 'common.c'),
         code,
         detail: campusDetail(caught) || undefined,
-        onRetry: () => campusSignIn.mutate(),
+        onRetry: () => campusSignIn.mutate(ticketRef.current ?? undefined),
       });
     },
   });
@@ -171,7 +175,7 @@ export default function LoginScreen() {
         </Notice>
         <Button
           label={busy ? tx(locale, 'common.anmeldung_laeuft') : tx(locale, 'loginLegacy.c_mpus_token')}
-          onPress={() => campusSignIn.mutate()}
+          onPress={() => campusSignIn.mutate(ticketRef.current ?? undefined)}
         />
         {campusSignIn.isPending ? (
           <SigningIn
@@ -205,7 +209,7 @@ export default function LoginScreen() {
               setError(tx(locale, 'loginLegacy.bitte'));
               return;
             }
-            signInLocal(account);
+            void signInLocal(account);
           }}
         />
         <Footer>
@@ -238,7 +242,7 @@ export default function LoginScreen() {
               : tx(locale, 'loginLegacy.oidc', [universityUrls.support])}
         </Footer>
         <Text style={styles.redirect}>{redirectUri}</Text>
-        <Button secondary label={tx(locale, 'loginLegacy.demonstrationsprofil')} onPress={() => signInDemo(student.account)} />
+        <Button secondary label={tx(locale, 'loginLegacy.demonstrationsprofil')} onPress={() => void signInDemo(student.account)} />
         <Footer>
           {tx(locale, 'loginLegacy.ohne', [student.name])}
         </Footer>

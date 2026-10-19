@@ -1,5 +1,6 @@
 import { assistantUrl } from '@/src/assistant/remote';
 import { recordCampusCall, type CampusLogEntry, type CampusOp } from '@/src/auth/campus-log';
+import { asAuthSession, authHeaders, getActiveAuthToken, type AuthSession } from '@/src/auth/session';
 import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 
 export interface CampusLogin {
@@ -10,6 +11,8 @@ export interface CampusLogin {
   nodes: CurriculumNode[];
   studies: CampusStudy[];
   activeStudyId: number | null;
+  /** Server user and bearer session created by the same sign-in. Absent from older servers. */
+  auth?: AuthSession;
 }
 
 export interface CurriculumLoad {
@@ -65,6 +68,10 @@ export interface CampusStatus {
   sessionCookieConfigured: boolean;
   studyId: number;
   elementId: number;
+  /** Present when the status request carried the app bearer token. */
+  credentialActive?: boolean;
+  credentialSource?: 'env' | 'browser' | null;
+  credentialAccount?: string | null;
 }
 
 function endpoint(path: string): string {
@@ -164,7 +171,7 @@ function clipArrays(value: unknown, maxItems: number): unknown {
 
 export async function fetchCampusStatus(): Promise<CampusStatus | null> {
   try {
-    const response = await fetch(endpoint('/v1/campus/config'));
+    const response = await fetch(endpoint('/v1/campus/config'), { headers: authHeaders() });
     if (!response.ok) return null;
     return (await response.json()) as CampusStatus;
   } catch {
@@ -184,13 +191,17 @@ export function activeStudy(studies: CampusStudy[], activeStudyId: number | null
   return studies.find((item) => item.studyId === activeStudyId) ?? studies.find((item) => item.lastAccessed) ?? studies[0];
 }
 
-export async function signInWithCampusToken(): Promise<CampusLogin> {
+export async function signInWithCampusToken(ticket?: string): Promise<CampusLogin> {
   const url = endpoint('/v1/campus/login');
   const started = Date.now();
   console.info('[campus-login] POST', url);
   let response: Response;
   try {
-    response = await fetch(url, { method: 'POST' });
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(ticket ? { ticket } : {}),
+    });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.info('[campus-login] unreachable', reason);
@@ -214,7 +225,7 @@ export async function signInWithCampusToken(): Promise<CampusLogin> {
   // The login may already carry the chooser list (new server). Otherwise fetch it:
   // the enrolled studies are production data and drive the selector at the top.
   let studies = asCampusStudies(payload.studies);
-  if (!studies.length) {
+  if (!studies.length && getActiveAuthToken()) {
     const loaded = await loadCampusStudies().catch((error: unknown) => {
       // Surface the studies failure: without it the app would fall back to mockup data.
       throw error instanceof Error ? error : new Error('campus_failed');
@@ -222,7 +233,7 @@ export async function signInWithCampusToken(): Promise<CampusLogin> {
     studies = loaded.studies;
   }
   logCall('login', started, {}, { ok: true, httpStatus: response.status, response: `${summarize('Knoten', nodes.map((node) => node.name))}; ${summarize('Studiengänge', studies.map((study) => study.name))}`, responseJson: jsonPreview({ nodes, studies }) });
-  return { ...payload, nodes, studies, activeStudyId: pickActiveStudyId(studies, null) };
+  return { ...payload, nodes, studies, activeStudyId: pickActiveStudyId(studies, null), auth: asAuthSession(payload) ?? undefined };
 }
 
 export async function loadCampusCurriculum(elementId?: number, studyId?: number): Promise<CurriculumLoad> {
@@ -237,7 +248,7 @@ export async function loadCampusCurriculum(elementId?: number, studyId?: number)
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
     });
   } catch (caught) {
@@ -280,7 +291,7 @@ export async function loadCampusStudies(): Promise<StudiesLoad> {
   console.info('[campus-studies] GET', url);
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { headers: authHeaders() });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.info('[campus-studies] unreachable', reason);
@@ -317,7 +328,7 @@ export async function loadCampusCourses(elementId: number, studyId?: number): Pr
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body),
     });
   } catch (caught) {
@@ -447,7 +458,7 @@ export async function startServerSync(studyId: number, options: { elementId?: nu
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ studyId, elementId: options.elementId, includeCourses: options.includeCourses ?? true }),
     });
   } catch {
@@ -462,7 +473,7 @@ export async function getServerSync(jobId: number): Promise<CampusSyncJob> {
   const url = endpoint(`/v1/campus/sync/${jobId}`);
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { headers: authHeaders() });
   } catch {
     throw new Error('server_unreachable');
   }
@@ -475,7 +486,7 @@ export async function cancelServerSync(jobId: number): Promise<CampusSyncJob> {
   const url = endpoint(`/v1/campus/sync/${jobId}`);
   let response: Response;
   try {
-    response = await fetch(url, { method: 'DELETE' });
+    response = await fetch(url, { method: 'DELETE', headers: authHeaders() });
   } catch {
     throw new Error('server_unreachable');
   }
@@ -489,7 +500,7 @@ export async function loadServerTree(studyId: number): Promise<ServerTree> {
   const url = endpoint(`/v1/campus/tree?studyId=${studyId}`);
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { headers: authHeaders() });
   } catch {
     throw new Error('server_unreachable');
   }
@@ -508,7 +519,7 @@ export async function loadServerCourses(studyId: number): Promise<ServerCourses>
   const url = endpoint(`/v1/campus/courses/all?studyId=${studyId}`);
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { headers: authHeaders() });
   } catch {
     throw new Error('server_unreachable');
   }
@@ -543,7 +554,7 @@ export async function loadServerCalls(limit = 200): Promise<CampusLogEntry[]> {
   const url = endpoint(`/v1/campus/calls?limit=${limit}`);
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await fetch(url, { headers: authHeaders() });
   } catch {
     throw new Error('server_unreachable');
   }
@@ -589,7 +600,7 @@ export async function exportCampusCalendar(options: { dateFrom: string; dateTo: 
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ dateFrom: options.dateFrom, dateTo: options.dateTo, format: options.format ?? 99, charset: options.charset ?? 'UTF8' }),
     });
   } catch {
@@ -626,7 +637,7 @@ export async function syncExportedCalendar(options: { dateFrom: string; dateTo: 
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ dateFrom: options.dateFrom, dateTo: options.dateTo }),
     });
   } catch {
@@ -652,20 +663,24 @@ export interface BrowserHarvest {
 }
 
 /** Beta sign-in: hand the in-app browser harvest to the server for validation. Secrets never touch the app bundle. */
-export async function submitBrowserCredentials(harvest: BrowserHarvest): Promise<{ ok: boolean; studies: number }> {
+export async function submitBrowserCredentials(harvest: BrowserHarvest): Promise<{ ok: boolean; studies: number; ticket?: string }> {
   const url = endpoint('/v1/campus/credentials');
   console.info('[campus-credentials] POST', url);
   let response: Response;
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ cookies: harvest.cookies.slice(0, 8000), storage: harvest.storage }),
     });
   } catch {
     throw new Error('server_unreachable');
   }
-  const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; studies?: number } & CampusFailure;
+  const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; studies?: number; ticket?: unknown } & CampusFailure;
   if (!response.ok || payload.ok !== true) throw campusFailure(payload, 'campus_failed', response.status);
-  return { ok: true, studies: typeof payload.studies === 'number' ? payload.studies : 0 };
+  return {
+    ok: true,
+    studies: typeof payload.studies === 'number' ? payload.studies : 0,
+    ticket: typeof payload.ticket === 'string' ? payload.ticket : undefined,
+  };
 }

@@ -108,6 +108,8 @@ Until a client id exists, the login button returns `oidc_unconfigured` and the s
 
 The IdP proves who the account is. It does not return the timetable, grades, or ILIAS files. Those systems are separate. After SIAM sign-in the profile card shows the name and account from UserInfo, and it states that the timetable and grades are still the demonstration record. C@MPUS, ILIAS, and SDG Campus sync actions are unchanged: they stamp a local time and do not call those hosts.
 
+The code exchange also creates or refreshes the server-side user for that account and mints an app session ([accounts.md](accounts.md)). The university access and refresh tokens stay in the server's OIDC session map; the app receives only the public user and its own session token.
+
 ## Checks
 
 `node --test server/oidc.test.mjs` (also run by `npm run check`) asserts that the authorize URL uses the production endpoint, sends PKCE, omits `execution` and any password, and that a secret in the environment is not copied into the URL. It does not complete a login against the IdP. A real login needs a TIK client, a running `npm run assistant`, and a redirect URI that TIK has registered.

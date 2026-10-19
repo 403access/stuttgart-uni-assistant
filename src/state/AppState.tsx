@@ -1,8 +1,24 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import {
+  clearAuthToken,
+  createServerSession,
+  fetchSessionUser,
+  getActiveAuthToken,
+  linkServerPlatform,
+  logoutServerSession,
+  readAuthToken,
+  saveAuthToken,
+  setActiveAuthToken,
+  syncServerPlatform,
+  unlinkServerPlatform,
+  type AuthSession,
+} from '@/src/auth/session';
+import { asUserAccount, findPlatform, localUser } from '@/src/auth/user';
 import { documents } from '@/src/data';
 import type {
+  AccountPlatformId,
   CampusStudy,
   ChatMessage,
   CurriculumNode,
@@ -10,15 +26,17 @@ import type {
   Locale,
   PersistedState,
   PlatformId,
+  PlatformLinkStatus,
   Review,
-  SessionMode,
   TransferDraft,
+  UserAccount,
 } from '@/src/types';
 
 const STORAGE_KEY = 'university-assistant/v1';
 
 const empty: PersistedState = {
   locale: 'de',
+  user: null,
   sessionAccount: null,
   sessionMode: null,
   sessionName: null,
@@ -39,16 +57,42 @@ const empty: PersistedState = {
   plannedIds: [],
 };
 
+export interface CampusSignInProfile {
+  account: string;
+  name: string;
+  nodes?: CurriculumNode[];
+  studyId?: number | null;
+  studies?: CampusStudy[];
+  activeStudyId?: number | null;
+  auth?: AuthSession;
+}
+
+export interface OidcSignInProfile {
+  account: string;
+  name: string | null;
+  email: string | null;
+  subject: string | null;
+  sessionId: string;
+  auth?: AuthSession;
+}
+
 type AppContextValue = PersistedState & {
   ready: boolean;
-  signInDemo: (account: string) => void;
-  signInLocal: (account: string) => void;
-  signInCampus: (profile: { account: string; name: string; nodes?: CurriculumNode[]; studyId?: number | null; studies?: CampusStudy[]; activeStudyId?: number | null }) => void;
+  /** Bearer token of the server session, or null while offline / signed out. Never persisted in AsyncStorage. */
+  authToken: string | null;
+  signInDemo: (account: string) => Promise<void>;
+  signInLocal: (account: string) => Promise<void>;
+  signInCampus: (profile: CampusSignInProfile) => void;
   setCurriculum: (nodes: CurriculumNode[], options?: { studyId?: number | null; replace?: boolean }) => void;
   setStudies: (studies: CampusStudy[]) => void;
   setActiveStudy: (studyId: number) => void;
-  signInOidc: (profile: { account: string; name: string | null; email: string | null; subject: string | null; sessionId: string }) => void;
+  signInOidc: (profile: OidcSignInProfile) => void;
   setMailAccount: (account: string | null) => void;
+  /** Re-read this account from the server (after a link, sync, or mail connect). */
+  refreshUser: () => Promise<void>;
+  linkAccount: (platform: AccountPlatformId, account: string | null, status?: PlatformLinkStatus, source?: string) => Promise<void>;
+  syncAccount: (platform: AccountPlatformId) => Promise<void>;
+  unlinkAccount: (platform: AccountPlatformId) => Promise<void>;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
   syncPlatform: (platform: PlatformId) => void;
@@ -126,14 +170,18 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
     typeof value.activeStudyId === 'number' && campusStudies.some((item) => item.studyId === value.activeStudyId)
       ? value.activeStudyId
       : pickActiveStudyId(campusStudies, null);
+  const user = asUserAccount(value.user);
   return {
     locale: value.locale === 'en' ? 'en' : 'de',
-    sessionAccount: typeof value.sessionAccount === 'string' ? value.sessionAccount : null,
-    sessionMode: value.sessionMode === 'oidc' || value.sessionMode === 'demo' || value.sessionMode === 'local' || value.sessionMode === 'campus' ? value.sessionMode : null,
-    sessionName: typeof value.sessionName === 'string' ? value.sessionName : null,
-    sessionEmail: typeof value.sessionEmail === 'string' ? value.sessionEmail : null,
-    sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : null,
-    mailAccount: typeof value.mailAccount === 'string' ? value.mailAccount : null,
+    user,
+    // The flat session fields predate the account record. A stored user fills them in
+    // when an older payload did not carry them yet.
+    sessionAccount: typeof value.sessionAccount === 'string' ? value.sessionAccount : user?.account ?? null,
+    sessionMode: value.sessionMode === 'oidc' || value.sessionMode === 'demo' || value.sessionMode === 'local' || value.sessionMode === 'campus' ? value.sessionMode : user?.mode ?? null,
+    sessionName: typeof value.sessionName === 'string' ? value.sessionName : user?.name ?? null,
+    sessionEmail: typeof value.sessionEmail === 'string' ? value.sessionEmail : user?.email ?? null,
+    sessionSubject: typeof value.sessionSubject === 'string' ? value.sessionSubject : user?.subject ?? null,
+    mailAccount: typeof value.mailAccount === 'string' ? value.mailAccount : findPlatform(user, 'mail')?.account ?? null,
     oidcSessionId: typeof value.oidcSessionId === 'string' ? value.oidcSessionId : null,
     curriculumNodes: sanitizeNodes(value.curriculumNodes),
     curriculumStudyId: typeof value.curriculumStudyId === 'number' ? value.curriculumStudyId : null,
@@ -149,9 +197,23 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
   };
 }
 
+/** The session fields every signed-in account mirrors, so older screens keep working. */
+function sessionFields(user: UserAccount) {
+  return {
+    user,
+    sessionAccount: user.account,
+    sessionMode: user.mode,
+    sessionName: user.name,
+    sessionEmail: user.email,
+    sessionSubject: user.subject,
+    mailAccount: findPlatform(user, 'mail')?.account ?? null,
+  };
+}
+
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedState>(empty);
   const [ready, setReady] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -174,61 +236,114 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => undefined);
   }, [ready, state]);
 
-  const api = useMemo<AppContextValue>(
-    () => ({
+  // Restore the server session on launch. A rejected token is dropped, so a
+  // revoked sign-in cannot keep showing a record. A network failure keeps the
+  // cached user, matching the app's offline behaviour.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const token = await readAuthToken();
+      if (!active || !token) return;
+      setAuthToken(token);
+      setActiveAuthToken(token);
+      const result = await fetchSessionUser(token);
+      if (!active) return;
+      if (result && 'unauthorized' in result) {
+        await clearAuthToken();
+        if (!active) return;
+        setAuthToken(null);
+        setActiveAuthToken(null);
+        setState((current) => ({ ...current, user: null, sessionAccount: null, sessionMode: null, sessionName: null, sessionEmail: null, sessionSubject: null, mailAccount: null, oidcSessionId: null }));
+        return;
+      }
+      if (result && 'user' in result) {
+        setState((current) => ({ ...current, ...sessionFields(result.user) }));
+      }
+    })().catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const api = useMemo<AppContextValue>(() => {
+    /** Sign-in: persist the server token, then the user and its mirrored fields. */
+    const establish = (session: AuthSession, extra: Partial<PersistedState> = {}) => {
+      setAuthToken(session.token);
+      setActiveAuthToken(session.token);
+      void saveAuthToken(session.token);
+      setState((current) => ({ ...current, ...sessionFields(session.user), ...extra }));
+    };
+
+    return {
       ...state,
       ready,
-      signInDemo: (account) =>
-        setState((current) => ({
-          ...current,
-          sessionAccount: account.trim() || 'st123456',
-          sessionMode: 'demo' satisfies SessionMode,
-          sessionName: null,
-          sessionEmail: null,
-          sessionSubject: null,
-          oidcSessionId: null,
-          curriculumNodes: [],
-          curriculumStudyId: null,
-          campusStudies: [],
-          activeStudyId: null,
-        })),
-      signInLocal: (account) =>
-        setState((current) => ({
-          ...current,
-          sessionAccount: account.trim(),
-          sessionMode: 'local',
-          sessionName: null,
-          sessionEmail: null,
-          sessionSubject: null,
-          oidcSessionId: null,
-          curriculumNodes: [],
-          curriculumStudyId: null,
-          campusStudies: [],
-          activeStudyId: null,
-        })),
-      signInCampus: (profile) =>
-        setState((current) => {
-          const studies = profile.studies ?? current.campusStudies;
-          const activeStudyId =
-            profile.activeStudyId !== undefined && profile.activeStudyId !== null
-              ? profile.activeStudyId
-              : pickActiveStudyId(studies, current.activeStudyId);
-          return {
-            ...current,
-            sessionAccount: profile.account,
-            sessionMode: 'campus',
-            sessionName: profile.name,
-            sessionEmail: null,
-            sessionSubject: null,
+      authToken,
+      signInDemo: async (account) => {
+        const accountValue = account.trim() || 'st123456';
+        try {
+          const session = await createServerSession({ mode: 'demo', account: accountValue, name: 'Lena Hartmann' });
+          establish(session, {
             oidcSessionId: null,
-            // A fresh login replaces the tree so nodes from another study never linger.
-            curriculumNodes: profile.nodes ?? current.curriculumNodes,
-            curriculumStudyId: profile.nodes ? (profile.studyId ?? null) : current.curriculumStudyId,
-            campusStudies: studies,
-            activeStudyId,
-            syncAt: { ...current.syncAt, campus: new Date().toISOString() },
-          };
-        }),
+            curriculumNodes: [],
+            curriculumStudyId: null,
+            campusStudies: [],
+            activeStudyId: null,
+          });
+        } catch {
+          // Offline: the demonstration record works without the assistant server.
+          setState((current) => ({
+            ...current,
+            ...sessionFields(localUser({ account: accountValue, name: 'Lena Hartmann', mode: 'demo' })),
+            oidcSessionId: null,
+            curriculumNodes: [],
+            curriculumStudyId: null,
+            campusStudies: [],
+            activeStudyId: null,
+          }));
+        }
+      },
+      signInLocal: async (account) => {
+        const accountValue = account.trim();
+        try {
+          const session = await createServerSession({ mode: 'local', account: accountValue });
+          establish(session, { oidcSessionId: null, curriculumNodes: [], curriculumStudyId: null, campusStudies: [], activeStudyId: null });
+        } catch {
+          setState((current) => ({
+            ...current,
+            ...sessionFields(localUser({ account: accountValue, mode: 'local' })),
+            oidcSessionId: null,
+            curriculumNodes: [],
+            curriculumStudyId: null,
+            campusStudies: [],
+            activeStudyId: null,
+          }));
+        }
+      },
+      signInCampus: (profile) => {
+        const studies = profile.studies ?? state.campusStudies;
+        const activeStudyId =
+          profile.activeStudyId !== undefined && profile.activeStudyId !== null
+            ? profile.activeStudyId
+            : pickActiveStudyId(studies, state.activeStudyId);
+        const extra: Partial<PersistedState> = {
+          oidcSessionId: null,
+          // A fresh login replaces the tree so nodes from another study never linger.
+          curriculumNodes: profile.nodes ?? state.curriculumNodes,
+          curriculumStudyId: profile.nodes ? (profile.studyId ?? null) : state.curriculumStudyId,
+          campusStudies: studies,
+          activeStudyId,
+          syncAt: { ...state.syncAt, campus: new Date().toISOString() },
+        };
+        if (profile.auth) {
+          establish(profile.auth, extra);
+          return;
+        }
+        setState((current) => ({
+          ...current,
+          ...sessionFields(localUser({ account: profile.account, name: profile.name, mode: 'campus' })),
+          ...extra,
+        }));
+      },
       setCurriculum: (nodes, options) =>
         setState((current) => {
           const studyId = options?.studyId !== undefined ? options.studyId : current.curriculumStudyId;
@@ -245,25 +360,66 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setState((current) =>
           current.campusStudies.some((item) => item.studyId === studyId) ? { ...current, activeStudyId: studyId } : current,
         ),
-      signInOidc: (profile) =>
-        setState((current) => ({
-          ...current,
-          sessionAccount: profile.account,
-          sessionMode: 'oidc',
-          sessionName: profile.name,
-          sessionEmail: profile.email,
-          sessionSubject: profile.subject,
+      signInOidc: (profile) => {
+        const extra: Partial<PersistedState> = {
           oidcSessionId: profile.sessionId,
           curriculumNodes: [],
           curriculumStudyId: null,
           campusStudies: [],
           activeStudyId: null,
-          syncAt: { ...current.syncAt, siam: new Date().toISOString() },
-        })),
-      setMailAccount: (account) => setState((current) => (current.mailAccount === account ? current : { ...current, mailAccount: account })),
-      signOut: () =>
+          syncAt: { ...state.syncAt, siam: new Date().toISOString() },
+        };
+        if (profile.auth) {
+          establish(profile.auth, extra);
+          return;
+        }
         setState((current) => ({
           ...current,
+          ...sessionFields(localUser({ account: profile.account, name: profile.name, email: profile.email, subject: profile.subject, mode: 'oidc' })),
+          ...extra,
+        }));
+      },
+      setMailAccount: (account) => setState((current) => (current.mailAccount === account ? current : { ...current, mailAccount: account })),
+      refreshUser: async () => {
+        const token = getActiveAuthToken();
+        if (!token) return;
+        const result = await fetchSessionUser(token);
+        if (result && 'unauthorized' in result) {
+          await clearAuthToken();
+          setAuthToken(null);
+          setActiveAuthToken(null);
+          setState((current) => ({ ...current, user: null, sessionAccount: null, sessionMode: null, sessionName: null, sessionEmail: null, sessionSubject: null, mailAccount: null }));
+          return;
+        }
+        if (result && 'user' in result) {
+          setState((current) => ({ ...current, ...sessionFields(result.user) }));
+        }
+      },
+      linkAccount: async (platform, account, status = 'connected', source = 'client') => {
+        const user = await linkServerPlatform(getActiveAuthToken(), platform, account, status, source);
+        if (user) setState((current) => ({ ...current, user, mailAccount: platform === 'mail' ? account : current.mailAccount ?? findPlatform(user, 'mail')?.account ?? null }));
+      },
+      syncAccount: async (platform) => {
+        const user = await syncServerPlatform(getActiveAuthToken(), platform);
+        if (!user) return;
+        setState((current) => ({
+          ...current,
+          user,
+          syncAt: platform === 'mail' ? current.syncAt : { ...current.syncAt, [platform]: new Date().toISOString() },
+        }));
+      },
+      unlinkAccount: async (platform) => {
+        const user = await unlinkServerPlatform(getActiveAuthToken(), platform);
+        if (user) setState((current) => ({ ...current, user, mailAccount: platform === 'mail' ? null : current.mailAccount }));
+      },
+      signOut: () => {
+        void logoutServerSession(authToken);
+        void clearAuthToken();
+        setAuthToken(null);
+        setActiveAuthToken(null);
+        setState((current) => ({
+          ...current,
+          user: null,
           sessionAccount: null,
           sessionMode: null,
           sessionName: null,
@@ -275,7 +431,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           curriculumStudyId: null,
           campusStudies: [],
           activeStudyId: null,
-        })),
+        }));
+      },
       setLocale: (locale) => setState((current) => ({ ...current, locale })),
       syncPlatform: (platform) =>
         setState((current) => ({
@@ -318,6 +475,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setState((current) => ({
           ...empty,
           locale: current.locale,
+          user: current.user,
           sessionAccount: current.sessionAccount,
           sessionMode: current.sessionMode,
           sessionName: current.sessionName,
@@ -336,9 +494,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                 ? { campus: current.syncAt.campus }
                 : {},
         })),
-    }),
-    [ready, state],
-  );
+    };
+  }, [ready, state, authToken]);
 
   return <AppContext.Provider value={api}>{children}</AppContext.Provider>;
 }

@@ -36,7 +36,7 @@
 
 ## Signing out
 
-Settings has sign-out. It clears the session and returns to the sign-in screen. The language stays set. If the server holds mail credentials, signing out clears them from the server too.
+Sign-out lives on the account screen (**Campus → Konto**) and in this list. It revokes the server session, deletes the device session token, clears the stored C@MPUS password, and returns to the sign-in screen. The language stays set. If the server holds mail credentials, signing out clears them from the server too.
 
 ## What is stored about you
 

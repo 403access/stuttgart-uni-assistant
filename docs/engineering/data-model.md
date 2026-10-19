@@ -123,6 +123,7 @@ Key: `university-assistant/v1`.
 ```ts
 interface PersistedState {
   locale: 'de' | 'en';
+  user: UserAccount | null;
   sessionAccount: string | null;
   sessionMode: 'oidc' | 'demo' | 'local' | 'campus' | null;
   sessionName: string | null;
@@ -149,4 +150,6 @@ interface PersistedState {
 
 `sanitize` keeps only well-typed fields. Unknown JSON is ignored. ILIAS sync unions every `source: 'ilias'` document id into `downloadedIds` and sets `syncAt.ilias`. Other platforms only set their timestamp.
 
-Not stored: the OIDC client secret, the C@MPUS bearer token, `PSESSIONID`, the API key, grades, the Informatik catalog, GPS, or anyone else's account. The university password is not stored either, with one opt-in beta exception: the C@MPUS autologin vault keeps it in `expo-secure-store` (see [campus-browser-login.md](campus-browser-login.md)), deleted on sign-out. `oidcSessionId` only names a record in the server's memory. `curriculumNodes`, `curriculumStudyId`, `campusStudies`, and `activeStudyId` are cleared on sign-out.
+`UserAccount` is the server-side account copied to the device: `id`, `account`, `name`, `email`, `matriculation`, `subject`, `mode`, timestamps, and `platforms` (one `PlatformLink` per C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail with `status` `connected` or `linked`, `source`, `linkedAt`, `lastSyncAt`). The flat `session*` fields are the same values kept for the screens that predate the account record. The server tables (`users`, `user_sessions`, `user_platforms`, `user_campus`) and the bearer session are documented in [accounts.md](accounts.md); the session token is not part of `PersistedState`. The server's portal rows are keyed by the same user id, so one account's curriculum and courses are not visible to another ([accounts.md](accounts.md#portal-rows-are-scoped-by-user)).
+
+Not stored: the OIDC client secret, the C@MPUS bearer token, `PSESSIONID`, the app session token, the API key, grades, the Informatik catalog, GPS, or anyone else's account. The university password is not stored either, with one opt-in beta exception: the C@MPUS autologin vault keeps it in `expo-secure-store` (see [campus-browser-login.md](campus-browser-login.md)), deleted on sign-out. `oidcSessionId` only names a record in the server's memory. `curriculumNodes`, `curriculumStudyId`, `campusStudies`, and `activeStudyId` are cleared on sign-out; the server user survives, so a later sign-in with the same account keeps its platform links.

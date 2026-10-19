@@ -50,6 +50,8 @@ Read these in order. Each file states the decision for this project, the artifac
 | Document | Contents |
 | --- | --- |
 | [engineering/architecture.md](engineering/architecture.md) | Client, local record, assistant server |
+| [engineering/accounts.md](engineering/accounts.md) | Server-side users, bearer sessions, and the one account across C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail |
+| [engineering/admin-dashboard.md](engineering/admin-dashboard.md) | The token-protected `/admin` dashboard for users, sessions, platform links, and per-user C@MPUS data |
 | [engineering/data-model.md](engineering/data-model.md) | Program, modules, places, and what is stored on the device |
 | [engineering/integrations.md](engineering/integrations.md) | SIAM, C@MPUS, ILIAS, SDG Campus, and which of them are live |
 | [engineering/campus-curriculum.md](engineering/campus-curriculum.md) | C@MPUS curriculum-structure request, stored nodes, and the API screen |

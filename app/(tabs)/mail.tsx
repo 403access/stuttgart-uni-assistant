@@ -147,7 +147,7 @@ function messageTime(message: { date: string }): number {
 }
 
 export default function MailScreen() {
-  const { locale, sessionAccount, mailAccount, setMailAccount } = useApp();
+  const { locale, sessionAccount, mailAccount, setMailAccount, authToken, refreshUser } = useApp();
   const [status, setStatus] = useState<MailStatus | null>(() => getMailSnapshot().status);
   const [messages, setMessages] = useState<MailMessage[]>(() => getMailSnapshot().messages ?? []);
   const [account, setAccount] = useState(mailAccount ?? sessionAccount ?? '');
@@ -413,9 +413,10 @@ export default function MailScreen() {
     setNote('');
     setBusy(true);
     try {
-      const result = await submitMailCredentials({ account, password });
+      const result = await submitMailCredentials({ account, password }, authToken);
       setPassword('');
       setMailAccount(result.account);
+      void refreshUser();
       showToast({
         tone: 'success',
         title: tx(locale, 'tabsMail.verbunden_2', [result.account]),

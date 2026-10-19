@@ -1,12 +1,14 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 
-import { exportCampusCalendar, loadCampusStudies, loadCourseGroups, loadCurriculumCourses, loadCurriculumStructure, loginWithBrowserCredentials, loginWithCampusToken, publicCampusStatus, startCampusTokenRefresh, syncExportedCalendar } from './campus.mjs';
+import { exportCampusCalendar, clearUserCampusCredential, loadCampusStudies, loadCourseGroups, loadCurriculumCourses, loadCurriculumStructure, publicCampusStatus, readCampusLogin, resolveLoginCredential, setUserCampusCredential, startCampusTokenRefresh, storeCampusLogin, syncExportedCalendar, validateBrowserCredentials } from './campus.mjs';
 import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials } from './mail.mjs';
-import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls } from './db.mjs';
-import { cancelSyncJob, getSyncJob, startSyncJob } from './sync.mjs';
+import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls, saveCampusSource } from './db.mjs';
+import { cancelSyncJobForUser, getSyncJobForUser, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
+import { authenticateRequest, campusPlatformLinks, createUserSession, getUser, linkPlatform, oidcPlatformLinks, readBearer, requireAuth, revokeSession, touchPlatform, unlinkPlatform } from './auth.mjs';
+import { adminAuthorized, adminConfigured, adminCookie, adminStats, adminTokenMatches, adminUserDetail, clearAdminCookie, clearAdminPortalData, deleteAdminUser, disconnectAdminCampus, linkAdminPlatform, listUsers, revokeAdminSession, revokeAdminSessions, unlinkAdminPlatform, updateAdminUser } from './admin.mjs';
 import { t } from './i18n/index.mjs';
 
 loadEnv(new URL('../.env', import.meta.url));
@@ -68,14 +70,46 @@ function readBody(request) {
   });
 }
 
-function send(response, status, body) {
+function send(response, status, body, headers = {}) {
   response.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    ...headers,
   });
   response.end(JSON.stringify(body));
+}
+
+function sendHtml(response, html) {
+  response.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'no-store',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+    'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'",
+  });
+  response.end(html);
+}
+
+function isSecureRequest(request) {
+  return Boolean(request.socket?.encrypted) || String(request.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
+}
+
+function adminUserId(value) {
+  return typeof value === 'string' && /^usr_[A-Za-z0-9_-]{4,100}$/.test(value) ? value : null;
+}
+
+function adminGate(request, response) {
+  if (!adminConfigured()) {
+    send(response, 503, { error: 'admin_unconfigured' });
+    return false;
+  }
+  if (!adminAuthorized(request)) {
+    send(response, 401, { error: 'unauthorized' });
+    return false;
+  }
+  return true;
 }
 
 function campusFailure(error) {
@@ -108,6 +142,146 @@ const server = createServer(async (request, response) => {
     send(response, 204, {});
     return;
   }
+  if (request.method === 'GET' && (url.pathname === '/admin' || url.pathname === '/admin/')) {
+    // Read per request: a dashboard edit does not need a server restart.
+    sendHtml(response, readFileSync(new URL('./dashboard.html', import.meta.url), 'utf8'));
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/admin/login') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    if (!adminConfigured()) {
+      send(response, 503, { error: 'admin_unconfigured' });
+      return;
+    }
+    if (!adminTokenMatches(body?.token)) {
+      send(response, 401, { error: 'unauthorized' });
+      return;
+    }
+    send(response, 200, { ok: true }, { 'Set-Cookie': adminCookie(String(body.token), isSecureRequest(request)) });
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/admin/logout') {
+    send(response, 200, { ok: true }, { 'Set-Cookie': clearAdminCookie() });
+    return;
+  }
+  if (url.pathname.startsWith('/v1/admin/')) {
+    if (!adminGate(request, response)) return;
+    if (request.method === 'GET' && url.pathname === '/v1/admin/overview') {
+      send(response, 200, adminStats());
+      return;
+    }
+    if (request.method === 'GET' && url.pathname === '/v1/admin/users') {
+      send(response, 200, listUsers({
+        query: url.searchParams.get('query') || '',
+        mode: url.searchParams.get('mode') || '',
+        platform: url.searchParams.get('platform') || '',
+        credential: url.searchParams.get('credential') || '',
+        limit: url.searchParams.get('limit') || 50,
+        offset: url.searchParams.get('offset') || 0,
+      }));
+      return;
+    }
+    const match = url.pathname.match(/^\/v1\/admin\/users\/([^/]+)(?:\/(.+))?$/);
+    if (match) {
+      let userId;
+      try {
+        userId = adminUserId(decodeURIComponent(match[1]));
+      } catch {
+        userId = null;
+      }
+      if (!userId) {
+        send(response, 400, { error: 'bad_user_id' });
+        return;
+      }
+      const action = match[2] ?? '';
+      const existing = getUser(userId);
+      if (!existing) {
+        send(response, 404, { error: 'unknown_user' });
+        return;
+      }
+      if (request.method === 'GET' && action === '') {
+        send(response, 200, adminUserDetail(userId));
+        return;
+      }
+      if (request.method === 'POST' && action === '') {
+        let body = {};
+        try {
+          body = await readBody(request);
+        } catch {
+          send(response, 400, { error: 'bad_json' });
+          return;
+        }
+        updateAdminUser(userId, body);
+        send(response, 200, adminUserDetail(userId));
+        return;
+      }
+      if (request.method === 'DELETE' && action === '') {
+        deleteAdminUser(userId);
+        send(response, 200, { ok: true });
+        return;
+      }
+      if (request.method === 'POST' && action === 'sessions/revoke') {
+        send(response, 200, revokeAdminSessions(userId));
+        return;
+      }
+      if (request.method === 'DELETE' && action.startsWith('sessions/')) {
+        const sessionId = decodeURIComponent(action.slice('sessions/'.length));
+        if (!revokeAdminSession(userId, sessionId)) {
+          send(response, 404, { error: 'unknown_session' });
+          return;
+        }
+        send(response, 200, adminUserDetail(userId));
+        return;
+      }
+      if (request.method === 'POST' && action === 'platforms') {
+        let body = {};
+        try {
+          body = await readBody(request);
+        } catch {
+          send(response, 400, { error: 'bad_json' });
+          return;
+        }
+        try {
+          send(response, 200, linkAdminPlatform(userId, body));
+        } catch (error) {
+          send(response, Number(error.status) || 400, { error: error.message || 'admin_failed' });
+        }
+        return;
+      }
+      if (request.method === 'DELETE' && action.startsWith('platforms/')) {
+        const platform = decodeURIComponent(action.slice('platforms/'.length));
+        try {
+          send(response, 200, unlinkAdminPlatform(userId, platform));
+        } catch (error) {
+          send(response, Number(error.status) || 400, { error: error.message || 'admin_failed' });
+        }
+        return;
+      }
+      if (request.method === 'POST' && action === 'campus/disconnect') {
+        send(response, 200, disconnectAdminCampus(userId));
+        return;
+      }
+      if (request.method === 'POST' && action === 'portal/clear') {
+        let body = {};
+        try {
+          body = await readBody(request);
+        } catch {
+          send(response, 400, { error: 'bad_json' });
+          return;
+        }
+        send(response, 200, clearAdminPortalData(userId, body?.studyId));
+        return;
+      }
+    }
+    send(response, 404, { error: 'not_found' });
+    return;
+  }
   if (request.method === 'GET' && url.pathname === '/health') {
     send(response, 200, {
       ok: true,
@@ -116,11 +290,111 @@ const server = createServer(async (request, response) => {
       oidc: publicOidcStatus(),
       campus: publicCampusStatus(),
       mail: publicMailStatus(),
+      admin: { configured: adminConfigured() },
     });
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/api') {
     send(response, 200, apiCatalog());
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/auth/session') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    const mode = body.mode === 'demo' ? 'demo' : body.mode === 'local' ? 'local' : '';
+    if (!mode) {
+      send(response, 400, { error: 'bad_mode' });
+      return;
+    }
+    try {
+      // Demo and local profiles create a server-side user without a university
+      // password. Campus and OIDC sessions are only minted by their own routes,
+      // which have verified the identity first.
+      const session = createUserSession({
+        account: body.account,
+        name: typeof body.name === 'string' ? body.name : null,
+        email: typeof body.email === 'string' ? body.email : null,
+        mode,
+      });
+      console.log(`[auth] session created mode=${mode} account=${session.user.account}`);
+      send(response, 200, session);
+    } catch (error) {
+      send(response, Number(error.status) || 400, { error: error.message || 'auth_failed', detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/auth/me') {
+    const auth = authenticateRequest(request);
+    if (!auth) {
+      send(response, 401, { error: 'unauthorized' });
+      return;
+    }
+    send(response, 200, { user: auth.user, session: { expiresAt: auth.expiresAt } });
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/auth/logout') {
+    const token = readBearer(request);
+    const auth = authenticateRequest(request);
+    // Sign-out revokes the app session and drops the in-memory portal
+    // credential; the per-user data stays for the next sign-in.
+    if (auth) clearUserCampusCredential(auth.user.id);
+    if (token) revokeSession(token);
+    send(response, 200, { ok: true });
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/auth/links') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      const auth = requireAuth(request);
+      const user = linkPlatform(auth.user.id, {
+        platform: body.platform,
+        account: body.account,
+        status: body.status,
+        source: body.source,
+      });
+      send(response, 200, { user });
+    } catch (error) {
+      send(response, Number(error.status) || 400, { error: error.message || 'auth_failed', detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'DELETE' && url.pathname.startsWith('/v1/auth/links/')) {
+    const platform = url.pathname.slice('/v1/auth/links/'.length);
+    try {
+      const auth = requireAuth(request);
+      const user = unlinkPlatform(auth.user.id, platform);
+      send(response, 200, { user });
+    } catch (error) {
+      send(response, Number(error.status) || 400, { error: error.message || 'auth_failed', detail: error.detail });
+    }
+    return;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/auth/sync') {
+    let body = {};
+    try {
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      const auth = requireAuth(request);
+      const user = touchPlatform(auth.user.id, body.platform, body.at);
+      send(response, 200, { user });
+    } catch (error) {
+      send(response, Number(error.status) || 400, { error: error.message || 'auth_failed', detail: error.detail });
+    }
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/mail/config') {
@@ -140,8 +414,10 @@ const server = createServer(async (request, response) => {
     try {
       // Secrets in, never out: the password is validated against the TIK IMAP server and stays in this process.
       const result = await saveMailCredentials({ account: body?.account, password: body?.password });
+      const auth = authenticateRequest(request);
+      if (auth) linkPlatform(auth.user.id, { platform: 'mail', account: result.account, status: 'connected', source: 'mail' });
       console.log(`[mail] credentials ok account=${result.account}`);
-      send(response, 200, result);
+      send(response, 200, auth ? { ...result, user: getUser(auth.user.id) } : result);
     } catch (error) {
       const code = error.message || 'mail_failed';
       console.log(`[mail] credentials failed ${code}`);
@@ -193,12 +469,15 @@ const server = createServer(async (request, response) => {
   }
   if (request.method === 'POST' && url.pathname === '/v1/mail/logout') {
     console.log('[mail] POST /v1/mail/logout');
+    const auth = authenticateRequest(request);
+    if (auth) unlinkPlatform(auth.user.id, 'mail');
     forgetMailCredentials();
     send(response, 200, publicMailStatus());
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/config') {
-    send(response, 200, publicCampusStatus());
+    const auth = authenticateRequest(request);
+    send(response, 200, publicCampusStatus(auth?.user?.id));
     return;
   }
   if (request.method === 'POST' && url.pathname === '/v1/campus/credentials') {
@@ -212,9 +491,19 @@ const server = createServer(async (request, response) => {
     }
     try {
       // Secrets in, never out: the body is neither logged nor echoed.
-      const result = await loginWithBrowserCredentials({ cookies: body?.cookies, storage: body?.storage });
-      console.log(`[campus] credentials ok studies=${result.studies}`);
-      send(response, 200, result);
+      const auth = authenticateRequest(request);
+      const result = await validateBrowserCredentials({ cookies: body?.cookies, storage: body?.storage });
+      if (auth) {
+        // A signed-in user reconnecting C@MPUS: keep the credential under that account.
+        setUserCampusCredential(auth.user.id, result.credential);
+        saveCampusSource(auth.user.id, 'browser', auth.user.account);
+        console.log(`[campus] credentials ok studies=${result.studies} user=${auth.user.id}`);
+        send(response, 200, { ok: true, studies: result.studies, activeStudyId: result.activeStudyId, user: getUser(auth.user.id) });
+        return;
+      }
+      // Pre-login: hand the validated credential to /v1/campus/login by ticket.
+      console.log(`[campus] credentials ok studies=${result.studies} ticket issued`);
+      send(response, 200, { ok: true, studies: result.studies, activeStudyId: result.activeStudyId, ticket: result.ticket });
     } catch (error) {
       const code = error.message || 'campus_failed';
       console.log(`[campus] credentials failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
@@ -224,10 +513,32 @@ const server = createServer(async (request, response) => {
   }
   if (request.method === 'POST' && url.pathname === '/v1/campus/login') {
     const reqId = campusReq('POST /v1/campus/login');
+    let body = {};
     try {
-      const profile = await loginWithCampusToken();
-      console.log(`[campus #${reqId}] login ok name=${profile.name} account=${profile.account} nodes=${profile.nodes.length} studies=${profile.studies?.length ?? 0}`);
-      send(response, 200, profile);
+      body = await readBody(request);
+    } catch {
+      send(response, 400, { error: 'bad_json' });
+      return;
+    }
+    try {
+      const auth = authenticateRequest(request);
+      const credential = resolveLoginCredential({ ticket: body?.ticket, userId: auth?.user?.id });
+      // Read the profile before choosing the user id: a pre-login ticket has no account yet.
+      const profile = await readCampusLogin(credential, fetch, auth?.user?.id ?? null, false);
+      const { credential: _credential, ...profileData } = profile;
+      // The C@MPUS read proves the st-account. Mint the app session for this
+      // user and record the platforms that share the same SIAM identity.
+      const session = createUserSession({
+        account: profileData.account,
+        name: profileData.name,
+        mode: 'campus',
+        platforms: campusPlatformLinks({ account: profileData.account }),
+      });
+      setUserCampusCredential(session.user.id, { ...credential, account: profileData.account });
+      saveCampusSource(session.user.id, credential.source, profileData.account);
+      storeCampusLogin(session.user.id, profileData);
+      console.log(`[campus #${reqId}] login ok name=${profileData.name} account=${profileData.account} nodes=${profileData.nodes.length} studies=${profileData.studies?.length ?? 0} user=${session.user.id}`);
+      send(response, 200, { ...profileData, user: session.user, token: session.token, expiresAt: session.expiresAt });
     } catch (error) {
       const code = error.message || 'campus_failed';
       console.log(`[campus #${reqId}] login failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
@@ -245,7 +556,8 @@ const server = createServer(async (request, response) => {
     }
     const reqId = campusReq('POST /v1/campus/structure', `body=${previewBody(body)}`);
     try {
-      const result = await loadCurriculumStructure(body?.elementId, body?.studyId);
+      const auth = requireAuth(request);
+      const result = await loadCurriculumStructure(body?.elementId, body?.studyId, fetch, undefined, auth.user.id);
       console.log(`[campus #${reqId}] structure ok study=${result.studyId} element=${result.elementId} nodes=${result.nodes.length}`);
       send(response, 200, result);
     } catch (error) {
@@ -265,7 +577,8 @@ const server = createServer(async (request, response) => {
     }
     const reqId = campusReq('POST /v1/campus/courses', `body=${previewBody(body)}`);
     try {
-      const result = await loadCurriculumCourses(body?.studyId, body?.elementId);
+      const auth = requireAuth(request);
+      const result = await loadCurriculumCourses(body?.studyId, body?.elementId, fetch, undefined, auth.user.id);
       console.log(`[campus #${reqId}] courses ok study=${result.studyId} element=${result.elementId} count=${result.courses.length}`);
       send(response, 200, result);
     } catch (error) {
@@ -285,7 +598,8 @@ const server = createServer(async (request, response) => {
     }
     const reqId = campusReq('POST /v1/campus/course-groups', `body=${previewBody(body)}`);
     try {
-      const result = await loadCourseGroups(body?.courseId);
+      const auth = requireAuth(request);
+      const result = await loadCourseGroups(body?.courseId, fetch, undefined, auth.user.id);
       console.log(`[campus #${reqId}] course groups ok course=${result.courseId} groups=${result.groups.length}`);
       send(response, 200, result);
     } catch (error) {
@@ -305,7 +619,8 @@ const server = createServer(async (request, response) => {
     }
     const reqId = campusReq('POST /v1/campus/sync', `body=${previewBody(body)}`);
     try {
-      const job = await startSyncJob({ studyId: body?.studyId, elementId: body?.elementId, includeCourses: body?.includeCourses });
+      const auth = requireAuth(request);
+      const job = await startSyncJob({ userId: auth.user.id, studyId: body?.studyId, elementId: body?.elementId, includeCourses: body?.includeCourses });
       console.log(`[campus #${reqId}] sync started job=${job.jobId} study=${job.studyId}`);
       send(response, 200, job);
     } catch (error) {
@@ -321,12 +636,17 @@ const server = createServer(async (request, response) => {
       send(response, 400, { error: 'bad_job_id' });
       return;
     }
-    const job = request.method === 'DELETE' ? cancelSyncJob(id) : getSyncJob(id);
-    if (!job) {
-      send(response, 404, { error: 'unknown_job' });
-      return;
+    try {
+      const auth = requireAuth(request);
+      const job = request.method === 'DELETE' ? cancelSyncJobForUser(auth.user.id, id) : getSyncJobForUser(auth.user.id, id);
+      if (!job) {
+        send(response, 404, { error: 'unknown_job' });
+        return;
+      }
+      send(response, 200, job);
+    } catch (error) {
+      send(response, Number(error.status) || 500, { error: error.message || 'campus_failed' });
     }
-    send(response, 200, job);
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/tree') {
@@ -336,7 +656,8 @@ const server = createServer(async (request, response) => {
       return;
     }
     try {
-      const stored = loadStructure(studyId);
+      const auth = requireAuth(request);
+      const stored = loadStructure(auth.user.id, studyId);
       send(response, 200, {
         studyId,
         nodes: stored.nodes,
@@ -346,7 +667,7 @@ const server = createServer(async (request, response) => {
           : null,
       });
     } catch (error) {
-      send(response, 500, { error: error.message || 'campus_failed' });
+      send(response, Number(error.status) || 500, { error: error.message || 'campus_failed' });
     }
     return;
   }
@@ -357,15 +678,16 @@ const server = createServer(async (request, response) => {
       return;
     }
     try {
-      const sync = getCoursesSync(studyId);
+      const auth = requireAuth(request);
+      const sync = getCoursesSync(auth.user.id, studyId);
       send(response, 200, {
         studyId,
-        courses: loadCourses(studyId),
-        fetchedElementIds: loadCoursesFetchedIds(studyId),
+        courses: loadCourses(auth.user.id, studyId),
+        fetchedElementIds: loadCoursesFetchedIds(auth.user.id, studyId),
         sync: sync ? { courseCount: sync.courseCount, finishedAt: sync.finishedAt, complete: sync.complete } : null,
       });
     } catch (error) {
-      send(response, 500, { error: error.message || 'campus_failed' });
+      send(response, Number(error.status) || 500, { error: error.message || 'campus_failed' });
     }
     return;
   }
@@ -379,7 +701,8 @@ const server = createServer(async (request, response) => {
     }
     const reqId = campusReq('POST /v1/campus/calendar-export', `body=${previewBody(body)}`);
     try {
-      const result = await exportCampusCalendar(body, undefined);
+      const auth = requireAuth(request);
+      const result = await exportCampusCalendar(body, undefined, auth.user.id);
       console.log(`[campus #${reqId}] calendar export ok ${result.filename} ${result.bytes} bytes`);
       send(response, 200, result);
     } catch (error) {
@@ -399,7 +722,8 @@ const server = createServer(async (request, response) => {
     }
     const reqId = campusReq('POST /v1/campus/calendar-sync', `body=${previewBody(body)}`);
     try {
-      const result = await syncExportedCalendar(body, undefined);
+      const auth = requireAuth(request);
+      const result = await syncExportedCalendar(body, undefined, auth.user.id);
       console.log(`[campus #${reqId}] calendar sync ok ${result.imported} new, ${result.skipped} duplicates`);
       send(response, 200, result);
     } catch (error) {
@@ -411,16 +735,18 @@ const server = createServer(async (request, response) => {
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/calls') {
     try {
-      send(response, 200, { calls: readPortalCalls(url.searchParams.get('limit')) });
+      const auth = requireAuth(request);
+      send(response, 200, { calls: readPortalCalls(auth.user.id, url.searchParams.get('limit')) });
     } catch (error) {
-      send(response, 500, { error: error.message || 'campus_failed' });
+      send(response, Number(error.status) || 500, { error: error.message || 'campus_failed' });
     }
     return;
   }
   if (request.method === 'GET' && url.pathname === '/v1/campus/studies') {
     const reqId = campusReq('GET /v1/campus/studies');
     try {
-      const result = await loadCampusStudies();
+      const auth = requireAuth(request);
+      const result = await loadCampusStudies(undefined, auth.user.id);
       console.log(`[campus #${reqId}] studies ok count=${result.studies.length}`);
       send(response, 200, result);
     } catch (error) {
@@ -452,7 +778,16 @@ const server = createServer(async (request, response) => {
         return;
       }
       if (url.pathname === '/v1/oidc/exchange') {
-        send(response, 200, await exchangeCode({ code: oidcBody.code, state: oidcBody.state, redirectUri: String(oidcBody.redirectUri ?? '') }));
+        const exchanged = await exchangeCode({ code: oidcBody.code, state: oidcBody.state, redirectUri: String(oidcBody.redirectUri ?? '') });
+        const session = createUserSession({
+          account: exchanged.profile.account,
+          name: exchanged.profile.name,
+          email: exchanged.profile.email,
+          subject: exchanged.profile.subject,
+          mode: 'oidc',
+          platforms: oidcPlatformLinks({ account: exchanged.profile.account }),
+        });
+        send(response, 200, { ...exchanged, user: session.user, token: session.token, expiresAt: session.expiresAt });
         return;
       }
       send(response, 200, await endRemoteSession(oidcBody.sessionId));

@@ -1,6 +1,6 @@
 # C@MPUS calendar import
 
-One authenticated download from the C@MPUS portal, observed in a signed-in browser session on 16 October 2026. It exports the personal calendar through the export mask `wbKalender.wbExport`. Unlike the REST calls in [campus-curriculum.md](campus-curriculum.md), this is the classic web UI: a form POST with the session cookie and a binary attachment back. The assistant server calls it for `POST /v1/campus/calendar-export`. In the app the feature is called **Kalender-Import** and sits on the Campus tab (Studium → Kalender-Import): the portal side is an export, the app's action is an import.
+One authenticated download from the C@MPUS portal, observed in a signed-in browser session on 16 October 2026. It exports the personal calendar through the export mask `wbKalender.wbExport`. Unlike the REST calls in [campus-curriculum.md](campus-curriculum.md), this is the classic web UI: a form POST with the session cookie and a binary attachment back. The assistant server calls it for `POST /v1/campus/calendar-export`. In the app the feature is called **Kalender-Import** and sits on the Campus tab (Studium → Kalender-Import): the portal side is an export, the app's action is an import. The route requires the app bearer token and uses that user's portal session cookie; imported events are stored per `user_id`.
 
 ## Observed calls
 

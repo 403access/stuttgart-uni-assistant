@@ -34,6 +34,13 @@ connect UniMail on the assistant server, so your Messages tab is ready without a
 second entry. A loading indicator names the phase while the profile and
 curriculum load.
 
+The C@MPUS portal session is kept for your account on the assistant server, not
+for the whole server. Another student signing in on the same server gets a
+separate account, credential, and curriculum. After a server restart the
+browser session is gone and the account has to connect C@MPUS again; `.env`
+credentials survive because they stay in the environment. See
+[accounts.md](../engineering/accounts.md).
+
 The other paths still work but have moved to the deprecated `/login-legacy`
 screen, which the start screen no longer links to:
 
@@ -55,7 +62,8 @@ Any path signs you in. The demonstration profile needs nothing; the token, brows
 2. On **Heute (Today)** you see credits, today's sessions, and the next deadlines. On the demonstration profile these are Lena's numbers.
 3. The five tabs at the bottom are **Heute (Today)**, **Kalender (Calendar)**, **Chat**, **Nachrichten (Messages)**, **Campus**. Everything else is reached from the last tab.
 4. Your profile lives under **Campus** at the top: name, account, and — with a C@MPUS session — the study selector for switching between enrolled studies.
+5. **Campus → Konto** is one account for C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail. It shows what is connected (a live session or credential) and what is only linked through the same identity, and each row carries the action that fits: open C@MPUS, sync ILIAS or SDG Campus, or enter UniMail. See [accounts.md](../engineering/accounts.md).
 
 ## Sign out and switch profile
 
-**Campus → Einstellungen** has sign-out. Signing out clears the session and returns to the sign-in screen. Language stays as you set it.
+**Campus → Konto → Abmelden** (or the sign-out row in Campus) revokes the server session, deletes the session token and the stored C@MPUS password from this device, and returns to the sign-in screen. The server keeps the user and its platform links, so signing in again with the same account finds them. Language stays as you set it.

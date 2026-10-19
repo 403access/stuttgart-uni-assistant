@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>University Assistant · Verwaltung</title>
+    <style>
+      :root {
+        --anthracite: #323232;
+        --blue: #004191;
+        --blue-soft: #e6eef7;
+        --light: #00beff;
+        --light-soft: #e5f8ff;
+        --paper: #ffffff;
+        --mist: #f3f6f8;
+        --line: #e1e5e8;
+        --ink-soft: #5e666e;
+        --mute: #8b939a;
+        --ok: #1c6b45;
+        --ok-soft: #e5f4ec;
+        --warn: #8a5a00;
+        --warn-soft: #fbf3e4;
+        --danger: #8e2f2f;
+        --danger-soft: #f8e8e8;
+        --shadow: 0 18px 40px rgba(0, 26, 58, 0.12);
+        --radius: 16px;
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html, body { margin: 0; min-height: 100%; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: var(--anthracite);
+        background: var(--mist);
+        line-height: 1.45;
+      }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      .centered { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+      .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+      .login-card { width: min(460px, 100%); padding: 28px; display: grid; gap: 14px; }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .mark { width: 44px; height: 44px; border-radius: 14px; background: var(--blue); display: grid; place-items: center; }
+      .mark span { width: 13px; height: 13px; border-radius: 999px; background: var(--paper); display: block; box-shadow: 15px 0 0 var(--light); }
+      h1 { font-size: 24px; margin: 0; letter-spacing: -0.4px; }
+      h2 { font-size: 15px; margin: 0; text-transform: uppercase; letter-spacing: 0.08em; color: var(--blue); }
+      p { margin: 0; color: var(--ink-soft); }
+      label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+      input, select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: var(--paper);
+        color: var(--anthracite);
+        outline: none;
+      }
+      input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+      .btn {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+        background: var(--blue);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .btn:hover { filter: brightness(1.08); }
+      .btn.secondary { background: var(--paper); color: var(--blue); border: 1px solid var(--line); }
+      .btn.danger { background: var(--danger); }
+      .btn.small { padding: 6px 10px; font-size: 12px; border-radius: 9px; }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .error { color: var(--danger); font-size: 13px; min-height: 18px; }
+      .hint { font-size: 12px; color: var(--mute); }
+      header.top {
+        position: sticky; top: 0; z-index: 20;
+        background: linear-gradient(120deg, var(--blue), #002b61 70%);
+        color: #fff; padding: 18px 24px;
+        display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        box-shadow: 0 8px 24px rgba(0, 26, 58, 0.18);
+      }
+      header.top .brand h1 { font-size: 20px; }
+      header.top .brand p { color: #cfe0f2; font-size: 12px; }
+      header.top .mark { background: rgba(255, 255, 255, 0.16); }
+      header.top .actions { display: flex; gap: 8px; }
+      main { max-width: 1240px; margin: 0 auto; padding: 22px 20px 60px; display: grid; gap: 18px; }
+      .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+      .stat { padding: 16px; display: grid; gap: 2px; }
+      .stat .value { font-size: 28px; font-weight: 800; letter-spacing: -0.8px; }
+      .stat .label { color: var(--ink-soft); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+      .stat .sub { color: var(--mute); font-size: 12px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 14px; }
+      .toolbar label { flex: 1 1 160px; }
+      .toolbar .grow { flex: 2 1 260px; }
+      .table-wrap { overflow: auto; padding: 0; }
+      table { width: 100%; border-collapse: collapse; min-width: 900px; }
+      th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+      th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--mute); background: #fafcfd; }
+      tbody tr:hover { background: #f7fafd; }
+      tbody tr:last-child td { border-bottom: 0; }
+      .who { display: grid; gap: 1px; }
+      .who strong { font-size: 14px; }
+      .who span { color: var(--ink-soft); font-size: 12px; }
+      .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--mist); color: var(--anthracite); }
+      .badge.blue { background: var(--blue-soft); color: var(--blue); }
+      .badge.ok { background: var(--ok-soft); color: var(--ok); }
+      .badge.warn { background: var(--warn-soft); color: var(--warn); }
+      .badge.danger { background: var(--danger-soft); color: var(--danger); }
+      .stack { display: flex; flex-wrap: wrap; gap: 4px; }
+      .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; }
+      .pager .hint { margin: 0; }
+      dialog {
+        border: 0; padding: 0; border-radius: 20px; width: min(880px, calc(100vw - 28px));
+        max-height: calc(100vh - 40px); background: var(--paper); color: var(--anthracite); box-shadow: var(--shadow);
+      }
+      dialog::backdrop { background: rgba(0, 26, 58, 0.45); backdrop-filter: blur(2px); }
+      .detail-head { position: sticky; top: 0; background: var(--paper); padding: 20px 22px 14px; border-bottom: 1px solid var(--line); display: flex; gap: 14px; align-items: flex-start; justify-content: space-between; z-index: 2; }
+      .detail-body { padding: 18px 22px 26px; display: grid; gap: 20px; }
+      .detail-head .who strong { font-size: 20px; }
+      .section { display: grid; gap: 10px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+      .field-box { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 2px; }
+      .field-box .k { font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: 0.06em; }
+      .field-box .v { font-size: 14px; overflow-wrap: anywhere; }
+      .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+      .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .list { display: grid; gap: 8px; }
+      .row-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+      .row-card .main { display: grid; gap: 2px; min-width: 0; }
+      .row-card .main strong { font-size: 13px; overflow-wrap: anywhere; }
+      .row-card .main span { font-size: 12px; color: var(--ink-soft); overflow-wrap: anywhere; }
+      .danger-zone { border: 1px solid #f0cfcf; background: #fffafa; border-radius: 14px; padding: 14px; display: grid; gap: 10px; }
+      .toast { position: fixed; right: 18px; bottom: 18px; background: var(--anthracite); color: #fff; padding: 10px 14px; border-radius: 12px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: all .18s ease; z-index: 40; max-width: 360px; }
+      .toast.show { opacity: 1; transform: translateY(0); }
+      .toast.error { background: var(--danger); }
+      @media (max-width: 640px) {
+        header.top { flex-direction: column; align-items: flex-start; }
+        .detail-head { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="setup" class="centered" hidden>
+      <div class="card login-card">
+        <div class="brand"><div class="mark"><span></span></div><div><h1>Verwaltung</h1><p>University Assistant</p></div></div>
+        <h2>Dashboard nicht konfiguriert</h2>
+        <p>Setze <code>DASHBOARD_TOKEN</code> in <code>.env</code> und starte den Assistenz-Server neu. Ohne Token bleibt die Verwaltung absichtlich gesperrt.</p>
+        <pre style="background:var(--mist);padding:10px 12px;border-radius:10px;overflow:auto">DASHBOARD_TOKEN=ein-langes-zufaelliges-token</pre>
+        <p class="hint">Danach <code>npm run assistant</code> neu starten und diese Seite neu laden.</p>
+      </div>
+    </div>
+
+    <div id="login" class="centered" hidden>
+      <form id="login-form" class="card login-card">
+        <div class="brand"><div class="mark"><span></span></div><div><h1>Verwaltung</h1><p>University Assistant</p></div></div>
+        <p>Konten, Sitzungen, Plattformen und C@MPUS-Daten einsehen und verwalten.</p>
+        <label>Dashboard-Token
+          <input id="login-token" type="password" autocomplete="current-password" placeholder="DASHBOARD_TOKEN" required />
+        </label>
+        <button class="btn" type="submit">Anmelden</button>
+        <div id="login-error" class="error" role="alert"></div>
+      </form>
+    </div>
+
+    <div id="app" hidden>
+      <header class="top">
+        <div class="brand">
+          <div class="mark"><span></span></div>
+          <div><h1>Verwaltung</h1><p>University Assistant · Konten und Plattformen</p></div>
+        </div>
+        <div class="actions">
+          <button id="refresh" class="btn secondary small" type="button">Aktualisieren</button>
+          <button id="logout" class="btn secondary small" type="button">Abmelden</button>
+        </div>
+      </header>
+      <main>
+        <section id="stats" class="stats" aria-label="Übersicht"></section>
+        <section class="card toolbar" aria-label="Filter">
+          <label class="grow">Suche
+            <input id="search" type="search" placeholder="Kennung, Name, E-Mail" />
+          </label>
+          <label>Modus
+            <select id="mode">
+              <option value="">Alle</option>
+              <option value="campus">C@MPUS</option>
+              <option value="oidc">SIAM</option>
+              <option value="demo">Demo</option>
+              <option value="local">Lokal</option>
+            </select>
+          </label>
+          <label>Plattform
+            <select id="platform">
+              <option value="">Alle</option>
+              <option value="campus">C@MPUS</option>
+              <option value="ilias">ILIAS</option>
+              <option value="sdg">SDG Campus</option>
+              <option value="siam">SIAM</option>
+              <option value="mail">UniMail</option>
+            </select>
+          </label>
+          <label>C@MPUS-Zugang
+            <select id="credential">
+              <option value="">Alle</option>
+              <option value="active">Aktiv im Speicher</option>
+              <option value="env">.env</option>
+              <option value="browser">Browser</option>
+            </select>
+          </label>
+          <button id="apply" class="btn" type="button">Filtern</button>
+        </section>
+        <section class="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nutzer</th>
+                <th>Modus</th>
+                <th>Plattformen</th>
+                <th>C@MPUS</th>
+                <th>Sitzungen</th>
+                <th>Letzte Anmeldung</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="users"></tbody>
+          </table>
+          <div class="pager">
+            <p id="page-info" class="hint"></p>
+            <div class="row">
+              <button id="prev" class="btn secondary small" type="button">Zurück</button>
+              <button id="next" class="btn secondary small" type="button">Weiter</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="detail">
+      <div class="detail-head">
+        <div class="who" id="detail-who"></div>
+        <div class="row">
+          <button id="detail-refresh" class="btn secondary small" type="button">Neu laden</button>
+          <button id="detail-close" class="btn secondary small" type="button">Schließen</button>
+        </div>
+      </div>
+      <div class="detail-body" id="detail-body"></div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        'use strict';
+
+        const MODES = { campus: 'C@MPUS', oidc: 'SIAM', demo: 'Demo', local: 'Lokal' };
+        const PLATFORMS = ['campus', 'ilias', 'sdg', 'siam', 'mail'];
+        const PLATFORM_NAMES = { campus: 'C@MPUS', ilias: 'ILIAS', sdg: 'SDG Campus', siam: 'SIAM', mail: 'UniMail' };
+        const state = { users: [], total: 0, limit: 50, offset: 0, selected: null, detail: null, busy: false };
+        const $ = (id) => document.getElementById(id);
+
+        function h(tag, props, ...children) {
+          const node = document.createElement(tag);
+          if (props) {
+            for (const [key, value] of Object.entries(props)) {
+              if (value === undefined || value === null) continue;
+              if (key === 'className') node.className = value;
+              else if (key === 'text') node.textContent = value;
+              else if (key === 'dataset') Object.assign(node.dataset, value);
+              else if (key.startsWith('on') && typeof value === 'function') node.addEventListener(key.slice(2).toLowerCase(), value);
+              else if (key === 'html') node.innerHTML = value;
+              else node.setAttribute(key, value);
+            }
+          }
+          for (const child of children.flat()) {
+            if (child === null || child === undefined || child === false) continue;
+            node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+          }
+          return node;
+        }
+
+        function date(value) {
+          if (!value) return '–';
+          const parsed = new Date(value);
+          if (Number.isNaN(parsed.getTime())) return value;
+          return parsed.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+        }
+
+        function badge(text, tone) {
+          return h('span', { className: `badge ${tone || ''}`.trim(), text });
+        }
+
+        function toast(message, isError) {
+          const node = $('toast');
+          node.textContent = message;
+          node.className = `toast show${isError ? ' error' : ''}`;
+          clearTimeout(node._timer);
+          node._timer = setTimeout(() => { node.className = 'toast'; }, 3200);
+        }
+
+        async function api(path, options) {
+          const response = await fetch(path, {
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', ...(options && options.body ? {} : {}) },
+            ...options,
+          });
+          if (response.status === 401) {
+            showLogin();
+            throw new Error('unauthorized');
+          }
+          const payload = await response.json().catch(() => ({}));
+          if (response.status === 503) {
+            showSetup();
+            throw new Error(payload.error || 'admin_unconfigured');
+          }
+          if (!response.ok) throw new Error(payload.error || `http_${response.status}`);
+          return payload;
+        }
+
+        function showSetup() {
+          $('setup').hidden = false;
+          $('login').hidden = true;
+          $('app').hidden = true;
+        }
+
+        function showLogin() {
+          $('setup').hidden = true;
+          $('login').hidden = false;
+          $('app').hidden = true;
+          $('login-token').focus();
+        }
+
+        function showApp() {
+          $('setup').hidden = true;
+          $('login').hidden = true;
+          $('app').hidden = false;
+        }
+
+        async function boot() {
+          try {
+            const stats = await api('/v1/admin/overview');
+            renderStats(stats);
+            showApp();
+            await loadUsers();
+          } catch (error) {
+            if (error.message !== 'unauthorized' && error.message !== 'admin_unconfigured') {
+              showLogin();
+              $('login-error').textContent = error.message;
+            }
+          }
+        }
+
+        function stat(value, label, sub) {
+          return h('article', { className: 'card stat' },
+            h('div', { className: 'value', text: String(value) }),
+            h('div', { className: 'label', text: label }),
+            sub ? h('div', { className: 'sub', text: sub }) : null,
+          );
+        }
+
+        function renderStats(stats) {
+          const root = $('stats');
+          root.replaceChildren(
+            stat(stats.users, 'Nutzer'),
+            stat(stats.activeSessions, 'Aktive Sitzungen', `${stats.usersWithSessions} Nutzer`),
+            stat(stats.credentialsActive, 'C@MPUS im Speicher'),
+            stat(stats.portalNodes, 'Portal-Knoten'),
+            stat(stats.recentUsers, 'Neu (7 Tage)'),
+          );
+        }
+
+        async function loadUsers() {
+          const params = new URLSearchParams({
+            query: $('search').value.trim(),
+            mode: $('mode').value,
+            platform: $('platform').value,
+            credential: $('credential').value,
+            limit: String(state.limit),
+            offset: String(state.offset),
+          });
+          const data = await api(`/v1/admin/users?${params}`);
+          state.users = data.users;
+          state.total = data.total;
+          renderUsers();
+        }
+
+        function renderUsers() {
+          const body = $('users');
+          body.replaceChildren();
+          if (!state.users.length) {
+            body.append(h('tr', null, h('td', { colspan: '7' }, h('p', { className: 'hint', text: 'Keine Nutzer für diesen Filter.' }))));
+          }
+          for (const user of state.users) {
+            body.append(h('tr', null,
+              h('td', null, h('div', { className: 'who' },
+                h('strong', { text: user.name || user.account }),
+                h('span', { text: `${user.account}${user.email ? ` · ${user.email}` : ''}` }),
+              )),
+              h('td', null, badge(MODES[user.mode] || user.mode, user.mode === 'campus' ? 'blue' : '')),
+              h('td', null, h('span', { className: 'badge', text: `${user.platformCount} verknüpft` })),
+              h('td', null,
+                user.campusActive ? badge('aktiv', 'ok')
+                  : user.campusSource ? badge(user.campusSource === 'env' ? '.env' : 'Browser', 'warn')
+                    : badge('keiner', '')),
+              h('td', null, String(user.activeSessions)),
+              h('td', null, date(user.lastLoginAt)),
+              h('td', null, h('button', { className: 'btn secondary small', type: 'button', text: 'Details', onClick: () => openDetail(user.id) })),
+            ));
+          }
+          const from = state.total === 0 ? 0 : state.offset + 1;
+          const to = Math.min(state.offset + state.limit, state.total);
+          $('page-info').textContent = `${from}–${to} von ${state.total}`;
+          $('prev').disabled = state.offset <= 0;
+          $('next').disabled = state.offset + state.limit >= state.total;
+        }
+
+        async function openDetail(userId) {
+          state.selected = userId;
+          const dialog = $('detail');
+          $('detail-body').replaceChildren(h('p', { className: 'hint', text: 'Lade …' }));
+          dialog.showModal();
+          await refreshDetail();
+        }
+
+        async function refreshDetail() {
+          if (!state.selected) return;
+          try {
+            const data = await api(`/v1/admin/users/${encodeURIComponent(state.selected)}`);
+            state.detail = data;
+            renderDetail(data);
+          } catch (error) {
+            if (error.message !== 'unauthorized') toast(error.message, true);
+          }
+        }
+
+        function field(key, value) {
+          return h('div', { className: 'field-box' }, h('div', { className: 'k', text: key }), h('div', { className: 'v', text: value || '–' }));
+        }
+
+        function section(title, ...children) {
+          return h('section', { className: 'section' }, h('h2', { text: title }), ...children);
+        }
+
+        function renderDetail(data) {
+          const user = data.user;
+          $('detail-who').replaceChildren(
+            h('strong', { text: user.name || user.account }),
+            h('span', { text: `${user.account} · ${MODES[user.mode] || user.mode} · ${user.id}` }),
+          );
+          const body = $('detail-body');
+          body.replaceChildren();
+
+          // Profile form.
+          const name = h('input', { id: 'edit-name', value: user.name || '', placeholder: 'Name' });
+          const email = h('input', { id: 'edit-email', value: user.email || '', placeholder: 'E-Mail' });
+          const matriculation = h('input', { id: 'edit-matriculation', value: user.matriculation || '', placeholder: 'Matrikelnummer' });
+          const subject = h('input', { id: 'edit-subject', value: user.subject || '', placeholder: 'Subjekt / ID' });
+          body.append(section('Kontodaten',
+            h('div', { className: 'form-grid' },
+              h('label', null, 'Name', name),
+              h('label', null, 'E-Mail', email),
+              h('label', null, 'Matrikelnummer', matriculation),
+              h('label', null, 'Subjekt', subject),
+            ),
+            h('div', { className: 'row' },
+              h('button', { className: 'btn small', type: 'button', text: 'Speichern', onClick: async () => {
+                try {
+                  await api(`/v1/admin/users/${encodeURIComponent(user.id)}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ name: name.value, email: email.value, matriculation: matriculation.value, subject: subject.value }),
+                  });
+                  toast('Kontodaten gespeichert.');
+                  await refreshDetail();
+                  await loadUsers();
+                } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+              } }),
+              badge('Konto seit ' + date(user.createdAt), 'blue'),
+              badge('Letzte Anmeldung ' + date(user.lastLoginAt), ''),
+            ),
+          ));
+
+          // Meta.
+          body.append(section('Status',
+            h('div', { className: 'grid' },
+              field('Sitzungen aktiv', String(data.sessions.filter((item) => item.state === 'active').length)),
+              field('C@MPUS-Zugang', data.campus.active ? 'im Speicher aktiv' : data.campus.source || 'keiner'),
+              field('C@MPUS-Quelle', data.campus.source || '–'),
+              field('C@MPUS-Konto', data.campus.account || '–'),
+              field('Portal-Studiengänge', String(data.counts.studies)),
+              field('Portal-Knoten', String(data.counts.nodes)),
+              field('Kurse', String(data.counts.courses)),
+              field('Kalender-Ereignisse', String(data.counts.events)),
+              field('Portal-Aufrufe', String(data.counts.calls)),
+            ),
+          ));
+
+          // Sessions.
+          const sessions = data.sessions.length
+            ? data.sessions.map((session) => h('div', { className: 'row-card' },
+                h('div', { className: 'main' },
+                  h('strong', { text: session.id }),
+                  h('span', { text: `erstellt ${date(session.createdAt)} · läuft ab ${date(session.expiresAt)}${session.lastSeenAt ? ` · zuletzt ${date(session.lastSeenAt)}` : ''}` }),
+                ),
+                h('div', { className: 'row' },
+                  badge(session.state, session.state === 'active' ? 'ok' : session.state === 'revoked' ? 'danger' : 'warn'),
+                  session.state === 'active'
+                    ? h('button', { className: 'btn danger small', type: 'button', text: 'Widerrufen', onClick: async () => {
+                        try {
+                          await api(`/v1/admin/users/${encodeURIComponent(user.id)}/sessions/${encodeURIComponent(session.id)}`, { method: 'DELETE' });
+                          toast('Sitzung widerrufen.');
+                          await refreshDetail();
+                          await loadUsers();
+                        } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+                      } })
+                    : null,
+                ),
+              ))
+            : [h('p', { className: 'hint', text: 'Keine Sitzungen.' })];
+          body.append(section('Sitzungen',
+            sessions,
+            h('button', { className: 'btn danger small', type: 'button', text: 'Alle Sitzungen widerrufen', onClick: async () => {
+              if (!window.confirm('Alle Sitzungen dieses Kontos widerrufen?')) return;
+              try {
+                await api(`/v1/admin/users/${encodeURIComponent(user.id)}/sessions/revoke`, { method: 'POST', body: '{}' });
+                toast('Alle Sitzungen widerrufen.');
+                await refreshDetail();
+                await loadUsers();
+              } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+            } }),
+          ));
+
+          // Platforms.
+          const platformRows = data.user.platforms.length
+            ? data.user.platforms.map((link) => h('div', { className: 'row-card' },
+                h('div', { className: 'main' },
+                  h('strong', { text: PLATFORM_NAMES[link.id] || link.id }),
+                  h('span', { text: `${link.account || '–'} · ${link.source} · ${link.lastSyncAt ? 'zuletzt ' + date(link.lastSyncAt) : 'nie synchronisiert'}` }),
+                ),
+                h('div', { className: 'row' },
+                  badge(link.status === 'connected' ? 'verbunden' : 'verknüpft', link.status === 'connected' ? 'ok' : 'blue'),
+                  h('button', { className: 'btn secondary small', type: 'button', text: 'Entfernen', onClick: async () => {
+                    if (!window.confirm(`${PLATFORM_NAMES[link.id] || link.id} entfernen?`)) return;
+                    try {
+                      await api(`/v1/admin/users/${encodeURIComponent(user.id)}/platforms/${encodeURIComponent(link.id)}`, { method: 'DELETE' });
+                      toast('Plattform entfernt.');
+                      await refreshDetail();
+                    } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+                  } }),
+                ),
+              ))
+            : [h('p', { className: 'hint', text: 'Keine Plattform verknüpft.' })];
+          const platformSelect = h('select', null, ...PLATFORMS.map((id) => h('option', { value: id, text: PLATFORM_NAMES[id] })));
+          const platformAccount = h('input', { placeholder: 'Konto (z. B. st123456)' });
+          const platformStatus = h('select', null,
+            h('option', { value: 'linked', text: 'verknüpft' }),
+            h('option', { value: 'connected', text: 'verbunden' }),
+          );
+          body.append(section('Plattformen',
+            ...platformRows,
+            h('div', { className: 'form-grid' }, platformSelect, platformAccount, platformStatus),
+            h('button', { className: 'btn small', type: 'button', text: 'Plattform verknüpfen', onClick: async () => {
+              try {
+                await api(`/v1/admin/users/${encodeURIComponent(user.id)}/platforms`, {
+                  method: 'POST',
+                  body: JSON.stringify({ platform: platformSelect.value, account: platformAccount.value || null, status: platformStatus.value, source: 'dashboard' }),
+                });
+                toast('Plattform verknüpft.');
+                await refreshDetail();
+              } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+            } }),
+          ));
+
+          // Portal data.
+          body.append(section('C@MPUS-Daten',
+            h('p', { className: 'hint', text: 'Der Zugang selbst wird nie angezeigt. „Trennen“ löscht nur die gespeicherte Sitzung; die Portalzeilen bleiben.' }),
+            h('div', { className: 'row' },
+              h('button', { className: 'btn secondary small', type: 'button', text: 'C@MPUS trennen', onClick: async () => {
+                if (!window.confirm('C@MPUS-Zugang dieses Kontos trennen?')) return;
+                try {
+                  await api(`/v1/admin/users/${encodeURIComponent(user.id)}/campus/disconnect`, { method: 'POST', body: '{}' });
+                  toast('C@MPUS getrennt.');
+                  await refreshDetail();
+                  await loadUsers();
+                } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+              } }),
+              h('button', { className: 'btn danger small', type: 'button', text: 'Portal-Daten löschen', onClick: async () => {
+                if (!window.confirm('Alle gespeicherten Portal-Daten dieses Kontos löschen?')) return;
+                try {
+                  await api(`/v1/admin/users/${encodeURIComponent(user.id)}/portal/clear`, { method: 'POST', body: '{}' });
+                  toast('Portal-Daten gelöscht.');
+                  await refreshDetail();
+                } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+              } }),
+            ),
+          ));
+
+          // Recent portal calls.
+          if (data.calls.length) {
+            body.append(section('Letzte Portal-Aufrufe',
+              h('div', { className: 'list' }, ...data.calls.map((call) => h('div', { className: 'row-card' },
+                h('div', { className: 'main' },
+                  h('strong', { text: `${call.op}${call.studyId ? ` · Studium ${call.studyId}` : ''}${call.elementId ? ` · Element ${call.elementId}` : ''}` }),
+                  h('span', { text: `${date(call.createdAt)} · ${call.elapsedMs} ms${call.message ? ` · ${call.message}` : ''}` }),
+                ),
+                badge(call.ok ? 'ok' : `HTTP ${call.httpStatus || 'Fehler'}`, call.ok ? 'ok' : 'danger'),
+              ))),
+            ));
+          }
+
+          // Danger zone.
+          body.append(h('section', { className: 'danger-zone' },
+            h('h2', { text: 'Konto löschen' }),
+            h('p', { className: 'hint', text: 'Löscht das Konto, alle Sitzungen, Plattformverknüpfungen und alle Portal-Daten. Das lässt sich nicht rückgängig machen.' }),
+            h('button', { className: 'btn danger small', type: 'button', text: 'Konto endgültig löschen', onClick: async () => {
+              if (!window.confirm(`Konto ${user.account} endgültig löschen?`)) return;
+              try {
+                await api(`/v1/admin/users/${encodeURIComponent(user.id)}`, { method: 'DELETE' });
+                toast('Konto gelöscht.');
+                $('detail').close();
+                state.selected = null;
+                await loadUsers();
+              } catch (error) { if (error.message !== 'unauthorized') toast(error.message, true); }
+            } }),
+          ));
+        }
+
+        $('login-form').addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const token = $('login-token').value;
+          $('login-error').textContent = '';
+          try {
+            const response = await fetch('/v1/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token }),
+            });
+            if (response.status === 503) { showSetup(); return; }
+            if (!response.ok) { $('login-error').textContent = 'Token ungültig.'; return; }
+            $('login-token').value = '';
+            await boot();
+          } catch {
+            $('login-error').textContent = 'Server nicht erreichbar.';
+          }
+        });
+
+        $('logout').addEventListener('click', async () => {
+          await fetch('/v1/admin/logout', { method: 'POST' }).catch(() => undefined);
+          showLogin();
+        });
+        $('refresh').addEventListener('click', () => boot());
+        $('apply').addEventListener('click', () => { state.offset = 0; loadUsers().catch((error) => { if (error.message !== 'unauthorized') toast(error.message, true); }); });
+        $('search').addEventListener('keydown', (event) => { if (event.key === 'Enter') { state.offset = 0; loadUsers().catch(() => undefined); } });
+        $('prev').addEventListener('click', () => { state.offset = Math.max(0, state.offset - state.limit); loadUsers().catch(() => undefined); });
+        $('next').addEventListener('click', () => { state.offset += state.limit; loadUsers().catch(() => undefined); });
+        $('detail-close').addEventListener('click', () => $('detail').close());
+        $('detail-refresh').addEventListener('click', () => refreshDetail());
+
+        boot();
+      })();
+    </script>
+  </body>
+</html>

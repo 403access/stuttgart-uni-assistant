@@ -36,7 +36,7 @@ function sameAccount(stored: string | null, entered: string): boolean {
  * purpose — it is frozen, and this hook is where the live flow is maintained.
  */
 export function useLoginFlow() {
-  const { locale, signInCampus, signInOidc, setMailAccount } = useApp();
+  const { locale, signInCampus, signInOidc, setMailAccount, refreshUser } = useApp();
   // The status probes resolve to null when the server is unreachable — the
   // screen renders unknown, not an error toast.
   const status = useQuery({ queryKey: keys.oidcStatus(), queryFn: () => fetchOidcStatus() }).data ?? null;
@@ -45,6 +45,8 @@ export function useLoginFlow() {
   const [campusLog, setCampusLog] = useState('');
   // One flag for both browser surfaces: they share the harvest mutation.
   const [harvestBusy, setHarvestBusy] = useState(false);
+  // A validated harvest is handed to the login route by a short-lived ticket.
+  const ticketRef = useRef<string | null>(null);
   // Credentials of the automated sign-in, held only for this attempt: the C@MPUS
   // st-account and password are the UniMail ones, so a successful sign-in reuses
   // them for the Messages tab instead of asking for them twice. Null when the
@@ -65,10 +67,11 @@ export function useLoginFlow() {
       // until the profile loads, and hiding it now would flash the login screen
       // between the wait and the home tabs.
       headless.setPhase('profile');
+      ticketRef.current = result.ticket ?? null;
       setCampusLog(
         tx(locale, 'common.browser', [result.studies]),
       );
-      campusSignIn.mutate();
+      campusSignIn.mutate(result.ticket);
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -85,7 +88,7 @@ export function useLoginFlow() {
 
   const campusSignIn = useMutation({
     mutationKey: ['campus-sign-in'],
-    mutationFn: signInWithCampusToken,
+    mutationFn: (ticket?: string) => signInWithCampusToken(ticket),
     onMutate: () => {
       setError('');
       setCampusLog(tx(locale, 'common.rufe', [assistantUrl]));
@@ -100,16 +103,20 @@ export function useLoginFlow() {
       // of the bare login screen. It stays up and disappears with this screen
       // when the gate swaps in the tabs.
       signInCampus(profile);
+      ticketRef.current = null;
       // The st-account and password work for UniMail too; connect it so the
       // Messages tab is ready. The mutation above is not held up by this.
       const credentials = loginCredentials.current;
-      if (credentials) void connectMail(credentials);
+      if (credentials) void connectMail(credentials, profile.auth?.token ?? null);
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
       const message = campusMessage(locale, code, campusDetail(caught));
       setCampusLog(message);
       setError(message);
+      // The login route consumes a ticket before it reads the portal, so a
+      // failed read needs a fresh harvest, not the same ticket again.
+      ticketRef.current = null;
       // A failed profile load has no session to move to, so the waiting views
       // give way to the screen with the retry.
       headless.close();
@@ -118,7 +125,7 @@ export function useLoginFlow() {
         title: tx(locale, 'common.c'),
         code,
         detail: campusDetail(caught) || undefined,
-        onRetry: () => campusSignIn.mutate(),
+        onRetry: () => campusSignIn.mutate(ticketRef.current ?? undefined),
       });
     },
   });
@@ -159,12 +166,16 @@ export function useLoginFlow() {
    * process memory, so the Messages tab is connected without a second entry.
    * Best effort — the sign-in neither waits for it nor fails with it.
    */
-  async function connectMail(credentials: { account: string; password: string }) {
+  async function connectMail(credentials: { account: string; password: string }, token: string | null) {
     try {
       const current = await fetchMailStatus();
-      if (current?.configured && sameAccount(current.account, credentials.account)) return;
-      const result = await submitMailCredentials(credentials);
+      if (current?.configured && sameAccount(current.account, credentials.account)) {
+        void refreshUser();
+        return;
+      }
+      const result = await submitMailCredentials(credentials, token);
       setMailAccount(result.account);
+      void refreshUser();
       showToast({
         tone: 'success',
         title: tx(locale, 'tabsMail.verbunden_2', [result.account]),

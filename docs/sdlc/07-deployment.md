@@ -28,6 +28,7 @@ The file-system plugin turns on opening documents in place and file sharing, so 
 Secrets:
 
 - `XAI_API_KEY` only in the server environment or a git-ignored `.env`. `.gitignore` ignores `.env`.
+- `DASHBOARD_TOKEN` only in the server environment or `.env`; leave it unset on a deployment that should not expose `/admin`. See [admin-dashboard.md](../engineering/admin-dashboard.md).
 - `EXPO_PUBLIC_ASSISTANT_URL` and `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` are public by design. They are URLs, not credentials. The tunnel script writes and clears the second one.
 
 ## Build path when a binary is needed

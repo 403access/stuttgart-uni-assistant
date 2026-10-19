@@ -15,14 +15,15 @@ Requirements use three words on purpose:
 - The app must offer SIAM sign-in through the university identity provider, and must not transmit the password. The password is entered on `https://idp.uni-stuttgart.de`. Client id and secret stay on the server. See [oidc-login.md](../engineering/oidc-login.md).
 - The app must load one named demonstration record, and must show that name even if the typed account differs.
 - The app must keep language, notes, drafts, and chat on the device.
-- The app won't create accounts on a server.
+- The app must create one server-side user per university identity and mint a bearer session for it, and the device must keep only that session token (keychain/Keystore on native) plus a copy of the public user record. The account screen must show C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail as links on that one account. See [accounts.md](../engineering/accounts.md).
+- The server must offer a token-protected operator dashboard at `/admin` for listing users, inspecting sessions/platforms/C@MPUS state, editing profile fields, revoking sessions, disconnecting C@MPUS, clearing portal data, and deleting an account. Without `DASHBOARD_TOKEN` it must stay disabled. See [admin-dashboard.md](../engineering/admin-dashboard.md).
 
 ## Platforms
 
-- The app must show C@MPUS, ILIAS, SDG Campus, and SIAM as separate connectors with a plain description of what each would sync.
-- Sync must be an explicit action and must only update local state.
-- ILIAS sync must mark the bundled lecture files as saved on the device.
-- The app won't call C@MPUS, ILIAS, or SDG Campus. The identity provider is the exception, and only through the authorization-code flow.
+- The app must show C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail as links on one account.
+- Sync must be an explicit action. C@MPUS structure, studies, courses, and calendar data must be read through the assistant server with the signed-in user's own credential and stored under that user id. ILIAS sync must mark the bundled lecture files as saved on the device.
+- Every C@MPUS route that reads portal data must require the app session token and must not answer from another user's rows. A missing credential is a clear 409, not a shared fallback.
+- ILIAS and SDG Campus have no live client; their account links are identity-level only. The university identity provider remains the only direct browser flow.
 
 ## Degree
 

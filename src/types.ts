@@ -31,6 +31,36 @@ export type PlaceKind =
 
 export type PlatformId = 'campus' | 'ilias' | 'sdg' | 'siam';
 
+/** Platforms a signed-in user can have linked to the one account. */
+export type AccountPlatformId = PlatformId | 'mail';
+
+/** `connected` means a working session or credential exists; `linked` means the same identity is known. */
+export type PlatformLinkStatus = 'connected' | 'linked';
+
+export interface PlatformLink {
+  id: AccountPlatformId;
+  account: string | null;
+  status: PlatformLinkStatus;
+  source: string;
+  linkedAt: string;
+  lastSyncAt: string | null;
+}
+
+/** The server-side user, mirrored on the device for display and offline use. */
+export interface UserAccount {
+  id: string;
+  account: string;
+  name: string | null;
+  email: string | null;
+  matriculation: string | null;
+  subject: string | null;
+  mode: SessionMode;
+  createdAt: string;
+  updatedAt: string;
+  lastLoginAt: string | null;
+  platforms: PlatformLink[];
+}
+
 export type DeadlineSource = 'campus' | 'ilias' | 'sdg' | 'faculty';
 
 export type NewsSource = 'stuvus' | 'faculty' | 'institute' | 'university' | 'sdg';
@@ -299,6 +329,7 @@ export interface BulkCourse extends CampusCourse {
 
 export interface PersistedState {
   locale: Locale;
+  user: UserAccount | null;
   sessionAccount: string | null;
   sessionMode: SessionMode | null;
   sessionName: string | null;

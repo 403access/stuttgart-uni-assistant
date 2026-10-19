@@ -163,6 +163,49 @@ entitlements are inert. See [vpn-tunnel.md](vpn-tunnel.md) — the extension
 target is still open work, and the entitlement needs Apple's grant once a paid
 membership exists.
 
+## React Native 0.88 prebuilt and the dev-client network inspector
+
+Symptom: the linker stops with
+
+```text
+Undefined symbols for architecture arm64
+  Symbol: _OBJC_CLASS_$_RCTReconnectingWebSocket
+  Referenced from: libexpo-dev-launcher.a[18](DevLauncherNetworkInterceptor.o)
+```
+
+The precompiled `React.xcframework` from React Native 0.88 does not export
+`RCTReconnectingWebSocket`, while `expo-dev-launcher`'s network inspector imports
+it. The repository fixes this with the supported build property in `app.json`:
+
+```json
+[
+  "expo-build-properties",
+  {
+    "ios": {
+      "networkInspector": false
+    }
+  }
+]
+```
+
+`npx expo prebuild --platform ios` writes
+`EX_DEV_CLIENT_NETWORK_INSPECTOR=false` into `ios/Podfile.properties.json`; the
+podspec then compiles the stub class and the linker has nothing to resolve. The
+trade-off is that the Expo network inspector is off in the dev build.
+
+To keep the inspector, replace that property with
+`"buildReactNativeFromSource": true` instead. React Native is then compiled from
+source, including `Libraries/WebSocket/RCTReconnectingWebSocket.m`, at a
+significantly higher build time. Do not patch `ios/Podfile` by hand: `ios/` is
+generated and ignored.
+
+After a prebuild that clears `ios/`, Xcode may lose the selected development
+team. `npx expo run:ios` signs automatically with the team it finds; a
+`--clean` prebuild is the case that needs `DEVELOPMENT_TEAM` set again.
+
+A launch error after "Build Succeeded" that says the device is locked is not a
+build failure: unlock the iPhone and run the install/launch step again.
+
 ## Building the test build
 
 `npm run ios:ipa` does the whole thing: preflight, archive, export. It is

@@ -1,4 +1,5 @@
 import { assistantUrl } from '@/src/assistant/remote';
+import { authHeaders } from '@/src/auth/session';
 import { tx } from '@/src/text';
 
 export interface ApiOperation {
@@ -27,6 +28,11 @@ const fallback: ApiOperation[] = [
   { id: 'oidc-start', method: 'POST', path: '/v1/oidc/start', replay: false },
   { id: 'oidc-exchange', method: 'POST', path: '/v1/oidc/exchange', replay: false },
   { id: 'oidc-logout', method: 'POST', path: '/v1/oidc/logout', replay: false },
+  { id: 'auth-session', method: 'POST', path: '/v1/auth/session', replay: false },
+  { id: 'auth-me', method: 'GET', path: '/v1/auth/me', replay: false },
+  { id: 'auth-logout', method: 'POST', path: '/v1/auth/logout', replay: false },
+  { id: 'auth-links', method: 'POST', path: '/v1/auth/links', replay: false },
+  { id: 'auth-sync', method: 'POST', path: '/v1/auth/sync', replay: false },
 ];
 
 function endpoint(path: string): string {
@@ -66,7 +72,7 @@ export async function sendApiOperation(
   const allowed = operation.replay && (operation.path === '/health' || operation.path.startsWith('/v1/'));
   if (!allowed || operation.path.includes('://') || operation.path.includes('..')) throw new Error('not_replayable');
   const started = Date.now();
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...authHeaders() };
   let body: string | undefined;
   if (operation.id === 'campus-structure' || operation.id === 'campus-courses') {
     headers['Content-Type'] = 'application/json';

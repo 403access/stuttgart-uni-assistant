@@ -12,6 +12,7 @@ Status of the prototype on 13 October 2026. "Done" means the screen or script ex
 - ILIAS-style local sync, text import, notes, on-device sharing, reader, extractive summary, export.
 - Schematic campus for Vaihingen and Stadtmitte.
 - SIAM sign-in through the TIK identity provider (authorization code, secret on the server). Demonstration profile remains. See [oidc-login.md](../engineering/oidc-login.md).
+- Server-side users, bearer sessions, one account across C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail, per-user C@MPUS credentials and portal rows, and a token-protected operator dashboard at `/admin`. See [accounts.md](../engineering/accounts.md) and [admin-dashboard.md](../engineering/admin-dashboard.md).
 - Documentation of the product, the lifecycle, and this engineering set.
 - `npm run typecheck`, `npm run check`, and a web export of the routes. `GET /health` without a key.
 

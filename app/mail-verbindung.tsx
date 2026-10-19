@@ -19,7 +19,7 @@ import type { MailStatus } from '@/src/types';
 
 /** Pushed from the gear icon of the Messages tab once UniMail is connected. */
 export default function MailConnectionScreen() {
-  const { locale, setMailAccount } = useApp();
+  const { locale, setMailAccount, authToken, refreshUser } = useApp();
   const [status, setStatus] = useState<MailStatus | null>(() => getMailSnapshot().status);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,8 +61,9 @@ export default function MailConnectionScreen() {
     setNote('');
     setBusy(true);
     try {
-      await forgetMail();
+      await forgetMail(authToken);
       setMailAccount(null);
+      void refreshUser();
       router.back();
     } catch (caught) {
       const code = caught instanceof Error ? caught.message : 'mail_failed';

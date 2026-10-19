@@ -79,40 +79,40 @@ function fakePortal({ delayMs = 0, failElements = [] } = {}) {
 }
 
 test('server structures round-trip with expanded ids and sync info', async () => {
-  db.saveStructure(99, 10, TREE[10].map((node) => ({ ...node, parentId: node.parentId ?? null, completed: false, inProgress: false })), [10], false);
-  const stored = db.loadStructure(99);
+  db.saveStructure('legacy', 99, 10, TREE[10].map((node) => ({ ...node, parentId: node.parentId ?? null, completed: false, inProgress: false })), [10], false);
+  const stored = db.loadStructure('legacy', 99);
   assert.equal(stored.nodes.length, 3);
   assert.deepEqual(stored.expandedIds, [10]);
   assert.equal(stored.sync.complete, false);
-  assert.equal(db.isExpanded(99, 10), true);
-  assert.equal(db.isExpanded(99, 20), false);
+  assert.equal(db.isExpanded('legacy', 99, 10), true);
+  assert.equal(db.isExpanded('legacy', 99, 20), false);
 });
 
 test('server courses round-trip with element links and fetched ids', async () => {
   const courses = campus.coursesFromPayload(coursesPayload([{ id: 7, courseTitle: { value: 'Logik' } }]));
-  db.saveCourses(99, [{ ...courses[0], elementIds: [20], elementNames: ['Basismodule'] }], [20], true);
-  assert.equal(db.loadCourses(99).length, 1);
-  assert.equal(db.loadCourses(99, 20).length, 1);
-  assert.equal(db.loadCourses(99, 30).length, 0);
-  assert.deepEqual(db.loadCoursesFetchedIds(99), [20]);
-  assert.equal(db.getCoursesSync(99).complete, true);
+  db.saveCourses('legacy', 99, [{ ...courses[0], elementIds: [20], elementNames: ['Basismodule'] }], [20], true);
+  assert.equal(db.loadCourses('legacy', 99).length, 1);
+  assert.equal(db.loadCourses('legacy', 99, 20).length, 1);
+  assert.equal(db.loadCourses('legacy', 99, 30).length, 0);
+  assert.deepEqual(db.loadCoursesFetchedIds('legacy', 99), [20]);
+  assert.equal(db.getCoursesSync('legacy', 99).complete, true);
 });
 
 test('server studies snapshot and portal-call log round-trip', async () => {
-  db.saveStudiesSnapshot([{ studyId: 99, name: 'Philosophie' }]);
-  assert.equal(db.loadStudiesSnapshot().studies.length, 1);
+  db.saveStudiesSnapshot('legacy', [{ studyId: 99, name: 'Philosophie' }]);
+  assert.equal(db.loadStudiesSnapshot('legacy').studies.length, 1);
   db.logPortalCall({ op: 'structure', studyId: 99, elementId: 10, ok: true, httpStatus: 200, elapsedMs: 5 });
   db.logPortalCall({ op: 'structure', studyId: 99, elementId: 20, ok: false, httpStatus: 500, message: 'upstream 500', elapsedMs: 6 });
-  const calls = db.readPortalCalls(500);
+  const calls = db.readPortalCalls('legacy', 500);
   assert.deepEqual(calls.map((item) => item.elementId), [20, 10]);
   assert.equal(calls[0].uid, `srv-${calls[0].id}`);
-  assert.equal(db.readPortalCalls(1).length, 1);
+  assert.equal(db.readPortalCalls('legacy', 1).length, 1);
 });
 
 test('live reads persist and offline reads fall back to the store', async () => {
   const loaded = await campus.loadCurriculumStructure(10, 99, fakePortal());
   assert.equal(loaded.nodes.length, 3);
-  assert.equal(db.loadStructure(99).nodes.length, 3);
+  assert.equal(db.loadStructure('legacy', 99).nodes.length, 3);
   const offline = await campus.loadCurriculumStructure(10, 99, async () => {
     throw new Error('fetch failed');
   });
@@ -128,8 +128,8 @@ test('sync job walks the tree and courses into the store', async () => {
   assert.equal(done.state, 'done');
   assert.equal(done.nodeCount, 3);
   assert.deepEqual([...done.failedIds].sort(), []);
-  assert.equal(db.loadStructure(99).sync.complete, true);
-  assert.equal(db.getCoursesSync(99).courseCount, 1);
+  assert.equal(db.loadStructure('legacy', 99).sync.complete, true);
+  assert.equal(db.getCoursesSync('legacy', 99).courseCount, 1);
 }, { timeout: 15000 });
 
 test('sync job can be cancelled and keeps partial progress', async () => {
@@ -147,7 +147,7 @@ test('sync job can be cancelled and keeps partial progress', async () => {
   sync.cancelSyncJob(started.jobId);
   const done = await pollJob(started.jobId);
   assert.equal(done.state, 'cancelled');
-  const stored = db.loadStructure(98);
+  const stored = db.loadStructure('legacy', 98);
   // The root call lands with all its children, but only the root counts as expanded.
   assert.equal(stored.nodes.length, 12);
   assert.deepEqual(stored.expandedIds, [1]);

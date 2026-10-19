@@ -31,7 +31,7 @@ npm run android
 npm run tunnel   # from another network; the assistant needs its own tunnel too
 ```
 
-On the sign-in screen, **Mit C@MPUS-Token anmelden** loads the curriculum structure through the assistant server. The bearer token and the `PSESSIONID` cookie stay in `.env`. **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann. **Mehr → Schnittstelle** lists the server routes and can send them again. The request and the stored nodes are documented in [docs/engineering/campus-curriculum.md](docs/engineering/campus-curriculum.md), and the study chooser in [docs/engineering/campus-studies.md](docs/engineering/campus-studies.md).
+On the sign-in screen, **Mit C@MPUS-Token anmelden** loads the curriculum structure through the assistant server. The `.env` bearer token and `PSESSIONID` cookie stay on the server; a browser sign-in keeps that user's harvested session on the server too, never in the app bundle. **C@MPUS öffnen und anmelden** opens the official campus login. Use the account and password you already have. The app does not need to be registered for that, and the password is typed only on the university page. **Mit dieser Nutzerkennung weiter** labels the profile with your account id and does not check a password. **Mit SIAM anmelden** is the registered OpenID Connect client, documented in [docs/engineering/oidc-login.md](docs/engineering/oidc-login.md). **Demonstrationsprofil öffnen** loads Lena Hartmann. Any path that reaches the server creates one user record and one session; **Campus → Konto** shows C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail as links on that account, per [docs/engineering/accounts.md](docs/engineering/accounts.md). C@MPUS credentials and every portal row are scoped to that user, so two accounts on one server do not share a timetable or a portal session. **Mehr → Schnittstelle** lists the server routes and can send them again. The request and the stored nodes are documented in [docs/engineering/campus-curriculum.md](docs/engineering/campus-curriculum.md), and the study chooser in [docs/engineering/campus-studies.md](docs/engineering/campus-studies.md).
 
 ## Run the assistant server
 
@@ -46,6 +46,8 @@ npm run assistant
 The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8787`. On a physical phone, use the computer's LAN address instead of `127.0.0.1`. `npm run assistant:tunnel` writes the public hostname of a running tunnel to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`, which takes priority while it is set, and blanks it again when the tunnel stops — so a local run never inherits a dead tunnel URL. `GET /health` is on that assistant server, for example `http://127.0.0.1:8787/health`. The Expo app on port 8081 does not serve `/health`.
 
 `GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
+
+The assistant server also hosts an operator dashboard at `http://127.0.0.1:8787/admin`. Set `DASHBOARD_TOKEN` in `.env` to enable it; without the token the page and every `/v1/admin/*` route stay disabled. The dashboard lists users, sessions, platform links, and per-user C@MPUS data, and can edit, revoke, disconnect, clear, or delete. Details: [docs/engineering/admin-dashboard.md](docs/engineering/admin-dashboard.md).
 
 When the phone is not on the local network, Expo's tunnel carries the bundle but not the assistant, so the assistant needs a tunnel of its own. Run the three processes in this order, because `EXPO_PUBLIC_*` is read at bundle time:
 
@@ -78,6 +80,8 @@ npm run check
 | `src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
 | `src/assistant/` | Local answers, fact sheet, optional Grok call |
 | `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
+| `src/auth/session.ts` | The server user session: token storage and the `/v1/auth/*` calls |
+| `server/auth.mjs` | Server-side users, bearer sessions, and platform links |
 | `app/api.tsx` | API overview. Replays known server routes |
 | `server/index.mjs` | Assistant server. Holds the xAI key and the C@MPUS secrets |
 | `scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |

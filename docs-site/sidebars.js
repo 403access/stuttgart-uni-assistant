@@ -49,6 +49,8 @@ const sidebars = {
       label: 'Engineering',
       link: { type: 'doc', id: 'engineering/architecture' },
       items: [
+        'engineering/accounts',
+        'engineering/admin-dashboard',
         'engineering/data-model',
         'engineering/integrations',
         'engineering/campus-curriculum',

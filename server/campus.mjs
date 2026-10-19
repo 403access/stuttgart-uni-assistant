@@ -1,12 +1,21 @@
 /** Server-only C@MPUS access token. Never sent to the Expo bundle. */
 
-import { getCoursesSync, isExpanded, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveExportedEvents, saveStudiesSnapshot, saveStructure } from './db.mjs';
+import { randomBytes } from 'node:crypto';
 
-/** Refreshed bearer token for this process. Memory only: a restart falls back to `CAMPUS_BEARER_TOKEN`. */
+import { getCoursesSync, isExpanded, loadCampusSource, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveCampusSource, saveExportedEvents, saveStudiesSnapshot, saveStructure } from './db.mjs';
+
+/** Refreshed bearer token for the legacy single-user path. Memory only. */
 let runtimeBearerToken = null;
 
-/** Portal session cookie captured through the in-app browser login. Memory only, like the token. */
+/** Portal session cookie captured through the legacy single-user path. Memory only. */
 let runtimeSessionCookie = null;
+
+/** Per-user portal credentials. Memory only: a server restart asks the user to sign in again. */
+const userCredentials = new Map();
+
+/** Short-lived tickets that carry a validated browser harvest from `/v1/campus/credentials` to `/v1/campus/login`. */
+const pendingCredentials = new Map();
+const PENDING_TTL_MS = 10 * 60 * 1000;
 
 export function clearRuntimeToken() {
   runtimeBearerToken = null;
@@ -16,11 +25,77 @@ export function clearRuntimeSession() {
   runtimeSessionCookie = null;
 }
 
-export function campusBearerToken() {
-  if (runtimeBearerToken) return runtimeBearerToken;
+function envBearerToken() {
   const raw = (process.env.CAMPUS_BEARER_TOKEN || '').trim();
   if (!raw) return '';
   return raw.replace(/^Bearer\s+/i, '');
+}
+
+function envSessionCookie() {
+  const raw = (process.env.CAMPUS_SESSION_COOKIE || '').trim();
+  if (!raw) return '';
+  return raw.replace(/^(PSESSIONID|JSESSIONID)=/i, '');
+}
+
+function normalCredential(credential) {
+  return {
+    bearer: String(credential?.bearer ?? '').trim().replace(/^Bearer\s+/i, ''),
+    cookie: String(credential?.cookie ?? '').trim().replace(/^(PSESSIONID|JSESSIONID)=/i, ''),
+    account: typeof credential?.account === 'string' && credential.account ? credential.account : null,
+    source: credential?.source === 'env' ? 'env' : 'browser',
+  };
+}
+
+function envCredential() {
+  const credential = normalCredential({ bearer: envBearerToken(), cookie: envSessionCookie(), source: 'env' });
+  if (!credential.bearer && !credential.cookie) return null;
+  return credential;
+}
+
+/** Remember the working portal credential for one signed-in account. */
+export function setUserCampusCredential(userId, credential) {
+  if (!userId || !credential) return;
+  const normalized = normalCredential(credential);
+  if (!normalized.bearer && !normalized.cookie) return;
+  userCredentials.set(userId, normalized);
+}
+
+export function getUserCampusCredential(userId) {
+  return userId ? userCredentials.get(userId) ?? null : null;
+}
+
+export function clearUserCampusCredential(userId) {
+  if (userId) userCredentials.delete(userId);
+}
+
+export function listUserCampusCredentials() {
+  return [...userCredentials.entries()].map(([userId, credential]) => ({ userId, credential }));
+}
+
+/**
+ * The credential for one user: their own browser harvest when present, the
+ * operator `.env` credential only for an account that signed in with it, or a
+ * clear 409 telling the app to connect C@MPUS again.
+ */
+export function resolveCampusCredential(userId) {
+  if (userId) {
+    const stored = userCredentials.get(userId);
+    if (stored) return stored;
+    const source = loadCampusSource(userId);
+    if (source?.source === 'env') {
+      const env = envCredential();
+      if (env) return { ...env, account: source.account };
+    }
+    throw httpError(409, 'campus_credentials_missing');
+  }
+  const env = envCredential();
+  if (!env) throw httpError(503, 'token_missing');
+  return env;
+}
+
+export function campusBearerToken() {
+  if (runtimeBearerToken) return runtimeBearerToken;
+  return envBearerToken();
 }
 
 export function campusAuthorizationHeader() {
@@ -30,9 +105,7 @@ export function campusAuthorizationHeader() {
 
 export function campusSessionCookie() {
   if (runtimeSessionCookie) return runtimeSessionCookie;
-  const raw = (process.env.CAMPUS_SESSION_COOKIE || '').trim();
-  if (!raw) return '';
-  return raw.replace(/^(PSESSIONID|JSESSIONID)=/i, '');
+  return envSessionCookie();
 }
 
 export function campusStudyTarget() {
@@ -45,22 +118,34 @@ export function campusStudyTarget() {
 }
 
 export function campusRequestHeaders() {
+  return credentialHeaders({ bearer: campusBearerToken(), cookie: campusSessionCookie() });
+}
+
+function credentialHeaders(credential) {
   const headers = { Accept: 'application/json' };
-  const authorization = campusAuthorizationHeader();
-  if (authorization) headers.Authorization = authorization;
-  const cookie = campusSessionCookie();
-  if (cookie) headers.Cookie = `PSESSIONID=${cookie}`;
+  const value = normalCredential(credential);
+  if (value.bearer) headers.Authorization = `Bearer ${value.bearer}`;
+  if (value.cookie) headers.Cookie = `PSESSIONID=${value.cookie}`;
   return headers;
 }
 
-export function publicCampusStatus() {
+export function publicCampusStatus(userId) {
   const { studyId, elementId } = campusStudyTarget();
+  const own = userId ? getUserCampusCredential(userId) : null;
+  const source = userId ? loadCampusSource(userId) : null;
   return {
-    tokenConfigured: Boolean(campusBearerToken()),
+    tokenConfigured: Boolean(envBearerToken()),
     tokenRefreshed: Boolean(runtimeBearerToken),
-    sessionCookieConfigured: Boolean(campusSessionCookie()),
+    sessionCookieConfigured: Boolean(envSessionCookie()),
     studyId,
     elementId,
+    ...(userId
+      ? {
+          credentialActive: Boolean(own || source?.source === 'env'),
+          credentialSource: own?.source ?? source?.source ?? null,
+          credentialAccount: own?.account ?? source?.account ?? null,
+        }
+      : {}),
   };
 }
 
@@ -168,19 +253,18 @@ export function extractRefreshedToken(payload) {
 }
 
 /**
- * Renew the bearer token through the portal session cookie (empty POST,
- * no Authorization header — the observed browser call sends only cookies).
- * On success the process uses the new token; a restart still needs
- * `CAMPUS_BEARER_TOKEN` (persist with `npm run campus:token`).
+ * Renew one credential through its portal session cookie (empty POST, no
+ * Authorization header — the observed browser call sends only cookies).
+ * Returns the updated credential; it does not mutate process globals.
  */
-export async function refreshCampusToken(fetchImpl = fetch) {
-  const cookie = campusSessionCookie();
-  if (!cookie) throw httpError(401, 'missing_session_cookie');
+export async function refreshCredential(credential, fetchImpl = fetch) {
+  const value = normalCredential(credential);
+  if (!value.cookie) throw httpError(401, 'missing_session_cookie');
   let response;
   try {
     response = await fetchImpl(refreshRequestUrl(), {
       method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Cookie: `PSESSIONID=${cookie}` },
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json', Cookie: `PSESSIONID=${value.cookie}` },
       signal: AbortSignal.timeout(20_000),
     });
   } catch (caught) {
@@ -195,9 +279,28 @@ export async function refreshCampusToken(fetchImpl = fetch) {
   }
   const token = extractRefreshedToken(payload);
   if (!token) throw httpError(502, 'refresh_failed', `refresh answered ${response.status} without a token`);
-  runtimeBearerToken = token;
+  return { ...value, bearer: token };
+}
+
+/**
+ * Legacy single-user refresh used by the terminal probe and the tests. The app
+ * uses `refreshUserCampusCredential`, which is scoped to one account.
+ */
+export async function refreshCampusToken(fetchImpl = fetch) {
+  const refreshed = await refreshCredential({ bearer: campusBearerToken(), cookie: campusSessionCookie(), source: 'env' }, fetchImpl);
+  runtimeBearerToken = refreshed.bearer;
   console.log('[campus] bearer token refreshed (memory only — persist with npm run campus:token)');
   return true;
+}
+
+/** Refresh the credential stored for one user and keep the new bearer in memory. */
+export async function refreshUserCampusCredential(userId, fetchImpl = fetch) {
+  if (!userId) throw httpError(401, 'unauthorized');
+  const credential = resolveCampusCredential(userId);
+  const refreshed = await refreshCredential(credential, fetchImpl);
+  setUserCampusCredential(userId, refreshed);
+  console.log(`[campus] user ${userId} bearer token refreshed`);
+  return refreshed;
 }
 
 /** Renewal cadence in minutes from the env, clamped to 1–1440, default 10. */
@@ -228,6 +331,19 @@ export async function proactiveCampusRefresh(fetchImpl = fetch) {
   }
 }
 
+/** Refresh every remembered user credential. A dead cookie is dropped from memory. */
+export async function proactiveUserCampusRefresh(fetchImpl = fetch) {
+  const entries = listUserCampusCredentials();
+  for (const { userId } of entries) {
+    try {
+      await refreshUserCampusCredential(userId, fetchImpl);
+    } catch (error) {
+      console.log(`[campus] proactive refresh for ${userId} failed ${error instanceof Error ? error.message : error}`);
+    }
+  }
+  return entries.length;
+}
+
 /**
  * Renew the token on a fixed cadence instead of waiting for a 401, and once
  * right at startup: a restart with a valid cookie renews without `.env`.
@@ -239,6 +355,7 @@ export function startCampusTokenRefresh(fetchImpl = fetch) {
   console.log(`[campus] proactive token refresh every ${minutes} min (needs a session cookie)`);
   const tick = () => {
     proactiveCampusRefresh(fetchImpl);
+    proactiveUserCampusRefresh(fetchImpl);
   };
   proactiveTimer = setInterval(tick, minutes * 60_000);
   proactiveTimer.unref?.();
@@ -455,20 +572,21 @@ export function profileFromCurriculum(payload, studyId, elementId) {
   };
 }
 
-async function readCampus(url, label, op, fetchImpl, context = {}) {
-  if (!campusBearerToken()) throw httpError(503, 'token_missing');
+async function readCampus(credential, userId, url, label, op, fetchImpl, context = {}) {
+  const headers = credentialHeaders(credential);
+  if (!headers.Authorization && !headers.Cookie) throw httpError(503, 'token_missing');
   const started = Date.now();
   const signal = context.signal ? AbortSignal.any([AbortSignal.timeout(20_000), context.signal]) : AbortSignal.timeout(20_000);
   let response;
   try {
-    response = await fetchImpl(url, { headers: campusRequestHeaders(), signal });
+    response = await fetchImpl(url, { headers, signal });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
     console.log(`[campus] ${label} request failed ${reason} ${Date.now() - started}ms`);
     const detail = `request failed: ${String(reason).slice(0, 200)}`;
     // A user-cancelled call is not a portal failure; keep it out of the history.
     if (!context.signal?.aborted) {
-      logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: false, detail, elapsedMs: Date.now() - started });
+      logPortalCall({ userId, op, studyId: context.studyId, elementId: context.elementId, ok: false, detail, elapsedMs: Date.now() - started });
     }
     throw httpError(502, 'campus_failed', detail);
   }
@@ -477,16 +595,20 @@ async function readCampus(url, label, op, fetchImpl, context = {}) {
   if (!response.ok) {
     const message = portalMessage(payload);
     const detail = `upstream ${response.status}${message ? `: ${message}` : ''}`;
-    console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} message=${message || '-'} ${elapsed}ms`);
-    logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: false, httpStatus: response.status, message: detail, elapsedMs: elapsed });
+    console.log(`[campus] ${label} user=${userId ?? '-'} status=${response.status} message=${message || '-'} ${elapsed}ms`);
+    logPortalCall({ userId, op, studyId: context.studyId, elementId: context.elementId, ok: false, httpStatus: response.status, message: detail, elapsedMs: elapsed });
     // Expired bearer, valid session: renew once through the refresh endpoint and retry the same call.
     const authFailed = message.includes('invalid_token') || response.status === 401;
-    if (authFailed && !context.refreshed && campusSessionCookie()) {
+    if (authFailed && !context.refreshed && normalCredential(credential).cookie) {
       console.log(`[campus] ${label} token rejected, trying refresh`);
       try {
-        await refreshCampusToken(fetchImpl);
+        const refreshed = await refreshCredential(credential, fetchImpl);
+        // Keep the caller's credential current too: a pre-login ticket hands
+        // this object to the login route after the read.
+        credential.bearer = refreshed.bearer;
+        if (userId) setUserCampusCredential(userId, refreshed);
         console.log(`[campus] ${label} retrying after refresh`);
-        return readCampus(url, label, op, fetchImpl, { ...context, refreshed: true });
+        return readCampus(credential, userId, url, label, op, fetchImpl, { ...context, refreshed: true });
       } catch (refreshError) {
         console.log(`[campus] ${label} refresh failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
       }
@@ -496,45 +618,78 @@ async function readCampus(url, label, op, fetchImpl, context = {}) {
     if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
     throw httpError(502, 'campus_failed', detail);
   }
-  console.log(`[campus] ${label} token=${Boolean(campusBearerToken())} cookie=${Boolean(campusSessionCookie())} status=${response.status} ${elapsed}ms`);
-  logPortalCall({ op, studyId: context.studyId, elementId: context.elementId, ok: true, httpStatus: response.status, elapsedMs: elapsed });
+  console.log(`[campus] ${label} user=${userId ?? '-'} status=${response.status} ${elapsed}ms`);
+  logPortalCall({ userId, op, studyId: context.studyId, elementId: context.elementId, ok: true, httpStatus: response.status, elapsedMs: elapsed });
   return payload;
 }
 
-function readCurriculum(studyId, elementId, fetchImpl, signal) {
-  return readCampus(curriculumRequestUrl(studyId, elementId), `structure study=${studyId} element=${elementId}`, 'structure', fetchImpl, { studyId, elementId, signal });
+function readCurriculum(credential, userId, studyId, elementId, fetchImpl, signal) {
+  return readCampus(credential, userId, curriculumRequestUrl(studyId, elementId), `structure study=${studyId} element=${elementId}`, 'structure', fetchImpl, { studyId, elementId, signal });
 }
 
-/** Merge freshly read nodes into the server store. Best-effort; never breaks the call. */
-function storeStructure(studyId, elementId, nodes) {
+/** One-time handoff from the harvest validation to the sign-in route. */
+function prunePendingCredentials() {
+  const cutoff = Date.now() - PENDING_TTL_MS;
+  for (const [ticket, value] of pendingCredentials) {
+    if (value.created < cutoff) pendingCredentials.delete(ticket);
+  }
+}
+
+export function issueCredentialTicket(credential) {
+  prunePendingCredentials();
+  const ticket = randomBytes(24).toString('base64url');
+  pendingCredentials.set(ticket, { credential: normalCredential(credential), created: Date.now() });
+  return ticket;
+}
+
+export function takeCredentialTicket(ticket) {
+  prunePendingCredentials();
+  if (typeof ticket !== 'string' || !ticket) throw httpError(400, 'ticket_missing');
+  const value = pendingCredentials.get(ticket);
+  pendingCredentials.delete(ticket);
+  if (!value) throw httpError(400, 'ticket_invalid');
+  return value.credential;
+}
+
+/** Resolve the credential a login should use: a validated harvest ticket, the signed-in user's, or `.env`. */
+export function resolveLoginCredential({ ticket, userId } = {}) {
+  if (ticket) return takeCredentialTicket(ticket);
+  if (userId) return resolveCampusCredential(userId);
+  const env = envCredential();
+  if (!env) throw httpError(503, 'token_missing');
+  return env;
+}
+
+/** Merge freshly read nodes into the user's server store. Best-effort; never breaks the call. */
+function storeStructure(userId, studyId, elementId, nodes) {
   try {
-    const known = loadStructure(studyId);
+    const known = loadStructure(userId, studyId);
     const map = new Map(known.nodes.map((node) => [node.id, node]));
     for (const node of nodes) map.set(node.id, node);
     const expanded = [...new Set([...known.expandedIds, elementId])];
-    saveStructure(studyId, known.sync?.rootElementId ?? null, [...map.values()], expanded, known.sync?.complete ?? false);
+    saveStructure(userId, studyId, known.sync?.rootElementId ?? null, [...map.values()], expanded, known.sync?.complete ?? false);
   } catch {
     // The store is best-effort; the portal answer still goes out.
   }
 }
 
 /** Cached answer when the portal cannot be reached. Null when nothing usable is stored. */
-function storedStructure(studyId, elementId) {
+function storedStructure(userId, studyId, elementId) {
   try {
-    if (!isExpanded(studyId, elementId)) return null;
-    const known = loadStructure(studyId);
+    if (!isExpanded(userId, studyId, elementId)) return null;
+    const known = loadStructure(userId, studyId);
     if (!known.nodes.length) return null;
-    console.log(`[campus] structure study=${studyId} element=${elementId} served from server store`);
+    console.log(`[campus] structure study=${studyId} element=${elementId} served from server store for ${userId ?? '-'}`);
     return { studyId, elementId, nodes: known.nodes, cached: true };
   } catch {
     return null;
   }
 }
 
-/** Merge freshly read courses into the server store. Best-effort; never breaks the call. */
-function storeCourses(studyId, elementId, elementName, courses) {
+/** Merge freshly read courses into the user's server store. Best-effort; never breaks the call. */
+function storeCourses(userId, studyId, elementId, elementName, courses) {
   try {
-    const known = loadCourses(studyId);
+    const known = loadCourses(userId, studyId);
     const map = new Map(known.map((course) => [course.id, course]));
     for (const course of courses) {
       const existing = map.get(course.id);
@@ -545,34 +700,40 @@ function storeCourses(studyId, elementId, elementName, courses) {
         if (!existing.elementNames.includes(elementName)) existing.elementNames.push(elementName);
       }
     }
-    const fetched = [...new Set([...loadCoursesFetchedIds(studyId), elementId])];
-    const sync = getCoursesSync(studyId);
-    saveCourses(studyId, [...map.values()], fetched, sync?.complete ?? false);
+    const fetched = [...new Set([...loadCoursesFetchedIds(userId, studyId), elementId])];
+    const sync = getCoursesSync(userId, studyId);
+    saveCourses(userId, studyId, [...map.values()], fetched, sync?.complete ?? false);
   } catch {
     // The store is best-effort; the portal answer still goes out.
   }
 }
 
 /** Cached courses when the portal cannot be reached. Null when nothing usable is stored. */
-function storedCourses(studyId, elementId) {
+function storedCourses(userId, studyId, elementId) {
   try {
-    const fetched = loadCoursesFetchedIds(studyId);
+    const fetched = loadCoursesFetchedIds(userId, studyId);
     if (!fetched.includes(elementId)) return null;
-    const courses = loadCourses(studyId, elementId);
-    console.log(`[campus] courses study=${studyId} element=${elementId} served from server store`);
+    const courses = loadCourses(userId, studyId, elementId);
+    console.log(`[campus] courses study=${studyId} element=${elementId} served from server store for ${userId ?? '-'}`);
     return { studyId, elementId, courses, cached: true };
   } catch {
     return null;
   }
 }
 
-export async function loginWithCampusToken(fetchImpl = fetch) {
+/**
+ * Read the curriculum and studies for one credential. With a `userId` the
+ * answer is stored under that account and an offline read can fall back to the
+ * previous one; without a user id it is a pre-login read and stores nothing.
+ */
+export async function readCampusLogin(credential, fetchImpl = fetch, userId = null, store = Boolean(userId)) {
   const { studyId, elementId } = campusStudyTarget();
   let payload;
   try {
-    payload = await readCurriculum(studyId, elementId, fetchImpl);
+    payload = await readCurriculum(credential, userId, studyId, elementId, fetchImpl);
   } catch (error) {
-    const cached = storedStructure(studyId, elementId);
+    if (!userId) throw error;
+    const cached = storedStructure(userId, studyId, elementId);
     if (!cached) throw error;
     const root = cached.nodes.find((item) => item.elementType === 'ROOT') || cached.nodes.find((item) => item.id === elementId) || cached.nodes[0];
     if (!root?.name) throw error;
@@ -585,78 +746,110 @@ export async function loginWithCampusToken(fetchImpl = fetch) {
       cached: true,
     };
     try {
-      const { studies } = await loadCampusStudies(fetchImpl);
-      return { ...offline, studies, activeStudyId: pickActiveStudyId(studies, null), cached: true };
+      const { studies } = await loadCampusStudiesForCredential(credential, userId, fetchImpl);
+      return { ...offline, studies, activeStudyId: pickActiveStudyId(studies, null), cached: true, credential };
     } catch {
-      return { ...offline, studies: [], activeStudyId: null, cached: true };
+      return { ...offline, studies: [], activeStudyId: null, cached: true, credential };
     }
   }
   const profile = profileFromCurriculum(payload, studyId, elementId);
   if (!profile) throw httpError(502, 'campus_unexpected');
-  storeStructure(studyId, elementId, profile.nodes);
-  // Attach the enrolled studies so the app starts from production data, not mockup data.
+  if (store) storeStructure(userId, studyId, elementId, profile.nodes);
   try {
-    const { studies } = await loadCampusStudies(fetchImpl);
-    return { ...profile, studies, activeStudyId: pickActiveStudyId(studies, null) };
+    const { studies } = await loadCampusStudiesForCredential(credential, userId, fetchImpl);
+    return { ...profile, studies, activeStudyId: pickActiveStudyId(studies, null), credential };
   } catch {
-    return { ...profile, studies: [], activeStudyId: null };
+    return { ...profile, studies: [], activeStudyId: null, credential };
   }
 }
 
-export async function loadCurriculumStructure(elementIdOverride, studyIdOverride, fetchImpl = fetch, signal) {
+/** Persist a login result under the account that owns the credential. */
+export function storeCampusLogin(userId, profile) {
+  if (!userId || !profile) return;
+  storeStructure(userId, profile.studyId, profile.elementId, profile.nodes ?? []);
+  if (Array.isArray(profile.studies) && profile.studies.length) {
+    try {
+      saveStudiesSnapshot(userId, profile.studies);
+    } catch {
+      // The store is best-effort; the portal answer still goes out.
+    }
+  }
+}
+
+/** Legacy entry point: reads with `.env` (or the given user's credential) and stores for that user. */
+export async function loginWithCampusToken(fetchImpl = fetch, options = {}) {
+  const userId = options.userId ?? null;
+  const credential = options.credential ?? resolveCampusCredential(userId);
+  const result = await readCampusLogin(credential, fetchImpl, userId, Boolean(userId));
+  if (userId) {
+    setUserCampusCredential(userId, result.credential);
+    saveCampusSource(userId, result.credential.source, result.credential.account ?? result.account);
+  }
+  return result;
+}
+
+export async function loadCurriculumStructure(elementIdOverride, studyIdOverride, fetchImpl = fetch, signal, userId = null) {
   if (typeof studyIdOverride === 'function') {
     fetchImpl = studyIdOverride;
     studyIdOverride = undefined;
   }
+  const credential = resolveCampusCredential(userId);
   const target = campusStudyTarget();
   const studyId = parseStudyId(studyIdOverride) ?? target.studyId;
   let elementId = parseElementId(elementIdOverride);
   if (elementId == null && studyId !== target.studyId) {
     // Resolve the root element for another enrolled study via the chooser.
-    const { studies } = await loadCampusStudies(fetchImpl);
+    const { studies } = await loadCampusStudiesForCredential(credential, userId, fetchImpl);
     const match = studies.find((item) => item.studyId === studyId);
     if (!match?.elementId) throw httpError(400, 'bad_study_id');
     elementId = match.elementId;
   }
   elementId ??= target.elementId;
   try {
-    const payload = await readCurriculum(studyId, elementId, fetchImpl, signal);
+    const payload = await readCurriculum(credential, userId, studyId, elementId, fetchImpl, signal);
     const nodes = nodesFromCurriculum(payload);
     if (!nodes.length) throw httpError(502, 'campus_unexpected', `empty structure study=${studyId} element=${elementId}`);
-    storeStructure(studyId, elementId, nodes);
+    storeStructure(userId, studyId, elementId, nodes);
     return { studyId, elementId, nodes };
   } catch (error) {
-    const cached = storedStructure(studyId, elementId);
+    const cached = storedStructure(userId, studyId, elementId);
     if (!cached) throw error;
     return cached;
   }
 }
 
-export async function loadCampusStudies(fetchImpl = fetch) {
+export async function loadCampusStudiesForCredential(credential, userId, fetchImpl = fetch) {
   try {
-    const payload = await readCampus(studiesRequestUrl(), 'studies', 'studies', fetchImpl);
+    const payload = await readCampus(credential, userId, studiesRequestUrl(), 'studies', 'studies', fetchImpl);
     const studies = studiesFromChooser(payload);
     if (!studies.length) throw httpError(502, 'campus_unexpected');
-    try {
-      saveStudiesSnapshot(studies);
-    } catch {
-      // The store is best-effort; the portal answer still goes out.
+    if (userId) {
+      try {
+        saveStudiesSnapshot(userId, studies);
+      } catch {
+        // The store is best-effort; the portal answer still goes out.
+      }
     }
     return { studies, activeStudyId: pickActiveStudyId(studies, null) };
   } catch (error) {
+    if (!userId) throw error;
     let snapshot = null;
     try {
-      snapshot = loadStudiesSnapshot();
+      snapshot = loadStudiesSnapshot(userId);
     } catch {
       snapshot = null;
     }
     if (!snapshot) throw error;
-    console.log('[campus] studies served from server store');
+    console.log(`[campus] studies served from server store for ${userId}`);
     return { studies: snapshot.studies, activeStudyId: pickActiveStudyId(snapshot.studies, null), cached: true };
   }
 }
 
-export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, fetchImpl = fetch, signal) {
+export async function loadCampusStudies(fetchImpl = fetch, userId = null) {
+  return loadCampusStudiesForCredential(resolveCampusCredential(userId), userId, fetchImpl);
+}
+
+export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, fetchImpl = fetch, signal, userId = null) {
   if (typeof elementIdOverride === 'function') {
     fetchImpl = elementIdOverride;
     elementIdOverride = undefined;
@@ -665,27 +858,28 @@ export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, 
     fetchImpl = studyIdOverride;
     studyIdOverride = undefined;
   }
+  const credential = resolveCampusCredential(userId);
   const target = campusStudyTarget();
   const studyId = parseStudyId(studyIdOverride) ?? target.studyId;
   // Courses always belong to one curriculum element: there is no useful default.
   const elementId = parseElementId(elementIdOverride);
   if (elementId == null) throw httpError(400, 'bad_element_id');
   try {
-    const payload = await readCampus(coursesRequestUrl(studyId, elementId), `courses study=${studyId} element=${elementId}`, 'courses', fetchImpl, { studyId, elementId, signal });
+    const payload = await readCampus(credential, userId, coursesRequestUrl(studyId, elementId), `courses study=${studyId} element=${elementId}`, 'courses', fetchImpl, { studyId, elementId, signal });
     const courses = coursesFromPayload(payload);
     // An element without courses is a valid answer, not an error.
     // The element name for the link table comes from the stored tree when known.
     let elementName = String(elementId);
     try {
-      const known = loadStructure(studyId).nodes.find((node) => node.id === elementId);
+      const known = loadStructure(userId, studyId).nodes.find((node) => node.id === elementId);
       if (known?.name) elementName = known.name;
     } catch {
       // Name lookup is best-effort.
     }
-    storeCourses(studyId, elementId, elementName, courses);
+    storeCourses(userId, studyId, elementId, elementName, courses);
     return { studyId, elementId, courses };
   } catch (error) {
-    const cached = storedCourses(studyId, elementId);
+    const cached = storedCourses(userId, studyId, elementId);
     if (!cached) throw error;
     return cached;
   }
@@ -696,15 +890,16 @@ export async function loadCurriculumCourses(studyIdOverride, elementIdOverride, 
  * service, observed 18 October 2026). Live read: the answer stays out of
  * the store, the call itself lands in the portal history.
  */
-export async function loadCourseGroups(courseIdOverride, fetchImpl = fetch, signal) {
+export async function loadCourseGroups(courseIdOverride, fetchImpl = fetch, signal, userId = null) {
   if (typeof courseIdOverride === 'function') {
     fetchImpl = courseIdOverride;
     courseIdOverride = undefined;
   }
+  const credential = resolveCampusCredential(userId);
   // Groups belong to one course: there is no useful default, like courses to one node.
   const courseId = parseCourseId(courseIdOverride);
   if (courseId == null) throw httpError(400, 'bad_course_id');
-  const payload = await readCampus(courseGroupsRequestUrl(courseId), `course groups course=${courseId}`, 'course-groups', fetchImpl, { signal });
+  const payload = await readCampus(credential, userId, courseGroupsRequestUrl(courseId), `course groups course=${courseId}`, 'course-groups', fetchImpl, { signal });
   // A course without groups is a valid answer, not an error.
   return { courseId, groups: groupsFromPayload(payload) };
 }
@@ -715,12 +910,13 @@ export async function loadCourseGroups(courseIdOverride, fetchImpl = fetch, sign
  * session cookie, binary attachment back (CSV/ICS/XML). No bearer token —
  * the browser sends only cookies here.
  */
-export async function exportCampusCalendar({ dateFrom, dateTo, format = 99, charset = 'UTF8' } = {}, fetchImpl = fetch) {
+export async function exportCampusCalendar({ dateFrom, dateTo, format = 99, charset = 'UTF8' } = {}, fetchImpl = fetch, userId = null) {
   const from = parseExportDate(dateFrom);
   const to = parseExportDate(dateTo);
   const outputFormat = parseExportFormat(format);
   const outputCharset = parseExportCharset(charset);
-  const cookie = campusSessionCookie();
+  const credential = resolveCampusCredential(userId);
+  const cookie = normalCredential(credential).cookie;
   if (!cookie) throw httpError(503, 'token_missing');
   const form = new URLSearchParams({
     pMode: 'I',
@@ -827,11 +1023,11 @@ export function parseIcsEvents(ics) {
  * Download the personal calendar as ICS and upsert its events into the
  * server store. Re-running imports only new UIDs; repeats are skipped.
  */
-export async function syncExportedCalendar({ dateFrom, dateTo } = {}, fetchImpl = fetch) {
-  const downloaded = await exportCampusCalendar({ dateFrom, dateTo, format: 99, charset: 'UTF8' }, fetchImpl);
+export async function syncExportedCalendar({ dateFrom, dateTo } = {}, fetchImpl = fetch, userId = null) {
+  const downloaded = await exportCampusCalendar({ dateFrom, dateTo, format: 99, charset: 'UTF8' }, fetchImpl, userId);
   const text = Buffer.from(downloaded.base64, 'base64').toString('utf-8');
   const events = parseIcsEvents(text);
-  const { imported, skipped } = saveExportedEvents(events);
+  const { imported, skipped } = saveExportedEvents(userId, events);
   console.log(`[campus] calendar sync ok ${downloaded.filename}: ${imported} new, ${skipped} duplicates`);
   return { filename: downloaded.filename, imported, skipped, total: events.length };
 }
@@ -881,16 +1077,13 @@ export function extractBrowserCredentials(harvest) {
 }
 
 /**
- * Beta sign-in until the OIDC client is approved: take the session cookie
- * and bearer candidates harvested from the in-app browser login, validate
- * them against the chooser, and keep the working pair in process memory.
- * Tries cookie+bearer first, then bearer alone. Never logs the values.
+ * Validate a harvested browser login and keep the working pair behind a
+ * short-lived ticket. Nothing is written to a user until `/v1/campus/login`
+ * takes the ticket and creates the session.
  */
-export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
+export async function validateBrowserCredentials(harvest, fetchImpl = fetch) {
   const { session, bearers } = extractBrowserCredentials(harvest);
   if (!session && bearers.length === 0) throw httpError(400, 'no_credentials_found');
-  const previousToken = runtimeBearerToken;
-  const previousCookie = runtimeSessionCookie;
   const attempts = [];
   if (session) {
     for (const bearer of bearers) attempts.push({ session, bearer });
@@ -899,22 +1092,27 @@ export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
   for (const bearer of bearers) attempts.push({ session: null, bearer });
   let lastError = null;
   for (const attempt of attempts) {
-    runtimeBearerToken = attempt.bearer;
-    runtimeSessionCookie = attempt.session;
+    let credential = normalCredential({ bearer: attempt.bearer, cookie: attempt.session, source: 'browser' });
     try {
       // A harvest may hold the portal session without a bearer: the SPA writes
       // the token a moment later, or never. The session alone can mint one
       // through the refresh endpoint, exactly like the signed-in browser.
-      if (!attempt.bearer && attempt.session) {
+      if (!credential.bearer && credential.cookie) {
         try {
-          await refreshCampusToken(fetchImpl);
+          credential = await refreshCredential(credential, fetchImpl);
         } catch (refreshError) {
           console.log(`[campus] credentials refresh from session failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
         }
       }
-      const { studies } = await loadCampusStudies(fetchImpl);
+      const { studies } = await loadCampusStudiesForCredential(credential, null, fetchImpl);
       console.log(`[campus] browser credentials ok studies=${studies.length} session=${Boolean(attempt.session)}`);
-      return { ok: true, studies: studies.length, activeStudyId: pickActiveStudyId(studies, null) };
+      return {
+        ok: true,
+        studies: studies.length,
+        activeStudyId: pickActiveStudyId(studies, null),
+        credential,
+        ticket: issueCredentialTicket(credential),
+      };
     } catch (error) {
       lastError = error;
       console.log(
@@ -922,7 +1120,13 @@ export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
       );
     }
   }
-  runtimeBearerToken = previousToken;
-  runtimeSessionCookie = previousCookie;
   throw lastError ?? httpError(401, 'campus_unauthorized');
+}
+
+/** Legacy single-user wrapper used by the terminal probe and tests: it also fills the process globals. */
+export async function loginWithBrowserCredentials(harvest, fetchImpl = fetch) {
+  const result = await validateBrowserCredentials(harvest, fetchImpl);
+  runtimeBearerToken = result.credential.bearer;
+  runtimeSessionCookie = result.credential.cookie;
+  return { ok: true, studies: result.studies, activeStudyId: result.activeStudyId, ticket: result.ticket };
 }

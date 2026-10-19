@@ -40,6 +40,7 @@ Stack headers are off. Each screen draws its own title with the shared `Screen` 
 | --- | --- |
 | Screens in `app/` | Render, collect input, call `useApp` and the domain helpers |
 | `src/state` | Session, language, and everything the student types |
+| `src/auth` | The sign-in flows, the device vault, the server session token, and the pure user parser |
 | `src/data` | The fictional catalog: program, modules, people, places, deadlines, news, documents, reviews, exams, tutorials |
 | `src/domain/plan.ts` | Pure functions over that catalog |
 | `src/assistant` | Turn a question into an answer, then optionally ask the server to rewrite it |
@@ -63,7 +64,7 @@ Document summary and plain language follow the same pair: extractive text first 
 
 One Async Storage key, `university-assistant/v1`. The shape is `PersistedState` in `src/types.ts`. Writes happen after the first successful load, so an empty initial state does not wipe a stored record. `sanitize` drops unexpected shapes on read. Chat is capped at 40 messages. Imports are capped at 40. Reset clears notes, reviews, transfers, downloads, sync stamps, planned modules, and chat, and keeps the language and the session.
 
-The password never enters this object. The opt-in C@MPUS autologin credential is the only secret on the device: it lives beside the key in `expo-secure-store`, never in `PersistedState` and never in the assistant server — see [campus-browser-login.md](campus-browser-login.md).
+The password never enters this object. The opt-in C@MPUS autologin credential is the only secret on the device: it lives beside the key in `expo-secure-store`, never in `PersistedState` and never in the assistant server — see [campus-browser-login.md](campus-browser-login.md). The `PersistedState` record carries a copy of the server user (`user`), but not the session token: that lives in `expo-secure-store` on native (or AsyncStorage on web) and is the only thing sent as a bearer header. See [accounts.md](accounts.md).
 
 The curriculum, course, and API-call caches live outside that key in `campus-cache.db` (`expo-sqlite`, with the plugin in `app.json`), or in AsyncStorage on web where the native module is not bundled. The API log keeps the newest 1000 calls. Clearing a study drops its structures and courses; the call history has its own clear.
 
@@ -73,24 +74,35 @@ The curriculum, course, and API-call caches live outside that key in `campus-cac
 
 | Route | Behavior |
 | --- | --- |
-| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc, campus }`. `campus` is `tokenConfigured`, `sessionCookieConfigured`, `studyId`, and `elementId` |
+| `GET /health` | `{ ok, model: "grok-4.7", configured, oidc, campus, mail, admin }`. `campus` is `tokenConfigured`, `sessionCookieConfigured`, `studyId`, and `elementId`; `admin` is `{ configured }` |
 | `GET /v1/api` | The operation list in `server/catalog.mjs`. No secrets |
-| `GET /v1/campus/config` | The same public campus fields as `/health` |
-| `GET /v1/campus/studies` | The study chooser. Name, degree, status, and the root element id per study |
-| `POST /v1/campus/login` | Reads the configured curriculum root, then the chooser list. Returns the name, designation, mapped nodes, studies, and the active study |
-| `POST /v1/campus/structure` | Same read for an optional positive integer `elementId` and `studyId`; a bare `studyId` resolves the root through the chooser |
-| `POST /v1/campus/courses` | Courses of one curriculum element (`studyId`, required `elementId`). An empty list is valid |
+| `GET /v1/campus/config` | Public `.env` status; with a bearer it adds the caller's `credentialActive` and `credentialSource` |
+| `GET /v1/campus/studies` | **Bearer.** The study chooser, stored for the caller. Name, degree, status, and the root element id per study |
+| `POST /v1/campus/credentials` | Validates a browser harvest. Signed in: stores it for that user. Signed out: returns a one-shot `ticket` |
+| `POST /v1/campus/login` | Body `{ ticket }`, a signed-in user's stored credential, or `.env`. Reads the root, stores the rows for the user, and returns the profile plus the server `user`, `token`, and `expiresAt` |
+| `POST /v1/campus/structure` | **Bearer.** Same read for an optional positive integer `elementId` and `studyId`; a bare `studyId` resolves the root through the chooser |
+| `POST /v1/campus/courses` | **Bearer.** Courses of one curriculum element (`studyId`, required `elementId`). An empty list is valid |
 | `GET /v1/oidc/config` | Public OIDC status. No secret, no login hint |
 | `POST /v1/oidc/start` | Authorize URL for a redirect this server allows |
-| `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims, not tokens |
+| `POST /v1/oidc/exchange` | Code exchange and UserInfo. Returns profile claims and the server `user`, `token`, and `expiresAt`; not the university tokens |
 | `POST /v1/oidc/logout` | Revokes the server-side token and drops the session |
+| `POST /v1/auth/session` | Creates a `demo` or `local` user and session |
+| `GET /v1/auth/me` | Resolves the `Authorization: Bearer` token to the public user and its platform links |
+| `POST /v1/auth/logout` | Revokes the calling session token |
+| `POST /v1/auth/links` | Links or refreshes one platform on the signed-in user |
+| `DELETE /v1/auth/links/<platform>` | Removes one platform link |
+| `POST /v1/auth/sync` | Sets the `lastSyncAt` of one platform link |
+| `GET /admin` | The operator dashboard HTML. Safe without a cookie; it renders login/setup. |
+| `POST /v1/admin/login` | Compares `DASHBOARD_TOKEN`, sets the `HttpOnly` admin cookie. `503` when unconfigured. |
+| `POST /v1/admin/logout` | Clears the admin cookie. |
+| `GET/POST/DELETE /v1/admin/*` | Cross-user stats, list, detail, edits, session revoke, platform link/unlink, C@MPUS disconnect, portal clear, delete. Admin cookie required. |
 | `POST /v1/assist` | 503 `missing_key` when `XAI_API_KEY` is absent. Otherwise forwards to `https://api.x.ai/v1/responses` with `store: false` and a 50 second timeout. |
 
 ## Server store
 
-The assistant server keeps its own SQLite database, `server/campus-server.db` (`node:sqlite`, requires Node 22.5 or newer, git-ignored, overridable with `CAMPUS_DB_PATH`). It is the source of truth for portal data; the app keeps its own copy for offline use. Tables mirror the client cache — `curriculum_nodes` with per-element `expanded` flags, `curriculum_sync`, `courses` plus `course_elements` links, `courses_sync` with fetched element ids — plus a `studies_snapshot` row and a `portal_calls` log (newest 2000 portal hops).
+The assistant server keeps its own SQLite database, `server/campus-server.db` (`node:sqlite`, requires Node 22.5 or newer, git-ignored, overridable with `CAMPUS_DB_PATH`). It is the source of truth for portal data; the app keeps its own copy for offline use. Every portal table is keyed by `user_id`: `user_curriculum_nodes` with per-element `expanded` flags, `user_curriculum_sync`, `user_courses` plus `user_course_elements` links, `user_courses_sync` with fetched element ids, a `user_studies_snapshot` row per user, `user_exported_events`, and a `user_portal_calls` log (newest 2000 hops per user). It also holds the accounts — `users`, `user_sessions` (only token hashes), `user_platforms` — and `user_campus`, which records whether a user signed in with a browser harvest or the operator `.env` credential. See [accounts.md](accounts.md). The operator dashboard in `server/admin.mjs` reads and edits these tables; it is gated by `DASHBOARD_TOKEN` and documented in [admin-dashboard.md](admin-dashboard.md).
 
-Every portal read persists into the store as it arrives. Reads are live-first: on portal failure the server answers from the store when the requested element was expanded before, marked `cached: true`. An `invalid_token` (or any other 401) triggers one renewal through the portal refresh endpoint while the session cookie is valid, then retries the failed call — the renewed bearer stays in process memory. The renewal also runs proactively, on a fixed cadence (`CAMPUS_REFRESH_MINUTES`, default 10 min) and once at startup, so a valid cookie keeps a fresh bearer without depending on `.env`. Sync jobs (`server/sync.mjs`, `POST /v1/campus/sync`, polled via `GET /v1/campus/sync/<id>`, cancelled via `DELETE`) walk a whole study in the background with the same 3-attempt retry as the app and persist as they go, so cancelling keeps partial progress and the next job resumes. Cancelling also aborts in-flight portal calls instead of waiting out their timeouts, and aborted hops stay out of the call history. Jobs live in memory — a server restart drops them, the stored rows stay. Snapshots (`GET /v1/campus/tree`, `GET /v1/campus/courses/all`) and the portal history (`GET /v1/campus/calls`) serve the store without touching the portal.
+Every portal read persists into the store as it arrives under the signed-in user id. Reads are live-first: on portal failure the server answers from that user's store when the requested element was expanded before, marked `cached: true`. An `invalid_token` (or any other 401) triggers one renewal through the portal refresh endpoint with that user's session cookie, then retries the failed call — the renewed bearer stays in process memory. The renewal also runs proactively, on a fixed cadence (`CAMPUS_REFRESH_MINUTES`, default 10 min) for every remembered user credential and for the `.env` credential, and once at startup. Sync jobs (`server/sync.mjs`, `POST /v1/campus/sync`, polled via `GET /v1/campus/sync/<id>`, cancelled via `DELETE`) carry the user id and walk a whole study in the background with the same 3-attempt retry as the app; a job id from another user is a 404. Jobs live in memory — a server restart drops them, the stored rows stay. Snapshots (`GET /v1/campus/tree`, `GET /v1/campus/courses/all`) and the portal history (`GET /v1/campus/calls`) serve only the caller's rows without touching the portal.
 | Anything else | 404 |
 
 The body is capped at 200 KB. The question is sliced to 4,000 characters, the fact sheet to 24,000, and history to the last six turns. CORS allows any origin so Expo web on another port can call a local server. That is acceptable for a local demo and too open for a public host. See [security and privacy](security-and-privacy.md).

@@ -2,6 +2,7 @@ import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 
 import { assistantUrl } from '@/src/assistant/remote';
+import { asAuthSession, type AuthSession as AppSession } from '@/src/auth/session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -25,6 +26,8 @@ export interface OidcProfile {
   email: string | null;
   subject: string | null;
   sessionId: string;
+  /** Server user and bearer session created by the same sign-in. Absent from older servers. */
+  auth?: AppSession;
 }
 
 export interface OidcStatus {
@@ -87,12 +90,19 @@ export async function signInWithUniversity(): Promise<OidcProfile> {
   const code = returned.searchParams.get('code');
   const state = returned.searchParams.get('state');
   if (!code || state !== started.state) throw new Error('state_invalid');
-  const exchanged = await postJson<{ sessionId: string; profile: Omit<OidcProfile, 'sessionId'> }>('/v1/oidc/exchange', {
+  const exchanged = await postJson<{
+    sessionId: string;
+    profile: Omit<OidcProfile, 'sessionId' | 'auth'>;
+    token?: unknown;
+    expiresAt?: unknown;
+    user?: unknown;
+  }>('/v1/oidc/exchange', {
     code,
     state,
     redirectUri,
   });
-  return { ...exchanged.profile, sessionId: exchanged.sessionId };
+  const auth = asAuthSession({ token: exchanged.token, expiresAt: exchanged.expiresAt, user: exchanged.user });
+  return { ...exchanged.profile, sessionId: exchanged.sessionId, auth: auth ?? undefined };
 }
 
 export async function openOfficialCampus(): Promise<void> {

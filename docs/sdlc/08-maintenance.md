@@ -19,6 +19,8 @@ Keep the demonstration true after the first build: the numbers, the disclaimer, 
 - Do not add a client-side call that posts the university password to a project server. The authorize redirect in `server/oidc.mjs` is the login for the SIAM path.
 - The C@MPUS automated sign-in is the one accepted exception that stores the university password: only in `expo-secure-store` via [vault.ts](../../src/auth/vault.ts), only after the user opts in, optionally behind biometrics, never in Async Storage, never in `.env`, never sent to the assistant server, and deleted on sign-out. Do not widen it — no logging, no copying to another store, no auto-retry with a second account.
 - Do not put `XAI_API_KEY` in `EXPO_PUBLIC_*` or in source.
+- Do not expose `/admin` or `/v1/admin/*` without TLS and a strong `DASHBOARD_TOKEN`. The dashboard reads across accounts; without the token it must stay disabled ([admin-dashboard.md](../engineering/admin-dashboard.md)).
+- Keep C@MPUS credentials per user. A browser harvest stays in server memory keyed by user id; the `.env` pair is bound to the account that signed in with it. Do not add a shared portal credential fallback for other accounts ([accounts.md](../engineering/accounts.md)).
 - Do not add exam PDFs to `src/data` or to the document hub.
 - Do not replace the drawn mark with the university signet.
 - If a screen shows a grade, a room, or a deadline, it must be traceable to `src/data` or to something the user typed.

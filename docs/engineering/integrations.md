@@ -4,6 +4,10 @@ The product description names four university systems. C@MPUS, ILIAS, and SDG Ca
 
 For SIAM the app never stores or sends the university password. The student types it on `https://idp.uni-stuttgart.de`. Client id and client secret, issued by TIK, stay in the server `.env`. Two deliberate exceptions exist. UniMail is documented in [mail.md](mail.md): the TIK publishes IMAP as the interface for mail clients, so the password goes from the app to the local assistant server (which proves and holds it in memory) and on to the TIK IMAP host — never to any other endpoint, never persisted. The C@MPUS automated sign-in is the second: the user may keep the st-account password in the device vault so a hidden WebView can fill the official form; the password stays on the device for the C@MPUS sign-in itself, is deleted on sign-out, and only the harvested session reaches the assistant server for C@MPUS. That same password is then reused to connect UniMail, where it does reach the assistant server for the IMAP proof — see [campus-browser-login.md](campus-browser-login.md) and [mail.md](mail.md).
 
+## One account across the platforms
+
+Every sign-in creates or refreshes one server-side user, keyed by the st-account, and links the platforms that share that identity: C@MPUS, ILIAS, and SDG Campus through SIAM, plus UniMail once its IMAP credential is proven. The device keeps a session token and a copy of the public user record; the account screen at `/konto` is the single place that shows, syncs, or opens each platform. Links are `connected` (a live session or credential) or `linked` (the same identity is known). C@MPUS credentials and every portal row are scoped to that user id, so two accounts on one server do not share a timetable or a portal session. The model, the ticket handoff, the routes, and the session lifetime are in [accounts.md](accounts.md).
+
 ## What sync does today
 
 `syncPlatform` in `src/state/AppState.tsx` writes an ISO timestamp on `syncAt[platform]`. For ILIAS it also marks the bundled ILIAS document ids as downloaded. The handbook, grades, deadlines, and news do not change, because they already are the record.
@@ -36,7 +40,7 @@ Student → this app → project backend → university IdP and academic systems
                          → xAI Responses API (already this shape)
 ```
 
-1. **Identity.** Implemented as authorization-code OpenID Connect. The token exchange already runs on this server. The app stores the account, name, email, and subject for display. It does not store the university tokens. Details and URLs: [oidc-login.md](oidc-login.md).
+1. **Identity.** Implemented as authorization-code OpenID Connect. The token exchange already runs on this server, which also creates the server-side user and its app session ([accounts.md](accounts.md)). The app stores the account, name, email, subject, and the public platform links for display. It does not store the university tokens. Details and URLs: [oidc-login.md](oidc-login.md).
 2. **C@MPUS.** One signed-in read is already shaped: the curriculum structure under `slc.cm.cs`, documented in [campus-curriculum.md](campus-curriculum.md). The assistant server calls it for login and for `POST /v1/campus/structure`. The study chooser, documented in [campus-studies.md](campus-studies.md), lists the enrolled studies and the root node of each; the server calls it for `GET /v1/campus/studies`. The bearer token and `PSESSIONID` stay in the server environment. A later connector still has to map that tree onto the modules `src/domain/plan.ts` already uses.
 3. **ILIAS.** The backend lists file metadata and streams files the student is enrolled to see. The one-tap control becomes a real download into the app's document directory. Copyright stays with the course. The app should not republish those files to other students.
 4. **SDG Campus.** Enrollment and the FÜSQ catalog come from that backend. The sustainability module row is the placeholder.

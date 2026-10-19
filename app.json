@@ -60,6 +60,14 @@
           "configureAndroidBackup": true,
           "faceIDPermission": "Face ID wird verwendet, um die gespeicherte C@MPUS-Anmeldung zu entsperren."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "networkInspector": false
+          }
+        }
       ]
     ],
     "experiments": {

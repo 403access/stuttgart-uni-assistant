@@ -5,6 +5,7 @@ import { StyleSheet, Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
 import { asCampusCourses, asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
+import { asAuthSession } from '@/src/auth/session';
 import type { CampusCourse } from '@/src/types';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
 import { keys } from '@/src/query/keys';
@@ -78,7 +79,7 @@ export default function ApiScreen() {
         const nodes = asCurriculumNodes(body.nodes);
         const studies = asCampusStudies(body.studies);
         if (body.account && body.name)
-          signInCampus({ account: body.account, name: body.name, nodes, studyId: typeof body.studyId === 'number' ? body.studyId : null, studies: studies.length ? studies : undefined });
+          signInCampus({ account: body.account, name: body.name, nodes, studyId: typeof body.studyId === 'number' ? body.studyId : null, studies: studies.length ? studies : undefined, auth: asAuthSession(body) ?? undefined });
         setNotice(
           body.name
             ? studies.length

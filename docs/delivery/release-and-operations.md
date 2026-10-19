@@ -46,6 +46,8 @@ npm run assistant
 curl -s http://127.0.0.1:8787/health
 ```
 
+The operator dashboard is at `http://127.0.0.1:8787/admin`. Set `DASHBOARD_TOKEN` in `.env` and restart the server; without it the page and `/v1/admin/*` stay disabled. See [admin-dashboard.md](../engineering/admin-dashboard.md).
+
 Rotate the C@MPUS secrets without editing the file by hand: `npm run campus:token -- <token>` and `npm run campus:session -- <PSESSIONID>`. A pasted `Bearer` header or a full cookie string is reduced to the bare value, the value can be piped or typed without echoing, and `npm run campus:secret -- list` reports masked status. Restart `npm run assistant` after a change. An expired bearer token renews itself while the session cookie is valid (see the token section in [campus-curriculum.md](../engineering/campus-curriculum.md)) — proactively on a fixed cadence (`CAMPUS_REFRESH_MINUTES`, default 10 min) and reactively on a 401; the renewed value only lives in the process, so persist it with `npm run campus:token` when the server log says it refreshed.
 
 To check the automated C@MPUS sign-in from the terminal, before touching the app: `npm run campus:headless -- --user <st-account> --password-stdin`, with the password piped in. It drives the real pages in headless Chromium with the app's own selectors, prints every step and the cookie names, and by default verifies the result against the running assistant server. The credential is taken per invocation, never stored, never printed. Details: [campus-browser-login.md](../engineering/campus-browser-login.md).

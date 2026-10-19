@@ -28,9 +28,13 @@ export function getSyncJob(id) {
   return job ? snapshot(job) : null;
 }
 
-export function cancelSyncJob(id) {
+/** A job is visible only to the account that started it. */
+export function getSyncJobForUser(userId, id) {
   const job = jobs.get(Number(id));
-  if (!job) return null;
+  return job && job.userId === (userId ?? null) ? snapshot(job) : null;
+}
+
+function cancel(job) {
   if (job.state === 'running') {
     job.cancelled = true;
     job.state = 'cancelling';
@@ -41,6 +45,18 @@ export function cancelSyncJob(id) {
     }
   }
   return snapshot(job);
+}
+
+export function cancelSyncJob(id) {
+  const job = jobs.get(Number(id));
+  return job ? cancel(job) : null;
+}
+
+/** A job id from another account is indistinguishable from an unknown one. */
+export function cancelSyncJobForUser(userId, id) {
+  const job = jobs.get(Number(id));
+  if (!job || job.userId !== (userId ?? null)) return null;
+  return cancel(job);
 }
 
 function sleep(ms) {
@@ -73,7 +89,8 @@ async function fetchWithRetry(job, label, fn) {
  * `getSyncJob`. Progress persists into the server store as it is fetched,
  * so cancelling keeps partial results and a later job resumes from them.
  */
-export async function startSyncJob({ studyId, elementId, includeCourses = true, fetchImpl = fetch }) {
+export async function startSyncJob({ userId = null, studyId, elementId, includeCourses = true, fetchImpl = fetch }) {
+  const owner = userId ?? null;
   const target = Number(studyId);
   if (!Number.isInteger(target) || target <= 0) {
     const error = new Error('bad_study_id');
@@ -82,11 +99,11 @@ export async function startSyncJob({ studyId, elementId, includeCourses = true, 
   }
   let root = Number(elementId);
   if (!Number.isInteger(root) || root <= 0) {
-    const known = loadStructure(target);
+    const known = loadStructure(owner, target);
     if (known.sync?.rootElementId) {
       root = known.sync.rootElementId;
     } else {
-      const { studies } = await loadCampusStudies(fetchImpl);
+      const { studies } = await loadCampusStudies(fetchImpl, userId);
       const match = studies.find((item) => item.studyId === target);
       if (!match?.elementId) {
         const error = new Error('bad_study_id');
@@ -98,6 +115,7 @@ export async function startSyncJob({ studyId, elementId, includeCourses = true, 
   }
   const job = {
     id: ++jobSeq,
+    userId: owner,
     state: 'running',
     studyId: target,
     rootElementId: root,
@@ -126,7 +144,7 @@ export async function startSyncJob({ studyId, elementId, includeCourses = true, 
 async function runJob(job, fetchImpl) {
   console.log(`[campus] sync #${job.id} started study=${job.studyId} root=${job.rootElementId} courses=${job.includeCourses}`);
   // Seed from the store so a later job resumes instead of starting over.
-  const known = loadStructure(job.studyId);
+  const known = loadStructure(job.userId, job.studyId);
   const visited = new Set([...known.expandedIds, job.rootElementId]);
   const queue = known.nodes.map((node) => node.id).filter((id) => !visited.has(id));
   if (!known.expandedIds.includes(job.rootElementId)) queue.unshift(job.rootElementId);
@@ -139,14 +157,14 @@ async function runJob(job, fetchImpl) {
       const elementId = queue.shift();
       if (elementId === undefined) return;
       // loadCurriculumStructure stores into the server DB itself.
-      const outcome = await fetchWithRetry(job, `structure element=${elementId}`, () => loadCurriculumStructure(elementId, job.studyId, fetchImpl, job.controller.signal));
+      const outcome = await fetchWithRetry(job, `structure element=${elementId}`, () => loadCurriculumStructure(elementId, job.studyId, fetchImpl, job.controller.signal, job.userId));
       job.fetched += 1;
       if (outcome.cancelled) return;
       if (outcome.error) {
         job.failedIds.push(elementId);
         continue;
       }
-      const fresh = loadStructure(job.studyId);
+      const fresh = loadStructure(job.userId, job.studyId);
       job.nodeCount = fresh.nodes.length;
       for (const node of outcome.value.nodes) {
         if (!visited.has(node.id)) {
@@ -156,7 +174,7 @@ async function runJob(job, fetchImpl) {
       }
       if (job.includeCourses && !job.cancelled) {
         // loadCurriculumCourses stores into the server DB itself.
-        const courses = await fetchWithRetry(job, `courses element=${elementId}`, () => loadCurriculumCourses(job.studyId, elementId, fetchImpl, job.controller.signal));
+        const courses = await fetchWithRetry(job, `courses element=${elementId}`, () => loadCurriculumCourses(job.studyId, elementId, fetchImpl, job.controller.signal, job.userId));
         job.fetched += 1;
         if (courses.cancelled) return;
         if (courses.error) {
@@ -168,16 +186,16 @@ async function runJob(job, fetchImpl) {
     }
   }
   await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
-  const sync = getCoursesSync(job.studyId);
+  const sync = getCoursesSync(job.userId, job.studyId);
   if (sync) job.courseCount = sync.courseCount;
   job.finishedAt = new Date().toISOString();
   job.state = job.cancelled || job.state === 'cancelling' ? 'cancelled' : 'done';
   // Mark the study complete only when nothing failed and nothing was cancelled.
   if (job.state === 'done' && job.failedIds.length === 0) {
-    const fresh = loadStructure(job.studyId);
-    saveStructure(job.studyId, job.rootElementId, fresh.nodes, fresh.expandedIds, true);
+    const fresh = loadStructure(job.userId, job.studyId);
+    saveStructure(job.userId, job.studyId, job.rootElementId, fresh.nodes, fresh.expandedIds, true);
     if (job.includeCourses) {
-      saveCourses(job.studyId, loadCourses(job.studyId), loadCoursesFetchedIds(job.studyId), true);
+      saveCourses(job.userId, job.studyId, loadCourses(job.userId, job.studyId), loadCoursesFetchedIds(job.userId, job.studyId), true);
     }
   }
   console.log(`[campus] sync #${job.id} ${job.state} fetched=${job.fetched} nodes=${job.nodeCount} failed=${job.failedIds.length}`);

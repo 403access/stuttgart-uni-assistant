@@ -1,6 +1,6 @@
 # C@MPUS curriculum structure
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session. Types live in `src/campus/curriculum.ts`. A reduced fixture is `src/campus/curriculum.sample.ts`. The assistant server calls this URL for `POST /v1/campus/login` and `POST /v1/campus/structure`. The app stores the mapped nodes, not the raw portal body.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session. Types live in `src/campus/curriculum.ts`. A reduced fixture is `src/campus/curriculum.sample.ts`. The assistant server calls this URL for `POST /v1/campus/login` and `POST /v1/campus/structure`. The app stores the mapped nodes, not the raw portal body. Both routes require the app bearer token, and the server stores the rows under the caller's `user_id`.
 
 The two ids in the path are discovered by the study chooser in [campus-studies.md](campus-studies.md). The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service. This file records the one structure operation that was returned, not a full catalog of C@MPUS.
 
