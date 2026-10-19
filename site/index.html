@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>University Assistant — Dein Studium, an einem Ort</title>
+    <meta
+      name="description"
+      content="University Assistant bündelt Stundenplan, Modulfortschritt, Fristen, ILIAS-Material, Lageplan und UniMail in einer App und beantwortet Fragen dazu. Studentisches Demonstrationsprojekt für die Universität Stuttgart."
+    />
+    <meta name="theme-color" content="#004191" />
+    <link rel="icon" href="assets/favicon.png" />
+    <link rel="apple-touch-icon" href="assets/icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <noscript>
+      <style>
+        .reveal { opacity: 1; transform: none; }
+        .lang { display: none; }
+      </style>
+    </noscript>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="University Assistant" />
+    <meta property="og:description" content="Stundenplan, Module, Fristen, Campus und ein Assistent — in einer App." />
+    <meta property="og:image" content="assets/shots/dashboard.jpg" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Zum Inhalt springen</a>
+
+    <header class="site-header">
+      <div class="container">
+        <a class="brand" href="#top" aria-label="University Assistant">
+          <svg width="28" height="28" viewBox="0 0 40 40" aria-hidden="true">
+            <circle cx="14.4" cy="20.8" r="14.4" fill="#004191" />
+            <circle cx="30.8" cy="9.2" r="9.2" fill="#00BEFF" />
+          </svg>
+          <span>University&nbsp;Assistant</span>
+        </a>
+        <nav class="nav" aria-label="Hauptnavigation">
+          <a href="#funktionen" data-i18n="navFeatures">Funktionen</a>
+          <a href="#assistent" data-i18n="navAssistant">Assistent</a>
+          <a href="#einblicke" data-i18n="navGallery">Einblicke</a>
+          <a href="#datenschutz" data-i18n="navPrivacy">Datenschutz</a>
+          <a href="docs/" data-i18n="navDocs">Dokumentation</a>
+          <a href="https://github.com/403access/stuttgart-uni-assistant" rel="noopener">GitHub</a>
+        </nav>
+        <div class="lang" role="group" aria-label="Sprache / Language">
+          <button type="button" data-lang="de" aria-pressed="true">Deutsch</button>
+          <button type="button" data-lang="en" aria-pressed="false">English</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="container">
+          <div>
+            <p class="eyebrow" data-i18n="heroKicker">Studentisches Projekt</p>
+            <h1 data-i18n="heroTitle">Dein Studium, an einem Ort.</h1>
+            <p class="lead" data-i18n="heroLead">
+              University Assistant bündelt Stundenplan, Modulfortschritt, Fristen, ILIAS-Material, Lageplan und UniMail
+              in einer App — und beantwortet Fragen dazu auf Deutsch oder Englisch.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#einblicke" data-i18n="heroCtaPrimary">Einblicke ansehen</a>
+              <a
+                class="btn btn-ghost"
+                href="https://github.com/403access/stuttgart-uni-assistant"
+                rel="noopener"
+                data-i18n="heroCtaSecondary"
+                >Auf GitHub ansehen</a
+              >
+            </div>
+            <div class="hero-meta">
+              <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+                <span data-i18n="heroMetaPlatforms">iOS · Android · Web</span>
+              </span>
+              <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+                <span data-i18n="heroMetaLocal">Antworten auf dem Gerät</span>
+              </span>
+              <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18-5-6 5-6"/><path d="m15 6 5 6-5 6"/></svg>
+                <span data-i18n="heroMetaOpen">Quelloffen · AGPL-3.0</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="devices">
+            <div class="phone tilt">
+              <img
+                src="assets/shots/dashboard.jpg"
+                width="402"
+                height="874"
+                alt="Startbildschirm mit bestandenen ECTS, dem heutigen Stundenplan und den nächsten Fristen"
+                data-i18n-alt="altDashboard"
+                loading="eager"
+              />
+            </div>
+            <div class="phone back">
+              <img
+                src="assets/shots/chat.jpg"
+                width="402"
+                height="874"
+                alt="Assistent mit einer Frage zu Fristen und der Antwort mit Quellen"
+                data-i18n-alt="altChat"
+                loading="eager"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="strip">
+        <div class="container">
+          <ul>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+              <span data-i18n="stripSchedule">Stundenplan</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M13 16V8M18 16v-3"/></svg>
+              <span data-i18n="stripModules">Module &amp; Noten</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              <span data-i18n="stripDeadlines">Fristen</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg>
+              <span data-i18n="stripAssistant">KI-Assistent</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+              <span data-i18n="stripMail">UniMail</span>
+            </li>
+            <li>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              <span data-i18n="stripCampus">Lageplan</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="section" id="funktionen">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="eyebrow" data-i18n="featuresKicker">Funktionen</p>
+            <h2 data-i18n="featuresTitle">Alles, was der Studienalltag braucht</h2>
+            <p class="lead" data-i18n="featuresLead">
+              Ein Datensatz, viele Ansichten: Der Demonstrationsstand zeigt, wie Stundenplan, Prüfungsordnung, Material
+              und Campus-Dienste in einer App zusammenspielen.
+            </p>
+          </div>
+
+          <div class="grid cols-4">
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
+              </span>
+              <h3 data-i18n="f1Title">Stundenplan</h3>
+              <p data-i18n="f1Body">Vorlesungen, Übungen, Räume und Zeiten aus dem eigenen Plan — heute zuerst.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 16v-5M13 16V8M18 16v-3"/></svg>
+              </span>
+              <h3 data-i18n="f2Title">Module &amp; Noten</h3>
+              <p data-i18n="f2Body">Bestandene ECTS je Bereich, gewichteter Schnitt und der Weg zum Abschluss.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </span>
+              <h3 data-i18n="f3Title">Fristen</h3>
+              <p data-i18n="f3Body">Abgaben, Anmeldungen und Rückmeldung — gesammelt aus C@MPUS, ILIAS und SDG Campus.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 16.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></svg>
+              </span>
+              <h3 data-i18n="f4Title">Assistent</h3>
+              <p data-i18n="f4Body">Fragen zu Fristen, ECTS, Modulen oder Räumen — beantwortet aus dem eigenen Stand.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+              </span>
+              <h3 data-i18n="f5Title">UniMail</h3>
+              <p data-i18n="f5Body">Postfach lesen, sortieren und durchsuchen, ohne die App zu wechseln.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              </span>
+              <h3 data-i18n="f6Title">Lageplan</h3>
+              <p data-i18n="f6Body">Gebäude, Räume und Ansprechstellen auf der Uni-Karte.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H8l-4 3z"/><path d="M8 9h8M8 13h5"/></svg>
+              </span>
+              <h3 data-i18n="f7Title">Notizen &amp; Altklausuren</h3>
+              <p data-i18n="f7Body">Peer-Bewertungen, geteilte Notizen und Themen aus vergangenen Prüfungen.</p>
+            </article>
+
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 17v4h10v-4"/></svg>
+              </span>
+              <h3 data-i18n="f8Title">Campus-Dienste</h3>
+              <p data-i18n="f8Body">PaperCut-Drucken und Netzzugang, erklärt in den richtigen Schritten.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="assistent">
+        <div class="container">
+          <div class="feature reveal">
+            <div class="copy">
+              <p class="eyebrow" data-i18n="aKicker">Assistent</p>
+              <h2 data-i18n="aTitle">Der Assistent kennt deinen Stand</h2>
+              <p class="lead" data-i18n="aLead">
+                Die Antworten entstehen zuerst auf dem Gerät — sofort und ohne Netz. Jede Antwort nennt ihre Quellen.
+              </p>
+              <ul class="checks">
+                <li data-i18n="a1">Lokaler Datensatz, sofortige Antwort, kein Server nötig.</li>
+                <li data-i18n="a2">Quellen unter jeder Antwort: C@MPUS, ILIAS, SDG Campus.</li>
+                <li data-i18n="a3">Optional formuliert Grok die Antwort neu, wenn ein Schlüssel gesetzt ist.</li>
+                <li data-i18n="a4">Fragen und Antworten auf Deutsch oder Englisch.</li>
+              </ul>
+            </div>
+            <div class="shot">
+              <div class="phone">
+                <img
+                  src="assets/shots/chat.jpg"
+                  width="402"
+                  height="874"
+                  alt="Assistent beantwortet eine Frage zu den nächsten Fristen"
+                  data-i18n-alt="altChat"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="feature flip reveal" id="fortschritt">
+            <div class="copy">
+              <p class="eyebrow" data-i18n="pKicker">Fortschritt</p>
+              <h2 data-i18n="pTitle">ECTS, Noten und Prüfungsordnung im Blick</h2>
+              <p class="lead" data-i18n="pLead">
+                Der vereinfachte Demonstrationsplan zeigt, wie ein Studienverlauf in der App aussieht — klar als
+                Annahme gekennzeichnet, nie als amtliche Auskunft.
+              </p>
+              <ul class="checks">
+                <li data-i18n="p1">Bestandene ECTS je Bereich, gewichteter Schnitt, offene Punkte.</li>
+                <li data-i18n="p2">Voraussetzungen geprüft, nächste Fächer vorgeschlagen.</li>
+                <li data-i18n="p3">Module, Struktur, Tutorien und Dozierende in einer Ansicht.</li>
+                <li data-i18n="p4">Altklausur-Themen und Peer-Notizen ergänzen den Plan.</li>
+              </ul>
+            </div>
+            <div class="shot">
+              <div class="phone pair">
+                <img
+                  src="assets/shots/credits.jpg"
+                  width="402"
+                  height="874"
+                  alt="Prüfungsordnungs-Ansicht mit ECTS je Bereich"
+                  data-i18n-alt="altCredits"
+                  loading="lazy"
+                />
+              </div>
+              <div class="phone pair">
+                <img
+                  src="assets/shots/modules.jpg"
+                  width="402"
+                  height="874"
+                  alt="Modulplan mit bestandenen und offenen Modulen"
+                  data-i18n-alt="altModules"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="feature reveal" id="campus">
+            <div class="copy">
+              <p class="eyebrow" data-i18n="cKicker">Campus &amp; Dienste</p>
+              <h2 data-i18n="cTitle">Vom Hörsaal bis zum Drucker</h2>
+              <p class="lead" data-i18n="cLead">
+                Orientierung auf dem Campus und die Dienste, die sonst über drei Portale verteilt sind.
+              </p>
+              <ul class="checks">
+                <li data-i18n="c1">Lageplan mit Gebäuden, Räumen und Ansprechstellen.</li>
+                <li data-i18n="c2">PaperCut-Drucken, Guthaben und Standorte in Schritten erklärt.</li>
+                <li data-i18n="c3">UniMail, Plattformen und Kalender-Export an einem Ort.</li>
+                <li data-i18n="c4">Notizen teilen oder für sich behalten.</li>
+              </ul>
+            </div>
+            <div class="shot">
+              <div class="phone">
+                <img
+                  src="assets/shots/map.jpg"
+                  width="402"
+                  height="874"
+                  alt="Uni-Lageplan mit markierten Gebäuden"
+                  data-i18n-alt="altMap"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section tight" id="einblicke">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="eyebrow" data-i18n="gKicker">Einblicke</p>
+            <h2 data-i18n="gTitle">Bilder aus der App</h2>
+            <p class="lead" data-i18n="gLead">
+              Aufnahmen aus dem Demonstrationsprofil von Lena Hartmann. Die Noten, Fristen und Kurse sind erfunden.
+              Tippe auf ein Bild, um es zu vergrößern.
+            </p>
+          </div>
+
+          <div class="gallery">
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/dashboard.jpg" aria-label="Startbildschirm vergrößern">
+                <span class="phone"><img src="assets/shots/dashboard.jpg" alt="Startbildschirm" data-i18n-alt="altDashboard" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capDashboard">Start</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/chat.jpg" aria-label="Assistent vergrößern">
+                <span class="phone"><img src="assets/shots/chat.jpg" alt="Assistent" data-i18n-alt="altChat" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capChat">Assistent</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/credits.jpg" aria-label="Prüfungsordnung vergrößern">
+                <span class="phone"><img src="assets/shots/credits.jpg" alt="Prüfungsordnung" data-i18n-alt="altCredits" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capCredits">Prüfungsordnung</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/modules.jpg" aria-label="Module vergrößern">
+                <span class="phone"><img src="assets/shots/modules.jpg" alt="Modulplan" data-i18n-alt="altModules" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capModules">Module</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/deadlines.jpg" aria-label="Fristen vergrößern">
+                <span class="phone"><img src="assets/shots/deadlines.jpg" alt="Fristen" data-i18n-alt="altDeadlines" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capDeadlines">Fristen</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/documents.jpg" aria-label="Dokumente vergrößern">
+                <span class="phone"><img src="assets/shots/documents.jpg" alt="Dokumente" data-i18n-alt="altDocuments" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capDocuments">Dokumente</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/notes.jpg" aria-label="Notizen und Bewertungen vergrößern">
+                <span class="phone"><img src="assets/shots/notes.jpg" alt="Notizen und Bewertungen" data-i18n-alt="altNotes" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capNotes">Austausch</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/map.jpg" aria-label="Lageplan vergrößern">
+                <span class="phone"><img src="assets/shots/map.jpg" alt="Lageplan" data-i18n-alt="altMap" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capMap">Campus</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/printing.jpg" aria-label="Drucken vergrößern">
+                <span class="phone"><img src="assets/shots/printing.jpg" alt="Drucken" data-i18n-alt="altPrinting" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capPrinting">Drucken</figcaption>
+            </figure>
+            <figure class="reveal">
+              <button type="button" data-full="assets/shots/login.jpg" aria-label="Anmeldung vergrößern">
+                <span class="phone"><img src="assets/shots/login.jpg" alt="Anmeldung" data-i18n-alt="altLogin" loading="lazy" /></span>
+              </button>
+              <figcaption data-i18n="capLogin">Anmeldung</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section trust" id="datenschutz">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="eyebrow" data-i18n="tKicker">Datenschutz</p>
+            <h2 data-i18n="tTitle">Erst das Gerät, dann das Netz</h2>
+            <p class="lead" data-i18n="tLead">
+              Die App arbeitet lokal. Netz und Schlüssel kommen nur dort ins Spiel, wo sie gebraucht werden — und
+              bleiben in der Hand des Servers.
+            </p>
+          </div>
+
+          <div class="grid cols-3">
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+              </span>
+              <h3 data-i18n="t1Title">Alles beginnt lokal</h3>
+              <p data-i18n="t1Body">
+                Stundenplan, Noten, Notizen und der Chat liegen auf dem Gerät. Die App läuft auch ohne Server.
+              </p>
+            </article>
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+              </span>
+              <h3 data-i18n="t2Title">Passwörter bleiben bei der Universität</h3>
+              <p data-i18n="t2Body">
+                Beim C@MPUS-Login tippst du das Passwort nur auf der Seite der Universität. Die App merkt es sich
+                nicht.
+              </p>
+            </article>
+            <article class="card reveal">
+              <span class="icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>
+              </span>
+              <h3 data-i18n="t3Title">Der Server hält die Schlüssel</h3>
+              <p data-i18n="t3Body">
+                Der xAI-Schlüssel und die C@MPUS-Zugangsdaten bleiben im Serverprozess. Die App sendet nur Frage und
+                Kontext.
+              </p>
+            </article>
+          </div>
+
+          <p class="note reveal" data-i18n="tNote">
+            University Assistant ist ein studentisches Demonstrationsprojekt. Es ist kein Angebot der Universität
+            Stuttgart, verwendet nicht das amtliche Logo, und die Noten von Lena Hartmann sind fiktiv.
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="cta reveal">
+            <div>
+              <p class="eyebrow" data-i18n="ctaKicker">Open Source</p>
+              <h2 data-i18n="ctaTitle">Quelloffen, nachvollziehbar, lauffähig</h2>
+              <p data-i18n="ctaLead">
+                Der Code steht unter AGPL-3.0-or-later auf GitHub. Bau ihn, prüfe ihn, verändere ihn — die Tests laufen
+                mit einem Befehl.
+              </p>
+            </div>
+            <div class="hero-actions">
+              <a
+                class="btn btn-primary"
+                href="https://github.com/403access/stuttgart-uni-assistant"
+                rel="noopener"
+                data-i18n="ctaGithub"
+                >Zum Repository</a
+              >
+              <a
+                class="btn btn-ghost"
+                href="docs/"
+                data-i18n="ctaDocs"
+                >Dokumentation</a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="top">
+          <a class="brand" href="#top">
+            <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
+              <circle cx="14.4" cy="20.8" r="14.4" fill="#00BEFF" />
+              <circle cx="30.8" cy="9.2" r="9.2" fill="#FFFFFF" />
+            </svg>
+            <span>University&nbsp;Assistant</span>
+          </a>
+          <nav aria-label="Fußzeile">
+            <a href="https://github.com/403access/stuttgart-uni-assistant" rel="noopener">GitHub</a>
+            <a href="docs/" data-i18n="footerDocs">Dokumentation</a>
+            <a href="https://github.com/403access/stuttgart-uni-assistant/blob/main/LICENSE" rel="noopener" data-i18n="footerLicense">Lizenz</a>
+            <a href="#einblicke" data-i18n="footerShots">Einblicke</a>
+          </nav>
+        </div>
+        <div class="fine">
+          <p data-i18n="footerLine1">
+            © 2026 Oliver Molnar. University Assistant ist ein studentisches Demonstrationsprojekt und kein Angebot der
+            Universität Stuttgart.
+          </p>
+          <p data-i18n="footerLine2">
+            Strukturierte Daten, Noten und Fristen (Lena Hartmann) sind fiktiv. Die Farben folgen den veröffentlichten
+            Corporate Colors der Universität; die Marke ist eine eigene Paarung zweier Kreise und nicht das Signet.
+          </p>
+          <p data-i18n="footerLine3">
+            Lizenz: GNU Affero General Public License, Version 3 oder später. Teile des Codes entstanden mit
+            KI-Unterstützung; der Assistent nutzt optional xAI Grok.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Bild">
+      <button type="button" id="lightbox-close" aria-label="Schließen">&times;</button>
+      <img alt="" />
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
