@@ -29,8 +29,8 @@
     heroTitle: 'Your studies, in one place.',
     heroLead:
       'University Assistant brings the timetable, module progress, deadlines, ILIAS material, the campus map and UniMail into one app — and answers questions about them in German or English.',
-    heroCtaPrimary: 'See the screens',
-    heroCtaSecondary: 'View on GitHub',
+    heroCtaPrimary: 'Register for the beta',
+    heroCtaSecondary: 'See the screens',
     heroMetaPlatforms: 'iOS · Android · Web',
     heroMetaLocal: 'Answers on the device',
     heroMetaOpen: 'Open source · AGPL-3.0',
