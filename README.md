@@ -73,6 +73,7 @@ npm run check
 | Path | What it is |
 | --- | --- |
 | `app/` | Expo Router screens |
+| `site/` | Static website for the app (plain HTML, CSS, JS; `npm run site`) |
 | `src/data/` | Demonstration curriculum, places, people, deadlines, documents |
 | `src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
 | `src/assistant/` | Local answers, fact sheet, optional Grok call |

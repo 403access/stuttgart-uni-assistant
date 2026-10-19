@@ -69,7 +69,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "docs": "cd docs-site && bun run start",
     "docs:build": "cd docs-site && bun run build",
-    "docs:serve": "cd docs-site && bun run serve"
+    "docs:serve": "cd docs-site && bun run serve",
+    "site": "python3 -m http.server 4173 --directory site"
   },
   "private": true,
   "patchedDependencies": {
