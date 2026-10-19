@@ -433,14 +433,13 @@ export default function MailScreen() {
   }
 
   /**
-   * Sticky controls: one horizontally scrollable row — mailbox first, then search,
-   * filter, sort. The row stays pinned while the inbox scrolls under it, and the
-   * strip keeps every control at its natural width instead of squeezing five
-   * controls into one narrow screen width.
+   * Sticky controls: mailbox, full-width search, filter, and sort in one row.
+   * The search takes the remaining width while the menus keep a capped width;
+   * on narrow screens the menus shrink before the search disappears.
    */
   const controlsBar = connected ? (
     <View style={styles.stickyBar}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.controlsRow}>
+      <View style={styles.controlsRow}>
         <DropdownPicker
           hint={tx(locale, 'tabsMail.postfach')}
           valueText={folderValueText}
@@ -475,7 +474,7 @@ export default function MailScreen() {
             <DropdownPicker hint={tx(locale, 'tabsMail.sortieren')} valueText={sortValueText} options={sortOptions} onSelect={applySortKey} />
           </>
         ) : null}
-      </ScrollView>
+      </View>
     </View>
   ) : null;
 
@@ -580,7 +579,7 @@ export default function MailScreen() {
 }
 
 const styles = StyleSheet.create({
-  controlsRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 },
+  controlsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stickyBar: {
     backgroundColor: colors.paper,
     paddingHorizontal: 20,
@@ -598,7 +597,8 @@ const styles = StyleSheet.create({
   listRow: { paddingHorizontal: 20, paddingVertical: 14 },
   listRowLine: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   searchRow: {
-    width: 190,
+    flex: 1,
+    minWidth: 64,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -609,6 +609,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, fontSize: 15, color: colors.anthracite, paddingVertical: 9 },
   clear: { color: colors.mute, fontSize: 13, fontWeight: '700' },
   dropdown: {
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,

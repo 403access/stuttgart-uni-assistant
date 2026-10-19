@@ -12,7 +12,7 @@ The password is never stored on the device and never written to `.env`. Dropping
 
 ## The inbox
 
-The sticky control bar is one row, scrollable horizontally:
+The sticky control bar keeps the mailbox, search, filter, and sort controls in one row. The search field fills the remaining width, while the menu controls keep a capped width and shrink first on narrow screens:
 
 | Control | What it does |
 | --- | --- |
