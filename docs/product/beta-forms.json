@@ -1,0 +1,27 @@
+{
+  "createdAt": "2026-10-19T08:45:34.908Z",
+  "status": "PUBLISHED",
+  "forms": {
+    "de": {
+      "id": "KpQrqV",
+      "name": "Uni-Assistant Beta – Fragebogen",
+      "url": "https://tally.so/r/KpQrqV"
+    },
+    "en": {
+      "id": "LD14Qp",
+      "name": "Uni-Assistant Beta — Questionnaire",
+      "url": "https://tally.so/r/LD14Qp"
+    },
+    "interview": {
+      "id": "vXj8QD",
+      "name": "Uni-Assistant Beta – Interview (15 Minuten) / Interview (15 minutes)",
+      "url": "https://tally.so/r/vXj8QD"
+    },
+    "signup": {
+      "id": "kbaB7Z",
+      "name": "Uni-Assistant Beta – Anmeldung / Beta signup",
+      "url": "https://tally.so/r/kbaB7Z"
+    }
+  },
+  "publishedAt": "2026-10-19T09:40:37.539Z"
+}

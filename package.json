@@ -61,6 +61,7 @@
     "assistant": "node server/index.mjs",
     "assistant:tunnel": "node scripts/tunnel-assistant.mjs",
     "assistant:local": "node scripts/tunnel-assistant.mjs --clear",
+    "beta:forms": "node scripts/create-beta-forms.mjs",
     "campus:secret": "node scripts/set-campus-secret.mjs",
     "campus:token": "node scripts/set-campus-secret.mjs token",
     "campus:session": "node scripts/set-campus-secret.mjs session",

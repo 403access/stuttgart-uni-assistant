@@ -24,6 +24,10 @@ For the person holding the phone: what each screen does and what stays on the de
 | [00-product-description.md](00-product-description.md) | The product description: platforms, modules, chat, peers, campus, documents |
 | [product/feature-catalog.md](product/feature-catalog.md) | Each requested capability, the screen that carries it, and what this build actually does |
 | [product/personas-and-journeys.md](product/personas-and-journeys.md) | Who the app is for, and five journeys through the current build |
+| [product/beta-signup.md](product/beta-signup.md) | The tester intake form: contact details, device, frustration baseline, privacy, and how it fits the pilot |
+| [product/beta-survey.md](product/beta-survey.md) | The five-minute pilot questionnaire, German and English, with Tally setup and decision thresholds |
+| [product/beta-recruitment.md](product/beta-recruitment.md) | Who to recruit, the invite and reminder messages, and the non-user follow-up |
+| [product/beta-interview-guide.md](product/beta-interview-guide.md) | The 15-minute interview script, consent, capture template, and analysis |
 
 ## Lifecycle
 

@@ -112,7 +112,7 @@ The repository's history shows substantial AI-assisted development. Do not conce
 
 ### A first real pilot
 
-Every route is stronger with evidence that a real student besides the author used the tool. The demonstration record is fictional by design, but a small pilot — a handful of students, a short survey, a screenshot of a real timetable export with consenting data — turns "prototype" into "validated". None of this exists in the repository yet, and it is the single highest-value non-legal addition.
+Every route is stronger with evidence that a real student besides the author used the tool. The demonstration record is fictional by design, but a small pilot — a handful of students, a short survey, a screenshot of a real timetable export with consenting data — turns "prototype" into "validated". The survey, recruitment messages, and interview guide are drafted in [beta-survey.md](../product/beta-survey.md); no pilot has run and there are no results yet. This remains the single highest-value non-legal addition.
 
 ## What to do first (summary)
 
