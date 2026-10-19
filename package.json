@@ -58,6 +58,7 @@
     "ios:accounts": "node scripts/xcode-accounts.mjs",
     "dist:serve": "node dist-service/server.mjs",
     "dist:publish": "node scripts/publish-ipa.mjs",
+    "dist:tunnel": "cloudflared --config dist-service/tunnel.yml tunnel run",
     "web": "expo start --web",
     "tunnel": "expo start --tunnel",
     "typecheck": "tsc --noEmit",

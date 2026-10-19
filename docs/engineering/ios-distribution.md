@@ -255,7 +255,9 @@ than the profile covers — that gap is the failure that otherwise surfaces as
 **The deploy prerequisite is a domain and a certificate.** Over-the-air install
 refuses plain HTTP and self-signed certificates, so the service is useful on
 `localhost` for the history and the API, but a phone can only install from an
-HTTPS origin. `dist-service/Caddyfile` covers that in one file.
+HTTPS origin. The supported shape is a named Cloudflare tunnel — `olimo.me` is
+already on Cloudflare's nameservers, so `builds.olimo.me` is one command — with a
+`Caddyfile` for the VPS alternative. Both are in `dist-service/README.md`.
 
 
 
@@ -374,10 +376,10 @@ during that build and does not prevent it.
 only exercised on `localhost` — the manifest and the pages were read back over
 HTTP, but iOS will not install from an `http://` origin. The service's own tests
 cover publishing, the hash check, the history, the binary round-trip and the
-manifest; the deploy step is a Caddyfile and a systemd unit that have not been run
-on a real host. No sideload has been performed either, so the SideStore path and
-its weekly refresh are described from the tools' documentation rather than from a
-completed run.
+manifest; the deploy step is a Cloudflare tunnel config and a systemd unit that
+have not been run on a real host. No sideload has been performed either, so the
+SideStore path and its weekly refresh are described from the tools' documentation
+rather than from a completed run.
 
 ## Sources
 

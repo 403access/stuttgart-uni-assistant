@@ -53,3 +53,5 @@ modules/*/ios/build/
 
 # distribution service state (database and uploaded .ipa files)
 /dist-service/data/
+# machine-specific Cloudflare tunnel config; the example is tracked
+/dist-service/tunnel.yml

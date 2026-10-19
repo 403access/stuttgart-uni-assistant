@@ -40,7 +40,7 @@ anything.
 | `DIST_TOKEN` | — | Bearer token for uploads and device edits. Unset means writes are refused. |
 | `DIST_PORT` | `8788` | Listen port. |
 | `DIST_HOST` | `127.0.0.1` | Bind address. Keep loopback behind a proxy. |
-| `DIST_PUBLIC_URL` | derived from the request | Public origin used in the install manifest, e.g. `https://builds.example.org`. |
+| `DIST_PUBLIC_URL` | derived from the request | Public origin used in the install manifest, e.g. `https://builds.olimo.me`. |
 | `DIST_DATA_DIR` | `./data` | Database and uploaded `.ipa` files. |
 | `DIST_MAX_BYTES` | `512MB` | Upload cap. |
 
@@ -72,9 +72,49 @@ Download URLs contain a random 16-hex build id, so a build is not enumerable.
 
 ## Deploy
 
-1. **DNS** — an `A`/`AAAA` record for `builds.example.org`.
-2. **TLS** — append [Caddyfile](Caddyfile) to your Caddy config (or keep it as
-   its own file and `import` it), replacing the hostname:
+Two shapes work. A **named Cloudflare tunnel** keeps the service on a machine you
+already have, with no public IP and TLS at Cloudflare's edge — that is the
+supported default here. A **VPS with Caddy** is the alternative when the service
+should own its IP and certificate.
+
+### Named Cloudflare tunnel
+
+The domain must already be on Cloudflare's nameservers, which `builds.olimo.me`
+is. `cloudflared` is installed.
+
+```bash
+cloudflared tunnel login                       # browser, pick the zone
+cloudflared tunnel create builds               # prints the UUID and a credentials path
+cloudflared tunnel route dns builds builds.olimo.me
+cp dist-service/tunnel.yml.example dist-service/tunnel.yml
+# fill in the UUID and the credentials path in tunnel.yml
+```
+
+Then, in two terminals (or two services):
+
+```bash
+DIST_TOKEN=change-me DIST_PUBLIC_URL=https://builds.olimo.me npm run dist:serve
+npm run dist:tunnel
+```
+
+`dist:tunnel` runs `cloudflared --config dist-service/tunnel.yml tunnel run` —
+the flag has to precede the subcommand. Once the edge reports the tunnel healthy,
+`https://builds.olimo.me/health` answers and the publish output stops warning
+about HTTPS.
+
+Keep `DIST_HOST=127.0.0.1`: Cloudflare terminates TLS and reaches the process
+over loopback, so there is nothing to serve on a public interface.
+
+**Upload limit.** Cloudflare caps request bodies at 100 MB on Free and Pro (200 MB
+Business, 500 MB Enterprise). A 13 MB `.ipa` is fine; a debug build with symbols
+can get close. The publish client sends a buffer, so `Content-Length` is set —
+cloudflared has had bugs with body-less chunked uploads, which is one reason to
+keep it that way.
+
+### VPS with Caddy
+
+1. `builds.olimo.me` → an `A`/`AAAA` record to the host.
+2. Append the [Caddyfile](Caddyfile) to your Caddy config, replacing the hostname:
 
    ```bash
    sudo cp Caddyfile /etc/caddy/dist-service.caddy
@@ -82,32 +122,42 @@ Download URLs contain a random 16-hex build id, so a build is not enumerable.
    sudo systemctl reload caddy
    ```
 
-3. **Service** — `/etc/systemd/system/dist-service.service`:
+   Caddy obtains and renews the certificate; the service never speaks TLS.
 
-   ```ini
-   [Unit]
-   Description=iOS build distribution
-   After=network.target
+### Running the service itself
 
-   [Service]
-   WorkingDirectory=/srv/stuttgart-uni-assistant
-   Environment=DIST_TOKEN=change-me
-   Environment=DIST_PUBLIC_URL=https://builds.example.org
-   Environment=DIST_DATA_DIR=/var/lib/dist-service
-   ExecStart=/usr/bin/node dist-service/server.mjs
-   Restart=always
-   User=dist
+On Linux, `/etc/systemd/system/dist-service.service`:
 
-   [Install]
-   WantedBy=multi-user.target
-   ```
+```ini
+[Unit]
+Description=iOS build distribution
+After=network.target
 
-4. **Backup** — the whole state is `DIST_DATA_DIR`. Copy it nightly; for SQLite
-   use `sqlite3 builds.db ".backup '/backup/builds.db'"` rather than copying a
-   live file.
+[Service]
+WorkingDirectory=/srv/stuttgart-uni-assistant
+Environment=DIST_TOKEN=change-me
+Environment=DIST_PUBLIC_URL=https://builds.olimo.me
+Environment=DIST_DATA_DIR=/var/lib/dist-service
+ExecStart=/usr/bin/node dist-service/server.mjs
+Restart=always
+User=dist
 
-The MySQL-free part is deliberate: one file plus one directory is the entire
-state, which is what makes this deployable without a database server.
+[Install]
+WantedBy=multi-user.target
+```
+
+On a Mac, run `npm run dist:serve` in a terminal, or wrap it in a LaunchAgent if
+it should survive a reboot. Either way, the tunnel and the service are separate
+processes; both have to be running.
+
+### Backup
+
+The whole state is `DIST_DATA_DIR`. Copy it nightly; for SQLite use
+`sqlite3 builds.db ".backup '/backup/builds.db'"` rather than copying a live
+file.
+
+The state being one file plus one directory is deliberate: it is what makes this
+deployable without a database server.
 
 ## Devices and the 100-device limit
 

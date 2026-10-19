@@ -18,7 +18,7 @@
  * Configuration (all optional except DIST_TOKEN for writes):
  *   DIST_TOKEN        bearer token that authorises uploads and device edits
  *   DIST_PORT         default 8788
- *   DIST_HOST         default 127.0.0.1, which is what a reverse proxy wants
+ *   DIST_HOST         default 127.0.0.1, which is what a tunnel or reverse proxy wants
  *   DIST_PUBLIC_URL   the public origin, e.g. https://builds.example.org; used to
  *                     build absolute URLs in the install manifest
  *   DIST_DATA_DIR     database and `.ipa` files, default ./data
@@ -298,6 +298,7 @@ server.listen(PORT, HOST, () => {
   console.log(`  token: ${TOKEN ? 'set' : 'NOT SET — uploads and device edits are disabled'}`);
   if (!origin.startsWith('https://')) {
     console.log('  note: over-the-air install needs HTTPS with a trusted certificate.');
-    console.log('        Use a reverse proxy (see dist-service/Caddyfile) before handing links out.');
+    console.log('        Use the Cloudflare tunnel (npm run dist:tunnel) or a TLS proxy');
+    console.log('        before handing links out.');
   }
 });

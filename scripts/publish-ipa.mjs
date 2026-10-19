@@ -196,7 +196,7 @@ async function main() {
     console.log('  Open that page in Safari on a registered device and tap Install.');
   } else {
     console.log('  This origin is not HTTPS, so over-the-air install will not work yet.');
-    console.log('  Put the service behind a TLS proxy (dist-service/Caddyfile) first.');
+    console.log('  Put it behind the Cloudflare tunnel (npm run dist:tunnel) or a TLS proxy first.');
   }
 }
 
