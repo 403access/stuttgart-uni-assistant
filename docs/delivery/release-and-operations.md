@@ -21,6 +21,8 @@ Scripts in `package.json`:
 | `start` | `expo start` | Dev server, then Expo Go, a simulator, or the web UI |
 | `web` | `expo start --web` | Browser |
 | `ios` / `android` | `expo start --ios` / `--android` | Simulator or emulator |
+| `ios:ipa` | `node scripts/build-ios-ipa.mjs` | Release `.ipa` for a tester's iPhone, signed by the Apple Account in Xcode. Refuses to archive an unsignable tree; see [ios-distribution.md](../engineering/ios-distribution.md) |
+| `ios:accounts` | `node scripts/xcode-accounts.mjs` | The Apple Accounts and teams Xcode knows about, compared with this project's team. Read-only; `--json` for scripts |
 | `tunnel` | `expo start --tunnel` | Dev server reachable from another network (Expo's ngrok tunnel) |
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
 | `check` | `tsx scripts/check-assistant.ts` + `tsx scripts/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests, the assistant-tunnel helper tests |
@@ -111,6 +113,10 @@ npx expo run:android
 ```
 
 Cloud builds need an `eas.json` and an Expo account. Add those in a change that names who owns the bundle id. The id should stay on `dev.demo.*` until the project is no longer a demonstration.
+
+Getting a build onto someone else's iPhone is a separate problem from producing
+it, and the answer depends on whether a paid Apple Developer Program membership
+exists. See [ios-distribution.md](../engineering/ios-distribution.md).
 
 ## Release gate for a change in this repo
 

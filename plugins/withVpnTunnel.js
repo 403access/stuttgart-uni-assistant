@@ -111,9 +111,23 @@ function withIosVpnEntitlements(config) {
   });
 }
 
+/**
+ * Set to `1` to write the iOS entitlements. They are deliberately off by
+ * default: both are unavailable to a free Apple Account, so a Personal Team
+ * cannot sign a project that has them, and the iOS tunnel they exist for does
+ * not exist yet. Turn this on together with a paid membership and the Packet
+ * Tunnel target. See docs/engineering/ios-distribution.md.
+ */
+const IOS_ENTITLEMENTS_FLAG = 'EXPO_ENABLE_IOS_VPN_ENTITLEMENTS';
+
 /** Adds the VPN entitlements and permissions the native engines require. */
 module.exports = function withVpnTunnel(config) {
   config = withAndroidVpn(config);
-  config = withIosVpnEntitlements(config);
+  if (process.env[IOS_ENTITLEMENTS_FLAG] === '1') {
+    config = withIosVpnEntitlements(config);
+  }
   return config;
 };
+
+module.exports.IOS_ENTITLEMENTS_FLAG = IOS_ENTITLEMENTS_FLAG;
+module.exports.IOS_ENTITLEMENT_KEYS = [NETWORK_EXTENSION, APP_GROUPS];

@@ -65,6 +65,7 @@ const sidebars = {
         'engineering/security-and-privacy',
         'engineering/vpn-comparison',
         'engineering/vpn-tunnel',
+        'engineering/ios-distribution',
         'engineering/design-system',
         'engineering/i18n',
       ],

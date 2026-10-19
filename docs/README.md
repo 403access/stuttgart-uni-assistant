@@ -59,7 +59,8 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/campus-course-groups.md](engineering/campus-course-groups.md) | C@MPUS groups and dated appointments of one course: request, mapped group list, and the route |
 | [engineering/campus-calendar-export.md](engineering/campus-calendar-export.md) | C@MPUS calendar import (export mask): observed form fields, formats, the download/sync route, and the in-app import history |
 | [engineering/campus-browser-login.md](engineering/campus-browser-login.md) | Beta sign-in through the in-app C@MPUS browser: harvest, validation, failure modes |
-| [engineering/onboarding.md](engineering/onboarding.md) | Post-sign-in onboarding: the gate, the steps, the device vault and its biometric gate, open decisions || [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
+| [engineering/onboarding.md](engineering/onboarding.md) | Post-sign-in onboarding: the gate, the steps, the device vault and its biometric gate, open decisions |
+| [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
 | [engineering/tanstack-query.md](engineering/tanstack-query.md) | Query client wiring, typed key factory, shared sync mutation, device-cache write-back |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
@@ -67,6 +68,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
 | [engineering/vpn-comparison.md](engineering/vpn-comparison.md) | The three university VPN endpoints, protocols, the engines available for each, and the evidence |
 | [engineering/vpn-tunnel.md](engineering/vpn-tunnel.md) | The TIK AnyConnect and ZDI OpenVPN services: screens, native control surface, and the engine seam |
+| [engineering/ios-distribution.md](engineering/ios-distribution.md) | Getting a build onto an iPhone without the App Store: the four routes, the free-Account limits, which Apple account signs the build, and the local `.ipa` workflow |
 | [engineering/design-system.md](engineering/design-system.md) | Color, type, mark, and screen patterns |
 | [engineering/i18n.md](engineering/i18n.md) | The keyed German/English catalogs, `tx`, placeholder values, and how to add a string |
 

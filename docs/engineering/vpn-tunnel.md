@@ -140,6 +140,22 @@ work, per the library's installation guide:
 Apple must then approve the App ID for `packet-tunnel-provider`. VPN does not
 work in the iOS simulator.
 
+Both entitlements above are written **only** when
+`EXPO_ENABLE_IOS_VPN_ENTITLEMENTS=1` is set, because neither is available to a
+free Apple Account and a Personal Team cannot sign a project that has them.
+Leave the flag unset for a device build without a paid membership; turn it on
+when the Packet Tunnel target lands:
+
+```bash
+EXPO_ENABLE_IOS_VPN_ENTITLEMENTS=1 npm run ios:ipa -- --clean
+```
+
+Set it inline like that, **not in `.env`**. `expo prebuild` reads `.env`, so a
+value stored there would write the entitlements into every prebuild, including
+the ones a free Account has to sign. The reasoning, and the workflow that
+refuses to archive an unsignable tree, are in
+[ios-distribution.md](ios-distribution.md).
+
 ## What is verified
 
 - TypeScript, lint, and `scripts/vpn-profile.test.mjs` (the `.ovpn` parser and

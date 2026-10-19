@@ -42,6 +42,8 @@ npx expo run:android
 
 Or, without local Xcode and Android Studio, use EAS and the same `app.json`. A cloud build is not configured in this repository yet. Adding it means an `eas.json`, an Expo account, and a decision about who owns the bundle id.
 
+Handing a binary to someone who is not on your machine is a separate question from building it. Here it turns on a paid Apple Developer Program membership, which this machine has: the exported build's one-year provisioning profile confirms it, so Ad Hoc or TestFlight is the route. The four routes, the free-Account limits, which account signs the build, and what each tester has to do every week are in [ios-distribution.md](../engineering/ios-distribution.md).
+
 ## Web
 
 `npx expo export --platform web` writes a static bundle. It is enough to prove the routes render. It is not a hosted environment. A public web deploy would need a host, the assistant URL of that environment, and the same disclaimer the sign-in screen already shows.
