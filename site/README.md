@@ -47,8 +47,9 @@ and the workflow sets `DOCS_BASE_URL=/stuttgart-uni-assistant/` for the Docusaur
 ## Screenshots
 
 The images in `assets/shots/` were captured from the app running on an iOS simulator with the
-demonstration profile (Lena Hartmann) loaded, then resized to 460 × 1000 px JPEG at quality ~82 so
-the whole page stays under a megabyte.
+demonstration profile (Lena Hartmann) loaded, then resized to 736 × 1600 px JPEG at quality 80
+(~1.6 MB for the ten files). That is a little over 2× the largest size they take on screen, so the
+hero phones and the lightbox stay sharp on a retina display; the gallery loads them lazily.
 
 | File | Screen |
 | --- | --- |
@@ -66,8 +67,13 @@ the whole page stays under a megabyte.
 To replace one, take a fresh screenshot at the same aspect ratio (roughly 402 × 874 pt) and run:
 
 ```bash
-sips -s format jpeg -s formatOptions 82 -Z 1000 shot.png --out site/assets/shots/dashboard.jpg
+sips -s format jpeg -s formatOptions 80 -Z 1600 shot.png --out site/assets/shots/dashboard.jpg
 ```
+
+Keep the `width`/`height` attributes on the hero and feature images in sync with the file (736 ×
+1600): they only reserve the box before the image loads. The aspect ratio itself comes from
+`.phone img { width: 100%; height: auto }` — without that `height: auto`, the `height` attribute
+wins as a presentational hint and the screenshots render squashed.
 
 ## Editing the copy
 

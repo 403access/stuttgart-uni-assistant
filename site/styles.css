@@ -223,7 +223,7 @@ p { margin: 0; }
   box-shadow: var(--shadow-lg);
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
-.phone img { border-radius: 26px; width: 100%; }
+.phone img { border-radius: 26px; width: 100%; height: auto; }
 .phone.tilt { transform: rotate(-3deg) translateY(14px); }
 .phone.back { transform: rotate(3deg) translateY(-10px); }
 
