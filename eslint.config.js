@@ -5,8 +5,9 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   {
-    // The assistant server is plain Node (no bundler): expose its globals to ESLint.
-    files: ["server/**/*.mjs"],
+    // Plain-Node code (no bundler): the assistant server and the standalone
+    // distribution service. Expose Node globals such as Buffer to ESLint.
+    files: ["server/**/*.mjs", "dist-service/**/*.mjs"],
     languageOptions: { globals: require("globals").node },
   },
   {

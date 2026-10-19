@@ -228,7 +228,36 @@ That is the whole reason a single build serves everyone. Adding tester number
 fifty requires no rebuild and nothing from this repository — unlike Ad Hoc,
 where Apple has to reissue the profile and the binary is re-signed.
 
-## Handing it out
+## Publishing builds to your own service
+
+`dist-service/` is a standalone distribution service: its own port, its own
+SQLite database, its own data directory and, once deployed, its own domain. It
+shares nothing with the assistant server, and it is the answer to "where does the
+history live" that does not depend on GitHub, Firebase or App Store Connect.
+
+```bash
+DIST_TOKEN=dev-token npm run dist:serve     # http://127.0.0.1:8788
+DIST_TOKEN=dev-token npm run dist:publish   # newest .ipa in dist/ios
+```
+
+`dist:publish` reads the version, build number, bundle id, team, profile expiry
+and device count out of the `.ipa` itself, hashes the bytes it sends, and the
+service verifies that hash before storing anything. The pages list the history,
+serve the binary, and generate the `itms-services` manifest for the install
+button. Its API and deployment steps are in `dist-service/README.md`.
+
+What it cannot do is the same thing this document cannot: sign. An ad-hoc
+profile only installs on devices whose UDID is inside it, so registering a tester
+still means rebuilding. The build page warns when the registry has more devices
+than the profile covers — that gap is the failure that otherwise surfaces as
+"it just won't install".
+
+**The deploy prerequisite is a domain and a certificate.** Over-the-air install
+refuses plain HTTP and self-signed certificates, so the service is useful on
+`localhost` for the history and the API, but a phone can only install from an
+HTTPS origin. `dist-service/Caddyfile` covers that in one file.
+
+
 
 | Step | Who | Cost |
 | --- | --- | --- |
@@ -341,9 +370,14 @@ authority `Apple Development: Oliver Molnar (8H5TXDZZ87)`, `get-task-allow = tru
 and a profile expiring 2027-10-18. The `missing Xcode-Token` line is printed
 during that build and does not prevent it.
 
-**Not verified.** No sideload has been performed and no tester has installed this
-app, so the SideStore path and its weekly refresh are described from the tools'
-documentation rather than from a completed run.
+**Not verified.** Over-the-air install has never run, because the service was
+only exercised on `localhost` — the manifest and the pages were read back over
+HTTP, but iOS will not install from an `http://` origin. The service's own tests
+cover publishing, the hash check, the history, the binary round-trip and the
+manifest; the deploy step is a Caddyfile and a systemd unit that have not been run
+on a real host. No sideload has been performed either, so the SideStore path and
+its weekly refresh are described from the tools' documentation rather than from a
+completed run.
 
 ## Sources
 

@@ -1,0 +1,20 @@
+# The distribution service behind automatic HTTPS.
+#
+#   1. Point the hostname at this machine's public address.
+#   2. Run Caddy with this file (see README.md for the systemd unit).
+#   3. Keep DIST_HOST=127.0.0.1, so the Node process is not exposed directly.
+#
+# Caddy obtains and renews the certificate. The service never speaks TLS itself,
+# and over-the-air install will not work without this step: iOS rejects plain
+# HTTP and self-signed certificates.
+
+builds.example.org {
+	encode gzip
+
+	# Match DIST_MAX_BYTES in the service, and keep it below any proxy default.
+	request_body {
+		max_size 512MB
+	}
+
+	reverse_proxy 127.0.0.1:8788
+}

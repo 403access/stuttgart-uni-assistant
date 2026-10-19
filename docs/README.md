@@ -68,7 +68,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/security-and-privacy.md](engineering/security-and-privacy.md) | Credentials, keys, student data, past papers |
 | [engineering/vpn-comparison.md](engineering/vpn-comparison.md) | The three university VPN endpoints, protocols, the engines available for each, and the evidence |
 | [engineering/vpn-tunnel.md](engineering/vpn-tunnel.md) | The TIK AnyConnect and ZDI OpenVPN services: screens, native control surface, and the engine seam |
-| [engineering/ios-distribution.md](engineering/ios-distribution.md) | Getting a build onto an iPhone without the App Store: the four routes, the free-Account limits, which Apple account signs the build, and the local `.ipa` workflow |
+| [engineering/ios-distribution.md](engineering/ios-distribution.md) | Getting a build onto an iPhone without the App Store: the four routes, the free-Account limits, which Apple account signs the build, the local `.ipa` workflow, and the standalone distribution service (`dist-service/`) |
 | [engineering/design-system.md](engineering/design-system.md) | Color, type, mark, and screen patterns |
 | [engineering/i18n.md](engineering/i18n.md) | The keyed German/English catalogs, `tx`, placeholder values, and how to add a string |
 

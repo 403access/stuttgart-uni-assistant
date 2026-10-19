@@ -50,3 +50,6 @@ modules/*/ios/build/
 *.db-journal
 *.db-wal
 *.db-shm
+
+# distribution service state (database and uploaded .ipa files)
+/dist-service/data/

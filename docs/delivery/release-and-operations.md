@@ -23,6 +23,8 @@ Scripts in `package.json`:
 | `ios` / `android` | `expo start --ios` / `--android` | Simulator or emulator |
 | `ios:ipa` | `node scripts/build-ios-ipa.mjs` | Release `.ipa` for a tester's iPhone, signed by the Apple Account in Xcode. Refuses to archive an unsignable tree; see [ios-distribution.md](../engineering/ios-distribution.md) |
 | `ios:accounts` | `node scripts/xcode-accounts.mjs` | The Apple Accounts and teams Xcode knows about, compared with this project's team. Read-only; `--json` for scripts |
+| `dist:serve` | `node dist-service/server.mjs` | The standalone build-distribution service: history, `.ipa` hosting, install manifest. Needs `DIST_TOKEN`; see `dist-service/README.md` |
+| `dist:publish` | `node scripts/publish-ipa.mjs` | Upload the newest `.ipa` (or a named one) to that service |
 | `tunnel` | `expo start --tunnel` | Dev server reachable from another network (Expo's ngrok tunnel) |
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
 | `check` | `tsx scripts/check-assistant.ts` + `tsx scripts/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests, the assistant-tunnel helper tests |
