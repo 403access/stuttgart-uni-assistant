@@ -1,18 +1,24 @@
 # Website
 
-A single static page that presents University Assistant: what it does, what it looks like, and how
-it treats data. No build step, no framework, no third-party requests — three files and a folder of
-screenshots.
+Static pages that present University Assistant: what it does, what it looks like, how it treats
+data, and what is live versus demo. No build step, no framework, no third-party requests.
 
 ```
 site/
-├── index.html      # the page (German is the authored markup, English lives in main.js)
-├── styles.css      # design tokens follow the app: anthracite, mid blue, light blue
-├── main.js         # DE/EN toggle, scroll reveal, screenshot lightbox
+├── index.html              # landing page (German is authored markup; English lives in main.js)
+├── impressum/index.html    # legal notice, German + English
+├── datenschutz/index.html  # privacy notice, German + English
+├── 404.html                # Pages 404 for the composed site
+├── styles.css              # design tokens follow the app: anthracite, mid blue, light blue
+├── main.js                 # DE/EN toggle, mobile nav, scroll reveal, screenshot lightbox
+├── robots.txt
+├── manifest.webmanifest
+├── .well-known/security.txt
 └── assets/
-    ├── favicon.png
-    ├── icon.png
-    └── shots/      # phone screenshots from the demonstration profile
+    ├── favicon.svg / favicon-32.png / favicon.png / apple-touch-icon.png
+    ├── icon.png / icon-192.png / icon-512.png
+    ├── og.jpg              # 1200 × 630 social preview
+    └── shots/              # phone screenshots from the demonstration profile
 ```
 
 ## Serve it
@@ -34,12 +40,18 @@ deployed to GitHub Pages under `https://403access.github.io/stuttgart-uni-assist
 | URL | Source |
 | --- | --- |
 | `/` | this folder, copied verbatim |
+| `/impressum/` | `impressum/index.html` |
+| `/datenschutz/` | `datenschutz/index.html` |
 | `/docs/` | the Docusaurus build of `docs/` (see [`docs-site/`](../docs-site)) |
 
 The workflow copies the Docusaurus build first, then this folder over it, so `index.html` here
 replaces Docusaurus's `/` redirect while the two keep sharing `assets/`. Because of that, the
 "Dokumentation" links use the relative `docs/` path and only resolve in the composed artifact (or
-against `bun run docs:serve`, which serves the same routes at `http://localhost:3000/docs`).
+against `bun run docs:serve`, which serves the same routes at `http://localhost:3000/docs`). The
+legal pages themselves resolve locally, because they live in this folder.
+
+`scripts/merge-site-sitemap.mjs` adds the landing page and the two legal pages to the Docusaurus
+sitemap after the compose step. `robots.txt` points to that sitemap.
 
 This needs the repository's Pages source set to **GitHub Actions** (Settings → Pages → Source),
 and the workflow sets `DOCS_BASE_URL=/stuttgart-uni-assistant/` for the Docusaurus build.
@@ -77,11 +89,38 @@ wins as a presentational hint and the screenshots render squashed.
 
 ## Editing the copy
 
-German is in `index.html`. Elements marked `data-i18n="key"` (and images marked `data-i18n-alt`)
-are swapped by the dictionary at the top of `main.js`; add the same key there to translate a new
-string. The toggle stores the choice in `localStorage` and otherwise follows the browser language.
+German is in `index.html`. Elements marked `data-i18n="key"` are swapped by the dictionary at the
+top of `main.js`. Images use `data-i18n-alt`, and accessibility labels use `data-i18n-aria`; add the
+same key to `en`, `enAlts`, or `enAria` to translate it. The toggle stores the choice in
+`localStorage` and otherwise follows the browser language.
+
+The legal pages are bilingual on one page (`#de` and `#en`), with the German version marked as
+authoritative. They do not use the landing-page language toggle.
+
+## Accessibility and SEO
+
+- Every page has a skip link, a visible focus style, and `prefers-reduced-motion` handling.
+- The mobile navigation is a real button with `aria-expanded` and `aria-controls`; the old layout
+  hid the navigation below 780 px, and the new one switches to the menu below 960 px.
+- The lightbox is a modal dialog with a focus trap and `inert` background.
+- Gallery images carry `width`/`height` to avoid layout shifts.
+- The landing page has a canonical URL, absolute Open Graph/Twitter images, a web manifest, a short
+  meta description, and a `SoftwareApplication` JSON-LD block.
+- `assets/og.jpg` is 1200 × 630. Regenerate it with `node scripts/generate-site-og.mjs` after a
+  major copy change; it is a composed card, not a raw screenshot.
+- Run axe or Lighthouse after changes. The page intentionally has no analytics and no cookie banner.
+
+## Legal pages
+
+`impressum/index.html` contains the provider information under § 5 DDG and § 18 MStV. The postal
+address is the operator's address; do not replace it with a PO box. `datenschutz/index.html` covers
+the website and the app, including GitHub Pages, Tally, the assistant server, UniMail, C@MPUS, xAI,
+and the campus map. If the app's data flows change, update that page in the same change.
+
+Security reports go to `uni-assistant@olimo.me`; the public policy is
+[`SECURITY.md`](../SECURITY.md) and the discovery file is `.well-known/security.txt`.
 
 ## Licence
 
-The page is part of this repository and ships under the same licence, AGPL-3.0-or-later. It is a
-student demonstration, not a service of the University of Stuttgart.
+The pages are part of this repository and ship under the same licence, AGPL-3.0-or-later. They are
+a student demonstration, not a service of the University of Stuttgart.

@@ -1,0 +1,24 @@
+{
+  "name": "University Assistant",
+  "short_name": "Uni Assistant",
+  "description": "Stundenplan, Module, Fristen, Campus und ein Assistent — ein studentisches Demonstrationsprojekt.",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#004191",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

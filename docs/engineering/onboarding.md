@@ -74,7 +74,7 @@ navigation, progress dots); each step is a component under
 
 ## Step 2: the security step (the important one)
 
-The vault already exists: [`src/auth/vault.ts`](../src/auth/vault.ts) writes the
+The vault already exists: [`src/auth/vault.ts`](https://github.com/403access/stuttgart-uni-assistant/blob/main/src/auth/vault.ts) writes the
 C@MPUS autologin credential through `expo-secure-store`. Onboarding must explain
 it and let the user turn it on, rather than leave it as a checkbox on the login
 screen.

@@ -1,0 +1,5 @@
+Contact: mailto:uni-assistant@olimo.me
+Expires: 2027-10-19T00:00:00.000Z
+Preferred-Languages: de, en
+Canonical: https://403access.github.io/stuttgart-uni-assistant/.well-known/security.txt
+Policy: https://github.com/403access/stuttgart-uni-assistant/blob/main/SECURITY.md

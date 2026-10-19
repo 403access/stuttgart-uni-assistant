@@ -4,6 +4,10 @@
 // The docs ship as the `/docs/` half of the GitHub Pages site (see
 // `.github/workflows/pages.yml`); a local `bun run docs` keeps the `/` default.
 const homeHref = process.env.DOCS_HOME_HREF;
+const siteUrl = process.env.DOCS_URL ?? 'http://localhost:3000';
+const baseUrl = process.env.DOCS_BASE_URL ?? '/';
+const basePath = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+const legalBase = `${siteUrl.replace(/\/$/, '')}${basePath}`;
 
 const config = /** @type {import('@docusaurus/types').Config} */ ({
   title: 'University Assistant',
@@ -11,11 +15,11 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
   favicon: 'img/favicon.ico',
 
   // Full URL and path prefix. Set in the Pages workflow; overridden for local runs.
-  url: process.env.DOCS_URL ?? 'http://localhost:3000',
-  baseUrl: process.env.DOCS_BASE_URL ?? '/',
+  url: siteUrl,
+  baseUrl,
 
   organizationName: '403access',
-  projectName: 'university-assistant',
+  projectName: 'stuttgart-uni-assistant',
 
   onBrokenLinks: 'warn',
   markdown: {
@@ -76,7 +80,36 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
       },
       footer: {
         style: 'dark',
-        copyright: `Copyright © ${new Date().getFullYear()} University Assistant (student demonstration, not affiliated with the University of Stuttgart). Built with Docusaurus.`,
+        links: [
+          {
+            title: 'Project',
+            items: [
+              { label: 'Documentation', to: '/docs' },
+              {
+                label: 'GitHub',
+                href: 'https://github.com/403access/stuttgart-uni-assistant',
+              },
+              {
+                label: 'Licence',
+                href: 'https://github.com/403access/stuttgart-uni-assistant/blob/main/LICENSE',
+              },
+            ],
+          },
+          {
+            title: 'Legal',
+            items: [
+              { label: 'Impressum', href: `${legalBase}impressum/` },
+              { label: 'Datenschutz', href: `${legalBase}datenschutz/` },
+              { label: 'Barrierefreiheit', href: `${legalBase}impressum/#barrierefreiheit` },
+              {
+                label: 'Sicherheit',
+                href: 'https://github.com/403access/stuttgart-uni-assistant/blob/main/SECURITY.md',
+              },
+              { label: 'Kontakt', href: 'mailto:uni-assistant@olimo.me' },
+            ],
+          },
+        ],
+        copyright: `Copyright © ${new Date().getFullYear()} Oliver Molnar. University Assistant is a student demonstration and not affiliated with the University of Stuttgart. The German legal notice and privacy policy are authoritative.`,
       },
       prism: {
         theme: require('prism-react-renderer').themes.githubLight,

@@ -15,6 +15,7 @@ on:
       - 'site/**'
       - 'docs/**'
       - 'docs-site/**'
+      - 'scripts/merge-site-sitemap.mjs'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -64,6 +65,9 @@ jobs:
           cp -R site/. public/
           rm -f public/README.md
           touch public/.nojekyll
+          # Docusaurus owns sitemap.xml; add the landing page and the two legal
+          # pages, which live in `site/` and are copied after the docs build.
+          node scripts/merge-site-sitemap.mjs public/sitemap.xml "https://403access.github.io/stuttgart-uni-assistant/"
 
       - uses: actions/upload-pages-artifact@v3
         with:
