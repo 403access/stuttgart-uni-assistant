@@ -73,3 +73,15 @@ Read these in order. Each file states the decision for this project, the artifac
 | [delivery/backlog.md](delivery/backlog.md) | What is in this build, and the ordered work after it |
 | [delivery/release-and-operations.md](delivery/release-and-operations.md) | Environments, release shape, and how to run it day to day |
 
+## Funding
+
+| Document | Contents |
+| --- | --- |
+| [funding/README.md](funding/README.md) | Whether the project can get grants, the four routes, and the bottom line |
+| [funding/verified-findings.md](funding/verified-findings.md) | Every finding re-checked against primary sources, with the corrections |
+| [funding/opportunities.md](funding/opportunities.md) | Every programme that plausibly fits: money, applicant, deadline, fit rating |
+| [funding/eligibility-and-gaps.md](funding/eligibility-and-gaps.md) | The applicant profile, the per-route gap, and the project-level issues to fix first |
+| [funding/application-playbook.md](funding/application-playbook.md) | The ordered plan, draft positioning, and a 12-month calendar |
+| [funding/applications/README.md](funding/applications/README.md) | Ready-to-submit drafts for Prototype Fund and NLnet, plus the applicant-status verdict |
+| [funding/applications/employer-release-template.md](funding/applications/employer-release-template.md) | The part-time release letter that closes the Prototype Fund eligibility gap |
+| [funding/sources.md](funding/sources.md) | Every source URL, grouped, with what it supports |

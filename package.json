@@ -2,6 +2,8 @@
   "name": "university-assistant",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "license": "AGPL-3.0-or-later",
+  "author": "Oliver Molnar",
   "dependencies": {
     "@aliakhgar1/react-native-openvpn": "^1.0.0",
     "@expo/ngrok": "^4.1.3",

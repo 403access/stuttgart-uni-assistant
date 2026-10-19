@@ -4,6 +4,14 @@ A study assistant for students at the University of Stuttgart. The app brings th
 
 This repository is a student demonstration. It is not a service of the University of Stuttgart, and it does not use the university logo. Sign-in can open the university identity provider (the same OpenID Connect login that C@MPUS uses). The timetable, grades, ILIAS files, and SDG Campus data in the app are still the fictional record of Lena Hartmann. The password is typed only on the university page.
 
+## Status, licence, and generative AI
+
+**Status.** This is a student demonstration, not a service of the University of Stuttgart. It does not use the university signet or the Univers typeface, and its bundle id is `dev.demo.universityassistant`, not a `uni-stuttgart.de` id. The academic record is fictional (see [docs/00-product-description.md](docs/00-product-description.md)). An analysis of grant options and an application plan are under [docs/funding/](docs/funding/README.md).
+
+**Licence.** Unless a file says otherwise, this project is licensed under the **GNU Affero General Public License, version 3 or later** (see [LICENSE](LICENSE)). Copyright (C) 2026 Oliver Molnar. Contributions are accepted under the same licence; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+**Generative AI.** Parts of this codebase were written with AI coding assistants, and the project says so. AI is also a runtime feature: when an xAI key is set, the assistant server may rewrite answers through Grok, opt-in and with `store: false`. The design, the domain model, the credit rules in `src/domain/plan.ts`, the privacy boundary and the tests are human-authored and accountable. Contributors mark generated code in their commit messages; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Run the app
 
 Requirements: Node.js 22 or newer.
@@ -77,7 +85,7 @@ npm run check
 
 ## Documentation
 
-Start with [docs/README.md](docs/README.md). The original product description is [docs/00-product-description.md](docs/00-product-description.md). The lifecycle, from initiation through maintenance, is under [docs/sdlc/](docs/sdlc/00-overview.md).
+Start with [docs/README.md](docs/README.md). The original product description is [docs/00-product-description.md](docs/00-product-description.md). The lifecycle, from initiation through maintenance, is under [docs/sdlc/](docs/sdlc/00-overview.md). Funding options, eligibility and an application plan are under [docs/funding/](docs/funding/README.md).
 
 ## Palette
 

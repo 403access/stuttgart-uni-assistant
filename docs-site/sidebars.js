@@ -75,6 +75,22 @@ const sidebars = {
       items: ['delivery/backlog', 'delivery/release-and-operations'],
     },
     {
+      type: 'category',
+      label: 'Funding',
+      link: { type: 'doc', id: 'funding/README' },
+      items: [
+        'funding/verified-findings',
+        'funding/opportunities',
+        'funding/eligibility-and-gaps',
+        'funding/application-playbook',
+        'funding/applications/README',
+        'funding/applications/prototype-fund',
+        'funding/applications/employer-release-template',
+        'funding/applications/nlnet',
+        'funding/sources',
+      ],
+    },
+    {
       type: 'doc',
       id: 'README',
     },
