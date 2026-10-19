@@ -1,0 +1,17 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!--
+      The packet-tunnel service. Declared here so the engine can be attached
+      without touching the generated android/ directory. Nothing starts it until
+      an engine is linked; see docs/engineering/vpn-tunnel.md.
+    -->
+    <service
+      android:name=".UniversityVpnService"
+      android:permission="android.permission.BIND_VPN_SERVICE"
+      android:exported="false">
+      <intent-filter>
+        <action android:name="android.net.VpnService" />
+      </intent-filter>
+    </service>
+  </application>
+</manifest>

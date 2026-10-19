@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { StyleProp, TextStyle } from 'react-native';
+import type { StyleProp, TextInputProps, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/src/theme';
@@ -197,13 +197,14 @@ export function SearchField({
   placeholder,
   style,
   compact = false,
+  ...rest
 }: {
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
   style?: StyleProp<TextStyle>;
   compact?: boolean;
-}) {
+} & Omit<TextInputProps, 'value' | 'onChangeText' | 'placeholder' | 'style'>) {
   return (
     <TextInput
       value={value}
@@ -211,6 +212,7 @@ export function SearchField({
       placeholder={placeholder}
       placeholderTextColor={colors.mute}
       style={[styles.input, compact && styles.inputCompact, style]}
+      {...rest}
     />
   );
 }

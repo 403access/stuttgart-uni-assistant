@@ -53,6 +53,7 @@
       "expo-status-bar",
       "expo-web-browser",
       "@preeternal/react-native-cookie-manager",
+      "./plugins/withVpnTunnel",
       [
         "expo-secure-store",
         {

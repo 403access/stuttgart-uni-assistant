@@ -1,0 +1,49 @@
+diff --git a/android/src/main/java/com/openvpn/OpenvpnModule.kt b/android/src/main/java/com/openvpn/OpenvpnModule.kt
+index 5a21512..b57edc6 100644
+--- a/android/src/main/java/com/openvpn/OpenvpnModule.kt
++++ b/android/src/main/java/com/openvpn/OpenvpnModule.kt
+@@ -146,14 +146,14 @@ class OpenvpnModule(reactContext: ReactApplicationContext) :
+ 
+   var preparePromise: Promise? = null;
+   override fun prepare(promise: Promise?) {
+-    if (currentActivity == null) {
++    if (reactApplicationContext.currentActivity == null) {
+       promise!!.reject("E_ACTIVITY_ERROR", "Activity doesn't exist")
+       return
+     }
+     preparePromise = promise
+-    val intent = VpnService.prepare(currentActivity)
++    val intent = VpnService.prepare(reactApplicationContext.currentActivity)
+     if (intent != null) {
+-      currentActivity!!.startActivityForResult(intent, PREPARE_VPN_PROFILE)
++      reactApplicationContext.currentActivity!!.startActivityForResult(intent, PREPARE_VPN_PROFILE)
+     }else{
+ 
+       preparePromise?.resolve(true)
+@@ -225,7 +225,7 @@ class OpenvpnModule(reactContext: ReactApplicationContext) :
+       VPNLaunchHelper.extraBundle = convertMixedMapToBundle(notificationOptions)
+ 
+ 
+-      val intent = VpnService.prepare(currentActivity)
++      val intent = VpnService.prepare(reactApplicationContext.currentActivity)
+       if (intent != null) {
+         profileToConnectAfterPrepare = openProfile
+         reactApplicationContext.startActivityForResult(intent, PREPARE_VPN_PROFILE,null)
+@@ -586,7 +586,7 @@ class OpenvpnModule(reactContext: ReactApplicationContext) :
+    * VPN PREPARE RELATED
+    */
+ 
+-  override fun onActivityResult(p0: Activity?, requestCode: Int, resultCode: Int, p3: Intent?) {
++  override fun onActivityResult(p0: Activity, requestCode: Int, resultCode: Int, p3: Intent?) {
+     if (requestCode == PREPARE_VPN_PROFILE) {
+       if (preparePromise != null) {
+         if (resultCode == RESULT_OK) {
+@@ -602,7 +602,7 @@ class OpenvpnModule(reactContext: ReactApplicationContext) :
+     }
+   }
+ 
+-  override fun onNewIntent(p0: Intent?) {
++  override fun onNewIntent(p0: Intent) {
+   }
+ 
+   private fun enableStrictModes() {

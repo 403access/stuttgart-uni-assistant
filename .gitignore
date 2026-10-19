@@ -41,6 +41,10 @@ yarn-error.*
 /ios
 /android
 
+# local Expo module build output
+modules/*/android/build/
+modules/*/ios/build/
+
 # local databases
 *.db
 *.db-journal
