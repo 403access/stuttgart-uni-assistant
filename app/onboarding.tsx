@@ -25,22 +25,6 @@ const LIST_ROW_HEIGHT = 66;
 
 const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable'] as const;
 
-const STEP_KICKER = {
-  biometrics: 'onboarding.kicker',
-  appearance: 'onboarding.stil_kicker',
-  calendar: 'onboarding.kalender_kicker',
-  mail: 'onboarding.mail_kicker',
-  timetable: 'onboarding.stundenplan_kicker',
-} as const;
-
-const STEP_ICON = {
-  biometrics: 'auto-awesome',
-  appearance: 'palette',
-  calendar: 'event',
-  mail: 'mail',
-  timetable: 'schedule',
-} as const;
-
 /**
  * First-run flow after a successful sign-in. Biometrics comes first, then the
  * visual style, then the three imports as separate pages: personal calendar,
@@ -160,32 +144,32 @@ function OnboardingHero({
   const totalSteps = STEP_ORDER.length;
   const progressLabel = tx(locale, 'onboarding.fortschritt', [currentStep, totalSteps]);
   return (
-    <View style={[styles.hero, { paddingTop: topInset + 28 }]}>
-      <View style={styles.blobOne} pointerEvents="none" />
-      <View style={styles.blobTwo} pointerEvents="none" />
-      <View style={styles.markTile}>
-        <Mark size={38} />
-      </View>
-      <Text style={styles.brand}>University Assistant</Text>
-      <View style={styles.kickerPill}>
-        <MaterialIcons name={STEP_ICON[step]} size={13} color="#FFFFFF" />
-        <Text style={styles.kicker}>{tx(locale, STEP_KICKER[step])}</Text>
+    <View style={[styles.hero, { paddingTop: topInset + 12 }]}>
+      <View pointerEvents="none" style={styles.heroGlow} />
+      <View style={styles.topRow}>
+        <View style={styles.brandRow}>
+          <View style={styles.markChip}>
+            <Mark size={18} />
+          </View>
+          <Text style={styles.brand}>University Assistant</Text>
+        </View>
+        <Text style={styles.progressCount} accessible={false}>
+          {currentStep} / {totalSteps}
+        </Text>
       </View>
       <View
         style={styles.progress}
+        accessible
         accessibilityRole="progressbar"
         accessibilityLabel={progressLabel}
         accessibilityValue={{ min: 1, max: totalSteps, now: currentStep }}
         accessibilityHint={tx(locale, 'onboarding.fortschritt_hinweis')}>
-        <View style={styles.progressSegments}>
-          {STEP_ORDER.map((entry, index) => (
-            <View
-              key={entry}
-              style={[styles.progressSegment, index < currentStep && styles.progressSegmentDone]}
-            />
-          ))}
-        </View>
-        <Text style={styles.progressLabel}>{progressLabel}</Text>
+        {STEP_ORDER.map((entry, index) => (
+          <View
+            key={entry}
+            style={[styles.progressSegment, index < currentStep && styles.progressSegmentDone]}
+          />
+        ))}
       </View>
     </View>
   );
@@ -868,56 +852,30 @@ const styles = themedStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.brand },
   scroll: { flex: 1 },
   content: { flexGrow: 1 },
-  hero: { paddingHorizontal: 24, paddingBottom: 30, gap: 10, overflow: 'hidden' },
-  blobOne: {
+  hero: { paddingHorizontal: 22, paddingBottom: 16, gap: 12, overflow: 'hidden' },
+  heroGlow: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 220,
-    backgroundColor: 'rgba(0,190,255,0.16)',
-    top: -70,
-    right: -50,
+    top: 0,
+    right: 0,
+    left: 0,
+    height: 180,
+    backgroundImage: 'radial-gradient(100% 130% at 100% 0%, rgba(0,190,255,0.22), transparent 68%)',
   },
-  blobTwo: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 150,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    bottom: -30,
-    left: -40,
-  },
-  markTile: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  markChip: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
     backgroundColor: colors.paper,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#001A3A',
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 5,
   },
-  brand: { color: '#FFFFFF', fontSize: 34, fontWeight: '700', letterSpacing: -0.8, marginTop: 4 },
-  kickerPill: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginTop: 4,
-  },
-  kicker: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
-  progress: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
-  progressSegments: { flex: 1, flexDirection: 'row', gap: 4 },
-  progressSegment: { flex: 1, height: 4, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.28)' },
+  brand: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: -0.1 },
+  progressCount: { color: 'rgba(255,255,255,0.72)', fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  progress: { flexDirection: 'row', gap: 4 },
+  progressSegment: { flex: 1, height: 3, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.26)' },
   progressSegmentDone: { backgroundColor: '#FFFFFF' },
-  progressLabel: { color: 'rgba(255,255,255,0.78)', fontSize: 12, fontWeight: '600' },
   sheet: {
     flex: 1,
     backgroundColor: colors.paper,
