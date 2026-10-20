@@ -5,16 +5,12 @@ import { Card, InfoRow, Screen } from '@/src/components/ui';
 import { exams, modules } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, pick, tx } from '@/src/text';
 
 export default function ExamScreen() {
   const { locale } = useApp();
   const params = useLocalSearchParams<{ id: string }>();
-  const exam = exams.find((item) => item.id === one(params.id));
+  const exam = exams.find((item) => item.id === firstParam(params.id));
   if (!exam) {
     return (
       <Screen kicker={tx(locale, 'pruefung.eintrag')} subtitle={tx(locale, 'common.eintrag')}>

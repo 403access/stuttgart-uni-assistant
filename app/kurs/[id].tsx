@@ -9,17 +9,13 @@ import { Button, Card, InfoRow, Muted, Screen } from '@/src/components/ui';
 import { deviceCourseQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { formatDay, formatTime, tx } from '@/src/text';
+import { firstParam, formatDay, formatTime, tx } from '@/src/text';
 import type { CampusCourse } from '@/src/types';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
 
 /** One C@MPUS course: session cache first, persisted course cache after a restart. */
 export default function CourseScreen() {
   const { locale } = useApp();
-  const id = Number(one(useLocalSearchParams<{ id: string }>().id));
+  const id = Number(firstParam(useLocalSearchParams<{ id: string }>().id));
   // The session memory map answers instantly; the device-cache query fills
   // the gap after a restart (the query back-fills the session map too).
   const persisted = useQuery({

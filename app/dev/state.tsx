@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack, useFocusEffect } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { APP_STATE_STORAGE_KEY, useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -31,11 +32,7 @@ export default function DevStateScreen() {
     }
   }, [locale]);
 
-  useFocusEffect(
-    useCallback(() => {
-      void reload();
-    }, [reload]),
-  );
+  useRefreshOnFocus(reload);
 
   const syncKeys = Object.keys(app.syncAt);
 

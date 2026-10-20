@@ -8,17 +8,13 @@ import { lockReason } from '@/src/domain/plan';
 import { moduleStatus, sessionKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
-import { formatGrade, pick, tx, uid, weekdays } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, formatGrade, pick, tx, uid, weekdays } from '@/src/text';
 
 export default function ModuleScreen() {
   const app = useApp();
   const { locale, plannedIds, togglePlanned, reviews, addReview } = app;
   const params = useLocalSearchParams<{ id: string }>();
-  const module = modules.find((item) => item.id === one(params.id));
+  const module = modules.find((item) => item.id === firstParam(params.id));
   const [comment, setComment] = useState('');
   const [rating, setRating] = useState('4');
   const [workload, setWorkload] = useState('8');

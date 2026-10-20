@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { fetchCampusStatus } from '@/src/auth/campus';
-import { endUniversitySession, openOfficialCampus, universityUrls } from '@/src/auth/oidc';
+import { openOfficialCampus, universityUrls } from '@/src/auth/oidc';
 import { findPlatform, initialsFor } from '@/src/auth/user';
-import { clearLogin } from '@/src/auth/vault';
+import { useLeaveSession } from '@/src/auth/use-leave-session';
 import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
 import { platformName } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
@@ -50,7 +50,8 @@ function formatStamp(value: string | null, locale: 'de' | 'en'): string {
 }
 
 export default function AccountScreen() {
-  const { locale, user, authToken, sessionMode, oidcSessionId, syncAt, syncPlatform, syncAccount, signOut } = useApp();
+  const { locale, user, authToken, sessionMode, syncAt, syncPlatform, syncAccount } = useApp();
+  const leave = useLeaveSession();
   const [campusActive, setCampusActive] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -64,12 +65,6 @@ export default function AccountScreen() {
       active = false;
     };
   }, [user?.id, authToken]);
-
-  async function leave() {
-    if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
-    await clearLogin();
-    signOut();
-  }
 
   function run(platform: AccountPlatformId) {
     if (platform === 'mail') {

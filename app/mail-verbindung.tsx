@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 
 import {
@@ -9,31 +9,21 @@ import {
   loadMailMessages,
   mailDetail,
   mailMessage,
-  subscribeMailSnapshot,
 } from '@/src/auth/mail';
+import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
-import type { MailStatus } from '@/src/types';
 
 /** Opened from the E-Mail item on the Campus tab. */
 export default function MailConnectionScreen() {
   const { locale, setMailAccount, authToken, refreshUser } = useApp();
-  const [status, setStatus] = useState<MailStatus | null>(() => getMailSnapshot().status);
+  const { status } = useMailSnapshot();
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
-
-  useEffect(
-    () =>
-      subscribeMailSnapshot(() => {
-        const snap = getMailSnapshot();
-        if (snap.status) setStatus(snap.status);
-      }),
-    [],
-  );
 
   async function refreshInbox() {
     if (busy || loading) return;

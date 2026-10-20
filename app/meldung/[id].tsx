@@ -6,16 +6,12 @@ import { news } from '@/src/data';
 import { newsSource } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { formatDate, pick, tx } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, formatDate, pick, tx } from '@/src/text';
 
 export default function NewsDetailScreen() {
   const { locale } = useApp();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const item = news.find((entry) => entry.id === one(id));
+  const item = news.find((entry) => entry.id === firstParam(id));
   if (!item) {
     return (
       <Screen kicker={tx(locale, 'meldung.meldung')} subtitle={tx(locale, 'common.eintrag')}>

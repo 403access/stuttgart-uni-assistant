@@ -4,9 +4,8 @@ import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
-import { activeStudy } from '@/src/auth/campus';
-import { endUniversitySession } from '@/src/auth/oidc';
-import { clearLogin } from '@/src/auth/vault';
+import { useLeaveSession } from '@/src/auth/use-leave-session';
+import { useActiveStudy } from '@/src/campus/use-active-study';
 import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
@@ -19,15 +18,11 @@ type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?:
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
 export default function MoreScreen() {
-  const { locale, theme, design, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId, signOut, oidcSessionId, authToken } = useApp();
+  const { locale, theme, design, sessionAccount, sessionMode, sessionName, sessionEmail, authToken } = useApp();
+  const { study } = useActiveStudy();
+  const leave = useLeaveSession();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
-  async function leave() {
-    if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
-    await clearLogin();
-    signOut();
-  }
   const groups: CampusGroup[] = [
     {
       title: tx(locale, 'common.campus'),

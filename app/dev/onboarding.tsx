@@ -1,9 +1,10 @@
-import { Stack, useFocusEffect } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import {
   ONBOARDING_STORAGE_KEY,
   readStoredOnboardingPreferences,
@@ -43,12 +44,10 @@ export default function DevOnboardingScreen() {
     setStored(await readStoredOnboardingPreferences());
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      void refreshBiometrics();
-      void reload();
-    }, [refreshBiometrics, reload]),
-  );
+  useRefreshOnFocus(() => {
+    void refreshBiometrics();
+    void reload();
+  });
 
   async function schedule(clearBiometrics: boolean) {
     if (busy) return;

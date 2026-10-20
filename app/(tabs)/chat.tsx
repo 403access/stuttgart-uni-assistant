@@ -10,16 +10,12 @@ import { askGrok } from '@/src/assistant/remote';
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
-import { tx, uid } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, tx, uid } from '@/src/text';
 
 export default function ChatScreen() {
   const { locale, messages, imports, addMessage, replaceMessage, clearChat } = useApp();
   const params = useLocalSearchParams<{ doc?: string }>();
-  const docId = one(params.doc);
+  const docId = firstParam(params.doc);
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState('');
   const bundled = docId ? bundledDocument(docId, locale) : null;

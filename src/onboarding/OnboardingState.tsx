@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState, Platform } from 'react-native';
+import { Platform } from 'react-native';
 
 import { authenticateWithBiometrics, biometricsStatus, type BiometricAuthResult, type BiometricsStatus } from '@/src/auth/biometrics';
 import { fetchServerPreferences, saveServerPreferences } from '@/src/auth/session';
+import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { useApp } from '@/src/state/AppState';
 
 /**
@@ -221,18 +222,15 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   // Re-check when the user returns from system settings, so enrolling or
   // removing biometrics is picked up. The probe above ignores the stale
   // post-prompt result for a short window.
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'background') setJustEnabled(false);
-      if (state === 'active') {
-        void refreshBiometrics();
-        // Retry a preference push that may have failed while the server or
-        // network was unavailable.
-        setSyncNonce((value) => value + 1);
-      }
-    });
-    return () => subscription.remove();
-  }, [refreshBiometrics]);
+  useAppStateChange((state) => {
+    if (state === 'background') setJustEnabled(false);
+    if (state === 'active') {
+      void refreshBiometrics();
+      // Retry a preference push that may have failed while the server or
+      // network was unavailable.
+      setSyncNonce((value) => value + 1);
+    }
+  });
 
   const scheduleOnboardingForNextLaunch = useCallback(async (clearBiometrics = false) => {
     const next: OnboardingPreferences = {

@@ -5,16 +5,12 @@ import { Card, InfoRow, Screen } from '@/src/components/ui';
 import { modules, people, places } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, pick, tx } from '@/src/text';
 
 export default function PersonScreen() {
   const { locale } = useApp();
   const params = useLocalSearchParams<{ id: string }>();
-  const person = people.find((item) => item.id === one(params.id));
+  const person = people.find((item) => item.id === firstParam(params.id));
   if (!person) {
     return (
       <Screen kicker={tx(locale, 'dozent.profil')} subtitle={tx(locale, 'common.eintrag')}>

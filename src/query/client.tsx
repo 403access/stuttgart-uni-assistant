@@ -1,7 +1,9 @@
 import * as Network from 'expo-network';
 import { useState, useEffect, type ReactNode } from 'react';
-import { AppState, Platform, type AppStateStatus } from 'react-native';
+import { Platform } from 'react-native';
 import { QueryClient, QueryClientProvider, focusManager, onlineManager } from '@tanstack/react-query';
+
+import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 
 /**
  * Defaults for query deeds of every screen:
@@ -38,14 +40,9 @@ function createQueryClient() {
 export function QueryProvider({ children }: { children: ReactNode }) {
   const [client] = useState(createQueryClient);
 
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const onAppStateChange = (status: AppStateStatus) => {
-      focusManager.setFocused(status === 'active');
-    };
-    const subscription = AppState.addEventListener('change', onAppStateChange);
-    return () => subscription.remove();
-  }, []);
+  useAppStateChange((status) => {
+    focusManager.setFocused(status === 'active');
+  }, Platform.OS !== 'web');
 
   useEffect(() => {
     onlineManager.setEventListener((setOnline) => {

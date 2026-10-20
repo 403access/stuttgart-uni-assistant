@@ -789,6 +789,10 @@ Trivial, but it removes three *inconsistent* variants:
 
 All five screens then share the same definition of "is a study selected".
 
+**Status (implemented).** `src/campus/use-active-study.ts`. Migrated `kurse`,
+`calendar-hero`, `mehr` and `campus-info-view`; `strukturen` keeps its own
+"browsed vs. active study" pair because it needs both.
+
 ### 7.3 `useMailSnapshot`
 
 ```ts
@@ -809,6 +813,11 @@ function — so this is a direct `useSyncExternalStore` fit, exactly like
 **Caution:** `useMailInbox` currently applies `LayoutAnimation` only when the
 row *order* changes (`sameMessageOrder`). Keep that logic in `useMailInbox`; the
 snapshot hook should not animate.
+
+**Status (implemented, partly migrated).** `src/mail/use-mail-snapshot.ts`
+exists and `mail-verbindung.tsx` consumes it. `use-mail-inbox.ts` keeps its own
+`messages`/`folder` state (optimistic folder switch + `LayoutAnimation`); the
+remaining step is to derive its `status` and `folders` from the snapshot too.
 
 ---
 
@@ -865,14 +874,16 @@ that is a separate migration.
 
 ### Wave 1 — primitives (1–2 days, low risk)
 
-1. `src/hooks/use-latest-ref.ts`
+1. ✅ `src/hooks/use-latest-ref.ts`
 2. `src/hooks/use-async-effect.ts` + `use-mounted-ref.ts`
 3. `src/hooks/use-once.ts`
 4. `src/hooks/use-async-action.ts`
-5. `src/hooks/use-interval.ts` + `use-polling.ts` + `use-countdown.ts`
-6. `src/hooks/use-refresh-on-focus.ts` + `use-app-state-change.ts`
+5. ✅ `src/hooks/use-interval.ts` + `use-countdown.ts`; `use-polling.ts` still open
+6. ✅ `src/hooks/use-refresh-on-focus.ts` + `use-app-state-change.ts`
 7. `src/hooks/use-disclosure.ts`
-8. Move date/param pure helpers (§4) to `src/text.ts` / `src/date.ts`.
+8. ✅ Date/param helpers: `firstParam`, `localDay`, `monthShort`,
+   `weekdayOf`, `shiftDay` moved to `src/text.ts`; `formatStamp`/`germanDate`
+   still open.
 
 Migrate the smallest sites first: `use-reduced-motion`, `use-vpn-profile`,
 `web-device-login`, `app/konto.tsx`, `mail-verbindung.tsx`.
@@ -880,16 +891,18 @@ Migrate the smallest sites first: `use-reduced-motion`, `use-vpn-profile`,
 ### Wave 2 — data pipelines (3–5 days, high value, medium/high risk)
 
 1. ✅ `src/campus/hydrate-study.ts` + `src/campus/use-campus-sync.ts`
-   (plus `src/hooks/use-latest-ref.ts`)
 2. ✅ Migrated `campus-info-view`, `strukturen`, `kurse`.
-3. `src/campus/use-active-study.ts`
-4. `src/campus/use-courses.ts` (`useCoursesForStudy`, `useCoursesForStudies`)
+3. ✅ `src/campus/use-active-study.ts`; migrated `kurse`, `calendar-hero`,
+   `mehr`, `campus-info-view`.
+4. ✅ `src/campus/use-courses.ts`; migrated `calendar-hero` and `kalender`.
 5. `src/campus/use-node-courses.ts`
-6. `kalender`/`calendar-hero` course merge, then `onboarding` (needs the
-   completion-semantics decision from §7.1).
-7. `src/mail/use-mail-snapshot.ts`, migrate both consumers.
-8. `src/auth/use-leave-session.ts`, `src/auth/use-server-status.ts`,
-   `src/auth/use-biometric-prompt.ts`.
+6. `onboarding` course merge (needs the completion-semantics decision from
+   §7.1) and the pre-walk snapshot catch-up.
+7. ◐ `src/mail/use-mail-snapshot.ts`; migrated `mail-verbindung`. `use-mail-inbox`
+   still keeps its local rows for `LayoutAnimation`, so the status/folder half
+   is the remaining work.
+8. ✅ `src/auth/use-leave-session.ts`; `use-server-status.ts` and
+   `use-biometric-prompt.ts` still open.
 
 ### Wave 3 — screens become renderers (2–3 days, medium risk)
 

@@ -1,31 +1,17 @@
 import { router } from 'expo-router';
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { activeStudy } from '@/src/auth/campus';
-import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
+import { useActiveStudy } from '@/src/campus/use-active-study';
+import { useCoursesForStudy } from '@/src/campus/use-courses';
 import { useApp } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
-import { formatDay, formatTime, shortMonths, tx, weekdays } from '@/src/text';
+import { formatDay, formatTime, localDay, monthShort, tx, weekdayOf } from '@/src/text';
 import type { BulkCourse } from '@/src/types';
 
 /** Assigned to the student: the portal marks it with a fixed place (`Fixplatz zugewiesen`). */
 function isAssigned(status: string): boolean {
   return /fixplatz/i.test(status);
-}
-
-function monthShort(iso: string, locale: 'de' | 'en'): string {
-  const index = Number(iso.slice(5, 7)) - 1;
-  return shortMonths[locale][index] ?? '';
-}
-
-function todayLocal(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-function weekdayOf(iso: string, locale: 'de' | 'en'): string {
-  return weekdays[locale][new Date(`${iso}T12:00:00`).getDay()] ?? '';
 }
 
 /**
@@ -34,19 +20,11 @@ function weekdayOf(iso: string, locale: 'de' | 'en'): string {
  * view-read, nothing is written back.
  */
 export function CalendarHero() {
-  const { locale, sessionMode, campusStudies, activeStudyId } = useApp();
-  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
-  const localQ = useQuery(deviceCoursesQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
-  const snapshotQ = useQuery(serverCoursesQuery(study?.studyId ?? null, { enabled: Boolean(study) }));
-  const courses = useMemo(() => {
-    const map = new Map((localQ.data ?? []).map((course) => [course.id, course]));
-    for (const course of snapshotQ.data?.courses ?? []) {
-      if (!map.has(course.id)) map.set(course.id, { ...course });
-    }
-    return [...map.values()];
-  }, [localQ.data, snapshotQ.data]);
+  const { locale } = useApp();
+  const { study, studyId, isCampus } = useActiveStudy();
+  const courses = useCoursesForStudy(studyId, { enabled: isCampus });
 
-  const today = todayLocal();
+  const today = localDay();
   const dated = useMemo(() => courses.filter((course) => Boolean(course.startTime)), [courses]);
   const upcomingCount = dated.filter((course) => course.startTime.slice(0, 10) >= today).length;
   const nowStamp = (() => {

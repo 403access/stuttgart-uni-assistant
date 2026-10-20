@@ -8,11 +8,7 @@ import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
 import { newsSource, sessionKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { formatDate, formatGrade, pick, tx, weekdays } from '@/src/text';
-
-function todayIso(now = new Date()): string {
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-}
+import { formatDate, formatGrade, localDay, pick, tx, weekdays } from '@/src/text';
 
 export default function TodayScreen() {
   const { locale } = useApp();
@@ -20,7 +16,7 @@ export default function TodayScreen() {
   const credit = totals(modules);
   const average = weightedAverage(modules);
   const sessions = scheduleForDay(modules, now.getDay(), places);
-  const upcoming = deadlines.filter((item) => item.date >= todayIso(now)).slice(0, 3);
+  const upcoming = deadlines.filter((item) => item.date >= localDay(now)).slice(0, 3);
   const latest = [...news].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
 
   return (

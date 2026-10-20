@@ -3,8 +3,9 @@ import { router } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { activeStudy, cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum } from '@/src/auth/campus';
+import { cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum } from '@/src/auth/campus';
 import { appendElementCourses, clearCachedStudy, loadCachedCoursesByElement } from '@/src/campus/db';
+import { useActiveStudy } from '@/src/campus/use-active-study';
 import { useCampusSync } from '@/src/campus/use-campus-sync';
 import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
@@ -19,13 +20,13 @@ import type { CampusCourse, CampusStudy } from '@/src/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export function CampusInfoView() {
-  const { locale, sessionMode, campusStudies, activeStudyId, curriculumNodes, curriculumStudyId, setCurriculum } = useApp();
+  const { locale, curriculumNodes, curriculumStudyId, setCurriculum } = useApp();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [busyNode, setBusyNode] = useState<number | null>(null);
   const [error, setError] = useState('');
   const autoLoaded = useRef<number | null>(null);
-  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
+  const { study } = useActiveStudy();
   const stale = study !== null && curriculumStudyId !== study.studyId;
   // Device store reads through queries; the network loads below stay
   // user-driven mutations until they are converted.

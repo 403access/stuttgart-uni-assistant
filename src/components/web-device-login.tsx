@@ -7,6 +7,7 @@ import { pollDeviceLink, startDeviceLink, type DeviceLinkStart } from '@/src/aut
 import { DeviceQr } from '@/src/components/device-qr';
 import { LanguagePicker } from '@/src/components/login-blocks';
 import { Button, Mark } from '@/src/components/ui';
+import { useCountdown } from '@/src/hooks/use-countdown';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -28,17 +29,12 @@ export function WebDeviceLogin() {
   const [phase, setPhase] = useState<Phase>('starting');
   const [error, setError] = useState<string | null>(null);
   const [generation, setGeneration] = useState(0);
-  const [now, setNow] = useState(() => Date.now());
+  const countdown = useCountdown(link?.expiresAt ?? null);
   const signInRef = useRef(signInDevice);
 
   useEffect(() => {
     signInRef.current = signInDevice;
   }, [signInDevice]);
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   function retry() {
     setLink(null);
@@ -92,11 +88,6 @@ export function WebDeviceLogin() {
     };
   }, [generation]);
 
-  const expiresAt = link ? new Date(link.expiresAt).getTime() : 0;
-  const secondsLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt - now) / 1000)) : 0;
-  const minutes = Math.floor(secondsLeft / 60);
-  const seconds = String(secondsLeft % 60).padStart(2, '0');
-
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 24) }]}>
@@ -130,7 +121,7 @@ export function WebDeviceLogin() {
           {phase === 'waiting' && link ? (
             <View style={styles.statusRow}>
               <View style={styles.liveDot} />
-              <Text style={styles.statusText}>{tx(locale, 'login.web_wartet', [`${minutes}:${seconds}`])}</Text>
+              <Text style={styles.statusText}>{tx(locale, 'login.web_wartet', [countdown.label])}</Text>
             </View>
           ) : null}
           {phase === 'starting' ? (

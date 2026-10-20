@@ -1,12 +1,13 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { Stack, useFocusEffect } from 'expo-router';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { Button, Card } from '@/src/components/ui';
+import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
@@ -34,11 +35,7 @@ export default function SecurityScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  useFocusEffect(
-    useCallback(() => {
-      void refreshBiometrics();
-    }, [refreshBiometrics]),
-  );
+  useRefreshOnFocus(refreshBiometrics);
 
   async function toggleBiometrics(next: boolean) {
     if (busy) return;

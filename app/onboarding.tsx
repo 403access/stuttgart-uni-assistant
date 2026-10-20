@@ -13,7 +13,7 @@ import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
-import { formatTime, shortMonths, tx } from '@/src/text';
+import { formatTime, localDay, monthShort, tx } from '@/src/text';
 import type { CampusCalendarEvent, DesignMode, MailMessage, ThemeMode } from '@/src/types';
 
 type Step = 'biometrics' | 'appearance' | 'calendar' | 'mail' | 'timetable';
@@ -806,7 +806,7 @@ function parseIcsDate(value: string): { date: string; time: string } | null {
     ? new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)))
     : new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
   return {
-    date: todayLocal(date),
+    date: localDay(date),
     time: `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`,
   };
 }
@@ -817,7 +817,7 @@ function buildCalendarOverview(events: CampusCalendarEvent[]): {
   upcoming: UpcomingItem[];
 } {
   const now = new Date();
-  const today = todayLocal(now);
+  const today = localDay(now);
   const nowStamp = `${today}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const parsed = events.flatMap((event) => {
     const start = parseIcsDate(event.dtstart);
@@ -845,7 +845,7 @@ function buildTimetableOverview(courses: ReturnType<typeof useOnboardingImport>[
   upcoming: UpcomingItem[];
 } {
   const now = new Date();
-  const today = todayLocal(now);
+  const today = localDay(now);
   const nowStamp = `${today}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const dated = courses.filter((course) => Boolean(course.startTime));
   const upcoming = dated
@@ -862,14 +862,6 @@ function buildTimetableOverview(courses: ReturnType<typeof useOnboardingImport>[
       location: course.roomName,
     })),
   };
-}
-
-function monthShort(iso: string, locale: 'de' | 'en'): string {
-  return shortMonths[locale][Number(iso.slice(5, 7)) - 1] ?? '';
-}
-
-function todayLocal(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function Point({ text }: { text: string }) {

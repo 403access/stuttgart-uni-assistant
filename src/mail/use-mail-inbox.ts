@@ -14,6 +14,7 @@ import {
   subscribeMailSnapshot,
 } from '@/src/auth/mail';
 import { showToast } from '@/src/components/toast';
+import { useInterval } from '@/src/hooks/use-interval';
 import { useApp } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 import type { MailFolder, MailMessage, MailStatus } from '@/src/types';
@@ -194,13 +195,12 @@ export function useMailInbox() {
   }, [setMailAccount, refreshMessages]);
 
   /** Deliberate fetching interval: one quiet refresh per minute while connected. */
-  useEffect(() => {
-    if (!connected) return;
-    const interval = setInterval(() => {
+  useInterval(
+    () => {
       refreshMessages({ quiet: true }).catch(() => undefined);
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [connected, refreshMessages]);
+    },
+    connected ? REFRESH_INTERVAL_MS : null,
+  );
 
   async function connect() {
     if (busy) return;

@@ -3,13 +3,14 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState as NativeAppState, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { getActiveAuthToken } from '@/src/auth/session';
 import { clearLogin } from '@/src/auth/vault';
 import { AppLock } from '@/src/components/app-lock';
 import { ToastHost } from '@/src/components/toast';
+import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
 import { QueryProvider } from '@/src/query/client';
 import { AppStateProvider, useApp } from '@/src/state/AppState';
@@ -133,13 +134,12 @@ function Gate() {
     console.info('[app-lock]', { lockable, unlocked, settled, biometricsEnabled });
   }, [lockable, unlocked, settled, biometricsEnabled]);
 
-  useEffect(() => {
-    if (!lockable) return;
-    const subscription = NativeAppState.addEventListener('change', (state) => {
+  useAppStateChange(
+    (state) => {
       if (state === 'background') setUnlockedKey(null);
-    });
-    return () => subscription.remove();
-  }, [lockable]);
+    },
+    lockable,
+  );
 
   const unlock = useCallback(() => setUnlockedKey(getActiveAuthToken() ?? sessionAccount), [sessionAccount]);
   const leave = useCallback(() => {

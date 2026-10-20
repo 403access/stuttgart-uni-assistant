@@ -3,7 +3,8 @@ import { useMemo, useRef, useState, useEffect } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { activeStudy, campusDetail } from '@/src/auth/campus';
+import { campusDetail } from '@/src/auth/campus';
+import { useActiveStudy } from '@/src/campus/use-active-study';
 import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCoursesFetchedIds, saveCourses } from '@/src/campus/db';
 import { useCampusSync } from '@/src/campus/use-campus-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
@@ -24,7 +25,7 @@ type CourseSort = 'title' | 'type' | 'time';
  * (Seminar, Vorlesung, … — whatever the portal returns), search, and sort.
  */
 export default function KurseScreen() {
-  const { locale, sessionMode, campusStudies, activeStudyId, setCurriculum } = useApp();
+  const { locale, setCurriculum } = useApp();
   const [failedIds, setFailedIds] = useState<number[]>([]);
   const [saveError, setSaveError] = useState('');
   const [query, setQuery] = useState('');
@@ -33,8 +34,7 @@ export default function KurseScreen() {
   // The device-store queries are keyed per study, so a late sync completion
   // can safely write another study's rows.
   const queryClient = useQueryClient();
-  const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
-  const studyId = study?.studyId ?? null;
+  const { study, studyId } = useActiveStudy();
 
   // Device store first: instant list, Weiter loads only the rest.
   const nodesQ = useQuery(deviceNodesQuery(studyId));

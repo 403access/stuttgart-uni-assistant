@@ -3,26 +3,19 @@ import * as WebBrowser from 'expo-web-browser';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import { studyCourseKey, useCoursesForStudies, type StudyCourse } from '@/src/campus/use-courses';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
-import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyle, themedStyles } from '@/src/theme';
-import { formatDay, formatTime, shortMonths, tx, weekdays } from '@/src/text';
-import type { BulkCourse, CampusStudy } from '@/src/types';
+import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@/src/text';
+import type { CampusStudy } from '@/src/types';
 
 type CalView = 'agenda' | 'week' | 'day' | 'month';
 type CalSort = 'time' | 'title';
 type AssignFilter = 'all' | 'fixed' | 'notfixed';
 type StudyFilter = number | 'all';
-
-/** A cached course tagged with the study it belongs to (the calendar spans all studies). */
-type StudyCourse = BulkCourse & { studyId: number };
-
-const courseKey = (studyId: number, courseId: number): string => `${studyId}-${courseId}`;
-
 
 /** Assigned to the student: the portal marks it with a fixed place (`Fixplatz zugewiesen`). */
 function isAssigned(status: string): boolean {
@@ -55,7 +48,7 @@ function minutesOf(value: string): number | null {
 export default function KalenderScreen() {
   const { locale, sessionMode, campusStudies } = useApp();
   const [view, setView] = useState<CalView>('agenda');
-  const [anchor, setAnchor] = useState(todayLocal());
+  const [anchor, setAnchor] = useState(localDay());
   const [query, setQuery] = useState('');
   const [studyFilter, setStudyFilter] = useState<StudyFilter>('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -65,22 +58,10 @@ export default function KalenderScreen() {
   const [searchOpen, setSearchOpen] = useState(false);
   const isWeb = Platform.OS === 'web';
   const isCampus = sessionMode === 'campus' && campusStudies.length > 0;
-  // Device store first, server snapshot second — a plain view-read: nothing
-  // is written back; the refetch on revisit comes from the queries. The study
-  // filter spans every enrolled study, so each one is read and tagged.
-  const localQs = useQueries({ queries: campusStudies.map((item) => deviceCoursesQuery(item.studyId, { enabled: isCampus })) });
-  const snapshotQs = useQueries({ queries: campusStudies.map((item) => serverCoursesQuery(item.studyId, { enabled: isCampus })) });
-  const allCourses = useMemo(() => {
-    const map = new Map<string, StudyCourse>();
-    campusStudies.forEach((item, index) => {
-      for (const course of localQs[index]?.data ?? []) map.set(courseKey(item.studyId, course.id), { ...course, studyId: item.studyId });
-      for (const course of snapshotQs[index]?.data?.courses ?? []) {
-        const key = courseKey(item.studyId, course.id);
-        if (!map.has(key)) map.set(key, { ...course, studyId: item.studyId });
-      }
-    });
-    return [...map.values()];
-  }, [campusStudies, localQs, snapshotQs]);
+  // Device store first, server snapshot second — a plain view-read: nothing is
+  // written back; the refetch on revisit comes from the queries. The course
+  // hook spans every enrolled study and tags each row with its study.
+  const allCourses = useCoursesForStudies(campusStudies, { enabled: isCampus });
   const courses = useMemo(
     () => (studyFilter === 'all' ? allCourses : allCourses.filter((course) => course.studyId === studyFilter)),
     [allCourses, studyFilter],
@@ -117,7 +98,7 @@ export default function KalenderScreen() {
     return map;
   }, [visible]);
 
-  const selected = selectedKey !== null ? (courses.find((course) => courseKey(course.studyId, course.id) === selectedKey) ?? null) : null;
+  const selected = selectedKey !== null ? (courses.find((course) => studyCourseKey(course.studyId, course.id) === selectedKey) ?? null) : null;
 
   /** Changing the study filter can drop the open course; reset the selection in the handler. */
   function changeStudyFilter(value: StudyFilter): void {
@@ -126,7 +107,7 @@ export default function KalenderScreen() {
   }
 
   function handleCoursePress(course: StudyCourse): void {
-    if (isWeb) setSelectedKey(courseKey(course.studyId, course.id));
+    if (isWeb) setSelectedKey(studyCourseKey(course.studyId, course.id));
     else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
   }
 
@@ -248,25 +229,6 @@ export default function KalenderScreen() {
       )}
     </Screen>
   );
-}
-
-function monthShort(iso: string, locale: 'de' | 'en'): string {
-  const index = Number(iso.slice(5, 7)) - 1;
-  return shortMonths[locale][index] ?? '';
-}
-
-function todayLocal(date = new Date()): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-function shiftDay(iso: string, delta: number): string {
-  const date = new Date(`${iso}T12:00:00`);
-  date.setDate(date.getDate() + delta);
-  return todayLocal(date);
-}
-
-function weekdayOf(iso: string, locale: 'de' | 'en'): string {
-  return weekdays[locale][new Date(`${iso}T12:00:00`).getDay()] ?? '';
 }
 
 function CalToolbar({
@@ -482,7 +444,7 @@ function weekDays(anchor: string): string[] {
 
 function WeekView({ days, anchor, setAnchor, setView, locale }: { days: Map<string, StudyCourse[]>; anchor: string; setAnchor: (day: string) => void; setView: (view: CalView) => void; locale: 'de' | 'en' }) {
   const week = weekDays(anchor);
-  const today = todayLocal();
+  const today = localDay();
   return (
     <View style={{ gap: 8 }}>
       <DayNav anchor={week[0]} setAnchor={setAnchor} step={7} locale={locale} range={`${formatDay(week[0], locale)} – ${formatDay(week[6], locale)}`} />
@@ -530,7 +492,7 @@ function DayNav({ anchor, setAnchor, step = 1, locale, range }: { anchor: string
       <Pressable onPress={() => setAnchor(shiftDay(anchor, -step))}>
         <Pill label="‹" />
       </Pressable>
-      <Pressable onPress={() => setAnchor(todayLocal())}>
+      <Pressable onPress={() => setAnchor(localDay())}>
         <Pill label={tx(locale, 'tabsKalender.heute')} />
       </Pressable>
       <Pressable onPress={() => setAnchor(shiftDay(anchor, step))}>
@@ -624,7 +586,7 @@ function MonthView({
   const month = Number(anchor.slice(5, 7));
   const firstOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7;
   const cells = new Date(year, month, 0).getDate();
-  const today = todayLocal();
+  const today = localDay();
   const monthName = new Date(year, month - 1, 1).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
   const weekdayShort = [
     tx(locale, 'tabsKalender.mo'),

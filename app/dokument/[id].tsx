@@ -10,15 +10,11 @@ import { documents } from '@/src/data';
 import { exportText } from '@/src/documents/io';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, pick, tx } from '@/src/text';
 
 export default function DocumentScreen() {
   const { locale, imports, downloadedIds, toggleShare, toggleDownload } = useApp();
-  const id = one(useLocalSearchParams<{ id: string }>().id);
+  const id = firstParam(useLocalSearchParams<{ id: string }>().id);
   const bundled = documents.find((item) => item.id === id);
   const imported = imports.find((item) => item.id === id);
   const [panel, setPanel] = useState('');

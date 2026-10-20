@@ -46,6 +46,28 @@ export const weekdays: Record<Locale, string[]> = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
 };
 
+/** Local calendar day as `YYYY-MM-DD` (never UTC-shifted). */
+export function localDay(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/** `2026-10-19` → `Okt` / `Oct`. */
+export function monthShort(iso: string, locale: Locale): string {
+  return shortMonths[locale][Number(iso.slice(5, 7)) - 1] ?? '';
+}
+
+/** Weekday name for a local ISO day, e.g. `Montag`. */
+export function weekdayOf(iso: string, locale: Locale): string {
+  return weekdays[locale][new Date(`${iso}T12:00:00`).getDay()] ?? '';
+}
+
+/** Shift an ISO day by N days without timezone drift. */
+export function shiftDay(iso: string, delta: number): string {
+  const date = new Date(`${iso}T12:00:00`);
+  date.setDate(date.getDate() + delta);
+  return localDay(date);
+}
+
 export function hay(value: string): string {
   return value
     .toLowerCase()
@@ -53,6 +75,11 @@ export function hay(value: string): string {
     .replaceAll('ö', 'o')
     .replaceAll('ü', 'u')
     .replaceAll('ß', 'ss');
+}
+
+/** First value of an expo-router search param (repeated keys arrive as arrays). */
+export function firstParam(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
 }
 
 export function uid(prefix: string): string {

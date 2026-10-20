@@ -6,16 +6,12 @@ import { modules, places } from '@/src/data';
 import { campusName, placeKind, sessionKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
-import { pick, tx, weekdays } from '@/src/text';
-
-function one(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
+import { firstParam, pick, tx, weekdays } from '@/src/text';
 
 export default function RoomScreen() {
   const { locale } = useApp();
   const params = useLocalSearchParams<{ id: string }>();
-  const place = places.find((item) => item.id === one(params.id));
+  const place = places.find((item) => item.id === firstParam(params.id));
   if (!place) {
     return (
       <Screen kicker={tx(locale, 'raum.ort_fehlt')} subtitle={tx(locale, 'raum.ort')}>
