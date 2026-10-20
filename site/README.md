@@ -9,8 +9,9 @@ site/
 ├── impressum/index.html    # legal notice, German + English
 ├── datenschutz/index.html  # privacy notice, German + English
 ├── 404.html                # Pages 404 for the composed site
-├── styles.css              # design tokens follow the app: anthracite, mid blue, light blue
+├── styles.css              # light/dark design tokens follow the app: anthracite, mid blue, light blue
 ├── main.js                 # DE/EN toggle, mobile nav, scroll reveal, screenshot lightbox
+├── theme.js                # persisted light/dark toggle (default light)
 ├── robots.txt
 ├── manifest.webmanifest
 ├── .well-known/security.txt
@@ -92,7 +93,8 @@ wins as a presentational hint and the screenshots render squashed.
 German is in `index.html`. Elements marked `data-i18n="key"` are swapped by the dictionary at the
 top of `main.js`. Images use `data-i18n-alt`, and accessibility labels use `data-i18n-aria`; add the
 same key to `en`, `enAlts`, or `enAria` to translate it. The toggle stores the choice in
-`localStorage` and otherwise follows the browser language.
+`localStorage` and otherwise follows the browser language. The colour theme is independent of the
+browser/OS setting: it defaults to light and is stored as `ua-site-theme` in `localStorage`.
 
 The legal pages are bilingual on one page (`#de` and `#en`), with the German version marked as
 authoritative. They do not use the landing-page language toggle.

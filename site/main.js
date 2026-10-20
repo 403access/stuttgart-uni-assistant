@@ -219,6 +219,7 @@
   const enAria = {
     ariaNav: 'Main navigation',
     ariaLang: 'Language / Sprache',
+    ariaTheme: 'Toggle colour theme',
     ariaMenu: 'Menu',
     ariaFooter: 'Footer',
     ariaLightbox: 'Image',

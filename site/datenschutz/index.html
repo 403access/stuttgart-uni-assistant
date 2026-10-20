@@ -10,6 +10,14 @@
     />
     <meta name="robots" content="index,follow" />
     <meta name="theme-color" content="#004191" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        if (localStorage.getItem('ua-site-theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch (error) {
+        /* private mode */
+      }
+    </script>
     <link rel="canonical" href="https://403access.github.io/stuttgart-uni-assistant/datenschutz/" />
     <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="../assets/favicon-32.png" sizes="32x32" />
@@ -24,8 +32,8 @@
       <div class="container">
         <a class="brand" href="../" aria-label="University Assistant">
           <svg width="28" height="28" viewBox="0 0 40 40" aria-hidden="true">
-            <circle cx="14.4" cy="20.8" r="14.4" fill="#004191" />
-            <circle cx="30.8" cy="9.2" r="9.2" fill="#00BEFF" />
+            <circle cx="14.4" cy="20.8" r="14.4" style="fill: var(--brand)" />
+            <circle cx="30.8" cy="9.2" r="9.2" style="fill: var(--light)" />
           </svg>
           <span>University&nbsp;Assistant</span>
         </a>
@@ -33,6 +41,15 @@
           <a href="../">Start</a>
           <a href="../impressum/">Impressum</a>
           <a href="#en" lang="en">English</a>
+          <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Farbschema wechseln">
+            <svg class="theme-icon theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+            </svg>
+            <svg class="theme-icon theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+            </svg>
+          </button>
         </nav>
       </div>
     </header>
@@ -94,10 +111,10 @@
         </p>
         <p>
           Die Spracheinstellung dieser Website wird im <code>localStorage</code> unter dem Schlüssel
-          <code>ua-site-lang</code> gespeichert. Die Dokumentationsseite kann eine Theme-Einstellung (hell/dunkel) im
-          <code>localStorage</code> speichern. Diese Speicherung ist für die von dir ausgelöste Funktion erforderlich
-          und daher nach § 25 Abs. 2 TDDDG zulässig. Sie wird nicht an Dritte übermittelt. Du kannst sie jederzeit
-          über die Browser-Einstellungen löschen.
+          <code>ua-site-lang</code> gespeichert, die Darstellung (hell/dunkel) unter <code>ua-site-theme</code>. Die
+          Dokumentationsseite kann eine eigene Theme-Einstellung im <code>localStorage</code> speichern. Diese
+          Speicherung ist für die von dir ausgelöste Funktion erforderlich und daher nach § 25 Abs. 2 TDDDG zulässig.
+          Sie wird nicht an Dritte übermittelt. Du kannst sie jederzeit über die Browser-Einstellungen löschen.
         </p>
 
         <h2>5. Kontakt per E-Mail</h2>
@@ -385,10 +402,10 @@
         </p>
         <p>
           The language setting of this website is stored in <code>localStorage</code> under the key
-          <code>ua-site-lang</code>. The documentation site may store a theme preference (light/dark) in
-          <code>localStorage</code>. This storage is necessary for the function you requested and is therefore
-          permitted under § 25(2) TDDDG. It is not transferred to third parties, and you can delete it at any time
-          through your browser settings.
+          <code>ua-site-lang</code>, the appearance (light/dark) under <code>ua-site-theme</code>. The documentation
+          site may store its own theme preference in <code>localStorage</code>. This storage is necessary for the
+          function you requested and is therefore permitted under § 25(2) TDDDG. It is not transferred to third
+          parties, and you can delete it at any time through your browser settings.
         </p>
 
         <h2>5. Contact by email</h2>
@@ -637,5 +654,6 @@
         </div>
       </div>
     </footer>
+    <script src="../theme.js"></script>
   </body>
 </html>

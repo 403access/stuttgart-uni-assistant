@@ -9,7 +9,14 @@
       content="University Assistant bündelt Stundenplan, Modulfortschritt, Fristen, ILIAS, Lageplan und UniMail. Studentisches Projekt, kein Angebot der Universität Stuttgart."
     />
     <meta name="theme-color" content="#004191" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      try {
+        if (localStorage.getItem('ua-site-theme') === 'dark') document.documentElement.dataset.theme = 'dark';
+      } catch (error) {
+        /* private mode */
+      }
+    </script>
     <meta name="author" content="Oliver Molnar" />
     <meta name="robots" content="index,follow" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -85,8 +92,8 @@
       <div class="container">
         <a class="brand" href="#top" aria-label="University Assistant">
           <svg width="28" height="28" viewBox="0 0 40 40" aria-hidden="true">
-            <circle cx="14.4" cy="20.8" r="14.4" fill="#004191" />
-            <circle cx="30.8" cy="9.2" r="9.2" fill="#00BEFF" />
+            <circle cx="14.4" cy="20.8" r="14.4" style="fill: var(--brand)" />
+            <circle cx="30.8" cy="9.2" r="9.2" style="fill: var(--light)" />
           </svg>
           <span>University&nbsp;Assistant</span>
         </a>
@@ -103,6 +110,22 @@
           <button type="button" data-lang="de" lang="de" aria-pressed="true">Deutsch</button>
           <button type="button" data-lang="en" lang="en" aria-pressed="false">English</button>
         </div>
+        <button
+          type="button"
+          class="theme-toggle"
+          data-theme-toggle
+          aria-pressed="false"
+          aria-label="Farbschema wechseln"
+          data-i18n-aria="ariaTheme"
+        >
+          <svg class="theme-icon theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+          </svg>
+          <svg class="theme-icon theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+          </svg>
+        </button>
         <button
           type="button"
           class="nav-toggle"
@@ -776,5 +799,6 @@
     <p class="sr-only" id="lang-status" aria-live="polite"></p>
 
     <script src="main.js"></script>
+    <script src="theme.js"></script>
   </body>
 </html>
