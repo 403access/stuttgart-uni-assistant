@@ -89,20 +89,22 @@ export async function renderUsersPage(route) {
   );
 
   view.replaceChildren(
-    h('div', { className: 'page-intro' },
-      h('div', null,
-        h('div', { className: 'eyebrow' }, 'Nutzerverwaltung'),
-        h('h2', { text: 'Konten' }),
-        h('p', { id: 'users-summary', text: 'Lade Konten …' }),
+    h('div', { className: 'view-stack' },
+      h('div', { className: 'page-intro' },
+        h('div', null,
+          h('div', { className: 'eyebrow' }, 'Nutzerverwaltung'),
+          h('h2', { text: 'Konten' }),
+          h('p', { id: 'users-summary', text: 'Lade Konten …' }),
+        ),
+        h('div', { className: 'row' },
+          h('button', { className: 'btn', type: 'button', onClick: () => openCreateUser() }, icon('plus'), 'Konto anlegen'),
+          h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivitätsprotokoll'),
+        ),
       ),
-      h('div', { className: 'row' },
-        h('button', { className: 'btn', type: 'button', onClick: () => openCreateUser() }, icon('plus'), 'Konto anlegen'),
-        h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivitätsprotokoll'),
-      ),
+      toolbar,
+      bulkBar,
+      table,
     ),
-    toolbar,
-    bulkBar,
-    table,
   );
 
   search.addEventListener('input', () => {
