@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, Text, View } from 'react-native';
+import { Animated, Easing, Text, View } from 'react-native';
 
 import { CAMPUS_LOGIN_PHASES, isPhaseDone, type CampusLoginPhase } from '@/src/auth/campus-progress';
+import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -22,26 +23,6 @@ function phaseLabel(phase: CampusLoginPhase, locale: Locale): string {
   if (phase === 'identify') return tx(locale, 'signingIn.anmeldung');
   if (phase === 'adopt') return tx(locale, 'signingIn.sitzung');
   return tx(locale, 'signingIn.studiengaenge');
-}
-
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    let active = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((value) => {
-        if (active) setReduced(value);
-      })
-      .catch(() => undefined);
-    const subscription = AccessibilityInfo.addEventListener?.('reduceMotionChanged', (value) => {
-      if (active) setReduced(value);
-    });
-    return () => {
-      active = false;
-      subscription?.remove?.();
-    };
-  }, []);
-  return reduced;
 }
 
 /** The mark, with the small circle orbiting the large one. */

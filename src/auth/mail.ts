@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { assistantUrl } from '@/src/assistant/remote';
 import { tx } from '@/src/text';
 import type { MailBody, MailFolder, MailMessage, MailStatus } from '@/src/types';
@@ -37,9 +39,94 @@ export interface MailSnapshot {
 let snapshot: MailSnapshot = { status: null, messages: null, folders: null, folder: null };
 const listeners = new Set<() => void>();
 
+/**
+ * The snapshot is mirrored on the device so the next launch can show the last
+ * inbox immediately instead of an empty skeleton. Only row metadata and the
+ * IMAP folder names are stored; the password stays on the assistant server.
+ */
+const MAIL_CACHE_KEY = 'mail-snapshot/v1';
+let hydrated = false;
+let hydration: Promise<void> | null = null;
+let cacheWrite: Promise<void> = Promise.resolve();
+/** Sign-out blocks late responses from repopulating the cache of the old session. */
+let cacheSuspended = false;
+
+interface StoredMailSnapshot {
+  status: MailStatus | null;
+  messages: MailMessage[];
+  folders: MailFolder[];
+  folder: string;
+}
+
+function persistSnapshot() {
+  const payload: StoredMailSnapshot = {
+    status: snapshot.status,
+    messages: snapshot.messages ?? [],
+    folders: snapshot.folders ?? [],
+    folder: snapshot.folder ?? 'INBOX',
+  };
+  const raw = JSON.stringify(payload);
+  // Serialize writes: a slow earlier write must not land after a newer one.
+  cacheWrite = cacheWrite
+    .then(() => AsyncStorage.setItem(MAIL_CACHE_KEY, raw))
+    .catch(() => undefined);
+}
+
 function publish(next: Partial<MailSnapshot>) {
+  if (cacheSuspended && !next.status?.configured) return;
+  if (next.status?.configured) cacheSuspended = false;
+  const previousAccount = snapshot.status?.account ?? null;
   snapshot = { ...snapshot, ...next };
+  // A disconnected status or a different mail account invalidates the cached
+  // rows; keeping them would show one account's mail to the next session.
+  const accountChanged =
+    Boolean(next.status?.configured && previousAccount && next.status?.account && next.status.account !== previousAccount);
+  if ((next.status && !next.status.configured) || accountChanged) {
+    snapshot = { ...snapshot, messages: [], folders: [], folder: 'INBOX' };
+  }
   for (const listener of listeners) listener();
+  persistSnapshot();
+}
+
+/**
+ * Restore the last stored inbox once per app process. Fresh data always wins:
+ * a field that has already been fetched or explicitly cleared is left alone,
+ * so a slow disk read cannot overwrite a just-loaded list.
+ */
+export function hydrateMailSnapshot(): Promise<void> {
+  if (hydrated) return Promise.resolve();
+  if (hydration) return hydration;
+  hydration = (async () => {
+    try {
+      const raw = await AsyncStorage.getItem(MAIL_CACHE_KEY);
+      if (!raw) return;
+      const stored = JSON.parse(raw) as Partial<StoredMailSnapshot>;
+      const next: Partial<MailSnapshot> = {};
+      const status = asMailStatus(stored.status);
+      if (snapshot.status === null && status) next.status = status;
+      if (snapshot.messages === null) next.messages = asMailMessages(stored.messages);
+      if (snapshot.folders === null) next.folders = asMailFolders(stored.folders);
+      if (snapshot.folder === null && typeof stored.folder === 'string' && stored.folder) next.folder = stored.folder;
+      if (Object.keys(next).length > 0) publish(next);
+    } catch {
+      // A corrupt or unreadable cache is simply ignored; the server read follows.
+    } finally {
+      hydrated = true;
+      hydration = null;
+    }
+  })();
+  return hydration;
+}
+
+/** Drop the local copy, e.g. on sign-out. The in-memory snapshot is reset too. */
+export async function clearMailCache(): Promise<void> {
+  cacheSuspended = true;
+  snapshot = { status: null, messages: null, folders: null, folder: null };
+  hydrated = true;
+  hydration = null;
+  for (const listener of listeners) listener();
+  cacheWrite = cacheWrite.then(() => AsyncStorage.removeItem(MAIL_CACHE_KEY)).catch(() => undefined);
+  await cacheWrite;
 }
 
 export function subscribeMailSnapshot(listener: () => void): () => void {
@@ -78,6 +165,20 @@ export function mailDetail(caught: unknown): string {
   if (!caught || typeof caught !== 'object') return '';
   const detail = (caught as { detail?: unknown }).detail;
   return typeof detail === 'string' ? detail : '';
+}
+
+/** Validate a server or cached status payload without trusting its shape. */
+export function asMailStatus(value: unknown): MailStatus | null {
+  if (!value || typeof value !== 'object') return null;
+  const payload = value as Partial<MailStatus>;
+  if (typeof payload.configured !== 'boolean') return null;
+  return {
+    configured: payload.configured,
+    account: typeof payload.account === 'string' ? payload.account : null,
+    address: typeof payload.address === 'string' ? payload.address : null,
+    webmail: typeof payload.webmail === 'string' && payload.webmail ? payload.webmail : UNIMAIL_WEBMAIL,
+    imap: typeof payload.imap === 'string' && payload.imap ? payload.imap : UNIMAIL_IMAP,
+  };
 }
 
 export function asMailMessages(value: unknown): MailMessage[] {
@@ -121,10 +222,10 @@ export async function fetchMailStatus(): Promise<MailStatus | null> {
   try {
     const response = await fetch(endpoint('/v1/mail/config'));
     if (!response.ok) return null;
-    const payload = (await response.json()) as MailStatus;
-    if (typeof payload.configured !== 'boolean') return null;
-    publish({ status: payload });
-    return payload;
+    const status = asMailStatus(await response.json());
+    if (!status) return null;
+    publish({ status });
+    return status;
   } catch {
     return null;
   }

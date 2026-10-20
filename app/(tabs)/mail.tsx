@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, LayoutAnimation, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,6 +13,7 @@ import {
   folderKind,
   folderLabel,
   getMailSnapshot,
+  hydrateMailSnapshot,
   loadMailMessages,
   mailDetail,
   mailMessage,
@@ -22,6 +23,7 @@ import {
 } from '@/src/auth/mail';
 import { Button, Card, FieldLabel, Pill, Screen } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
+import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -29,6 +31,16 @@ import type { MailFolder, MailMessage, MailStatus } from '@/src/types';
 
 /** Deliberate fetching interval: one quiet inbox read per minute while connected. */
 const REFRESH_INTERVAL_MS = 60_000;
+
+/**
+ * The list is never revealed faster than this, so opening the tab or a mailbox
+ * reads as a load instead of rows popping in from a cache. A real network read
+ * can take longer; the skeleton then simply stays up until the rows are there.
+ */
+const REVEAL_MIN_MS = 620;
+
+/** One calm fade-and-rise when the skeleton hands over to the loaded rows. */
+const REVEAL_MS = 300;
 
 /** Filter options carry the chosen sender; the choices themselves are inferred from the loaded rows. */
 type InboxFilter = { kind: 'all' } | { kind: 'unread' } | { kind: 'sender'; sender: string };
@@ -209,6 +221,158 @@ function messageTime(message: { date: string }): number {
   return message.date && !Number.isNaN(Date.parse(message.date)) ? Date.parse(message.date) : 0;
 }
 
+/** Full-row equality: a changed read flag must still update the visible row. */
+function sameMessageRows(a: MailMessage[], b: MailMessage[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every(
+      (row, index) =>
+        row.uid === b[index].uid &&
+        row.seen === b[index].seen &&
+        row.date === b[index].date &&
+        row.from === b[index].from &&
+        row.to === b[index].to &&
+        row.subject === b[index].subject &&
+        row.preview === b[index].preview,
+    )
+  );
+}
+
+/** Order-only equality: only added, removed or moved rows need a layout animation. */
+function sameMessageOrder(a: MailMessage[], b: MailMessage[]): boolean {
+  return a.length === b.length && a.every((row, index) => row.uid === b[index].uid);
+}
+
+/** Varying bone widths keep the skeleton from reading as a solid block. */
+const SKELETON_SUBJECT_WIDTHS = ['72%', '64%', '78%', '58%'] as const;
+
+/** One shared pulse rhythm for the list and toolbar placeholders. */
+function useSkeletonPulse(animate: boolean) {
+  const [pulse] = useState(() => new Animated.Value(0.55));
+
+  useEffect(() => {
+    if (!animate) {
+      pulse.setValue(1);
+      return undefined;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 720, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.55, duration: 720, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [animate, pulse]);
+
+  return pulse;
+}
+
+/**
+ * Placeholder in the rhythm of the real rows: spinner, subject, sender, date.
+ * The pulse stops when the platform asks for reduced motion.
+ */
+function MailListSkeleton({ label, animate }: { label: string; animate: boolean }) {
+  const pulse = useSkeletonPulse(animate);
+
+  return (
+    <View style={styles.skeletonWrap} accessible accessibilityRole="progressbar" accessibilityLabel={label}>
+      <View style={styles.loadingRow}>
+        <ActivityIndicator size="small" color={colors.blue} />
+        <Text style={styles.loadingText}>{label}</Text>
+      </View>
+      <Animated.View style={[styles.list, { opacity: pulse }]}>
+        {SKELETON_SUBJECT_WIDTHS.map((width, index) => (
+          <View key={width} style={[styles.skeletonRow, index < SKELETON_SUBJECT_WIDTHS.length - 1 && styles.listRowLine]}>
+            <View style={styles.skeletonDot} />
+            <View style={styles.skeletonLines}>
+              <View style={[styles.skeletonBone, { width }]} />
+              <View style={[styles.skeletonBone, styles.skeletonBoneFrom]} />
+              <View style={[styles.skeletonBone, styles.skeletonBoneMeta]} />
+            </View>
+          </View>
+        ))}
+      </Animated.View>
+    </View>
+  );
+}
+
+/**
+ * Placeholder for the search field, sort picker and filter button. Without it
+ * the sticky bar shows a lone mailbox button until the first read finishes and
+ * then pops the whole control row in.
+ */
+function ToolbarSkeleton({ label, animate }: { label: string; animate: boolean }) {
+  const pulse = useSkeletonPulse(animate);
+
+  return (
+    <Animated.View style={[styles.toolbarContent, { opacity: pulse }]} accessible accessibilityRole="progressbar" accessibilityLabel={label}>
+      <View style={styles.searchSkeleton} />
+      <View style={styles.dropdownSkeleton} />
+      <View style={styles.toolSkeleton} />
+    </Animated.View>
+  );
+}
+
+/** Fade the real controls in once they become usable, instead of swapping them in. */
+function ToolbarReveal({ children }: { children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const [opacity] = useState(() => new Animated.Value(reduced ? 1 : 0));
+
+  useEffect(() => {
+    if (reduced) {
+      opacity.setValue(1);
+      return undefined;
+    }
+    const reveal = Animated.timing(opacity, { toValue: 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true });
+    reveal.start();
+    return () => reveal.stop();
+  }, [opacity, reduced]);
+
+  return <Animated.View style={[styles.toolbarContent, { opacity }]}>{children}</Animated.View>;
+}
+
+/**
+ * Keeps the skeleton up for at least `REVEAL_MIN_MS` and hands over with one
+ * fade-and-rise. `pending` holds it longer while the first read of an empty
+ * mailbox is still running. Mounted under the mailbox as key, so a switch
+ * starts a fresh cycle; a disconnect/connect already remounts this branch.
+ */
+function MailReveal({ pending, label, children }: { pending: boolean; label: string; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const [minElapsed, setMinElapsed] = useState(false);
+  const [opacity] = useState(() => new Animated.Value(0));
+  const [shift] = useState(() => new Animated.Value(10));
+  const skeleton = !minElapsed || pending;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinElapsed(true), REVEAL_MIN_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (skeleton) {
+      opacity.setValue(0);
+      shift.setValue(10);
+      return undefined;
+    }
+    if (reduced) {
+      opacity.setValue(1);
+      shift.setValue(0);
+      return undefined;
+    }
+    const reveal = Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: REVEAL_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(shift, { toValue: 0, duration: REVEAL_MS, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+    ]);
+    reveal.start();
+    return () => reveal.stop();
+  }, [opacity, reduced, shift, skeleton]);
+
+  if (skeleton) return <MailListSkeleton label={label} animate={!reduced} />;
+  return <Animated.View style={[styles.reveal, { opacity, transform: [{ translateY: shift }] }]}>{children}</Animated.View>;
+}
+
 export default function MailScreen() {
   const { locale, sessionAccount, mailAccount, setMailAccount, authToken, refreshUser } = useApp();
   const [status, setStatus] = useState<MailStatus | null>(() => getMailSnapshot().status);
@@ -217,12 +381,19 @@ export default function MailScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
+  /** First status + mailbox read of this mount; without cached rows the skeleton waits for it. */
+  const [bootSettled, setBootSettled] = useState(false);
+  /** The on-device cache has been read, so an empty list is real rather than not-yet-hydrated. */
+  const [cacheReady, setCacheReady] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
   /** Guards so neither auto-load nor the poll interval stacks duplicate server calls. */
   const inFlight = useRef(false);
   const autoLoaded = useRef(false);
+  /** Mirror of the rows for change detection inside async callbacks. */
+  const messagesRef = useRef(messages);
+  const reduced = useReducedMotion();
 
   const connected = status?.configured ?? false;
 
@@ -242,6 +413,37 @@ export default function MailScreen() {
   const [folders, setFolders] = useState<MailFolder[]>(() => getMailSnapshot().folders ?? []);
   /** Mirror for the refresh callbacks so a folder switch does not re-create them (and rerun the load effects). */
   const folderRef = useRef(folder);
+
+  /**
+   * Apply a fetched list without ever remounting unchanged rows. Only a changed
+   * set or order schedules a layout animation, so newly arriving mail fades and
+   * pushes the rows below it down smoothly; read-flag updates stay still.
+   */
+  const applyMessages = useCallback((next: MailMessage[]) => {
+    const current = messagesRef.current;
+    if (sameMessageRows(current, next)) return;
+    if (!sameMessageOrder(current, next)) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    messagesRef.current = next;
+    setMessages(next);
+  }, []);
+
+  /** Read the on-device copy once; the app provider normally has done this already. */
+  useEffect(() => {
+    let active = true;
+    hydrateMailSnapshot()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setCacheReady(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /** Skeleton and entrance animation: a smooth minimum wait regardless of cached rows. */
+  const revealPending = loading || !cacheReady || (!bootSettled && messages.length === 0);
 
   /** What the current data supports. Missing variety removes the option instead of showing a dead control. */
   const offered = useMemo(() => {
@@ -351,6 +553,7 @@ export default function MailScreen() {
     if (key === folder) return;
     folderRef.current = key;
     setFolder(key);
+    messagesRef.current = [];
     setMessages([]);
     refreshMessages({ quiet: false, folder: key }).catch(() => undefined);
   }
@@ -405,7 +608,7 @@ export default function MailScreen() {
       }
       try {
         const loaded = await loadMailMessages(25, target);
-        setMessages(loaded);
+        applyMessages(loaded);
         const display = getMailSnapshot().folders?.find((candidate) => candidate.name === target)?.display ?? target;
         if (!quiet && !pull) setNote(tx(locale, 'tabsMail.geladen', [folderLabel(display, locale)]));
       } catch (caught) {
@@ -420,7 +623,7 @@ export default function MailScreen() {
         if (!quiet) setLoading(false);
       }
     },
-    [locale],
+    [applyMessages, locale],
   );
 
   /** Pull-to-refresh keeps the rows on screen; the spinner is the only feedback while it runs. */
@@ -438,10 +641,15 @@ export default function MailScreen() {
     () =>
       subscribeMailSnapshot(() => {
         const snap = getMailSnapshot();
-        if (snap.status) setStatus(snap.status);
-        if (snap.messages) setMessages(snap.messages);
-        if (snap.folders) setFolders(snap.folders);
+        setStatus(snap.status);
+        if (snap.messages) applyMessages(snap.messages);
+        else {
+          messagesRef.current = [];
+          setMessages([]);
+        }
+        setFolders(snap.folders ?? []);
         if (snap.status && !snap.status.configured) {
+          messagesRef.current = [];
           setMessages([]);
           setFolders([]);
           folderRef.current = 'INBOX';
@@ -450,7 +658,7 @@ export default function MailScreen() {
           setError('');
         }
       }),
-    [],
+    [applyMessages],
   );
 
   /** Auto-load exactly once per mount — the same attempt must never repeat by effect reruns. */
@@ -466,12 +674,22 @@ export default function MailScreen() {
             .finally(() => {
               if (!autoLoaded.current) {
                 autoLoaded.current = true;
-                refreshMessages({ quiet: true }).catch(() => undefined);
+                refreshMessages({ quiet: true })
+                  .catch(() => undefined)
+                  .finally(() => {
+                    if (active) setBootSettled(true);
+                  });
+              } else if (active) {
+                setBootSettled(true);
               }
             });
+        } else {
+          setBootSettled(true);
         }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (active) setBootSettled(true);
+      });
     return () => {
       active = false;
     };
@@ -491,6 +709,7 @@ export default function MailScreen() {
     setError('');
     setNote('');
     setBusy(true);
+    setBootSettled(false);
     try {
       const result = await submitMailCredentials({ account, password }, authToken);
       setPassword('');
@@ -508,6 +727,7 @@ export default function MailScreen() {
       setError(mailMessage(locale, code, mailDetail(caught)));
     } finally {
       setBusy(false);
+      setBootSettled(true);
     }
   }
 
@@ -524,8 +744,10 @@ export default function MailScreen() {
           label={tx(locale, 'tabsMail.postfach')}
           onPress={() => setMailboxOpen(true)}
         />
-        {messages.length > 0 ? (
-          <>
+        {revealPending ? (
+          <ToolbarSkeleton label={tx(locale, 'tabsMail.lade', [folderValueText])} animate={!reduced} />
+        ) : messages.length > 0 ? (
+          <ToolbarReveal>
             <View style={styles.searchRow}>
               <ControlIcon symbol="magnifyingglass" material="search" color={colors.mute} />
               <TextInput
@@ -550,7 +772,7 @@ export default function MailScreen() {
               label={tx(locale, 'tabsMail.filter')}
               onPress={() => setFilterOpen(true)}
             />
-          </>
+          </ToolbarReveal>
         ) : null}
       </View>
     </View>
@@ -604,99 +826,107 @@ export default function MailScreen() {
             ) : undefined
           }>
           {!connected ? (
-            <Card>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
-                <Pill tone="wait" label={tx(locale, 'tabsMail.verbunden')} />
-              </View>
-              <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
-                {status === null
-                  ? tx(locale, 'common.assistenz')
-                  : tx(locale, 'tabsMail.trage')}
-              </Text>
-              <FieldLabel>{tx(locale, 'tabsMail.nutzerkennung')}</FieldLabel>
-              <TextInput
-                value={account}
-                onChangeText={setAccount}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={styles.input}
-                placeholder={sessionAccount ?? 'st123456'}
-                placeholderTextColor={colors.mute}
-              />
-              <FieldLabel>{tx(locale, 'tabsMail.passwort_uni')}</FieldLabel>
-              <TextInput value={password} onChangeText={setPassword} secureTextEntry style={styles.input} placeholder="••••••••" placeholderTextColor={colors.mute} />
-              <Button label={busy ? tx(locale, 'tabsMail.verbindung') : tx(locale, 'tabsMail.unimail')} onPress={connect} />
-              <Text style={styles.hint}>
-                {tx(locale, 'tabsMail.passwort')}
-              </Text>
-            </Card>
-          ) : null}
-          {note ? <Text style={styles.note}>{note}</Text> : null}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          {activeFilter.kind !== 'all' || query ? (
-            <Text style={styles.meta}>
-              {tx(locale, 'tabsMail.von', [visibleMessages.length, messages.length, activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : '', query ? ` · „${query.trim()}“` : ''])}
-            </Text>
-          ) : null}
-          {messages.length === 0 ? (
-            <Text style={styles.hint}>
-              {connected
-                ? loading
-                  ? tx(locale, 'tabsMail.lade', [folderValueText])
-                  : tx(locale, 'tabsMail.nachrichten', [folderValueText])
-                : tx(locale, 'tabsMail.erst')}
-            </Text>
-          ) : visibleMessages.length === 0 ? (
-            <Text style={styles.hint}>
-              {tx(locale, 'tabsMail.treffer')}
-            </Text>
-          ) : null}
-          {visibleMessages.length > 0 ? (
-            <View style={styles.list}>
-              {visibleMessages.map((message, index) => {
-                const last = index === visibleMessages.length - 1;
-                return (
-                  <Pressable
-                    key={message.uid}
-                    style={({ pressed }) => [
-                      styles.listRow,
-                      !last && styles.listRowLine,
-                      pressed && styles.pressed,
-                    ]}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/mail-nachricht',
-                        params: { uid: String(message.uid), folder },
-                      })
-                    }
-                    accessibilityLabel={tx(locale, 'tabsMail.nachricht', [message.subject || 'ohne Betreff'])}
-                  >
-                    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-                      <View style={[styles.dot, { backgroundColor: message.seen ? colors.line : colors.blue }]} />
-                      <View style={{ flex: 1, gap: 4 }}>
-                        <Text style={[styles.subject, message.seen && styles.subjectSeen]} numberOfLines={2}>
-                          {message.subject || tx(locale, 'common.ohne')}
-                        </Text>
-                        <Text style={styles.from} numberOfLines={1}>
-                          {message.from || '–'}
-                        </Text>
-                        <Text style={styles.meta}>
-                          {message.date ? new Date(message.date).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : '–'}
-                          {!message.seen ? tx(locale, 'tabsMail.neu') : ''}
-                        </Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-          ) : null}
-          <Card>
-            <Text style={styles.hint}>
-              {tx(locale, 'tabsMail.gelesen')}
-            </Text>
-          </Card>
+            <>
+              <Card>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
+                  <Pill tone="wait" label={tx(locale, 'tabsMail.verbunden')} />
+                </View>
+                <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
+                  {status === null
+                    ? tx(locale, 'common.assistenz')
+                    : tx(locale, 'tabsMail.trage')}
+                </Text>
+                <FieldLabel>{tx(locale, 'tabsMail.nutzerkennung')}</FieldLabel>
+                <TextInput
+                  value={account}
+                  onChangeText={setAccount}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={styles.input}
+                  placeholder={sessionAccount ?? 'st123456'}
+                  placeholderTextColor={colors.mute}
+                />
+                <FieldLabel>{tx(locale, 'tabsMail.passwort_uni')}</FieldLabel>
+                <TextInput value={password} onChangeText={setPassword} secureTextEntry style={styles.input} placeholder="••••••••" placeholderTextColor={colors.mute} />
+                <Button label={busy ? tx(locale, 'tabsMail.verbindung') : tx(locale, 'tabsMail.unimail')} onPress={connect} />
+                <Text style={styles.hint}>
+                  {tx(locale, 'tabsMail.passwort')}
+                </Text>
+              </Card>
+              {note ? <Text style={styles.note}>{note}</Text> : null}
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              <Card>
+                <Text style={styles.hint}>
+                  {tx(locale, 'tabsMail.gelesen')}
+                </Text>
+              </Card>
+            </>
+          ) : (
+            <MailReveal key={folder} pending={revealPending} label={tx(locale, 'tabsMail.lade', [folderValueText])}>
+              {note ? <Text style={styles.note}>{note}</Text> : null}
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {activeFilter.kind !== 'all' || query ? (
+                <Text style={styles.meta}>
+                  {tx(locale, 'tabsMail.von', [visibleMessages.length, messages.length, activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : '', query ? ` · „${query.trim()}“` : ''])}
+                </Text>
+              ) : null}
+              {messages.length === 0 ? (
+                <Text style={styles.hint}>
+                  {tx(locale, 'tabsMail.nachrichten', [folderValueText])}
+                </Text>
+              ) : visibleMessages.length === 0 ? (
+                <Text style={styles.hint}>
+                  {tx(locale, 'tabsMail.treffer')}
+                </Text>
+              ) : null}
+              {visibleMessages.length > 0 ? (
+                <View style={styles.list}>
+                  {visibleMessages.map((message, index) => {
+                    const last = index === visibleMessages.length - 1;
+                    return (
+                      <Pressable
+                        key={message.uid}
+                        style={({ pressed }) => [
+                          styles.listRow,
+                          !last && styles.listRowLine,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/mail-nachricht',
+                            params: { uid: String(message.uid), folder },
+                          })
+                        }
+                        accessibilityLabel={tx(locale, 'tabsMail.nachricht', [message.subject || 'ohne Betreff'])}
+                      >
+                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                          <View style={[styles.dot, { backgroundColor: message.seen ? colors.line : colors.blue }]} />
+                          <View style={{ flex: 1, gap: 4 }}>
+                            <Text style={[styles.subject, message.seen && styles.subjectSeen]} numberOfLines={2}>
+                              {message.subject || tx(locale, 'common.ohne')}
+                            </Text>
+                            <Text style={styles.from} numberOfLines={1}>
+                              {message.from || '–'}
+                            </Text>
+                            <Text style={styles.meta}>
+                              {message.date ? new Date(message.date).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : '–'}
+                              {!message.seen ? tx(locale, 'tabsMail.neu') : ''}
+                            </Text>
+                          </View>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              <Card>
+                <Text style={styles.hint}>
+                  {tx(locale, 'tabsMail.gelesen')}
+                </Text>
+              </Card>
+            </MailReveal>
+          )}
         </Screen>
       </Drawer>
     </Drawer>
@@ -705,6 +935,10 @@ export default function MailScreen() {
 
 const styles = themedStyles((colors) => ({
   controlsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  toolbarContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  searchSkeleton: { flex: 1, minWidth: 64, height: 38, borderRadius: 12, backgroundColor: colors.line },
+  dropdownSkeleton: { width: 74, height: 38, borderRadius: 12, backgroundColor: colors.line },
+  toolSkeleton: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.line },
   stickyBar: {
     backgroundColor: colors.paper,
     paddingHorizontal: 20,
@@ -721,6 +955,18 @@ const styles = themedStyles((colors) => ({
   },
   listRow: { paddingHorizontal: 20, paddingVertical: 14 },
   listRowLine: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+  // The list enters as one calm block; the gap matches the Screen body spacing
+  // so wrapping the rows does not tighten their rhythm.
+  reveal: { gap: 14 },
+  skeletonWrap: { gap: 14 },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 },
+  loadingText: { flex: 1, color: colors.inkSoft, fontSize: 13, lineHeight: 19 },
+  skeletonRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingVertical: 14 },
+  skeletonDot: { width: 10, height: 10, borderRadius: 10, marginTop: 6, backgroundColor: colors.line },
+  skeletonLines: { flex: 1, gap: 7 },
+  skeletonBone: { height: 10, borderRadius: 5, backgroundColor: colors.line },
+  skeletonBoneFrom: { width: '45%' },
+  skeletonBoneMeta: { width: '30%', height: 8 },
   searchRow: {
     flex: 1,
     minWidth: 64,

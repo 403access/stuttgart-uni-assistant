@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { clearMailCache, hydrateMailSnapshot } from '@/src/auth/mail';
 import {
   clearAuthToken,
   createServerSession,
@@ -222,8 +223,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    AsyncStorage.getItem(APP_STATE_STORAGE_KEY)
-      .then((raw) => {
+    // The mail cache restores with the rest of the app state, so the messages
+    // tab can render its last inbox on the first frame instead of a flash of
+    // the connection form while the disk read is still pending.
+    Promise.all([AsyncStorage.getItem(APP_STATE_STORAGE_KEY), hydrateMailSnapshot()])
+      .then(([raw]) => {
         if (!active) return;
         if (raw) {
           const restored = sanitize(JSON.parse(raw) as Partial<PersistedState>);
@@ -262,6 +266,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (result && 'unauthorized' in result) {
         await clearAuthToken();
         if (!active) return;
+        void clearMailCache();
         setAuthToken(null);
         setActiveAuthToken(null);
         setState((current) => ({ ...current, user: null, sessionAccount: null, sessionMode: null, sessionName: null, sessionEmail: null, sessionSubject: null, mailAccount: null, oidcSessionId: null }));
@@ -421,11 +426,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       unlinkAccount: async (platform) => {
         const user = await unlinkServerPlatform(getActiveAuthToken(), platform);
-        if (user) setState((current) => ({ ...current, user, mailAccount: platform === 'mail' ? null : current.mailAccount }));
+        if (user) {
+          if (platform === 'mail') void clearMailCache();
+          setState((current) => ({ ...current, user, mailAccount: platform === 'mail' ? null : current.mailAccount }));
+        }
       },
       signOut: () => {
         void logoutServerSession(authToken);
         void clearAuthToken();
+        void clearMailCache();
         setAuthToken(null);
         setActiveAuthToken(null);
         setState((current) => ({
