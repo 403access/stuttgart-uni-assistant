@@ -13,7 +13,7 @@ process.env.DASHBOARD_TOKEN = 'route-token';
 
 const db = await import('./db.mjs');
 const auth = await import('./auth.mjs');
-const { handleAdmin } = await import('./routes/admin.mjs');
+const { handleAdmin } = await import('./routes/admin/index.mjs');
 
 let server;
 let base;
@@ -64,10 +64,28 @@ function call(path, options = {}) {
 }
 
 test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async () => {
-  // The page is readable without a cookie; it renders the login state.
+  // The shell and its browser modules are readable without a cookie.
   const page = await call('/admin');
   assert.equal(page.status, 200);
-  assert.match(await page.text(), /DASHBOARD_TOKEN/);
+  const html = await page.text();
+  assert.match(html, /DASHBOARD_TOKEN/);
+  assert.match(html, /\/admin\/assets\/styles\.css/);
+  assert.match(html, /\/admin\/assets\/app\.mjs/);
+  assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/);
+
+  const styles = await call('/admin/assets/styles.css');
+  assert.equal(styles.status, 200);
+  assert.match(styles.headers.get('content-type'), /text\/css/);
+  assert.match(await styles.text(), /:root/);
+
+  const modules = await call('/admin/assets/app.mjs');
+  assert.equal(modules.status, 200);
+  assert.match(modules.headers.get('content-type'), /javascript/);
+  assert.match(await modules.text(), /^import /m);
+
+  const missingAsset = await call('/admin/assets/missing.mjs');
+  assert.equal(missingAsset.status, 404);
+  await missingAsset.text();
 
   // Everything behind /v1/admin/ needs the cookie.
   const denied = await call('/v1/admin/overview');

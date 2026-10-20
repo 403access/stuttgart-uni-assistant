@@ -3,8 +3,9 @@
 A server-hosted operator console for the user store, sessions, platform links,
 C@MPUS data, portal activity, and server health. Open
 `http://127.0.0.1:8787/admin` while the assistant server is running. It is a
-plain HTML page served by `server/routes/admin.mjs`; there is no separate
-frontend build and no npm dependency.
+plain HTML page served by `server/routes/admin/index.mjs`; there is no separate
+frontend build and no npm dependency. The browser modules are native ES modules,
+also served by the same Node process.
 
 ## Access
 
@@ -162,9 +163,22 @@ screen cannot replay them.
 
 | File | Responsibility |
 | --- | --- |
-| `server/admin.mjs` | Token/cookie checks, audit helpers, every cross-user query and mutation, system status. |
-| `server/routes/admin.mjs` | The `/admin` page and `/v1/admin/*` HTTP routing. |
-| `server/dashboard.html` | The page, styles, hash router, and vanilla-JS client. |
+| `server/admin/index.mjs` | Public data-layer API and re-exports. |
+| `server/admin/session.mjs` | Token, cookie, and request authorization. |
+| `server/admin/audit.mjs` | Audit writes, filters, and facets. |
+| `server/admin/overview.mjs` | Cross-account counts and statistics. |
+| `server/admin/users.mjs` | Account list and detail reads. |
+| `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
+| `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
+| `server/admin/sync.mjs` | Manual sync start/cancel. |
+| `server/admin/system.mjs` | Runtime, configuration, database, and mail status. |
+| `server/admin/util.mjs` | Shared validation and pagination helpers. |
+| `server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
+| `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, and system routes. |
+| `server/dashboard/index.html` | The page shell. |
+| `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
+| `server/dashboard/pages/*.mjs` | Overview, users, user detail, audit, and system views. |
+| `server/dashboard/assets/styles.css` | The dashboard styles. |
 | `server/db.mjs` | Schema, including the `admin_audit` table. |
 | `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
 | `server/admin.test.mjs` | Token matching, stats, filters, detail, editors, audit, system status, destructive actions. |

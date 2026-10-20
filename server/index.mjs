@@ -13,7 +13,7 @@ import { startCampusTokenRefresh } from './campus.mjs';
 import { loadEnv } from './env.mjs';
 import { send } from './http.mjs';
 import { warnIfPasswordPresent } from './oidc.mjs';
-import { handleAdmin } from './routes/admin.mjs';
+import { handleAdmin } from './routes/admin/index.mjs';
 import { handleAssist } from './routes/assist.mjs';
 import { handleAuth } from './routes/auth.mjs';
 import { handleCampus } from './routes/campus.mjs';

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>University Assistant · Verwaltung</title>
+    <link rel="stylesheet" href="/admin/assets/styles.css" />
+  </head>
+  <body>
+    <button id="skip-link" class="skip-link" type="button" hidden>Zum Inhalt springen</button>
+    <div id="setup" class="auth-screen" hidden>
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="brand-mark"><span></span></div>
+          <div><h1>Verwaltung</h1><p>University Assistant</p></div>
+        </div>
+        <h2>Dashboard nicht konfiguriert</h2>
+        <p class="lead">Die Verwaltung bleibt absichtlich gesperrt, solange kein Operator-Token gesetzt ist.</p>
+        <ol class="auth-steps">
+          <li>Trage einen langen Zufallswert in <code>.env</code> ein:</li>
+        </ol>
+        <pre class="auth-code">DASHBOARD_TOKEN=ein-langes-zufaelliges-token</pre>
+        <p class="hint">Danach <code>npm run assistant</code> neu starten und diese Seite neu laden. Jede <code>/v1/admin/*</code>-Route antwortet ohne Token mit <code>503</code>.</p>
+      </div>
+    </div>
+
+    <div id="login" class="auth-screen" hidden>
+      <form id="login-form" class="auth-card">
+        <div class="auth-brand">
+          <div class="brand-mark"><span></span></div>
+          <div><h1>Verwaltung</h1><p>University Assistant</p></div>
+        </div>
+        <p class="lead">Konten, Sitzungen, Plattformen, C@MPUS-Daten und Betriebszustand einsehen und verwalten.</p>
+        <label class="field stack-field">
+          Dashboard-Token
+          <input id="login-token" type="password" autocomplete="current-password" placeholder="DASHBOARD_TOKEN" required />
+        </label>
+        <button class="btn" type="submit"><span id="login-submit-icon"></span>Anmelden</button>
+        <div id="login-error" class="auth-error" role="alert"></div>
+        <p class="hint">Das Token wird ausschließlich als <code>HttpOnly</code>-Cookie gespeichert und nie in der Seite abgelegt.</p>
+      </form>
+    </div>
+
+    <div id="app" class="app-shell" hidden>
+      <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+      <aside id="sidebar" class="sidebar" aria-label="Seitenleiste">
+        <div class="brand">
+          <div class="brand-mark"><span></span></div>
+          <div><h1>Verwaltung</h1><p>University Assistant</p></div>
+        </div>
+        <nav class="nav" aria-label="Hauptnavigation">
+          <p class="nav-label">Betrieb</p>
+          <a class="nav-item" data-nav="overview" href="#/overview"><span data-icon="overview"></span><span>Übersicht</span></a>
+          <a class="nav-item" data-nav="users" href="#/users"><span data-icon="users"></span><span>Nutzer</span><span class="nav-badge" id="nav-users-count" hidden></span></a>
+          <a class="nav-item" data-nav="audit" href="#/audit"><span data-icon="activity"></span><span>Aktivität</span></a>
+          <p class="nav-label">System</p>
+          <a class="nav-item" data-nav="system" href="#/system"><span data-icon="server"></span><span>System</span></a>
+        </nav>
+        <div class="sidebar-foot">
+          <button id="theme-toggle" class="nav-item" type="button"><span data-icon="moon"></span><span id="theme-label">Dunkles Design</span></button>
+          <div class="operator-card">
+            <span class="avatar a1">OP</span>
+            <div><strong>Operator</strong><span>Token-Sitzung · 12 h</span></div>
+          </div>
+          <button id="logout" class="nav-item" type="button"><span data-icon="logout"></span><span>Abmelden</span></button>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="menu-button" class="icon-btn mobile-only" type="button" aria-label="Navigation öffnen"><span data-icon="menu"></span></button>
+            <div>
+              <h1 id="page-title">Übersicht</h1>
+              <p id="page-subtitle">Konten, Daten und Betrieb im Blick</p>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <button id="refresh-page" class="btn secondary small" type="button"><span data-icon="refresh"></span><span class="refresh-label">Aktualisieren</span></button>
+          </div>
+        </header>
+        <main id="view" class="main" tabindex="-1"></main>
+      </div>
+    </div>
+
+    <dialog id="confirm" class="modal">
+      <form id="confirm-form" method="dialog" class="modal-body">
+        <div class="modal-head">
+          <div id="confirm-icon" class="modal-icon"></div>
+          <div><h2 id="confirm-title">Aktion bestätigen</h2><p id="confirm-message"></p></div>
+        </div>
+        <div id="confirm-text-wrap" hidden>
+          <label class="field stack-field">
+            <span id="confirm-text-label"></span>
+            <input id="confirm-text" type="text" autocomplete="off" spellcheck="false" />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn secondary" type="submit" value="cancel" formnovalidate>Abbrechen</button>
+          <button id="confirm-ok" class="btn danger" type="submit" value="confirm">Bestätigen</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="create-user" class="modal modal-wide">
+      <form id="create-form" class="modal-body">
+        <div class="modal-head">
+          <div class="modal-icon warn"><span data-icon="user"></span></div>
+          <div><h2>Konto anlegen</h2><p>Legt ein Konto ohne Sitzung an. Die Anmeldung erfolgt weiterhin über den gewählten Weg.</p></div>
+        </div>
+        <div class="form-grid">
+          <label class="field stack-field compact">Kennung (Login)
+            <input id="create-account" type="text" placeholder="z. B. st123456" required autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">Name
+            <input id="create-name" type="text" placeholder="Vor- und Nachname" autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">E-Mail
+            <input id="create-email" type="email" placeholder="name@example.de" autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">Matrikelnummer
+            <input id="create-matriculation" type="text" placeholder="1234567" autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">Subjekt / ID
+            <input id="create-subject" type="text" placeholder="optional" autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">Anmeldemodus
+            <select id="create-mode">
+              <option value="local">Lokal</option>
+              <option value="demo">Demo</option>
+              <option value="campus">C@MPUS</option>
+              <option value="oidc">SIAM</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint">Es wird kein Passwort und kein Sitzungs-Token gespeichert. Für C@MPUS und SIAM entsteht die Verbindung erst bei der echten Anmeldung.</p>
+        <div id="create-error" class="auth-error" role="alert"></div>
+        <div class="modal-actions">
+          <button id="create-cancel" class="btn secondary" type="button">Abbrechen</button>
+          <button id="create-submit" class="btn" type="submit">Konto anlegen</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toasts" class="toast-stack" aria-live="polite" aria-atomic="false"></div>
+
+    <script type="module" src="/admin/assets/app.mjs"></script>
+  </body>
+</html>

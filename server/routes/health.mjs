@@ -1,6 +1,6 @@
 /** Liveness and the operation catalogue the app's replay screen reads. */
 
-import { adminConfigured } from '../admin.mjs';
+import { adminConfigured } from '../admin/index.mjs';
 import { apiCatalog } from '../catalog.mjs';
 import { publicCampusStatus } from '../campus.mjs';
 import { ASSISTANT_MODEL } from '../config.mjs';

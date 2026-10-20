@@ -11,6 +11,11 @@ module.exports = defineConfig([
     languageOptions: { globals: require("globals").node },
   },
   {
+    // Dashboard browser modules are served as-is by the assistant server.
+    files: ["server/dashboard/**/*.mjs"],
+    languageOptions: { globals: { ...require("globals").browser } },
+  },
+  {
     // Node-only scripts (run through tsx): resolve `../src/campus/db` to `db.ts`. The default
     // React Native extension order tries `.web.ts` first, which makes `import/no-duplicates`
     // think the native and web implementations imported side by side are the same module.

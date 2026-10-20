@@ -55,9 +55,19 @@ export function sendHtml(response, html) {
     'Cache-Control': 'no-store',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
-    'Content-Security-Policy': "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'",
   });
   response.end(html);
+}
+
+/** Static dashboard modules. The HTML shell carries the CSP; assets are inert. */
+export function sendAsset(response, body, contentType) {
+  response.writeHead(200, {
+    'Content-Type': contentType,
+    'Cache-Control': 'no-cache',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  response.end(body);
 }
 
 export function isSecureRequest(request) {

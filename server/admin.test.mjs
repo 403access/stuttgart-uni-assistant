@@ -6,7 +6,7 @@ process.env.DASHBOARD_TOKEN = 'test-admin-token';
 
 const db = await import('./db.mjs');
 const auth = await import('./auth.mjs');
-const admin = await import('./admin.mjs');
+const admin = await import('./admin/index.mjs');
 
 beforeEach(() => {
   db.resetDbForTests();
