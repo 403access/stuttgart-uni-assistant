@@ -14,7 +14,7 @@ import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/darstellung' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -61,7 +61,8 @@ export default function MoreScreen() {
       entries: [
         { title: tx(locale, 'einstellungen.design'), detail: theme === 'dark' ? tx(locale, 'einstellungen.dunkel') : tx(locale, 'einstellungen.hell'), href: '/darstellung', tags: ['design', 'darstellung', 'theme', 'appearance', 'dark', 'dunkel', 'hell', 'light', 'modus', 'mode', 'aussehen'] },
         { title: tx(locale, 'sicherheit.titel'), detail: tx(locale, 'sicherheit.untertitel'), href: '/sicherheit', tags: ['sicherheit', 'security', 'biometrie', 'biometrics', 'face id', 'fingerabdruck', 'fingerprint', 'app lock', 'entsperren', 'unlock'] },
-        { title: tx(locale, 'common.einstellungen'), detail: tx(locale, 'tabsMehr.sprache'), href: '/einstellungen', tags: ['einstellungen', 'settings', 'sprache', 'language', 'daten', 'data', 'hinweis', 'notice'] },
+        { title: tx(locale, 'einstellungen.sprache'), detail: locale === 'de' ? 'Deutsch' : 'English', href: '/sprache', tags: ['sprache', 'language', 'sprache ändern', 'change language', 'deutsch', 'english', 'locale'] },
+        { title: tx(locale, 'common.einstellungen'), detail: tx(locale, 'tabsMehr.daten'), href: '/einstellungen', tags: ['einstellungen', 'settings', 'daten', 'data', 'hinweis', 'notice'] },
         {
           title: tx(locale, 'tabsMehr.sitzung'),
           detail: tx(locale, 'tabsMehr.abmelden'),
