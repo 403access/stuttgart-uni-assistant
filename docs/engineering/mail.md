@@ -13,17 +13,19 @@ Two surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
 - **Messages tab** (`app/(tabs)/mail.tsx`): while not connected it shows the credential
   form; once connected it becomes a clean inbox — subject, sender, date, read/unread dot,
   tap a row to open the read view (see below). The sticky control bar (pinned while the
-  inbox scrolls under it) is one horizontally scrollable row: the **mailbox dropdown**
-  first (Posteingang, Gesendet, Entwürfe, … — the real folder list comes from an IMAP
-  `LIST`; names travel in modified UTF-7, the server returns raw `name` plus decoded
-  `display`, so `Gel&APY-schte` shows as `Gelöschte` while `SELECT` uses the raw form,
-  and repeated listings dedupe). Recognized mailboxes are ordered
+  inbox scrolls under it) is one row: a **burger button** opens the left mailbox drawer
+  (Posteingang, Gesendet, Entwürfe, … — the real folder list comes from an IMAP `LIST`;
+  names travel in modified UTF-7, the server returns raw `name` plus decoded `display`,
+  so `Gel&APY-schte` shows as `Gelöschte` while `SELECT` uses the raw form, and repeated
+  listings dedupe). Recognized mailboxes are ordered
   Posteingang → Gesendet → Entwürfe → Archiv → Junk → Papierkorb, the account's own
-  folders follow by name; when both kinds exist the sheet labels them "Postfächer" and
-  "Eigene Ordner" (a single kind stays a flat list). Then search, then the filter and
-  sort dropdowns, then the cog that opens connection management. The
-  60-second fetching interval (`REFRESH_INTERVAL_MS`) refreshes quietly while connected.
-  The filter and sort options are inferred
+  folders follow by name; when both kinds exist the drawer labels them "Postfächer" and
+  "Eigene Ordner" (a single kind stays a flat list). Search fills the middle, the sort
+  dropdown keeps its compact sheet, and the **filter button** on the right edge opens
+  the sender drawer. Both drawers are `react-native-drawer-layout` (the implementation
+  Expo Router ships with SDK 56+) and reuse the sheet's title, grouped rows, counts, and
+  checkmarks. The 60-second fetching interval (`REFRESH_INTERVAL_MS`) refreshes quietly
+  while connected. The filter and sort options are inferred
   from the loaded rows only: "Neu" with the unread count appears when unread rows exist,
   one entry per distinct sender (with its row count), "Älteste" when any date parsed,
   "Absender" with two or more senders, "Neu zuerst" while unread rows exist. The stored

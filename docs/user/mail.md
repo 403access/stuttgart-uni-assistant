@@ -12,13 +12,14 @@ The password is never stored on the device and never written to `.env`. Dropping
 
 ## The inbox
 
-The sticky control bar keeps the mailbox, search, filter, and sort controls in one row. The search field fills the remaining width, while the menu controls keep a capped width and shrink first on narrow screens:
+The sticky control bar keeps the mailbox, search, filter, and sort controls in one row. The search field fills the remaining width, while the buttons keep a fixed compact size:
 
 | Control | What it does |
 | --- | --- |
-| Mailbox dropdown | Posteingang, Gesendet, Entwürfe, … — the real folder list as it comes from the server |
+| Burger button | Opens the left mailbox drawer: Posteingang, Gesendet, Entwürfe, … — the real folder list as it comes from the server |
 | Search | Filter the loaded rows |
-| Filter and sort dropdowns | Newest, oldest, by sender, unread first — the options adapt to what is actually loaded |
+| Sort dropdown | Newest, oldest, by sender, unread first — the options adapt to what is actually loaded |
+| Filter button | Opens the right filter drawer with "Alle", "Neu", and one entry per sender |
 
 Connection settings live on the **Campus** tab under **E-Mail**: it opens the same connection screen with **Posteingang aktualisieren (refresh inbox)** and **Verbindung lösen (drop connection)**.
 

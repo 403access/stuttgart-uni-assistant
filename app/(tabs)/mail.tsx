@@ -2,8 +2,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ComponentProps } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { ComponentProps, ReactNode } from 'react';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Drawer } from 'react-native-drawer-layout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   fetchMailFolders,
@@ -66,6 +68,86 @@ function ControlIcon({
   return <MaterialIcons name={material} size={18} color={color} />;
 }
 
+/** Icon-only control for the sticky bar (mailbox drawer, filter drawer). */
+function ToolButton({
+  symbol,
+  material,
+  label,
+  onPress,
+}: {
+  symbol: SymbolViewProps['name'];
+  material: ComponentProps<typeof MaterialIcons>['name'];
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]}
+      onPress={onPress}
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={4}
+    >
+      <ControlIcon symbol={symbol} material={material} color={colors.anthracite} />
+    </Pressable>
+  );
+}
+
+/** One list of options, shared by the sort sheet and both drawers. */
+function OptionRows({ options, onSelect }: { options: DropdownOption[]; onSelect: (key: string) => void }) {
+  return (
+    <>
+      {options.map((option, index) => {
+        const header = option.group && option.group !== options[index - 1]?.group ? option.group : null;
+        return (
+          <Fragment key={option.key}>
+            {header ? (
+              <View style={styles.sheetGroupWrap}>
+                <Text style={styles.sheetGroupText}>{header}</Text>
+              </View>
+            ) : null}
+            <Pressable
+              style={({ pressed }) => [styles.option, option.group && styles.optionGrouped, pressed && styles.pressed]}
+              onPress={() => onSelect(option.key)}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.optionText, option.selected && styles.optionTextActive]} numberOfLines={2}>
+                {option.label}
+              </Text>
+              {option.meta ? <Text style={styles.optionMeta}>{option.meta}</Text> : null}
+              {option.selected ? <ControlIcon symbol="checkmark" material="check" color={colors.blue} /> : null}
+            </Pressable>
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+/** Drawer body: same title, grouping, row and check treatment as the existing sheets. */
+function DrawerPanel({ title, closeLabel, onClose, children }: { title: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.drawerPanel, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 16 }]}>
+      <View style={styles.drawerHeader}>
+        <Text style={styles.drawerTitle}>{title}</Text>
+        <Pressable
+          style={({ pressed }) => [styles.drawerClose, pressed && styles.pressed]}
+          onPress={onClose}
+          accessibilityLabel={closeLabel}
+          accessibilityRole="button"
+          hitSlop={8}
+        >
+          <ControlIcon symbol="xmark" material="close" color={colors.mute} />
+        </Pressable>
+      </View>
+      <ScrollView style={styles.drawerScroll} contentContainerStyle={styles.drawerScrollContent}>
+        {children}
+      </ScrollView>
+    </View>
+  );
+}
+
 /** Compact button + bottom-sheet picker; the value text comes from the active selection. */
 function DropdownPicker({
   hint,
@@ -100,32 +182,13 @@ function DropdownPicker({
             </View>
             <Text style={styles.sheetTitle}>{hint}</Text>
             <ScrollView style={styles.sheetScroll}>
-              {options.map((option, index) => {
-                const header = option.group && option.group !== options[index - 1]?.group ? option.group : null;
-                return (
-                  <Fragment key={option.key}>
-                    {header ? (
-                      <View style={styles.sheetGroupWrap}>
-                        <Text style={styles.sheetGroupText}>{header}</Text>
-                      </View>
-                    ) : null}
-                    <Pressable
-                      style={({ pressed }) => [styles.option, option.group && styles.optionGrouped, pressed && styles.pressed]}
-                      onPress={() => {
-                        onSelect(option.key);
-                        setOpen(false);
-                      }}
-                      accessibilityRole="button"
-                    >
-                      <Text style={[styles.optionText, option.selected && styles.optionTextActive]} numberOfLines={2}>
-                        {option.label}
-                      </Text>
-                      {option.meta ? <Text style={styles.optionMeta}>{option.meta}</Text> : null}
-                      {option.selected ? <ControlIcon symbol="checkmark" material="check" color={colors.blue} /> : null}
-                    </Pressable>
-                  </Fragment>
-                );
-              })}
+              <OptionRows
+                options={options}
+                onSelect={(key) => {
+                  onSelect(key);
+                  setOpen(false);
+                }}
+              />
             </ScrollView>
           </Pressable>
         </Pressable>
@@ -166,6 +229,12 @@ export default function MailScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<InboxFilter>({ kind: 'all' });
   const [sort, setSort] = useState<InboxSort>('newest');
+
+  /** The mailbox opens from the left, the sender filter from the right. */
+  const [mailboxOpen, setMailboxOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  const drawerWidth = Math.min(340, Math.round(width * 0.86));
 
   /** The mailbox shown: IMAP folder name, default INBOX; the list comes from the server. */
   const [folder, setFolder] = useState(() => getMailSnapshot().folder ?? 'INBOX');
@@ -244,12 +313,6 @@ export default function MailScreen() {
     return options;
   }, [locale, activeSort, offered.anyDates, offered.multipleSenders, offered.unread]);
 
-  const filterValueText = useMemo(() => {
-    if (activeFilter.kind === 'sender') return activeFilter.sender;
-    if (activeFilter.kind === 'unread') return filterOptions.find((option) => option.key === 'unread')?.label ?? '';
-    return filterOptions[0]?.label ?? '';
-  }, [activeFilter, filterOptions]);
-
   const sortValueText = sortOptions.find((option) => option.selected)?.label ?? '';
 
   /** Mailboxes: offered by the IMAP server; without a fetched list only INBOX is safe to assume. */
@@ -283,6 +346,7 @@ export default function MailScreen() {
   const folderValueText = folderOptions.find((option) => option.selected)?.label ?? folderLabel(folder, locale);
 
   function applyFolderKey(key: string) {
+    setMailboxOpen(false);
     if (key === folder) return;
     folderRef.current = key;
     setFolder(key);
@@ -291,6 +355,7 @@ export default function MailScreen() {
   }
 
   function applyFilterKey(key: string) {
+    setFilterOpen(false);
     if (key === 'unread') setFilter({ kind: 'unread' });
     else if (key.startsWith('sender:')) setFilter({ kind: 'sender', sender: key.slice('sender:'.length) });
     else setFilter({ kind: 'all' });
@@ -433,18 +498,17 @@ export default function MailScreen() {
   }
 
   /**
-   * Sticky controls: mailbox, full-width search, filter, and sort in one row.
-   * The search takes the remaining width while the menus keep a capped width;
-   * on narrow screens the menus shrink before the search disappears.
+   * Sticky controls: mailbox drawer (left), full-width search, sort sheet, and the
+   * filter drawer on the right edge. The search keeps the remaining width.
    */
   const controlsBar = connected ? (
     <View style={styles.stickyBar}>
       <View style={styles.controlsRow}>
-        <DropdownPicker
-          hint={tx(locale, 'tabsMail.postfach')}
-          valueText={folderValueText}
-          options={folderOptions}
-          onSelect={applyFolderKey}
+        <ToolButton
+          symbol="line.3.horizontal"
+          material="menu"
+          label={tx(locale, 'tabsMail.postfach')}
+          onPress={() => setMailboxOpen(true)}
         />
         {messages.length > 0 ? (
           <>
@@ -465,13 +529,13 @@ export default function MailScreen() {
                 </Pressable>
               ) : null}
             </View>
-            <DropdownPicker
-              hint={tx(locale, 'tabsMail.absender_neuheit')}
-              valueText={filterValueText}
-              options={filterOptions}
-              onSelect={applyFilterKey}
-            />
             <DropdownPicker hint={tx(locale, 'tabsMail.sortieren')} valueText={sortValueText} options={sortOptions} onSelect={applySortKey} />
+            <ToolButton
+              symbol="line.3.horizontal.decrease"
+              material="filter-alt"
+              label={tx(locale, 'tabsMail.filter')}
+              onPress={() => setFilterOpen(true)}
+            />
           </>
         ) : null}
       </View>
@@ -479,102 +543,136 @@ export default function MailScreen() {
   ) : null;
 
   return (
-    <Screen stickyHeader={controlsBar} topInset>
-      {!connected ? (
-        <Card>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-            <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
-            <Pill tone="wait" label={tx(locale, 'tabsMail.verbunden')} />
-          </View>
-          <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
-            {status === null
-              ? tx(locale, 'common.assistenz')
-              : tx(locale, 'tabsMail.trage')}
-          </Text>
-          <FieldLabel>{tx(locale, 'tabsMail.nutzerkennung')}</FieldLabel>
-          <TextInput
-            value={account}
-            onChangeText={setAccount}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={styles.input}
-            placeholder={sessionAccount ?? 'st123456'}
-            placeholderTextColor={colors.mute}
-          />
-          <FieldLabel>{tx(locale, 'tabsMail.passwort_uni')}</FieldLabel>
-          <TextInput value={password} onChangeText={setPassword} secureTextEntry style={styles.input} placeholder="••••••••" placeholderTextColor={colors.mute} />
-          <Button label={busy ? tx(locale, 'tabsMail.verbindung') : tx(locale, 'tabsMail.unimail')} onPress={connect} />
-          <Text style={styles.hint}>
-            {tx(locale, 'tabsMail.passwort')}
-          </Text>
-        </Card>
-      ) : null}
-      {note ? <Text style={styles.note}>{note}</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {activeFilter.kind !== 'all' || query ? (
-        <Text style={styles.meta}>
-          {tx(locale, 'tabsMail.von', [visibleMessages.length, messages.length, activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : '', query ? ` · „${query.trim()}“` : ''])}
-        </Text>
-      ) : null}
-      {messages.length === 0 ? (
-        <Text style={styles.hint}>
-          {connected
-            ? loading
-              ? tx(locale, 'tabsMail.lade', [folderValueText])
-              : tx(locale, 'tabsMail.nachrichten', [folderValueText])
-            : tx(locale, 'tabsMail.erst')}
-        </Text>
-      ) : visibleMessages.length === 0 ? (
-        <Text style={styles.hint}>
-          {tx(locale, 'tabsMail.treffer')}
-        </Text>
-      ) : null}
-      {visibleMessages.length > 0 ? (
-        <View style={styles.list}>
-          {visibleMessages.map((message, index) => {
-            const last = index === visibleMessages.length - 1;
-            return (
-              <Pressable
-                key={message.uid}
-                style={({ pressed }) => [
-                  styles.listRow,
-                  !last && styles.listRowLine,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() =>
-                  router.push({
-                    pathname: '/mail-nachricht',
-                    params: { uid: String(message.uid), folder },
-                  })
-                }
-                accessibilityLabel={tx(locale, 'tabsMail.nachricht', [message.subject || 'ohne Betreff'])}
-              >
-                <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
-                  <View style={[styles.dot, { backgroundColor: message.seen ? colors.line : colors.blue }]} />
-                  <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={[styles.subject, message.seen && styles.subjectSeen]} numberOfLines={2}>
-                      {message.subject || tx(locale, 'common.ohne')}
-                    </Text>
-                    <Text style={styles.from} numberOfLines={1}>
-                      {message.from || '–'}
-                    </Text>
-                    <Text style={styles.meta}>
-                      {message.date ? new Date(message.date).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : '–'}
-                      {!message.seen ? tx(locale, 'tabsMail.neu') : ''}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-      <Card>
-        <Text style={styles.hint}>
-          {tx(locale, 'tabsMail.gelesen')}
-        </Text>
-      </Card>
-    </Screen>
+    <Drawer
+      open={mailboxOpen}
+      onOpen={() => setMailboxOpen(true)}
+      onClose={() => setMailboxOpen(false)}
+      drawerPosition="left"
+      drawerType="front"
+      drawerStyle={{ width: drawerWidth }}
+      overlayAccessibilityLabel={tx(locale, 'common.schliessen')}
+      renderDrawerContent={() => (
+        <DrawerPanel
+          title={tx(locale, 'tabsMail.postfach')}
+          closeLabel={tx(locale, 'common.schliessen')}
+          onClose={() => setMailboxOpen(false)}>
+          <OptionRows options={folderOptions} onSelect={applyFolderKey} />
+        </DrawerPanel>
+      )}>
+      <Drawer
+        open={filterOpen}
+        onOpen={() => setFilterOpen(true)}
+        onClose={() => setFilterOpen(false)}
+        drawerPosition="right"
+        drawerType="front"
+        drawerStyle={{ width: drawerWidth }}
+        overlayAccessibilityLabel={tx(locale, 'common.schliessen')}
+        renderDrawerContent={() => (
+          <DrawerPanel
+            title={tx(locale, 'tabsMail.filter')}
+            closeLabel={tx(locale, 'common.schliessen')}
+            onClose={() => setFilterOpen(false)}>
+            <OptionRows options={filterOptions} onSelect={applyFilterKey} />
+          </DrawerPanel>
+        )}>
+        <Screen stickyHeader={controlsBar} topInset>
+          {!connected ? (
+            <Card>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <Text style={{ color: colors.anthracite, fontSize: 18, fontWeight: '700' }}>UniMail</Text>
+                <Pill tone="wait" label={tx(locale, 'tabsMail.verbunden')} />
+              </View>
+              <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
+                {status === null
+                  ? tx(locale, 'common.assistenz')
+                  : tx(locale, 'tabsMail.trage')}
+              </Text>
+              <FieldLabel>{tx(locale, 'tabsMail.nutzerkennung')}</FieldLabel>
+              <TextInput
+                value={account}
+                onChangeText={setAccount}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+                placeholder={sessionAccount ?? 'st123456'}
+                placeholderTextColor={colors.mute}
+              />
+              <FieldLabel>{tx(locale, 'tabsMail.passwort_uni')}</FieldLabel>
+              <TextInput value={password} onChangeText={setPassword} secureTextEntry style={styles.input} placeholder="••••••••" placeholderTextColor={colors.mute} />
+              <Button label={busy ? tx(locale, 'tabsMail.verbindung') : tx(locale, 'tabsMail.unimail')} onPress={connect} />
+              <Text style={styles.hint}>
+                {tx(locale, 'tabsMail.passwort')}
+              </Text>
+            </Card>
+          ) : null}
+          {note ? <Text style={styles.note}>{note}</Text> : null}
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {activeFilter.kind !== 'all' || query ? (
+            <Text style={styles.meta}>
+              {tx(locale, 'tabsMail.von', [visibleMessages.length, messages.length, activeFilter.kind === 'sender' ? ` · ${activeFilter.sender}` : '', query ? ` · „${query.trim()}“` : ''])}
+            </Text>
+          ) : null}
+          {messages.length === 0 ? (
+            <Text style={styles.hint}>
+              {connected
+                ? loading
+                  ? tx(locale, 'tabsMail.lade', [folderValueText])
+                  : tx(locale, 'tabsMail.nachrichten', [folderValueText])
+                : tx(locale, 'tabsMail.erst')}
+            </Text>
+          ) : visibleMessages.length === 0 ? (
+            <Text style={styles.hint}>
+              {tx(locale, 'tabsMail.treffer')}
+            </Text>
+          ) : null}
+          {visibleMessages.length > 0 ? (
+            <View style={styles.list}>
+              {visibleMessages.map((message, index) => {
+                const last = index === visibleMessages.length - 1;
+                return (
+                  <Pressable
+                    key={message.uid}
+                    style={({ pressed }) => [
+                      styles.listRow,
+                      !last && styles.listRowLine,
+                      pressed && styles.pressed,
+                    ]}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/mail-nachricht',
+                        params: { uid: String(message.uid), folder },
+                      })
+                    }
+                    accessibilityLabel={tx(locale, 'tabsMail.nachricht', [message.subject || 'ohne Betreff'])}
+                  >
+                    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                      <View style={[styles.dot, { backgroundColor: message.seen ? colors.line : colors.blue }]} />
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={[styles.subject, message.seen && styles.subjectSeen]} numberOfLines={2}>
+                          {message.subject || tx(locale, 'common.ohne')}
+                        </Text>
+                        <Text style={styles.from} numberOfLines={1}>
+                          {message.from || '–'}
+                        </Text>
+                        <Text style={styles.meta}>
+                          {message.date ? new Date(message.date).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : '–'}
+                          {!message.seen ? tx(locale, 'tabsMail.neu') : ''}
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+          <Card>
+            <Text style={styles.hint}>
+              {tx(locale, 'tabsMail.gelesen')}
+            </Text>
+          </Card>
+        </Screen>
+      </Drawer>
+    </Drawer>
   );
 }
 
@@ -623,6 +721,32 @@ const styles = StyleSheet.create({
     maxWidth: 118,
   },
   dropdownText: { flexShrink: 1, color: colors.anthracite, fontSize: 13, fontWeight: '600' },
+  toolButton: {
+    flexShrink: 0,
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 12,
+    backgroundColor: colors.paper,
+  },
+  drawerPanel: { flex: 1, backgroundColor: colors.paper, paddingHorizontal: 16 },
+  drawerHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 6 },
+  drawerTitle: {
+    flex: 1,
+    color: colors.blue,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  drawerClose: { padding: 6, borderRadius: 999 },
+  drawerScroll: { flex: 1 },
+  drawerScrollContent: { paddingBottom: 8 },
   backdrop: { flex: 1, backgroundColor: 'rgba(15, 35, 55, 0.4)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: colors.paper,

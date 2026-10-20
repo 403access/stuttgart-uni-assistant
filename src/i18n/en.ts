@@ -735,6 +735,7 @@ export const en: Record<TranslationKey, string> = {
   "tabsMail.absender_neuheit": "Filter by sender and unread",
   "tabsMail.eigene": "Your folders",
   "tabsMail.erst": "Connect first; the newest messages then appear here.",
+  "tabsMail.filter": "Filter",
   "tabsMail.geladen": "\"{0}\" loaded.",
   "tabsMail.gelesen": "Read and shown only. Replying and sending stay in the webmail at https://mail.uni-stuttgart.de/, operated by the university itself.",
   "tabsMail.lade": "Loading \"{0}\" …",

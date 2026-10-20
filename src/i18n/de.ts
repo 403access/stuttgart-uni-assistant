@@ -734,6 +734,7 @@ export const de = {
   "tabsMail.absender_neuheit": "Nach Absender und Neuheit filtern",
   "tabsMail.eigene": "Eigene Ordner",
   "tabsMail.erst": "Erst verbinden, dann erscheinen die neuesten Nachrichten hier.",
+  "tabsMail.filter": "Filter",
   "tabsMail.geladen": "„{0}“ geladen.",
   "tabsMail.gelesen": "Nur gelesen und angezeigt. Antworten und Versand bleiben beim Webmail unter https://mail.uni-stuttgart.de/, das die Universität selbst betreibt.",
   "tabsMail.lade": "Lade „{0}“ …",
