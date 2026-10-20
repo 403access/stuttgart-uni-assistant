@@ -23,6 +23,8 @@ type IconName = ComponentProps<typeof MaterialIcons>['name'];
 const LIST_CAPTION_HEIGHT = 24;
 const LIST_ROW_HEIGHT = 66;
 
+const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable'] as const;
+
 const STEP_KICKER = {
   biometrics: 'onboarding.kicker',
   appearance: 'onboarding.stil_kicker',
@@ -154,6 +156,9 @@ function OnboardingHero({
   step: Step;
   topInset: number;
 }) {
+  const currentStep = STEP_ORDER.indexOf(step) + 1;
+  const totalSteps = STEP_ORDER.length;
+  const progressLabel = tx(locale, 'onboarding.fortschritt', [currentStep, totalSteps]);
   return (
     <View style={[styles.hero, { paddingTop: topInset + 28 }]}>
       <View style={styles.blobOne} pointerEvents="none" />
@@ -165,6 +170,22 @@ function OnboardingHero({
       <View style={styles.kickerPill}>
         <MaterialIcons name={STEP_ICON[step]} size={13} color="#FFFFFF" />
         <Text style={styles.kicker}>{tx(locale, STEP_KICKER[step])}</Text>
+      </View>
+      <View
+        style={styles.progress}
+        accessibilityRole="progressbar"
+        accessibilityLabel={progressLabel}
+        accessibilityValue={{ min: 1, max: totalSteps, now: currentStep }}
+        accessibilityHint={tx(locale, 'onboarding.fortschritt_hinweis')}>
+        <View style={styles.progressSegments}>
+          {STEP_ORDER.map((entry, index) => (
+            <View
+              key={entry}
+              style={[styles.progressSegment, index < currentStep && styles.progressSegmentDone]}
+            />
+          ))}
+        </View>
+        <Text style={styles.progressLabel}>{progressLabel}</Text>
       </View>
     </View>
   );
@@ -892,6 +913,11 @@ const styles = themedStyles((colors) => ({
     marginTop: 4,
   },
   kicker: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
+  progress: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  progressSegments: { flex: 1, flexDirection: 'row', gap: 4 },
+  progressSegment: { flex: 1, height: 4, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.28)' },
+  progressSegmentDone: { backgroundColor: '#FFFFFF' },
+  progressLabel: { color: 'rgba(255,255,255,0.78)', fontSize: 12, fontWeight: '600' },
   sheet: {
     flex: 1,
     backgroundColor: colors.paper,

@@ -602,6 +602,8 @@ export const de = {
   "oidc.wenn": "Wenn sich dieses Fenster nicht schließt, wechsle zurück zur App. Die Universität hat die Anmeldung an diese Adresse zurückgeschickt.",
   "onboarding.aktivieren": "Biometrie aktivieren",
   "onboarding.aktivieren_laeuft": "Wird aktiviert …",
+  "onboarding.fortschritt": "Schritt {0} von {1}",
+  "onboarding.fortschritt_hinweis": "Zeigt, wie weit die Einrichtung ist.",
   "onboarding.hinweis": "Du kannst die Biometrie später in den Einstellungen ändern.",
   "onboarding.kalender_als_naechstes": "Als Nächstes",
   "onboarding.kalender_anstehend": "anstehende Termine",

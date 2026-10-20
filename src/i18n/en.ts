@@ -603,6 +603,8 @@ export const en: Record<TranslationKey, string> = {
   "oidc.wenn": "If this window does not close, switch back to the app. The university sent the sign-in back to this address.",
   "onboarding.aktivieren": "Enable biometrics",
   "onboarding.aktivieren_laeuft": "Enabling …",
+  "onboarding.fortschritt": "Step {0} of {1}",
+  "onboarding.fortschritt_hinweis": "Shows how far setup has progressed.",
   "onboarding.hinweis": "You can change biometrics later in Settings.",
   "onboarding.kalender_als_naechstes": "Up next",
   "onboarding.kalender_anstehend": "upcoming appointments",
