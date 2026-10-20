@@ -3,10 +3,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
+
+/**
+ * The navigator defaults to an icon-and-label height (49pt) even when
+ * `tabBarShowLabel` is off. The icon slot plus its 5pt padding is 38pt, so the
+ * bar only needs that much above the safe-area inset.
+ */
+const TAB_BAR_CONTENT_HEIGHT = 38;
 
 /** SF Symbols on iOS, Material Icons elsewhere (Android, web). */
 function BarIcon({
@@ -26,6 +34,7 @@ function BarIcon({
 
 export default function TabLayout() {
   const { locale } = useApp();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -33,7 +42,12 @@ export default function TabLayout() {
         tabBarShowLabel: false,
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.mute,
-        tabBarStyle: { backgroundColor: colors.paper, borderTopColor: colors.line },
+        tabBarStyle: {
+          backgroundColor: colors.paper,
+          borderTopColor: colors.line,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+        },
+        tabBarItemStyle: { justifyContent: 'center' },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}>
       <Tabs.Screen
