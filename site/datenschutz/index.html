@@ -23,7 +23,7 @@
     <link rel="icon" href="../assets/favicon-32.png" sizes="32x32" />
     <link rel="icon" href="../assets/favicon.png" sizes="64x64" />
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/apple-touch-icon.png" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="../styles.css?v=2" />
   </head>
   <body>
     <a class="skip" href="#main">Zum Inhalt springen</a>
@@ -42,14 +42,19 @@
           <a href="../impressum/">Impressum</a>
           <a href="#en" lang="en">English</a>
           <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Farbschema wechseln">
-            <svg class="theme-icon theme-icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-            </svg>
-            <svg class="theme-icon theme-icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <span class="theme-slot theme-slot-light" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="4" />
               <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
             </svg>
-          </button>
+          </span>
+          <span class="theme-slot theme-slot-dark" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+            </svg>
+          </span>
+          <span class="theme-knob" aria-hidden="true"></span>
+        </button>
         </nav>
       </div>
     </header>
@@ -654,6 +659,6 @@
         </div>
       </div>
     </footer>
-    <script src="../theme.js"></script>
+    <script src="../theme.js?v=2"></script>
   </body>
 </html>
