@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -217,6 +217,7 @@ export default function MailScreen() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
   /** Guards so neither auto-load nor the poll interval stacks duplicate server calls. */
@@ -387,23 +388,26 @@ export default function MailScreen() {
    * One mailbox read through the assistant server (one IMAP session each). `quiet` runs are
    * the auto-load and the polling interval: they must not flash the refresh button and
    * not overwrite the visible note, only their own errors surface via `mailMessage`.
+   * `pull` runs come from pull-to-refresh: their spinner lives in the list, so they skip
+   * the loading copy and the success note as well.
    */
   const refreshMessages = useCallback(
-    async (options: { quiet?: boolean; folder?: string } = {}) => {
+    async (options: { quiet?: boolean; folder?: string; pull?: boolean } = {}) => {
       if (inFlight.current) return;
       inFlight.current = true;
       const quiet = options.quiet ?? false;
+      const pull = options.pull ?? false;
       const target = options.folder ?? folderRef.current;
       if (!quiet) {
         setError('');
         setNote('');
-        setLoading(true);
+        if (!pull) setLoading(true);
       }
       try {
         const loaded = await loadMailMessages(25, target);
         setMessages(loaded);
         const display = getMailSnapshot().folders?.find((candidate) => candidate.name === target)?.display ?? target;
-        if (!quiet) setNote(tx(locale, 'tabsMail.geladen', [folderLabel(display, locale)]));
+        if (!quiet && !pull) setNote(tx(locale, 'tabsMail.geladen', [folderLabel(display, locale)]));
       } catch (caught) {
         const code = caught instanceof Error ? caught.message : 'mail_failed';
         if (!quiet) setError(mailMessage(locale, code, mailDetail(caught)));
@@ -418,6 +422,16 @@ export default function MailScreen() {
     },
     [locale],
   );
+
+  /** Pull-to-refresh keeps the rows on screen; the spinner is the only feedback while it runs. */
+  const pullToRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshMessages({ pull: true });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshMessages]);
 
   /** The pushed connection screen publishes server-side changes; apply them here directly. */
   useEffect(
@@ -575,7 +589,20 @@ export default function MailScreen() {
             <OptionRows options={filterOptions} onSelect={applyFilterKey} />
           </DrawerPanel>
         )}>
-        <Screen stickyHeader={controlsBar} topInset>
+        <Screen
+          stickyHeader={controlsBar}
+          topInset
+          refreshControl={
+            connected ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={pullToRefresh}
+                tintColor={colors.blue}
+                colors={[colors.blue]}
+                progressBackgroundColor={colors.paper}
+              />
+            ) : undefined
+          }>
           {!connected ? (
             <Card>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>

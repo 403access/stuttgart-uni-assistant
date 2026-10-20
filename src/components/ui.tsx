@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import type { StyleProp, TextInputProps, TextStyle } from 'react-native';
+import type { RefreshControlProps, StyleProp, TextInputProps, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, themedStyles } from '@/src/theme';
@@ -42,6 +42,7 @@ export function Screen({
   scroll = true,
   footer,
   stickyHeader,
+  refreshControl,
   action,
   flush = false,
   topInset = false,
@@ -52,7 +53,13 @@ export function Screen({
   subtitle?: string;
   scroll?: boolean;
   footer?: ReactNode;
+  /**
+   * Fixed bar pinned above the scroll view. It stays put while the list scrolls and
+   * while pulling to refresh, so a pull never drags the controls down with it.
+   */
   stickyHeader?: ReactNode;
+  /** Native pull-to-refresh indicator for the scroll view, e.g. a `RefreshControl`. */
+  refreshControl?: ReactElement<RefreshControlProps>;
   /** Rendered at the top right of the header row, e.g. an icon button. */
   action?: ReactNode;
   /** Remove the side margins so cards reach the screen edges (e.g. the mail read view). */
@@ -84,16 +91,15 @@ export function Screen({
   );
   return (
     <View style={[styles.screen, topInset && { paddingTop: insets.top }]}>
+      {stickyHeader ? <View style={styles.stickyHeader}>{stickyHeader}</View> : null}
       {scroll ? (
         <ScrollView
-          // iOS adds the home-indicator inset (and, when the header floats over the
-          // content, the header inset) to the scroll content automatically.
+          // iOS adds the home-indicator inset to the scroll content automatically.
           contentContainerStyle={[styles.scroll, Platform.OS === 'android' && !topInset && { paddingBottom: 28 + insets.bottom }]}
           contentInsetAdjustmentBehavior="automatic"
           keyboardShouldPersistTaps="handled"
-          stickyHeaderIndices={stickyHeader ? [0] : undefined}
+          refreshControl={refreshControl}
         >
-          {stickyHeader ?? null}
           {body}
         </ScrollView>
       ) : (
@@ -242,6 +248,7 @@ export function InfoRow({ title, meta, detail, onPress, position, tone }: { titl
 
 const styles = themedStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.mist },
+  stickyHeader: { flexGrow: 0, flexShrink: 0 },
   scroll: { paddingBottom: 28 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
   body: { paddingHorizontal: 20, paddingTop: 12, gap: 14 },
