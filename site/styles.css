@@ -600,6 +600,31 @@ p { margin: 0; }
 .btn-solid { background: var(--brand); color: #fff; }
 .btn-solid:hover { background: var(--blue-deep); }
 
+@media (max-width: 620px) {
+  .cta { padding: 28px 20px; }
+  .cta .hero-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+  .cta .hero-actions .btn {
+    min-width: 0;
+    padding: 11px 6px;
+    font-size: clamp(0.66rem, 2.8vw, 0.82rem);
+    line-height: 1.25;
+    text-align: center;
+    justify-content: center;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 360px) {
+  .cta { padding: 24px 14px; }
+  .cta .hero-actions { gap: 6px; }
+  .cta .hero-actions .btn { padding: 10px 3px; font-size: 0.62rem; }
+}
+
 .site-footer {
   background: var(--footer);
   color: rgba(255, 255, 255, 0.72);

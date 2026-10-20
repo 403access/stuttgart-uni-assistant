@@ -40,8 +40,8 @@
     heroTitle: 'Your studies, in one place.',
     heroLead:
       'University Assistant brings the timetable, module progress, deadlines, ILIAS material, the campus map and UniMail into one app — and answers questions about them in German or English.',
-    heroCtaPrimary: 'Register for the beta',
-    heroCtaSecondary: 'See the screens',
+    heroCtaPrimary: 'Try the beta',
+    heroCtaSecondary: 'Screens',
     heroMetaPlatforms: 'Beta: iOS & Android',
     heroMetaLocal: 'Answers start on the device',
     heroMetaOpen: 'Open source · AGPL-3.0',
@@ -200,7 +200,7 @@
     ctaTitle: 'Open, traceable, runnable',
     ctaLead:
       'The code is on GitHub under AGPL-3.0-or-later. Build it, test it, change it — the checks run with a single command.',
-    ctaBeta: 'Register for the beta',
+    ctaBeta: 'Try the beta',
     ctaGithub: 'Go to the repository',
     ctaDocs: 'Documentation',
 
