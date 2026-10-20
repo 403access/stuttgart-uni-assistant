@@ -77,10 +77,13 @@ The state and the mutations behind the screen live in `src/auth/use-login-flow.t
 ## Onboarding and App Lock
 
 `app/onboarding.tsx` reuses the login composition: a blue hero with the mark, the
-brand, and a setup pill, then a white sheet with one biometrics card, two
-checkmark points, a primary **Biometrie aktivieren**, and a secondary **Nicht
-jetzt**. It has no header and disables the back gesture, because leaving it
-mid-flow would only send the gate to the same screen again.
+brand, and a setup pill, then a white sheet. The first page has one biometrics
+card, two checkmark points, a primary **Biometrie aktivieren**, and a secondary
+**Nicht jetzt**. Three import pages follow: calendar, messages, and timetable.
+Each has the same shape — icon, headline, explanation, a spinner while its
+pipeline runs, then a two-stat card and a short list of the next entries. The
+flow has no header and disables the back gesture, because leaving it mid-flow
+would only send the gate to the same screen again.
 
 `src/components/app-lock.tsx` is the opaque counterpart shown over the
 navigator when the lock is armed. It keeps the same blue hero and white panel,

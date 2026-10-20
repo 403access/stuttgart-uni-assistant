@@ -1,7 +1,7 @@
 import { assistantUrl } from '@/src/assistant/remote';
 import { recordCampusCall, type CampusLogEntry, type CampusOp } from '@/src/auth/campus-log';
 import { asAuthSession, authHeaders, getActiveAuthToken, type AuthSession } from '@/src/auth/session';
-import type { CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
+import type { CampusCalendarEvent, CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
 
 export interface CampusLogin {
   account: string;
@@ -626,6 +626,42 @@ export interface CalendarSync {
   imported: number;
   skipped: number;
   total: number;
+  /** Parsed events of the same run. Empty from an older assistant server. */
+  events: CampusCalendarEvent[];
+}
+
+function asCalendarEvents(value: unknown): CampusCalendarEvent[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const event = item as Partial<CampusCalendarEvent>;
+    if (typeof event.uid !== 'string' || !event.uid) return [];
+    return [
+      {
+        uid: event.uid,
+        summary: typeof event.summary === 'string' ? event.summary : '',
+        location: typeof event.location === 'string' ? event.location : '',
+        description: typeof event.description === 'string' ? event.description : '',
+        dtstart: typeof event.dtstart === 'string' ? event.dtstart : '',
+        dtend: typeof event.dtend === 'string' ? event.dtend : '',
+        fetchedAt: typeof event.fetchedAt === 'string' ? event.fetchedAt : '',
+      },
+    ];
+  });
+}
+
+/** Persisted calendar events of the signed-in user (server store, newest range first). */
+export async function loadCalendarEvents(limit = 1000): Promise<CampusCalendarEvent[]> {
+  const url = endpoint(`/v1/campus/calendar-events?limit=${limit}`);
+  let response: Response;
+  try {
+    response = await fetch(url, { headers: authHeaders() });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as { events?: unknown } & CampusFailure;
+  if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
+  return asCalendarEvents(payload.events);
 }
 
 /** Import the official ICS export into the server store (dedupe by UID). */
@@ -643,7 +679,7 @@ export async function syncExportedCalendar(options: { dateFrom: string; dateTo: 
   } catch {
     throw new Error('server_unreachable');
   }
-  const payload = (await response.json().catch(() => ({}))) as CalendarSync & CampusFailure;
+  const payload = (await response.json().catch(() => ({}))) as Partial<CalendarSync> & CampusFailure;
   console.info('[campus-sync] status', response.status, payload.error ?? `${payload.imported ?? 0} new`);
   if (!response.ok) throw campusFailure(payload, `http_${response.status}`, response.status);
   recordCampusCall({
@@ -654,7 +690,13 @@ export async function syncExportedCalendar(options: { dateFrom: string; dateTo: 
     response: `${payload.imported ?? 0} neu · ${payload.skipped ?? 0} Duplikate`,
     elapsedMs: Date.now() - started,
   });
-  return { filename: payload.filename ?? '', imported: payload.imported ?? 0, skipped: payload.skipped ?? 0, total: payload.total ?? 0 };
+  return {
+    filename: payload.filename ?? '',
+    imported: payload.imported ?? 0,
+    skipped: payload.skipped ?? 0,
+    total: payload.total ?? 0,
+    events: asCalendarEvents(payload.events),
+  };
 }
 
 export interface BrowserHarvest {

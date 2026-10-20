@@ -1029,7 +1029,9 @@ export async function syncExportedCalendar({ dateFrom, dateTo } = {}, fetchImpl 
   const events = parseIcsEvents(text);
   const { imported, skipped } = saveExportedEvents(userId, events);
   console.log(`[campus] calendar sync ok ${downloaded.filename}: ${imported} new, ${skipped} duplicates`);
-  return { filename: downloaded.filename, imported, skipped, total: events.length };
+  // The sync is also the onboarding's first read: return the parsed events so
+  // the overview does not depend on a second round-trip or the store read.
+  return { filename: downloaded.filename, imported, skipped, total: events.length, events };
 }
 
 /** PSESSIONID value from a `document.cookie` string. Empty when absent (e.g. HttpOnly). */

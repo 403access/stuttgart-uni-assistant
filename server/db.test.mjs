@@ -272,9 +272,11 @@ test('calendar sync imports once and skips duplicates on repeat', async () => {
   assert.equal(first.total, 3);
   assert.equal(first.imported, 3);
   assert.equal(first.skipped, 0);
+  assert.equal(first.events.length, 3);
   const second = await campus.syncExportedCalendar({ dateFrom: '16.10.2026', dateTo: '16.10.2027' }, fetchImpl);
   assert.equal(second.imported, 0);
   assert.equal(second.skipped, 3);
+  assert.equal(second.events.length, 3);
   delete process.env.CAMPUS_SESSION_COOKIE;
 });
 

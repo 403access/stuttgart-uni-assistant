@@ -266,6 +266,18 @@ export interface CampusStudy {
   elementId: number | null;
 }
 
+/** One VEVENT imported from the C@MPUS personal calendar export (ICS). */
+export interface CampusCalendarEvent {
+  uid: string;
+  summary: string;
+  location: string;
+  description: string;
+  /** ICS-local start, e.g. `20261020T080000`; date-only for all-day entries. */
+  dtstart: string;
+  dtend: string;
+  fetchedAt: string;
+}
+
 export interface CampusCourse {
   id: number;
   courseNumber: string;

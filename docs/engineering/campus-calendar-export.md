@@ -41,6 +41,8 @@ The browser sends no `Authorization` header here — only cookies — so neither
 | Method | Path | Behavior |
 | --- | --- | --- |
 | `POST` | `/v1/campus/calendar-export` | Validates `{ dateFrom, dateTo, format, charset }`, posts the mask fields, returns `{ filename, contentType, bytes, base64 }` |
+| `POST` | `/v1/campus/calendar-sync` | Downloads the ICS and upserts its `VEVENT`s into `user_exported_events`; repeats are skipped |
+| `GET` | `/v1/campus/calendar-events` | Returns the persisted events of the bearer user (`limit` optional, capped at 5000), newest date range first, for the onboarding overview |
 
 Validation: dates must be `TT.MM.JJJJ` between 2000 and 2100, format one of `1`, `2`, `3`, `99`, charset `UTF8` or `WE8ISO8859P1` — anything else is a `400` without touching the portal. The filename comes from the `filename*=utf-8''…` disposition parameter, falling back to `kalender-export.<ics|xml|csv>`. A missing `CAMPUS_SESSION_COOKIE` is `token_missing`; a rejected download maps like the other portal failures (see [campus-logging.md](campus-logging.md)). The 60 second timeout covers large date ranges.
 
@@ -50,7 +52,9 @@ Validation: dates must be `TT.MM.JJJJ` between 2000 and 2100, format one of `1`,
 
 ## Database sync
 
-`In Datenbank syncen` downloads the ICS and upserts its `VEVENT`s into the `exported_events` table (`POST /v1/campus/calendar-sync`, always ICS/UTF-8): unfolding of folded lines, unescaping, and the UID plus recurrence id as the dedupe key — repeats are skipped, so re-syncing imports only what's new. The answer reports `{ filename, imported, skipped, total }`.
+`In Datenbank syncen` downloads the ICS and upserts its `VEVENT`s into the `exported_events` table (`POST /v1/campus/calendar-sync`, always ICS/UTF-8): unfolding of folded lines, unescaping, and the UID plus recurrence id as the dedupe key — repeats are skipped, so re-syncing imports only what's new. The answer reports `{ filename, imported, skipped, total, events }`; the parsed events are returned so the first caller can render them without a second round-trip.
+
+The onboarding calendar page runs the same sync automatically and uses the returned events for its overview: imported total, upcoming total, and the next entries. `GET /v1/campus/calendar-events` (`loadCalendarEvents` in `src/auth/campus.ts`) remains the store read; if an older server returns only counts, the page parses the ICS attachment from `calendar-export` locally (`src/onboarding/ics.ts`). The Kalender-Import screen keeps its manual buttons and history.
 
 ## Import history
 

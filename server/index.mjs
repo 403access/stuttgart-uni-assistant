@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 
 import { exportCampusCalendar, clearUserCampusCredential, loadCampusStudies, loadCourseGroups, loadCurriculumCourses, loadCurriculumStructure, publicCampusStatus, readCampusLogin, resolveLoginCredential, setUserCampusCredential, startCampusTokenRefresh, storeCampusLogin, syncExportedCalendar, validateBrowserCredentials } from './campus.mjs';
 import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials } from './mail.mjs';
-import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, readPortalCalls, saveCampusSource } from './db.mjs';
+import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadExportedEvents, loadStructure, readPortalCalls, saveCampusSource } from './db.mjs';
 import { cancelSyncJobForUser, getSyncJobForUser, startSyncJob } from './sync.mjs';
 import { apiCatalog } from './catalog.mjs';
 import { endRemoteSession, exchangeCode, publicOidcStatus, startLogin, warnIfPasswordPresent } from './oidc.mjs';
@@ -730,6 +730,26 @@ const server = createServer(async (request, response) => {
       const code = error.message || 'campus_failed';
       console.log(`[campus #${reqId}] calendar sync failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, Number(error.status) || 500, campusFailure(error));
+    }
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/campus/calendar-events') {
+    try {
+      const auth = requireAuth(request);
+      const events = loadExportedEvents(auth.user.id, url.searchParams.get('limit'));
+      send(response, 200, {
+        events: events.map((event) => ({
+          uid: event.uid,
+          summary: event.summary,
+          location: event.location,
+          description: event.description,
+          dtstart: event.dtstart,
+          dtend: event.dtend,
+          fetchedAt: event.fetched_at,
+        })),
+      });
+    } catch (error) {
+      send(response, Number(error.status) || 500, { error: error.message || 'campus_failed' });
     }
     return;
   }

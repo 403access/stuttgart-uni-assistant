@@ -1,10 +1,12 @@
 # Onboarding
 
-The first-run flow after a successful sign-in. The biometrics page is
-implemented; the wider step list from the original plan is still open.
+The first-run flow after a successful sign-in. It has four pages: biometrics,
+calendar import, message import, then timetable import. Each import has its own
+pipeline and its own result page. All three pipelines start as soon as the flow
+mounts, so the biometrics page doubles as the time budget for the imports.
 
-Status: **first page implemented**. Files named below exist unless marked
-*planned*.
+Status: **biometrics plus all three import pages implemented**. Files named
+below exist unless marked *planned*.
 
 ## What runs today
 
@@ -15,13 +17,32 @@ Status: **first page implemented**. Files named below exist unless marked
    is set — the gate replaces the route with `/onboarding`.
 4. `app/onboarding.tsx` asks the user to enable biometrics, or to skip with
    **Nicht jetzt**.
-5. Enabling writes `biometricsEnabled` and `completedAt`. Skipping — or
-   dismissing/denying the system prompt — writes `completedAt` without enabling
-   the lock. The gate then moves to the tabs.
+5. `src/onboarding/use-onboarding-import.ts` starts three pipelines. The
+   calendar request is launched first:
+   - **Calendar:** `syncExportedCalendar` imports the personal C@MPUS ICS range
+     (today to one year out) and returns the parsed events of that same run, so
+     the overview does not depend on a second read. The persisted
+     `loadCalendarEvents` rows are shown while the import runs. If an older
+     server only returns counts, the page parses the export attachment locally
+     (`src/onboarding/ics.ts`). This page only uses exported appointments;
+     offered/booked timetable courses are never substituted for them.
+   - **Messages:** `hydrateMailSnapshot` publishes the cached inbox first;
+     `fetchMailStatus`, `fetchMailFolders`, and `loadMailMessages` refresh it.
+   - **Timetable:** the device course store is published first, then the server
+     course snapshot is merged. Studies that are not complete yet run the full
+     server sync (`includeCourses: true`) and hydrate structure plus courses.
+6. After the biometrics decision the flow moves through calendar, messages, and
+   timetable pages in that order. Each page shows its quick overview when the
+   pipeline has rows, or a spinner while it is still running. Failures keep
+   cached rows visible and offer **Erneut versuchen**.
+7. Enabling writes `biometricsEnabled`; **Weiter** on the timetable page writes
+   `completedAt`. Skipping biometrics — or cancelling the system prompt — only
+   writes `completedAt` when the last page is left. The gate then moves to the
+   tabs.
 
-The page is deliberately the only step in the flow for now. It is already gated
-behind a session and a completion record, so additional pages can be inserted
-without changing the navigation rule.
+The timetable pipeline deliberately outlives the screen: leaving early does not
+cancel the running server job, so the imported rows still land in the device
+store for the Kalender tab.
 
 ## Gate
 
@@ -189,18 +210,22 @@ Use it to distinguish the three failure modes:
 
 ## Manual check
 
-1. Sign in on a device with an enrolled biometric and no stored onboarding
-   record. The biometrics page appears before the tabs.
-2. **Biometrie aktivieren** shows the system prompt, then lands on Heute.
-3. Repeat with a fresh record and cancel the system prompt instead. The flow
-   closes without enabling the lock and does not return on the next launch.
-4. Put the app in the background and open it again. The lock screen appears.
-5. Cancel the App Lock prompt once: the lock screen stays, with retry and
+1. Sign in on a device with an enrolled biometric, no stored onboarding record,
+   and a C@MPUS session. The biometrics page appears before the tabs.
+2. **Biometrie aktivieren** shows the system prompt, then lands on the calendar
+   import page. With a warm export the overview is already there; on a cold
+   store the spinner is visible until the first rows arrive.
+3. **Weiter** moves to the message page (cached inbox or spinner), then to the
+   timetable page (cached courses or progress), then into the tabs.
+4. Repeat with a fresh record and cancel the system prompt instead. The flow
+   still runs the three import pages and completes without enabling the lock.
+5. Put the app in the background and open it again. The lock screen appears.
+6. Cancel the App Lock prompt once: the lock screen stays, with retry and
    sign-out.
-6. Disable biometrics in **Sicherheit**, background the app, and reopen it. No
+7. Disable biometrics in **Sicherheit**, background the app, and reopen it. No
    lock appears.
-7. Repeat on a device without enrollment: no onboarding page and no lock.
-8. Enroll biometrics while the app is installed, then reopen it. The page can
+8. Repeat on a device without enrollment: no onboarding page and no lock.
+9. Enroll biometrics while the app is installed, then reopen it. The page can
    appear because the skipped flow was not marked complete.
 
 ## Still planned
@@ -214,9 +239,7 @@ implemented yet:
 | `vault` | Move the opt-in C@MPUS autologin vault off the login form and explain it |
 | `study` | Confirm the C@MPUS studies and `activeStudyId` |
 | `live-data` | What is live C@MPUS data and what is the demonstration record |
-| `mail` | Offer the existing UniMail connection screen |
 | `assistant` | What leaves the device for chat, and the offline fallback |
-| `calendar` | One-tap C@MPUS calendar sync |
 | `tour` | Short cards for Heute, Kalender, Chat, and Mehr |
 | `done` | Summary of what is on and what was skipped |
 
