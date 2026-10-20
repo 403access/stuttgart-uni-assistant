@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,16 +9,23 @@ import { CampusHeadlessModal } from '@/src/components/campus-headless-modal';
 import { Field, LanguagePicker } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
+import { WebDeviceLogin } from '@/src/components/web-device-login';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
- * The sign-in screen the gate redirects to once the splash screen lifts. It
- * leads with the automated C@MPUS sign-in. The remaining paths — SIAM, the
- * visible browser, the demonstration profile, the token — still live on the
- * deprecated `/login-legacy` screen.
+ * The sign-in screen the gate redirects to once the splash screen lifts. On the
+ * web the only way in is a QR code approved by an already signed-in phone. The
+ * native screen leads with the automated C@MPUS sign-in. The remaining paths —
+ * SIAM, the visible browser, the demonstration profile, the token — still live
+ * on the deprecated `/login-legacy` screen.
  */
+
+export default function LoginScreen() {
+  if (Platform.OS === 'web') return <WebDeviceLogin />;
+  return <NativeLoginScreen />;
+}
 
 /** What the app is for, one line each, shown under the brand. */
 const HIGHLIGHTS = [
@@ -27,7 +34,7 @@ const HIGHLIGHTS = [
   { icon: 'mail-outline' as const, label: (locale: 'de' | 'en') => tx(locale, 'login.unimail') },
 ];
 
-export default function LoginScreen() {
+function NativeLoginScreen() {
   const insets = useSafeAreaInsets();
   const { locale, setLocale } = useApp();
   const { status, campusStatus, harvestBusy, browser, headless, campusSignIn } = useLoginFlow();

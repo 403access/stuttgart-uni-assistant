@@ -88,6 +88,7 @@ function renderSystem(data) {
             fieldBox('Größe', bytes(db.sizeBytes)),
             fieldBox('Konten', number(db.counts.users)),
             fieldBox('Sitzungen', number(db.counts.sessions)),
+            fieldBox('Geräte', number(db.counts.devices)),
             fieldBox('Plattformen', number(db.counts.platforms)),
             fieldBox('C@MPUS-Quellen', number(db.counts.campusSources)),
             fieldBox('Knoten', number(db.counts.nodes)),

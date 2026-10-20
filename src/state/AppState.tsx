@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { clearMailCache, hydrateMailSnapshot } from '@/src/auth/mail';
+import { loadCampusStudies } from '@/src/auth/campus';
 import {
   clearAuthToken,
   createServerSession,
@@ -88,6 +89,8 @@ type AppContextValue = PersistedState & {
   authToken: string | null;
   signInDemo: (account: string) => Promise<void>;
   signInLocal: (account: string) => Promise<void>;
+  /** Finish a web sign-in with the session minted after the phone approved the QR code. */
+  signInDevice: (session: AuthSession) => void;
   signInCampus: (profile: CampusSignInProfile) => void;
   setCurriculum: (nodes: CurriculumNode[], options?: { studyId?: number | null; replace?: boolean }) => void;
   setStudies: (studies: CampusStudy[]) => void;
@@ -285,6 +288,31 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // A web session starts without the phone's local study list. The server holds
+  // the cross-device snapshot, so fetch it once the campus session is present;
+  // the calendar and course tabs then read the server snapshots too.
+  useEffect(() => {
+    if (!authToken || state.sessionMode !== 'campus' || state.campusStudies.length) return;
+    let active = true;
+    loadCampusStudies()
+      .then((loaded) => {
+        if (!active || !loaded.studies.length) return;
+        setState((current) => {
+          if (current.campusStudies.length) return current;
+          return {
+            ...current,
+            campusStudies: loaded.studies,
+            activeStudyId: pickActiveStudyId(loaded.studies, loaded.activeStudyId ?? current.activeStudyId),
+            syncAt: { ...current.syncAt, campus: new Date().toISOString() },
+          };
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [authToken, state.sessionMode, state.campusStudies.length]);
+
   const api = useMemo<AppContextValue>(() => {
     /** Sign-in: persist the server token, then the user and its mirrored fields. */
     const establish = (session: AuthSession, extra: Partial<PersistedState> = {}) => {
@@ -339,9 +367,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           }));
         }
       },
+      signInDevice: (session) => {
+        establish(session, {
+          oidcSessionId: null,
+          curriculumNodes: [],
+          curriculumStudyId: null,
+          campusStudies: [],
+          activeStudyId: null,
+        });
+      },
       signInCampus: (profile) => {
-        const studies = profile.studies ?? state.campusStudies;
-        const activeStudyId =
+        const studies = profile.studies ?? state.campusStudies;        const activeStudyId =
           profile.activeStudyId !== undefined && profile.activeStudyId !== null
             ? profile.activeStudyId
             : pickActiveStudyId(studies, state.activeStudyId);

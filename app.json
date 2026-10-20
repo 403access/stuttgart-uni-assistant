@@ -52,6 +52,14 @@
       "expo-font",
       "expo-status-bar",
       "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Die Kamera wird nur verwendet, um den QR-Code der Web-Anmeldung zu scannen.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
       "@preeternal/react-native-cookie-manager",
       "./plugins/withVpnTunnel",
       [

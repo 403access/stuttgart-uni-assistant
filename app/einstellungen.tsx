@@ -1,15 +1,15 @@
-import { Stack } from 'expo-router';
-import { Text } from 'react-native';
+import { Stack, router } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { universityUrls } from '@/src/auth/oidc';
 import { assistantUrl } from '@/src/assistant/remote';
-import { Button, Card, Screen } from '@/src/components/ui';
+import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function SettingsScreen() {
-  const { locale, reset } = useApp();
+  const { locale, reset, authToken } = useApp();
   return (
     <Screen kicker={tx(locale, 'common.app')}>
       <Stack.Screen options={{ title: tx(locale, 'common.einstellungen') }} />
@@ -20,6 +20,14 @@ export default function SettingsScreen() {
           {tx(locale, 'einstellungen.schluessel')}
         </Text>
       </Card>
+      <Section title={tx(locale, 'einstellungen.geraet_titel')} />
+      <View>
+        <InfoRow
+          title={tx(locale, 'einstellungen.geraet_verknuepfen')}
+          detail={tx(locale, authToken ? 'einstellungen.geraet_text' : 'einstellungen.geraet_offline')}
+          onPress={() => router.push('/geraet-verknuepfen')}
+        />
+      </View>
       <Card>
         <Text style={{ color: colors.anthracite, lineHeight: 22 }}>
           {tx(locale, 'einstellungen.university')}

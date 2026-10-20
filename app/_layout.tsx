@@ -56,7 +56,10 @@ function Gate() {
   const router = useRouter();
   const onLogin = segments[0] === 'login' || segments[0] === 'login-legacy' || segments[0] === 'oidc';
   const onOnboarding = segments[0] === 'onboarding';
-  const needsOnboarding = Boolean(sessionAccount) && onboardingReady && !onboardingCompleted;
+  // The web build can only sign in through a phone that already completed the
+  // first-run flow, so it never shows onboarding again.
+  const isWeb = Platform.OS === 'web';
+  const needsOnboarding = Boolean(sessionAccount) && onboardingReady && !onboardingCompleted && !isWeb;
   // Settled once the route matches the session and, while signed in, the
   // onboarding decision has been made. The effects below only perform redirects.
   const settled =
@@ -88,6 +91,10 @@ function Gate() {
       if (!onLogin) router.replace('/login');
       return;
     }
+    if (isWeb) {
+      if (onLogin || onOnboarding) router.replace('/');
+      return;
+    }
     if (onboardingCompleted) {
       if (onLogin || onOnboarding) router.replace('/');
       return;
@@ -97,7 +104,7 @@ function Gate() {
       return;
     }
     if (onLogin) router.replace('/');
-  }, [ready, onboardingReady, sessionAccount, onboardingCompleted, needsOnboarding, onOnboarding, onLogin, router]);
+  }, [ready, onboardingReady, sessionAccount, onboardingCompleted, needsOnboarding, onOnboarding, onLogin, router, isWeb]);
 
   // A dev-screen reset is written to storage while the running session still
   // looks completed. Apply it when the user signs out, so the next sign-in

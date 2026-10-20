@@ -5,6 +5,7 @@ import { ASSISTANT_MODEL } from '../config.mjs';
 import { getDb } from '../db.mjs';
 import { publicMailStatus } from '../mail.mjs';
 import { publicOidcStatus } from '../oidc.mjs';
+import { adminDeviceStats } from './devices.mjs';
 import { adminConfigured } from './session.mjs';
 
 /* ----------------------------------------------------------------- counts -- */
@@ -61,6 +62,7 @@ export function databaseCounts() {
       `SELECT
         (SELECT COUNT(*) FROM users) AS users,
         (SELECT COUNT(*) FROM user_sessions) AS sessions,
+        (SELECT COUNT(*) FROM device_links) AS devices,
         (SELECT COUNT(*) FROM user_platforms) AS platforms,
         (SELECT COUNT(*) FROM user_campus) AS campus_sources,
         (SELECT COUNT(*) FROM user_curriculum_nodes) AS nodes,
@@ -73,6 +75,7 @@ export function databaseCounts() {
   return {
     users: row?.users ?? 0,
     sessions: row?.sessions ?? 0,
+    devices: row?.devices ?? 0,
     platforms: row?.platforms ?? 0,
     campusSources: row?.campus_sources ?? 0,
     nodes: row?.nodes ?? 0,
@@ -108,10 +111,12 @@ export function adminStats() {
     .map((row) => ({ source: row.source, count: row.n }));
   const credentialsActive = listUserCampusCredentials().length;
   const data = databaseCounts();
+  const deviceStats = adminDeviceStats();
   return {
     users,
     activeSessions,
     usersWithSessions,
+    ...deviceStats,
     recentUsers: recent,
     recentUsersMonth: recentMonth,
     activeUsersWeek: activeWeek,

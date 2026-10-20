@@ -25,6 +25,8 @@ export async function renderOverview() {
   const usersBadge = $('nav-users-count');
   usersBadge.textContent = number(stats.users);
   usersBadge.hidden = false;
+  const deviceBadge = $('nav-devices-count');
+  if (deviceBadge) { deviceBadge.textContent = number(stats.devices || 0); deviceBadge.hidden = false; }
 
   const config = stats.config || {};
   const campusReady = Boolean(config.campus?.tokenConfigured || config.campus?.sessionCookieConfigured);
@@ -59,6 +61,7 @@ export async function renderOverview() {
   const kpis = [
     { symbol: 'users', value: stats.users, label: 'Konten', sub: stats.recentUsers + ' neu in 7 Tagen', href: '#/users', tone: '' },
     { symbol: 'monitor', value: stats.activeSessions, label: 'Aktive Sitzungen', sub: stats.usersWithSessions + ' Konten angemeldet', href: '#/users?activity=active', tone: 'cyan' },
+    { symbol: 'smartphone', value: stats.devicesActive || 0, label: 'Web-Geräte', sub: (stats.devicesPending || 0) + ' warten auf Scan', href: '#/devices', tone: 'blue' },
     { symbol: 'key', value: stats.credentialsActive, label: 'C@MPUS im Speicher', sub: 'nur bis zum Server-Neustart', href: '#/users?credential=active', tone: 'green' },
     { symbol: 'list', value: stats.portalNodes, label: 'Portal-Knoten', sub: stats.completedNodes + ' abgeschlossen · ' + stats.inProgressNodes + ' in Arbeit', href: '#/users?data=portal', tone: 'purple' },
     { symbol: 'grid', value: stats.portalCourses, label: 'Kurse', sub: 'aus dem C@MPUS-Export', href: '#/users?data=courses', tone: 'amber' },

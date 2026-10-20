@@ -61,6 +61,31 @@ On launch `AppState` reads the token and asks `/v1/auth/me`. A 401 drops both th
 token and the session. A network failure keeps the cached user, so the app still
 opens offline with the last account shown.
 
+## Web device pairing
+
+The web build cannot create a `demo`, `local`, `campus`, or OIDC session from its
+own sign-in screen. It shows a QR code instead; the already signed-in native app
+opens **Einstellungen → Gerät verknüpfen**, scans the code, and approves the
+pairing with its bearer token.
+
+- `POST /v1/auth/devices/start` creates a pending row in `device_links` and
+  returns a one-time 32-byte token plus
+  `universityassistant://device-link?token=…`. Only the token hash reaches
+  SQLite. The code is valid for ten minutes.
+- `POST /v1/auth/devices/approve` (Bearer) attaches the pending code to the
+  signed-in user. A code cannot be approved twice or after it expires.
+- `POST /v1/auth/devices/poll` is the browser's unauthenticated poll. Before
+  approval it returns `{ status: "pending" }`; the first poll after approval
+  mints the session, stores its id on `device_links.session_id`, and returns the
+  same `user`, `token`, and `expiresAt` shape as every other sign-in.
+- `GET /v1/auth/devices` lists the caller's browsers. `DELETE
+  /v1/auth/devices/<id>` revokes the link and its session. The operator
+  dashboard has the same view under `#/devices` and can revoke a browser there.
+
+The QR payload never contains a server URL: the phone approves against its own
+configured assistant server, so a crafted QR code cannot redirect the bearer
+token to another host.
+
 ## Routes
 
 | Route | Auth | Behavior |
@@ -68,6 +93,13 @@ opens offline with the last account shown.
 | `POST /v1/auth/session` | none | Creates a `demo` or `local` user and session. Campus and OIDC sessions are only minted by their verified routes. |
 | `GET /v1/auth/me` | Bearer | The public user with platform links, plus the session expiry. |
 | `POST /v1/auth/logout` | Bearer | Revokes the token and drops the in-memory portal credential. |
+| `POST /v1/auth/devices/start` | none | Creates a ten-minute browser pairing; returns the one-time token and deep link. |
+| `POST /v1/auth/devices/approve` | Bearer | Attaches a scanned pairing token to the signed-in account. |
+| `POST /v1/auth/devices/poll` | none | Returns `pending`, or mints and returns the browser session after approval. |
+| `GET /v1/auth/devices` | Bearer | Lists the account's linked browsers. |
+| `DELETE /v1/auth/devices/<id>` | Bearer | Revokes one browser link and its session. |
+| `GET /v1/auth/preferences` | Bearer | Cross-device onboarding completion and appearance/language preferences. |
+| `POST /v1/auth/preferences` | Bearer | Partial upsert of `onboardingCompletedAt`, `theme`, `design`, and `locale`. |
 | `POST /v1/auth/links` | Bearer | Links or refreshes one platform (`platform`, `account`, `status`, `source`). |
 | `DELETE /v1/auth/links/<platform>` | Bearer | Removes one link. |
 | `POST /v1/auth/sync` | Bearer | Sets `last_sync_at` for one platform. |

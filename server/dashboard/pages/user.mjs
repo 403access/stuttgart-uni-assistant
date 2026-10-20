@@ -51,6 +51,7 @@ function renderUserShell(detail) {
   const tabs = [
     ['overview', 'Übersicht'],
     ['sessions', 'Sitzungen', detail.sessions.length],
+    ['devices', 'Geräte', detail.devices.length],
     ['platforms', 'Plattformen', user.platforms.length],
     ['campus', 'C@MPUS'],
     ['data', 'Studiengänge', detail.studies.length],
@@ -103,6 +104,7 @@ function renderUserTab(detail) {
   const tab = state.user.tab;
   if (tab === 'overview') renderOverviewTab(container, detail);
   else if (tab === 'sessions') renderSessionsTab(container, detail);
+  else if (tab === 'devices') renderDevicesTab(container, detail);
   else if (tab === 'platforms') renderPlatformsTab(container, detail);
   else if (tab === 'campus') renderCampusTab(container, detail);
   else if (tab === 'data') renderDataTab(container, detail);
@@ -186,6 +188,7 @@ function renderOverviewTab(container, detail) {
       fieldBox('Aktualisiert', date(user.updatedAt)),
       fieldBox('Letzte Anmeldung', user.lastLoginAt ? date(user.lastLoginAt) + ' · ' + relative(user.lastLoginAt) : 'nie'),
       fieldBox('Sitzungen aktiv', String(detail.sessions.filter((item) => item.state === 'active').length)),
+      fieldBox('Web-Geräte', String(detail.devices.length)),
       fieldBox('C@MPUS im Speicher', detail.campus.active ? 'ja' : 'nein'),
       fieldBox('C@MPUS-Quelle', detail.campus.source || '–'),
       fieldBox('C@MPUS-Konto', detail.campus.account || '–'),
@@ -256,6 +259,7 @@ function renderSessionsTab(container, detail) {
         h('div', { className: 'main' },
           h('div', { className: 'row tight' }, h('strong', { className: 'mono', text: session.id }), copyButton(session.id, 'Sitzungs-ID')),
           h('span', { text: 'erstellt ' + date(session.createdAt) + ' · läuft ab ' + date(session.expiresAt) }),
+          session.device ? h('span', { text: 'Gerät ' + session.device.name + (session.device.kind === 'web' ? ' · Web' : '') }) : null,
           h('span', { text: session.lastSeenAt ? 'zuletzt gesehen ' + date(session.lastSeenAt) : 'noch nicht verwendet' + (session.revokedAt ? ' · widerrufen ' + date(session.revokedAt) : '') }),
         ),
         h('div', { className: 'row actions' },
@@ -272,6 +276,66 @@ function renderSessionsTab(container, detail) {
       list,
     ),
   );
+}
+
+function deviceBadge(state) {
+  const map = {
+    pending: ['wartet auf Scan', 'warn'],
+    approved: ['genehmigt', 'blue'],
+    active: ['aktiv', 'ok'],
+    linked: ['verknüpft', 'ok'],
+    expired: ['abgelaufen', ''],
+    revoked: ['widerrufen', 'danger'],
+  };
+  const [label, tone] = map[state] || [state, ''];
+  return badge(label, tone);
+}
+
+function renderDevicesTab(container, detail) {
+  const user = detail.user;
+  const devices = detail.devices || [];
+  const active = devices.filter((device) => device.state === 'active' || device.state === 'linked').length;
+  const rows = devices.length
+    ? devices.map((device) => h('tr', null,
+        h('td', null, h('strong', { text: device.name }), h('div', { className: 'hint', text: device.userAgent || device.id })),
+        h('td', null, deviceBadge(device.state)),
+        h('td', null, date(device.createdAt)),
+        h('td', null, device.approvedAt ? date(device.approvedAt) : h('span', { className: 'muted', text: '–' })),
+        h('td', null, device.session ? h('div', { className: 'who-text' }, h('strong', { className: 'mono', text: device.session.id, style: { fontSize: '11px' } }), h('span', { text: device.session.expiresAt ? 'bis ' + date(device.session.expiresAt) : '' })) : h('span', { className: 'muted', text: 'keine' })),
+        h('td', null, device.state !== 'revoked' ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: () => revokeUserDevice(user.id, device) }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
+      ))
+    : [h('tr', null, h('td', { colspan: '6' }, emptyState('smartphone', 'Keine Web-Geräte', 'Dieses Konto hat noch keinen Browser per QR-Code freigegeben.')))];
+
+  container.append(
+    callout('Die Web-App kann sich nur mit einem QR-Code anmelden, den die App auf dem Telefon freigibt. Ein Widerruf beendet die zugehörige Websitzung sofort.', '', 'shield'),
+    h('div', { className: 'detail-section' },
+      sectionHead('Web-Geräte', active + ' aktiv · ' + devices.length + ' insgesamt'),
+      h('div', { className: 'table-wrap' },
+        h('table', { className: 'data', style: { minWidth: '820px' } },
+          h('caption', { className: 'sr-only' }, 'Mit dem Konto verknüpfte Web-Geräte'),
+          h('thead', null, h('tr', null, h('th', null, 'Gerät'), h('th', null, 'Status'), h('th', null, 'Erstellt'), h('th', null, 'Genehmigt'), h('th', null, 'Sitzung'), h('th', null, ''))),
+          h('tbody', null, ...rows),
+        ),
+      ),
+    ),
+  );
+}
+
+async function revokeUserDevice(userId, device) {
+  const ok = await confirmAction({
+    title: 'Web-Gerät widerrufen?',
+    message: 'Die Websitzung von „' + device.name + '“ wird sofort ungültig. Der Browser muss einen neuen QR-Code scannen.',
+    confirmLabel: 'Gerät widerrufen',
+  });
+  if (!ok) return;
+  try {
+    await api('/v1/admin/devices/' + encodeURIComponent(device.id), { method: 'DELETE' });
+    toast('Web-Gerät widerrufen.', 'ok');
+    const updated = await api('/v1/admin/users/' + encodeURIComponent(userId));
+    applyUserDetail(updated);
+  } catch (error) {
+    if (error.code !== 'unauthorized') toast(errorText(error), 'error');
+  }
 }
 
 function renderPlatformsTab(container, detail) {

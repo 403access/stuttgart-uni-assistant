@@ -71,6 +71,29 @@ const needsOnboarding =
   not delete it.
 - Direct access to `/onboarding` while signed out is redirected to `/login`.
   Access while the flow is already complete redirects to the tabs.
+- The web build never shows onboarding. It can only sign in through the QR code
+  approved by a phone, so the flow has already been completed there. While the
+  web session starts, `OnboardingState` waits for the account preferences once,
+  applies the phone's appearance and language, and then releases the gate.
+
+## Cross-device sync
+
+The phone remains the source of truth for the first-run decision, but it also
+writes it to the assistant server so a later web sign-in does not ask again:
+
+- `user_preferences` stores `onboarding_completed_at`, `theme`, `design`,
+  `locale`, and `updated_at` per account.
+- `GET /v1/auth/preferences` and `POST /v1/auth/preferences` read and merge
+  those values. Only known enum values are written; omitted fields keep their
+  stored value.
+- The phone pushes after onboarding completes and whenever the language, theme,
+  or design changes. It also sends the current values in the QR approval
+  request, so the browser sees them even if the background request lost a race.
+- On web, `OnboardingState` pulls the preferences before `ready` flips, adopts
+  the completion timestamp, applies theme/design/locale, and records a
+  completion even if the phone was on an older build without preferences.
+- `biometricsEnabled` stays device-local: the web build has no Face ID or
+  fingerprint to unlock.
 
 ## Storage
 

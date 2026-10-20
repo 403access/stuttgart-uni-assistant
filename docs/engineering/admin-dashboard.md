@@ -39,8 +39,10 @@ that survives reloads and can be shared between operators:
 | --- | --- |
 | `#/overview` | KPI cards, distribution bars, recent accounts, recent audit actions, configuration health |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
+| `#/devices` | QR-linked web browsers with state, account, timestamps, and revoke |
 | `#/users/<id>/overview` | Profile, status, per-study summary, audit preview, delete zone |
 | `#/users/<id>/sessions` | App sessions with state, timestamps, copy and revoke |
+| `#/users/<id>/devices` | Web browsers approved by this account through the QR flow |
 | `#/users/<id>/platforms` | C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail links |
 | `#/users/<id>/campus` | C@MPUS credential source, per-study data, calendar/call maintenance |
 | `#/users/<id>/data` | Curriculum nodes and courses per study, with search, state filter, and pagination |
@@ -58,10 +60,17 @@ the account name and bulk portal deletion requires typing `LÖSCHEN`.
 ## What it shows
 
 **Overview:** accounts, active sessions, live in-memory C@MPUS credentials,
-portal nodes (completed and in progress), courses, calendar events, portal
-calls, new accounts in 7/30 days, platform/channel distribution, sign-in modes,
-C@MPUS sources, the newest accounts, the newest audit actions, and the health
-of the admin token, assistant key, C@MPUS `.env`, OIDC, and UniMail.
+QR-linked web devices and pending pairings, portal nodes (completed and in
+progress), courses, calendar events, portal calls, new accounts in 7/30 days,
+platform/channel distribution, sign-in modes, C@MPUS sources, the newest
+accounts, the newest audit actions, and the health of the admin token,
+assistant key, C@MPUS `.env`, OIDC, and UniMail.
+
+**Web devices:** every browser pairing carries the browser label and user
+agent, the account that approved it, the pairing and approval timestamps, and
+the session minted when the browser redeemed the code. A browser whose QR code
+expires without approval is shown as expired; revoking a linked device ends
+its web session immediately.
 
 **User list:** search by account, name, email, or matriculation; filter by
 sign-in mode, linked platform, C@MPUS source (`env` / browser / active in
@@ -129,7 +138,9 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /admin` | The dashboard HTML. Safe without a cookie; it renders the login/setup state. |
 | `POST /v1/admin/login` | `{ token }` → sets the cookie and records an audit entry. `503` when unconfigured, `401` when wrong. |
 | `POST /v1/admin/logout` | Clears the cookie and records an audit entry. |
-| `GET /v1/admin/overview` | Stats, mode/platform/source breakdowns, database counts, and configuration health. |
+| `GET /v1/admin/overview` | Stats, mode/platform/source breakdowns, device counts, database counts, and configuration health. |
+| `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers, newest pairing first. |
+| `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
 | `GET /v1/admin/users?query=&mode=&platform=&credential=&activity=&data=&sort=&limit=&offset=` | Paginated user list with stored-data counts and platform chips. |
 | `POST /v1/admin/users` | Pre-provisions an account (`account`, `name`, `email`, `matriculation`, `subject`, `mode`) without a session. |
 | `GET /v1/admin/users/<id>` | Full detail: user, sessions, campus, counts, per-study summaries, recent calls, recent audit. |
@@ -168,6 +179,7 @@ screen cannot replay them.
 | `server/admin/audit.mjs` | Audit writes, filters, and facets. |
 | `server/admin/overview.mjs` | Cross-account counts and statistics. |
 | `server/admin/users.mjs` | Account list and detail reads. |
+| `server/admin/devices.mjs` | QR-linked browser list, stats, and revoke. |
 | `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
 | `server/admin/sync.mjs` | Manual sync start/cancel. |

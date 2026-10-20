@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import { authenticateWithBiometrics, biometricsStatus, type BiometricAuthResult, type BiometricsStatus } from '@/src/auth/biometrics';
+import { fetchServerPreferences, saveServerPreferences } from '@/src/auth/session';
+import { useApp } from '@/src/state/AppState';
 
 /**
  * First-run onboarding and the device-level biometric preference. These are
@@ -89,16 +91,24 @@ async function loadPreferences(): Promise<OnboardingPreferences> {
 const emptyStatus: BiometricsStatus = { module: false, hardware: false, enrolled: false, available: false };
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
+  const { authToken, theme, design, locale, setTheme, setDesign, setLocale } = useApp();
   const [preferences, setPreferences] = useState<OnboardingPreferences>(defaults);
   const [pending, setPending] = useState(true);
   const [biometrics, setBiometrics] = useState<BiometricsStatus>(emptyStatus);
   const [justEnabled, setJustEnabled] = useState(false);
+  const [checkedToken, setCheckedToken] = useState<string | null>(null);
+  const [syncNonce, setSyncNonce] = useState(0);
   const preferencesRef = useRef(preferences);
   // Set as soon as the user changes a preference, so a slow initial load cannot
   // overwrite the new value with the pre-change snapshot.
   const preferencesTouched = useRef(false);
   const biometricsTouched = useRef(false);
   const lastVerifiedAt = useRef(0);
+  const appRef = useRef({ theme, design, locale, setTheme, setDesign, setLocale });
+
+  useEffect(() => {
+    appRef.current = { theme, design, locale, setTheme, setDesign, setLocale };
+  }, [theme, design, locale, setTheme, setDesign, setLocale]);
 
   const persist = useCallback(async (next: OnboardingPreferences) => {
     preferencesTouched.current = true;
@@ -112,6 +122,52 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       if (__DEV__) console.warn('[onboarding] could not save preferences', error);
     }
   }, []);
+
+  // Pull the phone's onboarding decision and display choices before Onboarding's
+  // `ready` flips, so the web build never flashes the first-run flow. The phone
+  // remains local-first for its own appearance; only the web adopts the remote
+  // values.
+  useEffect(() => {
+    if (!authToken) return;
+    let active = true;
+    (async () => {
+      const remote = await fetchServerPreferences(authToken);
+      if (!active) return;
+      const current = preferencesRef.current;
+      if (remote?.onboardingCompletedAt && !current.completedAt) {
+        await persist({ ...current, completedAt: remote.onboardingCompletedAt, forceOnboarding: false });
+      } else if (Platform.OS === 'web' && !current.completedAt) {
+        // A web session can only be approved by a phone that has already been
+        // through onboarding. Record that even if an older phone had no prefs.
+        await persist({ ...current, completedAt: new Date().toISOString(), forceOnboarding: false });
+      }
+      if (Platform.OS === 'web' && remote) {
+        const app = appRef.current;
+        if (remote.theme) app.setTheme(remote.theme);
+        if (remote.design) app.setDesign(remote.design);
+        if (remote.locale) app.setLocale(remote.locale);
+      }
+      if (active) setCheckedToken(authToken);
+    })().catch(() => {
+      if (active) setCheckedToken(authToken);
+    });
+    return () => {
+      active = false;
+    };
+  }, [authToken, persist]);
+
+  // Push the local completion and appearance after the remote check settled.
+  useEffect(() => {
+    if (!authToken) return;
+    if (Platform.OS === 'web' && checkedToken !== authToken) return;
+    const payload = {
+      onboardingCompletedAt: preferences.completedAt,
+      theme,
+      design,
+      locale,
+    };
+    void saveServerPreferences(authToken, payload);
+  }, [authToken, checkedToken, preferences.completedAt, theme, design, locale, syncNonce]);
 
   useEffect(() => {
     let active = true;
@@ -168,7 +224,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'background') setJustEnabled(false);
-      if (state === 'active') void refreshBiometrics();
+      if (state === 'active') {
+        void refreshBiometrics();
+        // Retry a preference push that may have failed while the server or
+        // network was unavailable.
+        setSyncNonce((value) => value + 1);
+      }
     });
     return () => subscription.remove();
   }, [refreshBiometrics]);
@@ -226,7 +287,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   return (
     <OnboardingContext.Provider
       value={{
-        ready: !pending,
+        ready:
+          !pending &&
+          (Platform.OS !== 'web' ||
+            !authToken ||
+            Boolean(preferences.completedAt) ||
+            checkedToken === authToken),
         completed: Boolean(preferences.completedAt),
         completedAt: preferences.completedAt,
         forceOnboarding: preferences.forceOnboarding,

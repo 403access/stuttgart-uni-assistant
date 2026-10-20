@@ -5,9 +5,9 @@
  * Anmeldemethoden” section, but it is no longer the screen a user sees first.
  * Do not add features here; put them in the new login screen.
  */
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -31,6 +31,12 @@ import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function LoginScreen() {
+  // The web build has exactly one door: the QR pairing on /login.
+  if (Platform.OS === 'web') return <Redirect href="/login" />;
+  return <LegacyLoginScreen />;
+}
+
+function LegacyLoginScreen() {
   const insets = useSafeAreaInsets();
   const { locale, setLocale, signInCampus, signInDemo, signInLocal, signInOidc } = useApp();
   // The status probes resolve to null when the server is unreachable — the

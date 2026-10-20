@@ -21,6 +21,7 @@ export const AUDIT_LABELS = {
   'user.delete': 'Konto gelöscht',
   'session.revoke': 'Sitzung widerrufen',
   'session.revoke_all': 'Alle Sitzungen widerrufen',
+  'device.revoke': 'Web-Gerät widerrufen',
   'platform.link': 'Plattform verknüpft',
   'platform.unlink': 'Plattform entfernt',
   'platform.touch': 'Plattform-Sync markiert',
@@ -34,5 +35,5 @@ export const AUDIT_LABELS = {
   'sync.cancel': 'Synchronisation abgebrochen',
   'mail.disconnect': 'UniMail getrennt',
 };
-export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'campus.disconnect', 'mail.disconnect']);
+export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'mail.disconnect']);
 

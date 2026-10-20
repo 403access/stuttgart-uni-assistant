@@ -36,6 +36,46 @@ export interface AuthSession {
   user: UserAccount;
 }
 
+/** A browser pairing shown as a QR code in the web app. */
+export interface DeviceLinkStart {
+  id: string;
+  token: string;
+  name: string;
+  expiresAt: string;
+  state: 'pending';
+  pairingUrl: string;
+}
+
+/** A browser link as seen by the phone or the admin dashboard. */
+export interface DeviceLinkInfo {
+  id: string;
+  userId?: string | null;
+  name: string;
+  kind: string;
+  userAgent: string;
+  state: 'pending' | 'approved' | 'active' | 'linked' | 'expired' | 'revoked';
+  createdAt: string;
+  expiresAt: string;
+  approvedAt: string | null;
+  consumedAt: string | null;
+  revokedAt: string | null;
+  lastSeenAt: string | null;
+  sessionId: string | null;
+}
+
+export type DevicePollResult =
+  | { status: 'pending' }
+  | { status: 'approved'; session: AuthSession; device: DeviceLinkInfo };
+
+/** Preferences that follow the account across the phone and the web build. */
+export interface UserPreferences {
+  onboardingCompletedAt: string | null;
+  theme: 'light' | 'dark' | null;
+  design: 'clean' | 'playful' | null;
+  locale: 'de' | 'en' | null;
+  updatedAt: string | null;
+}
+
 export interface ServerSessionInput {
   mode: 'demo' | 'local';
   account: string;
@@ -68,6 +108,16 @@ export async function readAuthToken(): Promise<string | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * The token the scanner should try first. `authToken` comes from React state and
+ * can be empty while the session is still restoring (or when the app was opened
+ * offline); secure storage may already hold the token. Duplicates are removed.
+ */
+export async function authTokenCandidates(current: string | null): Promise<string[]> {
+  const stored = await readAuthToken();
+  return [...new Set([current, getActiveAuthToken(), stored].filter((token): token is string => Boolean(token)))];
 }
 
 export async function saveAuthToken(token: string): Promise<void> {
@@ -131,6 +181,189 @@ export async function createServerSession(input: ServerSessionInput): Promise<Au
   const session = asAuthSession(await response.json().catch(() => ({})));
   if (!session) throw new Error('auth_unexpected');
   return session;
+}
+
+function asUserPreferences(value: unknown): UserPreferences | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Partial<UserPreferences>;
+  return {
+    onboardingCompletedAt: typeof row.onboardingCompletedAt === 'string' ? row.onboardingCompletedAt : null,
+    theme: row.theme === 'light' || row.theme === 'dark' ? row.theme : null,
+    design: row.design === 'clean' || row.design === 'playful' ? row.design : null,
+    locale: row.locale === 'de' || row.locale === 'en' ? row.locale : null,
+    updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : null,
+  };
+}
+
+function asDeviceLinkInfo(value: unknown): DeviceLinkInfo | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Partial<DeviceLinkInfo>;
+  if (typeof row.id !== 'string' || !row.id) return null;
+  const states = ['pending', 'approved', 'active', 'linked', 'expired', 'revoked'] as const;
+  return {
+    id: row.id,
+    userId: typeof row.userId === 'string' ? row.userId : null,
+    name: typeof row.name === 'string' ? row.name : 'Gerät',
+    kind: typeof row.kind === 'string' ? row.kind : 'web',
+    userAgent: typeof row.userAgent === 'string' ? row.userAgent : '',
+    state: states.includes(row.state as (typeof states)[number]) ? (row.state as DeviceLinkInfo['state']) : 'pending',
+    createdAt: typeof row.createdAt === 'string' ? row.createdAt : '',
+    expiresAt: typeof row.expiresAt === 'string' ? row.expiresAt : '',
+    approvedAt: typeof row.approvedAt === 'string' ? row.approvedAt : null,
+    consumedAt: typeof row.consumedAt === 'string' ? row.consumedAt : null,
+    revokedAt: typeof row.revokedAt === 'string' ? row.revokedAt : null,
+    lastSeenAt: typeof row.lastSeenAt === 'string' ? row.lastSeenAt : null,
+    sessionId: typeof row.sessionId === 'string' ? row.sessionId : null,
+  };
+}
+
+/** Read the account-wide onboarding and appearance settings. */
+export async function fetchServerPreferences(token: string | null): Promise<UserPreferences | null> {
+  if (!token) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  try {
+    const response = await request('/v1/auth/preferences', { method: 'GET', signal: controller.signal }, token);
+    if (!response.ok) return null;
+    const payload = (await response.json().catch(() => ({}))) as { preferences?: unknown };
+    return asUserPreferences(payload.preferences);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Push the phone's completion and appearance choices for the next device. */
+export async function saveServerPreferences(
+  token: string | null,
+  preferences: Partial<Omit<UserPreferences, 'updatedAt'>>,
+): Promise<UserPreferences | null> {
+  if (!token) return null;
+  try {
+    const response = await request('/v1/auth/preferences', {
+      method: 'POST',
+      body: JSON.stringify(preferences),
+    }, token);
+    if (!response.ok) return null;
+    const payload = (await response.json().catch(() => ({}))) as { preferences?: unknown };
+    return asUserPreferences(payload.preferences);
+  } catch {
+    return null;
+  }
+}
+/** Create the browser pairing shown as a QR code. This call is unauthenticated. */
+export async function startDeviceLink(name?: string): Promise<DeviceLinkStart> {
+  let response: Response;
+  try {
+    response = await request('/v1/auth/devices/start', {
+      method: 'POST',
+      body: JSON.stringify({ name: name ?? null }),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  if (!response.ok) throw await failure(response, 'device_link_failed');
+  const payload = (await response.json().catch(() => ({}))) as { link?: Partial<DeviceLinkStart> };
+  const link = payload.link;
+  if (!link || typeof link.token !== 'string' || !link.token) throw new Error('device_link_unexpected');
+  return {
+    id: typeof link.id === 'string' ? link.id : '',
+    token: link.token,
+    name: typeof link.name === 'string' ? link.name : '',
+    expiresAt: typeof link.expiresAt === 'string' ? link.expiresAt : '',
+    state: 'pending',
+    pairingUrl: typeof link.pairingUrl === 'string' ? link.pairingUrl : '',
+  };
+}
+
+/** The web screen polls until the authenticated phone approves the QR code. */
+export async function pollDeviceLink(token: string): Promise<DevicePollResult> {
+  let response: Response;
+  try {
+    response = await request('/v1/auth/devices/poll', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  if (!response.ok) throw await failure(response, 'device_link_failed');
+  const payload = (await response.json().catch(() => ({}))) as { status?: unknown; session?: unknown; device?: unknown };
+  if (payload.status !== 'approved') return { status: 'pending' };
+  const session = asAuthSession(payload.session);
+  const device = asDeviceLinkInfo(payload.device);
+  if (!session || !device) throw new Error('device_link_unexpected');
+  return { status: 'approved', session, device };
+}
+
+/** Called by the authenticated phone after it scans the QR code. */
+export async function approveDeviceLink(
+  token: string,
+  phoneToken: string | null,
+  name?: string,
+  preferences?: Partial<Omit<UserPreferences, 'updatedAt'>>,
+): Promise<DeviceLinkInfo | null> {
+  if (!phoneToken) throw new Error('unauthorized');
+  let response: Response;
+  try {
+    response = await request(
+      '/v1/auth/devices/approve',
+      { method: 'POST', body: JSON.stringify({ token, name: name ?? null, preferences: preferences ?? null }) },
+      phoneToken,
+    );
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  if (response.status === 401) throw new Error('unauthorized');
+  if (!response.ok) throw await failure(response, 'device_link_failed');
+  const payload = (await response.json().catch(() => ({}))) as { device?: unknown };
+  return asDeviceLinkInfo(payload.device);
+}
+
+export async function fetchUserDevices(token: string | null): Promise<DeviceLinkInfo[]> {
+  if (!token) return [];
+  try {
+    const response = await request('/v1/auth/devices', { method: 'GET' }, token);
+    if (!response.ok) return [];
+    const payload = (await response.json().catch(() => ({}))) as { devices?: unknown };
+    return Array.isArray(payload.devices) ? payload.devices.flatMap((item) => {
+      const device = asDeviceLinkInfo(item);
+      return device ? [device] : [];
+    }) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function revokeServerDevice(token: string | null, deviceId: string): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const response = await request(`/v1/auth/devices/${encodeURIComponent(deviceId)}`, { method: 'DELETE' }, token);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The QR payload is `universityassistant://device-link?token=…`. Only the
+ * pairing token is accepted; the server address always comes from this app's
+ * own configuration so a crafted QR code cannot redirect the bearer token.
+ */
+export function deviceTokenFromScan(data: string): string | null {
+  const text = String(data ?? '').trim();
+  if (!text) return null;
+  const match = /[?&]token=([^&\s]+)/.exec(text);
+  let candidate = match ? match[1] : text;
+  if (match) {
+    try {
+      candidate = decodeURIComponent(candidate);
+    } catch {
+      return null;
+    }
+  }
+  return /^[A-Za-z0-9_-]{20,200}$/.test(candidate) ? candidate : null;
 }
 
 /** `null` means the server could not be asked; `{ unauthorized: true }` means the token is dead. */

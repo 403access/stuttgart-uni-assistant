@@ -4,6 +4,7 @@
  */
 
 export { listAdminAudit, recordAdminAudit } from './audit.mjs';
+export { adminDeviceStats, listAdminDevices, revokeAdminDevice } from './devices.mjs';
 export { adminUserCalls, adminUserCourses, adminUserEvents, adminUserNodes, adminUserStudies } from './explorers.mjs';
 export {
   clearAdminCalls,

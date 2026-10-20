@@ -197,6 +197,8 @@ export function deleteAdminUser(userId) {
       'user_exported_events',
       'user_portal_calls',
       'user_campus',
+      'device_links',
+      'user_preferences',
       'user_platforms',
       'user_sessions',
     ]) {

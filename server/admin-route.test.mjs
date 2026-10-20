@@ -204,6 +204,23 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   const missingJob = await call('/v1/admin/sync-jobs/999', { method: 'DELETE' });
   assert.equal(missingJob.status, 404);
 
+  const pairing = auth.createDeviceLink({ name: 'Route Browser', userAgent: 'Route/1.0' });
+  auth.approveDeviceLink(userId, pairing.token);
+  auth.pollDeviceLink(pairing.token);
+  const deviceList = await call('/v1/admin/devices?state=active');
+  assert.equal(deviceList.status, 200);
+  const deviceBody = await deviceList.json();
+  assert.equal(deviceBody.total, 1);
+  assert.equal(deviceBody.devices[0].name, 'Route Browser');
+  assert.equal(deviceBody.devices[0].account, 'st123456');
+  const deviceDetail = await call(`/v1/admin/users/${userId}`);
+  assert.equal((await deviceDetail.json()).devices.length, 1);
+  const revokeDevice = await call(`/v1/admin/devices/${pairing.id}`, { method: 'DELETE' });
+  assert.equal(revokeDevice.status, 200);
+  assert.equal((await revokeDevice.json()).ok, true);
+  const missingDevice = await call('/v1/admin/devices/dev_missing', { method: 'DELETE' });
+  assert.equal(missingDevice.status, 404);
+
   const logout = await call('/v1/admin/logout', { method: 'POST' });
   assert.equal(logout.status, 200);
   assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);

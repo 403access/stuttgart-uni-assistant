@@ -117,6 +117,71 @@ test('readBearer accepts only a well-formed bearer header', () => {
   assert.equal(auth.readBearer({ headers: {} }), null);
 });
 
+test('a QR pairing is authenticated by the phone and redeemed once by the browser', () => {
+  const user = auth.upsertUser({ account: 'st123456', mode: 'campus' });
+  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0' });
+  assert.equal(link.state, 'pending');
+  assert.equal(link.pairingUrl, `universityassistant://device-link?token=${link.token}`);
+  assert.equal(auth.pollDeviceLink(link.token).status, 'pending');
+
+  const approved = auth.approveDeviceLink(user.id, link.token);
+  assert.equal(approved.state, 'approved');
+  assert.equal(approved.userId, user.id);
+  assert.equal(approved.name, 'Chrome · macOS');
+
+  const redeemed = auth.pollDeviceLink(link.token);
+  assert.equal(redeemed.status, 'approved');
+  assert.equal(redeemed.session.user.id, user.id);
+  assert.equal(auth.authenticateToken(redeemed.session.token).user.id, user.id);
+
+  const devices = auth.listUserDevices(user.id);
+  assert.equal(devices.length, 1);
+  assert.equal(devices[0].state, 'active');
+  assert.equal(devices[0].sessionId !== null, true);
+
+  assert.throws(() => auth.pollDeviceLink(link.token), /device_link_consumed/);
+  assert.equal(auth.revokeDeviceLink(user.id, link.id), true);
+  assert.equal(auth.authenticateToken(redeemed.session.token), null);
+  assert.throws(() => auth.approveDeviceLink(user.id, link.token), /device_link_revoked/);
+  assert.throws(() => auth.pollDeviceLink('not-a-device-token'), /device_link_missing/);
+  assert.throws(() => auth.pollDeviceLink(`${'x'.repeat(32)}`), /device_link_unknown/);
+});
+
+test('an expired QR pairing cannot be approved', () => {
+  const user = auth.upsertUser({ account: 'st123456', mode: 'local' });
+  const link = auth.createDeviceLink({ name: 'Firefox' });
+  db.getDb().prepare('UPDATE device_links SET expires_at = ? WHERE id = ?').run('2000-01-01T00:00:00.000Z', link.id);
+  assert.throws(() => auth.approveDeviceLink(user.id, link.token), /device_link_expired/);
+  assert.throws(() => auth.pollDeviceLink(link.token), /device_link_expired/);
+});
+
+test('cross-device preferences merge partial updates', () => {
+  const user = auth.upsertUser({ account: 'st123456', mode: 'campus' });
+  assert.deepEqual(auth.getUserPreferences(user.id), {
+    onboardingCompletedAt: null,
+    theme: null,
+    design: null,
+    locale: null,
+    updatedAt: null,
+  });
+
+  const saved = auth.saveUserPreferences(user.id, {
+    onboardingCompletedAt: '2026-10-20T08:00:00.000Z',
+    theme: 'dark',
+    design: 'playful',
+    locale: 'en',
+  });
+  assert.equal(saved.onboardingCompletedAt, '2026-10-20T08:00:00.000Z');
+  assert.equal(saved.theme, 'dark');
+
+  const partial = auth.saveUserPreferences(user.id, { theme: 'light', locale: 'de' });
+  assert.equal(partial.theme, 'light');
+  assert.equal(partial.locale, 'de');
+  assert.equal(partial.design, 'playful');
+  assert.equal(partial.onboardingCompletedAt, '2026-10-20T08:00:00.000Z');
+  assert.equal(auth.getUserPreferences(user.id).theme, 'light');
+});
+
 test('portal rows are isolated per user', () => {
   const aliceNode = { id: 1, designation: 'A', elementType: 'ROOT', name: 'Alice tree', parentId: null, completed: false, inProgress: false };
   const bobNode = { id: 1, designation: 'B', elementType: 'ROOT', name: 'Bob tree', parentId: null, completed: false, inProgress: false };

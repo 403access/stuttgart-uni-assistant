@@ -1,0 +1,228 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { pollDeviceLink, startDeviceLink, type DeviceLinkStart } from '@/src/auth/session';
+import { DeviceQr } from '@/src/components/device-qr';
+import { LanguagePicker } from '@/src/components/login-blocks';
+import { Button, Mark } from '@/src/components/ui';
+import { useApp } from '@/src/state/AppState';
+import { colors, themedStyles } from '@/src/theme';
+import { tx } from '@/src/text';
+
+type Phase = 'starting' | 'waiting' | 'approved' | 'expired' | 'error';
+
+function describeBrowser(): string {
+  if (typeof navigator === 'undefined') return 'Web-Browser';
+  const agent = navigator.userAgent;
+  const browser = /Edg\//.test(agent) ? 'Edge' : /Firefox\//.test(agent) ? 'Firefox' : /Chrome\//.test(agent) ? 'Chrome' : /Safari\//.test(agent) ? 'Safari' : 'Browser';
+  const platform = /Mac/.test(agent) ? 'macOS' : /Windows/.test(agent) ? 'Windows' : /Android/.test(agent) ? 'Android' : /iPhone|iPad/.test(agent) ? 'iOS' : 'Web';
+  return `${browser} · ${platform}`;
+}
+
+export function WebDeviceLogin() {
+  const insets = useSafeAreaInsets();
+  const { locale, setLocale, signInDevice } = useApp();
+  const [link, setLink] = useState<DeviceLinkStart | null>(null);
+  const [phase, setPhase] = useState<Phase>('starting');
+  const [error, setError] = useState<string | null>(null);
+  const [generation, setGeneration] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const signInRef = useRef(signInDevice);
+
+  useEffect(() => {
+    signInRef.current = signInDevice;
+  }, [signInDevice]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  function retry() {
+    setLink(null);
+    setError(null);
+    setPhase('starting');
+    setGeneration((value) => value + 1);
+  }
+
+  useEffect(() => {
+    let active = true;
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+    let busy = false;
+
+    (async () => {
+      try {
+        const next = await startDeviceLink(describeBrowser());
+        if (!active) return;
+        setLink(next);
+        setPhase('waiting');
+        pollTimer = setInterval(async () => {
+          if (busy) return;
+          busy = true;
+          try {
+            const result = await pollDeviceLink(next.token);
+            if (!active || result.status !== 'approved') return;
+            clearInterval(pollTimer);
+            setPhase('approved');
+            signInRef.current(result.session);
+          } catch (pollError) {
+            if (!active) return;
+            const code = pollError instanceof Error ? pollError.message : '';
+            if (code === 'device_link_expired' || code === 'device_link_consumed' || code === 'device_link_revoked' || code === 'device_link_unknown') {
+              clearInterval(pollTimer);
+              setPhase('expired');
+              setError(code);
+            }
+          } finally {
+            busy = false;
+          }
+        }, 2000);
+      } catch (startError) {
+        if (!active) return;
+        setPhase('error');
+        setError(startError instanceof Error ? startError.message : 'device_link_failed');
+      }
+    })();
+
+    return () => {
+      active = false;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [generation]);
+
+  const expiresAt = link ? new Date(link.expiresAt).getTime() : 0;
+  const secondsLeft = expiresAt ? Math.max(0, Math.ceil((expiresAt - now) / 1000)) : 0;
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = String(secondsLeft % 60).padStart(2, '0');
+
+  return (
+    <View style={styles.screen}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 20, paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <View style={styles.topRow}>
+          <View style={styles.brandRow}>
+            <View style={styles.markTile}>
+              <Mark size={30} />
+            </View>
+            <Text style={styles.brand}>University Assistant</Text>
+          </View>
+          <LanguagePicker locale={locale} setLocale={setLocale} />
+        </View>
+
+        <View style={styles.hero}>
+          <Text style={styles.eyebrow}>{tx(locale, 'login.web_kicker')}</Text>
+          <Text style={styles.title}>{tx(locale, 'login.web_titel')}</Text>
+          <Text style={styles.lead}>{tx(locale, 'login.web_text')}</Text>
+        </View>
+
+        <View style={styles.qrCard}>
+          <View style={styles.qrFrame}>
+            {link ? (
+              <DeviceQr value={link.pairingUrl || `universityassistant://device-link?token=${encodeURIComponent(link.token)}`} size={236} />
+            ) : (
+              <View style={styles.qrPlaceholder}>
+                <MaterialIcons name={phase === 'error' ? 'wifi-off' : 'qr-code-2'} size={44} color={colors.mute} />
+              </View>
+            )}
+          </View>
+
+          {phase === 'waiting' && link ? (
+            <View style={styles.statusRow}>
+              <View style={styles.liveDot} />
+              <Text style={styles.statusText}>{tx(locale, 'login.web_wartet', [`${minutes}:${seconds}`])}</Text>
+            </View>
+          ) : null}
+          {phase === 'starting' ? (
+            <View style={styles.statusRow}>
+              <MaterialIcons name="hourglass-empty" size={16} color={colors.blue} />
+              <Text style={styles.statusText}>{tx(locale, 'login.web_startet')}</Text>
+            </View>
+          ) : null}
+          {phase === 'approved' ? (
+            <View style={styles.statusRow}>
+              <MaterialIcons name="check-circle" size={18} color={colors.success} />
+              <Text style={styles.statusText}>{tx(locale, 'login.web_genehmigt')}</Text>
+            </View>
+          ) : null}
+          {phase === 'expired' ? (
+            <View style={styles.errorBox}>
+              <MaterialIcons name="timer-off" size={18} color={colors.warning} />
+              <Text style={styles.errorText}>{tx(locale, 'login.web_abgelaufen')}</Text>
+            </View>
+          ) : null}
+          {phase === 'error' ? (
+            <View style={styles.errorBox}>
+              <MaterialIcons name="wifi-off" size={18} color={colors.warning} />
+              <Text style={styles.errorText}>
+                {tx(locale, error === 'server_unreachable' ? 'login.web_offline' : 'login.web_fehler')}
+              </Text>
+            </View>
+          ) : null}
+
+          {phase === 'expired' || phase === 'error' ? (
+            <Button label={tx(locale, 'login.web_neu')} onPress={retry} />
+          ) : null}
+        </View>
+
+        <View style={styles.steps}>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>1</Text>
+            <View style={styles.stepText}>
+              <Text style={styles.stepTitle}>{tx(locale, 'login.web_schritt1_titel')}</Text>
+              <Text style={styles.stepBody}>{tx(locale, 'login.web_schritt1')}</Text>
+            </View>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>2</Text>
+            <View style={styles.stepText}>
+              <Text style={styles.stepTitle}>{tx(locale, 'login.web_schritt2_titel')}</Text>
+              <Text style={styles.stepBody}>{tx(locale, 'login.web_schritt2')}</Text>
+            </View>
+          </View>
+          <View style={styles.step}>
+            <Text style={styles.stepNumber}>3</Text>
+            <View style={styles.stepText}>
+              <Text style={styles.stepTitle}>{tx(locale, 'login.web_schritt3_titel')}</Text>
+              <Text style={styles.stepBody}>{tx(locale, 'login.web_schritt3')}</Text>
+            </View>
+          </View>
+        </View>
+
+        <Pressable onPress={retry} style={styles.footHint}>
+          <MaterialIcons name="refresh" size={15} color={colors.mute} />
+          <Text style={styles.footHintText}>{tx(locale, 'login.web_hinweis')}</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand },
+  content: { flexGrow: 1, paddingHorizontal: 20, gap: 18, alignItems: 'center' },
+  topRow: { width: '100%', maxWidth: 560, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  markTile: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
+  brand: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: -0.3, flexShrink: 1 },
+  hero: { width: '100%', maxWidth: 560, gap: 8, marginTop: 12 },
+  eyebrow: { color: '#CFE0F2', fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },
+  title: { color: '#FFFFFF', fontSize: 34, lineHeight: 38, fontWeight: '700', letterSpacing: -0.8 },
+  lead: { color: '#CFE0F2', fontSize: 15, lineHeight: 22 },
+  qrCard: { width: '100%', maxWidth: 560, backgroundColor: colors.paper, borderRadius: 26, padding: 22, gap: 14, alignItems: 'center' },
+  qrFrame: { padding: 12, borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E3E8F0' },
+  qrPlaceholder: { width: 236, height: 236, alignItems: 'center', justifyContent: 'center' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  liveDot: { width: 8, height: 8, borderRadius: 8, backgroundColor: colors.success },
+  statusText: { color: colors.anthracite, fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  errorBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: colors.warningSoft, borderRadius: 14, padding: 12 },
+  errorText: { flex: 1, color: colors.anthracite, fontSize: 13, lineHeight: 19 },
+  steps: { width: '100%', maxWidth: 560, gap: 10 },
+  step: { flexDirection: 'row', gap: 12, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 16, padding: 14 },
+  stepNumber: { width: 24, height: 24, borderRadius: 24, textAlign: 'center', lineHeight: 24, backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFFFFF', fontWeight: '700', fontSize: 12 },
+  stepText: { flex: 1, gap: 2 },
+  stepTitle: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  stepBody: { color: '#CFE0F2', fontSize: 13, lineHeight: 19 },
+  footHint: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
+  footHintText: { color: '#CFE0F2', fontSize: 12 },
+}));

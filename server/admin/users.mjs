@@ -1,6 +1,6 @@
 /** Account list and detail reads. */
 
-import { getUser } from '../auth.mjs';
+import { getUser, listUserDevices } from '../auth.mjs';
 import { getUserCampusCredential, listUserCampusCredentials } from '../campus.mjs';
 import { getDb, loadCampusSource } from '../db.mjs';
 import { listAdminAudit } from './audit.mjs';
@@ -85,6 +85,7 @@ export function listUsers({ query = '', mode = '', platform = '', credential = '
         (SELECT COUNT(*) FROM user_sessions s WHERE s.user_id = users.id AND s.revoked_at IS NULL AND s.expires_at > ?) AS active_sessions,
         (SELECT source FROM user_campus c WHERE c.user_id = users.id) AS campus_source,
         (SELECT COUNT(*) FROM user_platforms p WHERE p.user_id = users.id) AS platform_count,
+        (SELECT COUNT(*) FROM device_links d WHERE d.user_id = users.id AND d.revoked_at IS NULL) AS device_count,
         (SELECT COUNT(*) FROM user_curriculum_nodes n WHERE n.user_id = users.id) AS portal_nodes,
         (SELECT COUNT(*) FROM user_curriculum_nodes n WHERE n.user_id = users.id AND n.completed = 1) AS completed_nodes,
         (SELECT COUNT(*) FROM user_courses c WHERE c.user_id = users.id) AS portal_courses,
@@ -119,6 +120,7 @@ export function listUsers({ query = '', mode = '', platform = '', credential = '
       lastLoginAt: row.last_login_at ?? null,
       activeSessions: row.active_sessions ?? 0,
       platformCount: row.platform_count ?? 0,
+      deviceCount: row.device_count ?? 0,
       platforms: platformMap.get(row.id) ?? [],
       campusSource: row.campus_source ?? null,
       campusActive: Boolean(getUserCampusCredential(row.id)),
@@ -141,10 +143,19 @@ export function adminUserDetail(userId) {
   const user = getUser(userId);
   if (!user) return null;
   const db = getDb();
+  const devices = listUserDevices(userId);
+  const deviceBySession = new Map(devices.filter((item) => item.sessionId).map((item) => [item.sessionId, item]));
   const sessions = db
     .prepare('SELECT id, created_at, expires_at, last_seen_at, revoked_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC')
     .all(userId)
-    .map(sessionRow);
+    .map((row) => {
+      const session = sessionRow(row);
+      const device = deviceBySession.get(session.id);
+      return {
+        ...session,
+        device: device ? { id: device.id, name: device.name, kind: device.kind, userAgent: device.userAgent } : null,
+      };
+    });
   const campusSource = loadCampusSource(userId);
   const credential = getUserCampusCredential(userId);
   const calls = db
@@ -166,6 +177,7 @@ export function adminUserDetail(userId) {
   return {
     user,
     sessions,
+    devices,
     campus: {
       source: campusSource?.source ?? null,
       account: campusSource?.account ?? null,

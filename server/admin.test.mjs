@@ -117,6 +117,41 @@ test('disconnecting C@MPUS clears the source and demotes the link', () => {
   assert.equal(detail.user.platforms.find((item) => item.id === 'campus').status, 'linked');
 });
 
+test('device links are listed, counted, attached to sessions, and revocable', () => {
+  const alice = user('st111111');
+  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0 Chrome' });
+  auth.approveDeviceLink(alice.user.id, link.token);
+  const redeemed = auth.pollDeviceLink(link.token);
+  assert.equal(redeemed.status, 'approved');
+
+  const stats = admin.adminDeviceStats();
+  assert.equal(stats.devices, 1);
+  assert.equal(stats.devicesActive, 1);
+  assert.equal(stats.devicesPending, 0);
+  assert.equal(admin.adminStats().devicesActive, 1);
+
+  const listed = admin.listAdminDevices({});
+  assert.equal(listed.total, 1);
+  assert.equal(listed.devices[0].name, 'Chrome · macOS');
+  assert.equal(listed.devices[0].state, 'active');
+  assert.equal(listed.devices[0].account, 'st111111');
+  assert.equal(admin.listAdminDevices({ state: 'revoked' }).total, 0);
+  assert.equal(admin.listAdminDevices({ query: 'chrome' }).total, 1);
+
+  const detail = admin.adminUserDetail(alice.user.id);
+  assert.equal(detail.devices.length, 1);
+  assert.equal(detail.sessions[0].device.name, 'Chrome · macOS');
+  assert.equal(admin.listUsers({}).users[0].deviceCount, 1);
+
+  const revoked = admin.revokeAdminDevice(link.id);
+  assert.equal(revoked.ok, true);
+  assert.equal(admin.listAdminDevices({ state: 'revoked' }).total, 1);
+  assert.equal(auth.authenticateToken(redeemed.session.token), null);
+  const audit = admin.listAdminAudit({ action: 'device.revoke' });
+  assert.equal(audit.entries[0].detail.deviceId, link.id);
+  assert.equal(admin.revokeAdminDevice('bad-id'), null);
+});
+
 test('portal data can be cleared for one user without touching another', () => {
   const alice = user('st111111');
   const bob = user('st222222');

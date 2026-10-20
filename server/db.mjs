@@ -70,6 +70,39 @@ export function getDb() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS user_sessions_user ON user_sessions(user_id);
+    /* A browser signs in by scanning a one-time QR code in the authenticated
+       mobile app. user_id stays NULL until the phone approves the pairing;
+       session_id points at the session minted when the browser next polls. */
+    CREATE TABLE IF NOT EXISTS device_links (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      token_hash TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL DEFAULT '',
+      user_agent TEXT NOT NULL DEFAULT '',
+      kind TEXT NOT NULL DEFAULT 'web',
+      created_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      approved_at TEXT,
+      consumed_at TEXT,
+      revoked_at TEXT,
+      last_seen_at TEXT,
+      session_id TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (session_id) REFERENCES user_sessions(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS device_links_user ON device_links(user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS device_links_expiry ON device_links(expires_at);
+    /* Cross-device preferences. Onboarding is completed on the phone; the web
+       build reads the result from here instead of asking again. */
+    CREATE TABLE IF NOT EXISTS user_preferences (
+      user_id TEXT PRIMARY KEY,
+      onboarding_completed_at TEXT,
+      theme TEXT,
+      design TEXT,
+      locale TEXT,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
     CREATE TABLE IF NOT EXISTS user_platforms (
       user_id TEXT NOT NULL,
       platform TEXT NOT NULL,
