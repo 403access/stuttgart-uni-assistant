@@ -1,11 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
+import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { Button, Card } from '@/src/components/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
@@ -28,31 +27,20 @@ export default function SecurityScreen() {
     biometricsEnabled,
     biometricsHardware,
     biometricsAvailable,
-    enableBiometrics,
     disableBiometrics,
     refreshBiometrics,
   } = useOnboarding();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const biometrics = useBiometricPrompt();
 
   useRefreshOnFocus(refreshBiometrics);
 
   async function toggleBiometrics(next: boolean) {
-    if (busy) return;
-    setError('');
+    if (biometrics.busy) return;
     if (!next) {
       await disableBiometrics();
       return;
     }
-    setBusy(true);
-    const result = await enableBiometrics(
-      tx(locale, 'appLock.grund'),
-      tx(locale, 'common.abbrechen'),
-    );
-    setBusy(false);
-    if (!result.success) {
-      setError(isBiometricCancel(result.error) ? '' : biometricMessage(locale, result.error));
-    }
+    await biometrics.prompt('appLock.grund');
   }
 
   const state = biometricsEnabled ? 'active' : !biometricsHardware ? 'unavailable' : !biometricsAvailable ? 'setup' : 'ready';
@@ -127,15 +115,15 @@ export default function SecurityScreen() {
               <Switch
                 value={biometricsEnabled}
                 onValueChange={(next) => void toggleBiometrics(next)}
-                disabled={busy || (!biometricsHardware && !biometricsEnabled)}
+                disabled={biometrics.busy || (!biometricsHardware && !biometricsEnabled)}
                 trackColor={{ false: colors.line, true: colors.blue }}
                 thumbColor={colors.paper}
                 ios_backgroundColor={colors.line}
                 accessibilityLabel={tx(locale, 'sicherheit.biometrie')}
               />
             </View>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
-            {error ? (
+            {biometrics.error ? <Text style={styles.error}>{biometrics.error}</Text> : null}
+            {biometrics.error ? (
               <Button
                 secondary
                 label={tx(locale, 'onboarding.systemeinstellungen')}

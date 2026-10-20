@@ -1,10 +1,9 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { authenticateWithBiometrics } from '@/src/auth/biometrics';
-import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
+import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { Button, Mark } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
@@ -17,29 +16,18 @@ import { tx } from '@/src/text';
 export function AppLock({ onUnlock, onSignOut }: { onUnlock: () => void; onSignOut: () => void }) {
   const { locale } = useApp();
   const insets = useSafeAreaInsets();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const prompting = useRef(false);
+  const { prompt, busy, error } = useBiometricPrompt({ persist: false });
   const started = useRef(false);
 
   const unlock = useCallback(async () => {
-    if (prompting.current) return;
-    prompting.current = true;
-    setBusy(true);
-    setError('');
-    const result = await authenticateWithBiometrics(
-      tx(locale, 'appLock.grund'),
-      tx(locale, 'common.abbrechen'),
-    );
-    prompting.current = false;
-    setBusy(false);
+    const result = await prompt('appLock.grund');
+    if (!result) return;
     if (result.success) {
       onUnlock();
       return;
     }
     if (__DEV__) console.info('[app-lock] biometric result', result);
-    setError(isBiometricCancel(result.error) ? '' : biometricMessage(locale, result.error));
-  }, [locale, onUnlock]);
+  }, [prompt, onUnlock]);
 
   useEffect(() => {
     if (started.current) return;

@@ -8,6 +8,7 @@ import { DeviceQr } from '@/src/components/device-qr';
 import { LanguagePicker } from '@/src/components/login-blocks';
 import { Button, Mark } from '@/src/components/ui';
 import { useCountdown } from '@/src/hooks/use-countdown';
+import { usePolling } from '@/src/hooks/use-polling';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -45,48 +46,47 @@ export function WebDeviceLogin() {
 
   useEffect(() => {
     let active = true;
-    let pollTimer: ReturnType<typeof setInterval> | undefined;
-    let busy = false;
-
-    (async () => {
-      try {
-        const next = await startDeviceLink(describeBrowser());
+    startDeviceLink(describeBrowser())
+      .then((next) => {
         if (!active) return;
         setLink(next);
         setPhase('waiting');
-        pollTimer = setInterval(async () => {
-          if (busy) return;
-          busy = true;
-          try {
-            const result = await pollDeviceLink(next.token);
-            if (!active || result.status !== 'approved') return;
-            clearInterval(pollTimer);
-            setPhase('approved');
-            signInRef.current(result.session);
-          } catch (pollError) {
-            if (!active) return;
-            const code = pollError instanceof Error ? pollError.message : '';
-            if (code === 'device_link_expired' || code === 'device_link_consumed' || code === 'device_link_revoked' || code === 'device_link_unknown') {
-              clearInterval(pollTimer);
-              setPhase('expired');
-              setError(code);
-            }
-          } finally {
-            busy = false;
-          }
-        }, 2000);
-      } catch (startError) {
+      })
+      .catch((startError) => {
         if (!active) return;
         setPhase('error');
         setError(startError instanceof Error ? startError.message : 'device_link_failed');
-      }
-    })();
-
+      });
     return () => {
       active = false;
-      if (pollTimer) clearInterval(pollTimer);
     };
   }, [generation]);
+
+  const pollToken = link?.token ?? null;
+  usePolling(
+    () => {
+      if (!pollToken) return Promise.reject(new Error('device_link_unknown'));
+      return pollDeviceLink(pollToken);
+    },
+    {
+      delayMs: phase === 'waiting' && pollToken ? 2000 : null,
+      stopOn: (result) => result.status === 'approved',
+      onResult: (result) => {
+        if (result.status !== 'approved') return;
+        setPhase('approved');
+        signInRef.current(result.session);
+      },
+      stopOnError: (pollError) => {
+        const code = pollError instanceof Error ? pollError.message : '';
+        if (code === 'device_link_expired' || code === 'device_link_consumed' || code === 'device_link_revoked' || code === 'device_link_unknown') {
+          setPhase('expired');
+          setError(code);
+          return true;
+        }
+        return false;
+      },
+    },
+  );
 
   return (
     <View style={styles.screen}>

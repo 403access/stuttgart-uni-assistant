@@ -4,6 +4,7 @@ import { Platform, Text, View } from 'react-native';
 
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import {
   ONBOARDING_STORAGE_KEY,
@@ -37,8 +38,6 @@ export default function DevOnboardingScreen() {
   } = useOnboarding();
   const [stored, setStored] = useState<OnboardingPreferences | null>(null);
   const [notice, setNotice] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
 
   const reload = useCallback(async () => {
     setStored(await readStoredOnboardingPreferences());
@@ -49,20 +48,21 @@ export default function DevOnboardingScreen() {
     void reload();
   });
 
-  async function schedule(clearBiometrics: boolean) {
-    if (busy) return;
-    setBusy(true);
-    setError('');
-    setNotice('');
-    const next = await scheduleOnboardingForNextLaunch(clearBiometrics);
-    setBusy(false);
-    if (!next) {
-      setError(tx(locale, 'dev.onboarding.error'));
-      return;
-    }
-    setStored(next);
-    setNotice(tx(locale, 'dev.onboarding.scheduled'));
-  }
+  const scheduleAction = useAsyncAction(
+    async (clearBiometrics: boolean) => {
+      setNotice('');
+      const next = await scheduleOnboardingForNextLaunch(clearBiometrics);
+      if (!next) throw new Error('schedule_failed');
+      return next;
+    },
+    {
+      errorMessage: () => tx(locale, 'dev.onboarding.error'),
+      onSuccess: (next) => {
+        setStored(next);
+        setNotice(tx(locale, 'dev.onboarding.scheduled'));
+      },
+    },
+  );
 
   const storedCompletedAt = stored?.completedAt ?? null;
   const storedBiometrics = stored?.biometricsEnabled ?? false;
@@ -101,12 +101,12 @@ export default function DevOnboardingScreen() {
       <View style={styles.actions}>
         <Button
           label={tx(locale, 'dev.onboarding.force')}
-          onPress={() => void schedule(false)}
+          onPress={() => void scheduleAction.run(false)}
         />
         <Button
           secondary
           label={tx(locale, 'dev.onboarding.force_clear')}
-          onPress={() => void schedule(true)}
+          onPress={() => void scheduleAction.run(true)}
         />
         <Button
           secondary
@@ -118,7 +118,7 @@ export default function DevOnboardingScreen() {
         />
       </View>
       {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {scheduleAction.error ? <Text style={styles.error}>{scheduleAction.error}</Text> : null}
 
       <Section title={tx(locale, 'dev.onboarding.raw')} />
       <Card>

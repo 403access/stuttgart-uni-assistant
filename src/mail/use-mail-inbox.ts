@@ -15,9 +15,10 @@ import {
 } from '@/src/auth/mail';
 import { showToast } from '@/src/components/toast';
 import { useInterval } from '@/src/hooks/use-interval';
+import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { useApp } from '@/src/state/AppState';
 import { tx } from '@/src/text';
-import type { MailFolder, MailMessage, MailStatus } from '@/src/types';
+import type { MailMessage } from '@/src/types';
 
 import { sameMessageOrder, sameMessageRows } from './format';
 
@@ -31,7 +32,10 @@ const REFRESH_INTERVAL_MS = 60_000;
  */
 export function useMailInbox() {
   const { locale, sessionAccount, mailAccount, setMailAccount, authToken, refreshUser } = useApp();
-  const [status, setStatus] = useState<MailStatus | null>(() => getMailSnapshot().status);
+  // Status and folder list are published by the mail module; the rows keep a
+  // local copy so `LayoutAnimation` can compare the previous order.
+  const { status, folders: liveFolders } = useMailSnapshot();
+  const folders = liveFolders ?? [];
   const [messages, setMessages] = useState<MailMessage[]>(() => getMailSnapshot().messages ?? []);
   const [account, setAccount] = useState(mailAccount ?? sessionAccount ?? '');
   const [password, setPassword] = useState('');
@@ -54,7 +58,6 @@ export function useMailInbox() {
 
   /** The mailbox shown: IMAP folder name, default INBOX; the list comes from the server. */
   const [folder, setFolder] = useState(() => getMailSnapshot().folder ?? 'INBOX');
-  const [folders, setFolders] = useState<MailFolder[]>(() => getMailSnapshot().folders ?? []);
   /** Mirror for the refresh callbacks so a folder switch does not re-create them (and rerun the load effects). */
   const folderRef = useRef(folder);
 
@@ -140,17 +143,14 @@ export function useMailInbox() {
     () =>
       subscribeMailSnapshot(() => {
         const snap = getMailSnapshot();
-        setStatus(snap.status);
         if (snap.messages) applyMessages(snap.messages);
         else {
           messagesRef.current = [];
           setMessages([]);
         }
-        setFolders(snap.folders ?? []);
         if (snap.status && !snap.status.configured) {
           messagesRef.current = [];
           setMessages([]);
-          setFolders([]);
           folderRef.current = 'INBOX';
           setFolder('INBOX');
           setNote('');

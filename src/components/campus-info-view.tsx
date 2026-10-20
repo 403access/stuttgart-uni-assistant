@@ -3,10 +3,11 @@ import { router } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { cacheCampusCourses, campusDetail, loadCampusCourses, loadCampusCurriculum } from '@/src/auth/campus';
-import { appendElementCourses, clearCachedStudy, loadCachedCoursesByElement } from '@/src/campus/db';
+import { campusDetail, loadCampusCurriculum } from '@/src/auth/campus';
+import { clearCachedStudy } from '@/src/campus/db';
 import { useActiveStudy } from '@/src/campus/use-active-study';
 import { useCampusSync } from '@/src/campus/use-campus-sync';
+import { useNodeCourses } from '@/src/campus/use-node-courses';
 import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { CurriculumTree } from '@/src/components/curriculum-tree';
@@ -16,7 +17,7 @@ import { deviceNodesQuery, syncInfoQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
-import type { CampusCourse, CampusStudy } from '@/src/types';
+import type { CampusStudy } from '@/src/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export function CampusInfoView() {
@@ -265,23 +266,9 @@ function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: num
   const [open, setOpen] = useState(false);
   // Cache first: instant and offline. Otherwise network with write-through.
   // The question runs when the node opens; a tap retries after a failure.
-  const coursesQ = useQuery({
-    queryKey: keys.deviceCoursesByElement(studyId, elementId),
-    queryFn: async (): Promise<CampusCourse[]> => {
-      const cached = await loadCachedCoursesByElement(studyId, elementId).catch(() => []);
-      if (cached.length > 0) {
-        cacheCampusCourses(cached);
-        return cached;
-      }
-      const loaded = await loadCampusCourses(elementId, studyId);
-      await appendElementCourses(studyId, elementId, elementName, loaded.courses).catch(() => undefined);
-      return loaded.courses;
-    },
-    staleTime: Infinity,
-    enabled: open,
-  });
-  const courses = coursesQ.data ?? null;
-  const coursesError = coursesQ.error;
+  const node = useNodeCourses({ studyId, elementId, elementName, enabled: open, fetchOnMiss: true });
+  const courses = node.courses;
+  const coursesError = node.error;
 
   function toggle(): void {
     if (open) {
@@ -289,7 +276,7 @@ function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: num
       return;
     }
     setOpen(true);
-    if (coursesQ.isError) coursesQ.refetch();
+    if (coursesError) void node.refetch();
   }
 
   const errorText =
@@ -305,7 +292,7 @@ function NodeCourses({ studyId, elementId, elementName, locale }: { studyId: num
     <View style={{ marginLeft: 8, marginBottom: 4 }}>
       <Pressable onPress={toggle} hitSlop={8}>
         <Text style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>
-          {coursesQ.isPending && open && !courses
+          {node.busy && open && !courses
             ? '…'
             : courses
               ? `${courses.length} ${courses.length === 1 ? tx(locale, 'campusInfoView.kurs') : tx(locale, 'kurse.kurse')}`

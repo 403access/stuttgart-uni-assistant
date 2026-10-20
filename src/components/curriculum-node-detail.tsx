@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { cacheCampusCourses, loadCampusCourses } from '@/src/auth/campus';
-import { appendElementCourses, getCoursesSyncInfo, loadCachedCoursesByElement, type CoursesSyncInfo } from '@/src/campus/db';
+import { getCoursesSyncInfo, type CoursesSyncInfo } from '@/src/campus/db';
+import { useNodeCourses } from '@/src/campus/use-node-courses';
 import { Button, Card, InfoRow, Muted, Section } from '@/src/components/ui';
+import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
-import type { CampusCourse, CampusStudy, CurriculumNode, Locale } from '@/src/types';
+import type { CampusStudy, CurriculumNode, Locale } from '@/src/types';
 
 export interface CurriculumNodeDetailProps {
   node: CurriculumNode;
@@ -25,24 +26,29 @@ export interface CurriculumNodeDetailProps {
  * load button fetches them once for this element.
  */
 export function CurriculumNodeDetail({ node, study, nodes, locale, onSelect, onClose }: CurriculumNodeDetailProps) {
-  const [courses, setCourses] = useState<CampusCourse[] | null>(null);
-  const [coursesBusy, setCoursesBusy] = useState(false);
-  const [coursesError, setCoursesError] = useState('');
   const [coursesSync, setCoursesSync] = useState<CoursesSyncInfo | null>(null);
   const parent = node.parentId !== null ? nodes.find((item) => item.id === node.parentId) ?? null : null;
   const kids = nodes.filter((item) => item.parentId === node.id);
 
   // Cache first: courses loaded via /kurse show up instantly, no refetch.
+  const nodeCourses = useNodeCourses({
+    studyId: study.studyId,
+    elementId: node.id,
+    elementName: node.name,
+  });
+
+  const load = useAsyncAction(nodeCourses.fetchRemote, {
+    errorMessage: (caught) => {
+      const code = caught instanceof Error ? caught.message : 'campus_failed';
+      return tx(locale, 'curriculumNodeDetail.kurse_geladen', [code]);
+    },
+    onSuccess: async () => {
+      setCoursesSync(await getCoursesSyncInfo(study.studyId).catch(() => null));
+    },
+  });
+
   useEffect(() => {
     let active = true;
-    loadCachedCoursesByElement(study.studyId, node.id)
-      .then((cached) => {
-        if (active && cached.length > 0) {
-          cacheCampusCourses(cached);
-          setCourses(cached);
-        }
-      })
-      .catch(() => undefined);
     getCoursesSyncInfo(study.studyId)
       .then((info) => {
         if (active) setCoursesSync(info);
@@ -51,24 +57,7 @@ export function CurriculumNodeDetail({ node, study, nodes, locale, onSelect, onC
     return () => {
       active = false;
     };
-  }, [study.studyId, node.id]);
-
-  async function loadNodeCourses(): Promise<void> {
-    if (coursesBusy) return;
-    setCoursesError('');
-    setCoursesBusy(true);
-    try {
-      const loaded = await loadCampusCourses(node.id, study.studyId);
-      setCourses(loaded.courses);
-      await appendElementCourses(study.studyId, node.id, node.name, loaded.courses).catch(() => undefined);
-      setCoursesSync(await getCoursesSyncInfo(study.studyId).catch(() => null));
-    } catch (caught) {
-      const code = caught instanceof Error ? caught.message : 'campus_failed';
-      setCoursesError(tx(locale, 'curriculumNodeDetail.kurse_geladen', [code]));
-    } finally {
-      setCoursesBusy(false);
-    }
-  }
+  }, [study.studyId]);
 
   const rows: [string, string][] = [
     [tx(locale, 'common.kennung'), node.designation || '–'],
@@ -106,19 +95,19 @@ export function CurriculumNodeDetail({ node, study, nodes, locale, onSelect, onC
         </>
       ) : null}
       <Section title={tx(locale, 'common.kurse')} />
-      {courses === null && !coursesError ? (
+      {nodeCourses.courses === null && !load.error ? (
         <>
           {coursesSync ? (
             <Text style={{ color: colors.inkSoft, fontSize: 13 }}>
               {tx(locale, 'curriculumNodeDetail.kurs', [coursesSync.courseCount, coursesSync.elementsFetched])}
             </Text>
           ) : null}
-          <Button secondary label={coursesBusy ? '…' : tx(locale, 'curriculumNodeDetail.kurse')} onPress={loadNodeCourses} />
+          <Button secondary label={load.busy ? '…' : tx(locale, 'curriculumNodeDetail.kurse')} onPress={() => void load.run()} />
         </>
       ) : null}
-      {coursesError ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{coursesError}</Text> : null}
-      {courses && courses.length === 0 ? <Muted>{tx(locale, 'common.lehrveranstaltungen')}</Muted> : null}
-      {courses?.map((course) => (
+      {load.error ? <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }}>{load.error}</Text> : null}
+      {nodeCourses.courses && nodeCourses.courses.length === 0 ? <Muted>{tx(locale, 'common.lehrveranstaltungen')}</Muted> : null}
+      {nodeCourses.courses?.map((course) => (
         <InfoRow
           key={course.id}
           title={course.title}

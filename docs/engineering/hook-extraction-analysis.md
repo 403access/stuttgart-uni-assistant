@@ -239,6 +239,11 @@ simple `busy/error/try/finally` shapes first (7 of the 10).
 
 **Impact.** ~70 lines removed and consistent error clearing. Low-medium risk.
 
+**Status (implemented).** `src/hooks/use-async-action.ts`; migrated `dev/nfc`,
+`dev/onboarding`, `vpn` (probe + profile import) and the node-detail load.
+`mail-verbindung` keeps two explicit flags because refresh and disconnect guard
+each other.
+
 ---
 
 ### 5.5 `useInterval` / `usePolling`
@@ -266,6 +271,10 @@ poll can adopt `usePolling` but keep its own timeout/phase machine.
 
 **Impact.** Low risk, removes three subtle "duplicate interval after re-render"
 bugs.
+
+**Status (implemented).** `use-interval`, `use-countdown` and `use-polling`
+exist. Migrated mail polling, the device-link clock, and the device-link poll
+(the headless WebView loop keeps its own timeout/phase machine).
 
 ---
 
@@ -546,6 +555,10 @@ Preserve that ordering and the test surface in `scripts/`.
 | `useBiometricPrompt()` | `onboarding.tsx:55-80`, `sicherheit.tsx:43-59`, `app-lock.tsx:25-42` | Wraps `authenticateWithBiometrics` + `isBiometricCancel` + `biometricMessage`, owns `busy`/`error`. |
 | `useLoginMutations()` | `login-legacy.tsx:52-127` | **Do not do this.** The file is explicitly frozen; the duplication is documented and intentional (§9). |
 
+**Status.** `useLeaveSession` and `useBiometricPrompt` are implemented and
+migrated (`konto`, `mehr`, `onboarding`, `sicherheit`, `app-lock`).
+`useServerStatus` remains.
+
 `useLoginFlow.ts` note: `browserHarvest` (`:61-84`) references `browser`
 declared at `:86`. It works because the callbacks run later, but it is fragile
 under `no-use-before-define` and easy to break when reordering. If touched,
@@ -565,6 +578,10 @@ This is the highest-value domain. See §7 for the deep dives.
 | `useCurriculumBrowser()` | `strukturen.tsx:55-240` | ~80 lines |
 | `useCurriculumExpansion()` | `strukturen.tsx:60,163-186,322-323`, `campus-info-view` tree props | ~30 lines |
 
+**Status.** `useActiveStudy`, `useCampusSync` + `hydrateStudySnapshot`,
+`useCoursesForStudy/Studies` and `useNodeCourses` are implemented and migrated.
+`useCurriculumBrowser`/`useCurriculumExpansion` remain.
+
 ### 6.3 Mail
 
 | Proposal | Replaces | Notes |
@@ -576,6 +593,11 @@ This is the highest-value domain. See §7 for the deep dives.
 `useMailInbox` itself is close to a good shape. It has 11 `useState` + 4 refs;
 if it grows, split into `useMailConnectionState()` and `useMailRows()`, but do
 not split now — the cohesion is real.
+
+**Status.** `useMailSnapshot` is implemented. `mail-verbindung` uses it fully;
+`use-mail-inbox` derives `status` and `folders` from it and keeps `messages` /
+`folder` local for `LayoutAnimation` and the optimistic folder switch.
+`useMailConnection` and `useMailMessage` remain.
 
 ### 6.4 Calendar
 
@@ -877,8 +899,8 @@ that is a separate migration.
 1. ✅ `src/hooks/use-latest-ref.ts`
 2. `src/hooks/use-async-effect.ts` + `use-mounted-ref.ts`
 3. `src/hooks/use-once.ts`
-4. `src/hooks/use-async-action.ts`
-5. ✅ `src/hooks/use-interval.ts` + `use-countdown.ts`; `use-polling.ts` still open
+4. ✅ `src/hooks/use-async-action.ts`
+5. ✅ `src/hooks/use-interval.ts`, `use-countdown.ts`, `use-polling.ts`
 6. ✅ `src/hooks/use-refresh-on-focus.ts` + `use-app-state-change.ts`
 7. `src/hooks/use-disclosure.ts`
 8. ✅ Date/param helpers: `firstParam`, `localDay`, `monthShort`,
@@ -895,14 +917,14 @@ Migrate the smallest sites first: `use-reduced-motion`, `use-vpn-profile`,
 3. ✅ `src/campus/use-active-study.ts`; migrated `kurse`, `calendar-hero`,
    `mehr`, `campus-info-view`.
 4. ✅ `src/campus/use-courses.ts`; migrated `calendar-hero` and `kalender`.
-5. `src/campus/use-node-courses.ts`
+5. ✅ `src/campus/use-node-courses.ts`; migrated the tree rows and the node
+   detail panel.
 6. `onboarding` course merge (needs the completion-semantics decision from
    §7.1) and the pre-walk snapshot catch-up.
-7. ◐ `src/mail/use-mail-snapshot.ts`; migrated `mail-verbindung`. `use-mail-inbox`
-   still keeps its local rows for `LayoutAnimation`, so the status/folder half
-   is the remaining work.
-8. ✅ `src/auth/use-leave-session.ts`; `use-server-status.ts` and
-   `use-biometric-prompt.ts` still open.
+7. ✅ `src/mail/use-mail-snapshot.ts`; both `mail-verbindung` and `use-mail-inbox`
+   consume it (the inbox keeps its local rows for `LayoutAnimation`).
+8. ✅ `src/auth/use-leave-session.ts` + `src/auth/use-biometric-prompt.ts`;
+   `use-server-status.ts` still open.
 
 ### Wave 3 — screens become renderers (2–3 days, medium risk)
 

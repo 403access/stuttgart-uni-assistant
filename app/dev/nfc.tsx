@@ -4,6 +4,7 @@ import { Platform, Text, View } from 'react-native';
 
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { cancelCardScan, isNfcSupported, readStudentCard } from '@/src/nfc/card';
 import type { CardReading } from '@/src/nfc/types';
 import { useApp } from '@/src/state/AppState';
@@ -18,9 +19,7 @@ import { tx } from '@/src/text';
 export default function DevNfcScreen() {
   const { locale } = useApp();
   const [supported, setSupported] = useState<boolean | null>(null);
-  const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState<CardReading | null>(null);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     let alive = true;
@@ -33,24 +32,22 @@ export default function DevNfcScreen() {
     };
   }, []);
 
-  async function scan() {
-    if (busy) return;
-    setBusy(true);
-    setError('');
-    setReading(null);
-    try {
-      setReading(await readStudentCard(tx(locale, 'dev.nfc.scannen')));
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
-      if (/entitlement|NFC Tag Reading|Personal Team|provisioning/i.test(message)) {
-        setError(tx(locale, 'dev.nfc.ios_entitlement'));
-      } else {
-        setError(message === 'no-tag' ? tx(locale, 'dev.nfc.no_tag') : tx(locale, 'dev.nfc.error', [message]));
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
+  const scan = useAsyncAction(
+    async () => {
+      setReading(null);
+      return readStudentCard(tx(locale, 'dev.nfc.scannen'));
+    },
+    {
+      errorMessage: (caught) => {
+        const message = caught instanceof Error ? caught.message : String(caught);
+        if (/entitlement|NFC Tag Reading|Personal Team|provisioning/i.test(message)) {
+          return tx(locale, 'dev.nfc.ios_entitlement');
+        }
+        return message === 'no-tag' ? tx(locale, 'dev.nfc.no_tag') : tx(locale, 'dev.nfc.error', [message]);
+      },
+      onSuccess: (next) => setReading(next),
+    },
+  );
 
   async function cancel() {
     await cancelCardScan();
@@ -67,10 +64,10 @@ export default function DevNfcScreen() {
         {supported === false ? (
           <Text style={styles.error}>{tx(locale, 'dev.nfc.unsupported')}</Text>
         ) : (
-          <Button label={busy ? tx(locale, 'dev.nfc.scanning') : tx(locale, 'dev.nfc.scan')} onPress={() => void scan()} />
+          <Button label={scan.busy ? tx(locale, 'dev.nfc.scanning') : tx(locale, 'dev.nfc.scan')} onPress={() => void scan.run()} />
         )}
-        {busy ? <Button secondary label={tx(locale, 'common.abbrechen')} onPress={() => void cancel()} /> : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {scan.busy ? <Button secondary label={tx(locale, 'common.abbrechen')} onPress={() => void cancel()} /> : null}
+        {scan.error ? <Text style={styles.error}>{scan.error}</Text> : null}
       </Card>
 
       {reading ? (

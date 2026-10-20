@@ -4,7 +4,8 @@ import { useCallback, useMemo, useRef, useState, type ComponentProps } from 'rea
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
+import { isBiometricCancel } from '@/src/auth/biometric-messages';
+import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { ChoiceCard } from '@/src/components/choice-card';
 import { Button, Mark } from '@/src/components/ui';
@@ -35,14 +36,13 @@ const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable']
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { locale, theme, setTheme, design, setDesign } = useApp();
-  const { enableBiometrics, completeOnboarding, biometricsAvailable } = useOnboarding();
+  const { completeOnboarding, biometricsAvailable } = useOnboarding();
+  const biometrics = useBiometricPrompt();
   const imports = useOnboardingImport();
   const [step, setStep] = useState<Step>(() => (biometricsAvailable ? 'biometrics' : 'appearance'));
   const flowSteps: readonly Step[] = biometricsAvailable
     ? STEP_ORDER
     : STEP_ORDER.filter((entry) => entry !== 'biometrics');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
   const finishing = useRef(false);
 
   const finish = useCallback(async () => {
@@ -53,14 +53,8 @@ export default function OnboardingScreen() {
   }, [completeOnboarding]);
 
   async function enable() {
-    if (busy) return;
-    setBusy(true);
-    setError('');
-    const result = await enableBiometrics(
-      tx(locale, 'onboarding.systemgrund'),
-      tx(locale, 'common.abbrechen'),
-    );
-    setBusy(false);
+    const result = await biometrics.prompt('onboarding.systemgrund');
+    if (!result) return;
     if (result.success) {
       setStep('appearance');
       return;
@@ -74,9 +68,7 @@ export default function OnboardingScreen() {
         message: tx(locale, 'onboarding.hinweis'),
       });
       setStep('appearance');
-      return;
     }
-    setError(biometricMessage(locale, result.error));
   }
 
   return (
@@ -90,8 +82,8 @@ export default function OnboardingScreen() {
           {step === 'biometrics' ? (
             <BiometricsPage
               locale={locale}
-              busy={busy}
-              error={error}
+              busy={biometrics.busy}
+              error={biometrics.error}
               onEnable={() => void enable()}
               onSkip={() => setStep('appearance')}
             />

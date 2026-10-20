@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button, Card, Pill, Screen, SearchField, Section } from '@/src/components/ui';
+import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx, type TranslationKey } from '@/src/text';
@@ -40,7 +41,8 @@ export default function VpnScreen() {
   const [openVpnUser, setOpenVpnUser] = useState('');
   const [openVpnPassword, setOpenVpnPassword] = useState('');
   const [importResult, setImportResult] = useState<ProfileImportResult | null>(null);
-  const [probing, setProbing] = useState(false);
+  const probe = useAsyncAction(probePrinter);
+  const importProfile = useAsyncAction(importFromPicker, { onSuccess: setImportResult });
 
   const provider = vpnProviderById(providerId);
   // A provider is only connectable when the engine that speaks its protocol is in this build.
@@ -52,16 +54,6 @@ export default function VpnScreen() {
   const sinceText = since ? new Date(since).toLocaleString(locale === 'de' ? 'de-DE' : 'en-GB') : null;
   const reachableKey =
     printerReachable === true ? 'vpn.netz.ja' : printerReachable === false ? 'vpn.netz.nein' : 'vpn.netz.unbekannt';
-
-  async function runProbe() {
-    setProbing(true);
-    await probePrinter();
-    setProbing(false);
-  }
-
-  async function runImport() {
-    setImportResult(await importFromPicker());
-  }
 
   return (
     <Screen kicker="Netz" title={tx(locale, 'vpn.title')} subtitle={tx(locale, 'vpn.subtitle')}>
@@ -150,7 +142,7 @@ export default function VpnScreen() {
             ) : (
               <Text style={{ color: colors.inkSoft }}>{tx(locale, 'vpn.openvpn.kein')}</Text>
             )}
-            <Button label={tx(locale, 'vpn.openvpn.import')} onPress={runImport} secondary />
+            <Button label={tx(locale, 'vpn.openvpn.import')} onPress={() => void importProfile.run()} secondary />
             {importResult && importResult !== 'cancelled' ? (
               <Text style={{ color: importResult === 'imported' ? colors.success : colors.danger }}>
                 {tx(locale, importMessages[importResult])}
@@ -278,8 +270,8 @@ export default function VpnScreen() {
           <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{tx(locale, reachableKey)}</Text>
         </View>
         <Text style={{ color: colors.mute, lineHeight: 20 }}>{tx(locale, 'vpn.netz.hinweis')}</Text>
-        <Button label={tx(locale, 'vpn.netz.pruefen')} onPress={runProbe} secondary />
-        {probing ? <Text style={{ color: colors.mute }}>…</Text> : null}
+        <Button label={tx(locale, 'vpn.netz.pruefen')} onPress={() => void probe.run()} secondary />
+        {probe.busy ? <Text style={{ color: colors.mute }}>…</Text> : null}
       </Card>
 
       <Section title={tx(locale, 'vpn.zweck')} />
