@@ -29,7 +29,12 @@
     navGallery: 'Screens',
     navStatus: 'Status',
     navFaq: 'FAQ',
-    navDocs: 'Docs',
+
+    docsKicker: 'For the curious',
+    docsTitle: 'Documentation',
+    docsLead:
+      'Setup, architecture and operations: the technical documentation explains how the app is built and how to run it yourself.',
+    docsCta: 'Open the documentation',
 
     heroKicker: 'A student project',
     heroTitle: 'Your studies, in one place.',

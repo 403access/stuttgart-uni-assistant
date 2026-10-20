@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.png" sizes="64x64" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <link rel="stylesheet" href="styles.css?v=3" />
     <link rel="preload" as="image" href="assets/shots/dashboard.jpg" fetchpriority="high" />
     <noscript>
       <style>
@@ -103,7 +103,6 @@
           <a href="#assistent" data-i18n="navAssistant">Assistent</a>
           <a href="#einblicke" data-i18n="navGallery">Einblicke</a>
           <a href="#faq" data-i18n="navFaq">FAQ</a>
-          <a href="docs/" data-i18n="navDocs">Dokumentation</a>
         </nav>
         <div class="lang" role="group" aria-label="Sprache / Language" data-i18n-aria="ariaLang">
           <button type="button" data-lang="de" lang="de" aria-pressed="true">Deutsch</button>
@@ -736,6 +735,29 @@
           </div>
         </div>
       </section>
+
+      <section class="section tight" id="dokumentation">
+        <div class="container">
+          <div class="docs-panel reveal">
+            <div>
+              <p class="eyebrow" data-i18n="docsKicker">Für Interessierte</p>
+              <h2 data-i18n="docsTitle">Dokumentation</h2>
+              <p class="lead" data-i18n="docsLead">
+                Einrichtung, Architektur und Betrieb: Die technische Dokumentation beschreibt, wie die App aufgebaut
+                ist und wie du sie selbst startest.
+              </p>
+            </div>
+            <a
+              class="btn btn-solid"
+              href="docs/"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-i18n="docsCta"
+              >Dokumentation öffnen</a
+            >
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
@@ -795,7 +817,7 @@
 
     <p class="sr-only" id="lang-status" aria-live="polite"></p>
 
-    <script src="main.js?v=2"></script>
-    <script src="theme.js?v=2"></script>
+    <script src="main.js?v=3"></script>
+    <script src="theme.js?v=3"></script>
   </body>
 </html>

@@ -577,6 +577,25 @@ p { margin: 0; }
 .cta h2 { max-width: 30rem; }
 .cta p { color: rgba(255, 255, 255, 0.8); margin-top: 10px; max-width: 34rem; }
 
+/* ---------- documentation ---------- */
+
+.docs-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px 40px;
+  background: var(--mist);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(24px, 4vw, 36px);
+}
+.docs-panel > div { max-width: 46rem; }
+.docs-panel h2 { margin: 8px 0; font-size: clamp(1.45rem, 2.6vw, 1.9rem); }
+.docs-panel .lead { font-size: 0.98rem; }
+.btn-solid { background: var(--brand); color: #fff; }
+.btn-solid:hover { background: var(--blue-deep); }
+
 .site-footer {
   background: var(--footer);
   color: rgba(255, 255, 255, 0.72);
