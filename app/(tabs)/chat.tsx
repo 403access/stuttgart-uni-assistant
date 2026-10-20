@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { buildLocalAnswer, renderFacts } from '@/src/assistant/answer';
 import { buildAnswerInput, bundledDocument } from '@/src/assistant/context';
 import { askGrok } from '@/src/assistant/remote';
+import { AmbientBackground } from '@/src/components/ambient-background';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { tx, uid } from '@/src/text';
@@ -82,6 +83,7 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.mist, paddingTop: insets.top }}>
+      <AmbientBackground />
       <View style={{ paddingHorizontal: 20, paddingTop: 12, gap: 6 }}>
         <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1 }}>CHAT</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

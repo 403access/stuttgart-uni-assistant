@@ -1,13 +1,14 @@
 import { Stack } from 'expo-router';
+import { View } from 'react-native';
 
 import { ChoiceCard } from '@/src/components/choice-card';
-import { Screen } from '@/src/components/ui';
+import { Muted, Screen, Section } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 
 /** Dedicated appearance screen reached from the App group on the Campus tab. */
 export default function AppearanceScreen() {
-  const { locale, theme, setTheme } = useApp();
+  const { locale, theme, setTheme, design, setDesign } = useApp();
   return (
     <Screen
       kicker={tx(locale, 'common.app')}
@@ -25,6 +26,23 @@ export default function AppearanceScreen() {
         label={tx(locale, 'einstellungen.dunkel')}
         active={theme === 'dark'}
         onPress={() => setTheme('dark')}
+      />
+
+      <View style={{ gap: 4 }}>
+        <Section title={tx(locale, 'einstellungen.stil')} />
+        <Muted>{tx(locale, 'einstellungen.stil_hinweis')}</Muted>
+      </View>
+      <ChoiceCard
+        icon="grid-view"
+        label={tx(locale, 'einstellungen.clean')}
+        active={design === 'clean'}
+        onPress={() => setDesign('clean')}
+      />
+      <ChoiceCard
+        icon="auto-awesome"
+        label={tx(locale, 'einstellungen.playful')}
+        active={design === 'playful'}
+        onPress={() => setDesign('playful')}
       />
     </Screen>
   );

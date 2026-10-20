@@ -1,6 +1,7 @@
 import { Link, Stack } from 'expo-router';
 import { Text, View } from 'react-native';
 
+import { AmbientBackground } from '@/src/components/ambient-background';
 import { themedStyles } from '@/src/theme';
 
 export default function NotFoundScreen() {
@@ -8,6 +9,7 @@ export default function NotFoundScreen() {
     <>
       <Stack.Screen options={{ title: 'University Assistant', headerShown: false }} />
       <View style={styles.container}>
+        <AmbientBackground />
         <Text style={styles.title}>Diese Seite gibt es nicht.</Text>
         <Link href="/" style={styles.link}>
           <Text style={styles.linkText}>Zur Startseite</Text>

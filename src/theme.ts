@@ -32,6 +32,10 @@ export type ThemeColors = {
   toastError: string;
   /** Surface that stays dark in both themes (calendar hero). */
   inverse: string;
+  /** Decorative screen backdrop: cyan glows and the faint dot grid. */
+  ambientGlow: string;
+  ambientGlowSoft: string;
+  ambientDot: string;
 };
 
 const lightColors: ThemeColors = {
@@ -56,6 +60,9 @@ const lightColors: ThemeColors = {
   toastSuccess: '#1C6B45',
   toastError: '#8E2F2F',
   inverse: '#323232',
+  ambientGlow: 'rgba(0, 190, 255, 0.22)',
+  ambientGlowSoft: 'rgba(0, 65, 145, 0.08)',
+  ambientDot: 'rgba(0, 65, 145, 0.09)',
 };
 
 const darkColors: ThemeColors = {
@@ -80,6 +87,9 @@ const darkColors: ThemeColors = {
   toastSuccess: '#246B4C',
   toastError: '#7A2F35',
   inverse: '#232A33',
+  ambientGlow: 'rgba(56, 198, 255, 0.16)',
+  ambientGlowSoft: 'rgba(30, 95, 168, 0.2)',
+  ambientDot: 'rgba(108, 180, 255, 0.14)',
 };
 
 export const themes: Record<ThemeMode, ThemeColors> = {

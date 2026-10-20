@@ -2,6 +2,9 @@ export type Locale = 'de' | 'en';
 
 export type ThemeMode = 'light' | 'dark';
 
+/** Background treatment: `clean` (default) keeps the mist ground flat; `playful` adds the marketing site's ambient backdrop. */
+export type DesignMode = 'clean' | 'playful';
+
 export type Localized = { de: string; en: string };
 
 export type Campus = 'vaihingen' | 'stadtmitte';
@@ -344,6 +347,7 @@ export interface BulkCourse extends CampusCourse {
 export interface PersistedState {
   locale: Locale;
   theme: ThemeMode;
+  design: DesignMode;
   user: UserAccount | null;
   sessionAccount: string | null;
   sessionMode: SessionMode | null;

@@ -23,6 +23,7 @@ import type {
   CampusStudy,
   ChatMessage,
   CurriculumNode,
+  DesignMode,
   ImportedDocument,
   Locale,
   PersistedState,
@@ -40,6 +41,7 @@ export const APP_STATE_STORAGE_KEY = 'university-assistant/v1';
 const empty: PersistedState = {
   locale: 'de',
   theme: 'light',
+  design: 'clean',
   user: null,
   sessionAccount: null,
   sessionMode: null,
@@ -100,6 +102,7 @@ type AppContextValue = PersistedState & {
   signOut: () => void;
   setLocale: (locale: Locale) => void;
   setTheme: (theme: ThemeMode) => void;
+  setDesign: (design: DesignMode) => void;
   syncPlatform: (platform: PlatformId) => void;
   toggleDownload: (id: string) => void;
   addImport: (document: ImportedDocument) => void;
@@ -179,6 +182,7 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
   return {
     locale: value.locale === 'en' ? 'en' : 'de',
     theme: value.theme === 'dark' ? 'dark' : 'light',
+    design: value.design === 'playful' ? 'playful' : 'clean',
     user,
     // The flat session fields predate the account record. A stored user fills them in
     // when an older payload did not carry them yet.
@@ -459,6 +463,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         applyTheme(theme);
         setState((current) => ({ ...current, theme }));
       },
+      setDesign: (design) => setState((current) => (current.design === design ? current : { ...current, design })),
       syncPlatform: (platform) =>
         setState((current) => ({
           ...current,
@@ -501,6 +506,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           ...empty,
           locale: current.locale,
           theme: current.theme,
+          design: current.design,
           user: current.user,
           sessionAccount: current.sessionAccount,
           sessionMode: current.sessionMode,

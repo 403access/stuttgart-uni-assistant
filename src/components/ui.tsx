@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 import type { RefreshControlProps, StyleProp, TextInputProps, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AmbientBackground } from '@/src/components/ambient-background';
 import { colors, themedStyles } from '@/src/theme';
 
 export function Mark({ size = 36 }: { size?: number }) {
@@ -91,6 +92,7 @@ export function Screen({
   );
   return (
     <View style={[styles.screen, topInset && { paddingTop: insets.top }]}>
+      <AmbientBackground />
       {stickyHeader ? <View style={styles.stickyHeader}>{stickyHeader}</View> : null}
       {scroll ? (
         <ScrollView
