@@ -6,7 +6,7 @@
  * tokens. Only the SHA-256 hash of a token is written to SQLite, so a copy of
  * the database cannot be replayed as a login.
  *
- * This module has no HTTP dependency: `server/index.mjs` does the routing and
+ * This module has no HTTP dependency: `server/routes/*.mjs` do the routing and
  * `server/auth.test.mjs` exercises the store directly.
  */
 

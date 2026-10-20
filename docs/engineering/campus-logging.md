@@ -36,7 +36,7 @@ The study switcher (`src/components/study-selector.tsx`) shows the newest entrie
 - The portal message is read by `portalMessage`, which checks the observed `resource[0].content.coErrorDto.message` shape first and falls back to `error.message`, `message`, `error_description`, and `error`. Anything else is an empty message, never an exception.
 - Every failure carries `detail`: `upstream <status>[: <portal message>]`, or `request failed: <reason>` when the portal was unreachable. The request logs the upstream status, the portal message, the user id, and the elapsed milliseconds. The token and cookie are never logged.
 - Portal hops land in `user_portal_calls` with the calling `user_id`; `GET /v1/campus/calls` reads only that user's rows. The cap is the newest 2000 hops per user.
-- `server/index.mjs` forwards `{ error, detail, status }` for the campus routes, and logs each campus request with an id, timestamp, and request body: `[campus #7 …] POST /v1/campus/structure body={"elementId":…,"studyId":…}` followed by the `ok` or `failed … detail=…` line.
+- `server/routes/campus.mjs` forwards `{ error, detail, status }` for the campus routes, and logs each campus request with an id, timestamp, and request body: `[campus #7 …] POST /v1/campus/structure body={"elementId":…,"studyId":…}` followed by the `ok` or `failed … detail=…` line.
 
 ## Stale server detection
 

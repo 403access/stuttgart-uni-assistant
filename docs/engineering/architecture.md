@@ -14,7 +14,9 @@ src/state/AppState.tsx       Async Storage
 src/documents/io.ts          picker and export
 src/components/ui.tsx        shared visual pieces
 src/i18n/                    German/English catalogs and the `tx` lookup
-server/index.mjs             POST /v1/assist → api.x.ai
+server/index.mjs             HTTP listener; dispatches to server/routes/
+server/http.mjs              Body parsing, JSON and HTML responses, CORS
+server/routes/               One module per group of paths
 ```
 
 `src/data/` and `src/domain/plan.ts` do not import React, so `scripts/check-assistant.ts` can assert the catalog without starting Metro.
@@ -70,7 +72,7 @@ The curriculum, course, and API-call caches live outside that key in `campus-cac
 
 ## Assistant server
 
-`server/index.mjs` has no npm dependencies. It reads `../.env` if present, without adding those values over variables that are already set. Its user-facing copy — the Grok system prompt — is keyed in `server/i18n/` the same way the app keys its strings ([i18n.md](i18n.md)).
+`server/index.mjs` has no npm dependencies and is only the listener: it reads `../.env` if present, without adding those values over variables that are already set, and hands each request to the matching module in `server/routes/`. Its user-facing copy — the Grok system prompt — is keyed in `server/i18n/` the same way the app keys its strings ([i18n.md](i18n.md)).
 
 | Route | Behavior |
 | --- | --- |

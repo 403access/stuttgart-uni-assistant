@@ -87,7 +87,8 @@ npm run check
 | `src/auth/session.ts` | The server user session: token storage and the `/v1/auth/*` calls |
 | `server/auth.mjs` | Server-side users, bearer sessions, and platform links |
 | `app/api.tsx` | API overview. Replays known server routes |
-| `server/index.mjs` | Assistant server. Holds the xAI key and the C@MPUS secrets |
+| `server/index.mjs` | Assistant server entry point. Loads `.env`, owns the listener, and dispatches to `server/routes/` |
+| `server/routes/` | Route modules for admin, health, auth, mail, C@MPUS, OIDC, and the Grok rewrite |
 | `scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
 | `scripts/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |

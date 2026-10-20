@@ -86,7 +86,7 @@ screen cannot replay them.
 | --- | --- |
 | `server/admin.mjs` | Token/cookie checks and every cross-user query and mutation. |
 | `server/dashboard.html` | The page, styles, and vanilla-JS client. |
-| `server/index.mjs` | Serves the page and routes `/v1/admin/*`. |
+| `server/index.mjs` | Entry point; serves the page through `server/routes/admin.mjs`, which also routes `/v1/admin/*`. |
 | `server/admin.test.mjs` | Token matching, stats, filters, detail, edits, session revoke, platform link/unlink, campus disconnect, portal clear, delete. |
 
 ## Limits

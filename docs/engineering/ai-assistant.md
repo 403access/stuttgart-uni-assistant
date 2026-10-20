@@ -47,7 +47,7 @@ Summaries of bundled pages use `src/assistant/summarize.ts`: split sentences, th
 - Abort after 40 seconds.
 - Returns `null` on network failure, a non-OK status, or an empty `text`. The caller keeps the campus message.
 
-`server/index.mjs`
+`server/index.mjs` and `server/routes/assist.mjs`
 
 - Loads `../.env` without overriding existing environment variables.
 - `GET /health` → `{ ok: true, model: "grok-4.7", configured: boolean }`.
