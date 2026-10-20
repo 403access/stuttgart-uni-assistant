@@ -427,9 +427,13 @@ p { margin: 0; }
 
 /* ---------- sections ---------- */
 
-.section { padding: clamp(56px, 8vw, 96px) 0; }
-.section.tight { padding-top: clamp(40px, 6vw, 64px); }
+.section { padding: clamp(40px, 5vw, 64px) 0; }
+.section.tight { padding-top: clamp(32px, 4vw, 48px); }
+/* Adjacent sections share one gap. */
 .section + .section { padding-top: 0; }
+/* Bordered bands keep padding on both sides of the border. */
+.section.trust,
+.section.trust + .section { padding-top: clamp(40px, 5vw, 64px); }
 
 .section-head { max-width: 46rem; }
 .section-head h2 { margin: 12px 0 14px; }
