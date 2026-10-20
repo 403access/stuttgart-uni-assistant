@@ -675,13 +675,33 @@ p { margin: 0; }
   box-shadow: var(--shadow);
 }
 .faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   cursor: pointer;
   padding: 17px 0;
   font-weight: 700;
   color: var(--ink);
-  list-style-position: outside;
+  list-style: none;
 }
-.faq summary::marker { color: var(--blue); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  margin-top: -4px;
+  border-right: 2px solid var(--blue);
+  border-bottom: 2px solid var(--blue);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+.faq details[open] summary::after {
+  margin-top: 4px;
+  transform: rotate(225deg);
+}
 .faq details[open] summary { border-bottom: 1px solid var(--line); }
 .faq details p {
   margin: 15px 0 18px;
@@ -799,7 +819,7 @@ body.lightbox-open { overflow: hidden; }
   html { scroll-behavior: auto; }
   .reveal,
   .reveal.reveal-init { opacity: 1; transform: none; transition: none; }
-  .btn, .gallery .phone, .theme-knob, .theme-slot, .theme-toggle { transition: none; }
+  .btn, .gallery .phone, .theme-knob, .theme-slot, .theme-toggle, .faq summary::after { transition: none; }
 }
 
 @media print {
