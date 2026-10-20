@@ -42,10 +42,6 @@
       'University Assistant brings the timetable, module progress, deadlines, ILIAS material, the campus map and UniMail into one app — and answers questions about them in German or English.',
     heroCtaPrimary: 'Try the beta',
     heroCtaSecondary: 'Screens',
-    heroMetaPlatforms: 'Beta: iOS & Android',
-    heroMetaLocal: 'Answers start on the device',
-    heroMetaOpen: 'Open source · AGPL-3.0',
-    heroNote: 'Not official: a student project, not a service of the University of Stuttgart.',
 
     stripSchedule: 'Timetable',
     stripModules: 'Modules & grades',
