@@ -16,6 +16,7 @@ export function parseHash() {
   }
   if (segments[0] === 'users') return { name: 'users', params };
   if (segments[0] === 'devices') return { name: 'devices', params };
+  if (segments[0] === 'ilias') return { name: 'ilias', params };
   if (segments[0] === 'audit') return { name: 'audit', params };
   if (segments[0] === 'system') return { name: 'system', params };
   return { name: 'overview', params };

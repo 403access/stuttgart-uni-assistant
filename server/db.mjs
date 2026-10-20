@@ -212,6 +212,20 @@ export function getDb() {
       account TEXT,
       updated_at TEXT NOT NULL
     );
+    /* ILIAS keeps its own session marker: the cookie itself stays in memory. */
+    CREATE TABLE IF NOT EXISTS user_ilias (
+      user_id TEXT PRIMARY KEY,
+      source TEXT NOT NULL DEFAULT 'browser',
+      account TEXT,
+      updated_at TEXT NOT NULL
+    );
+    /* Last parsed dashboard per account, so the admin console keeps context
+       after a restart and the app can show a stale copy while reconnecting. */
+    CREATE TABLE IF NOT EXISTS user_ilias_snapshot (
+      user_id TEXT PRIMARY KEY,
+      payload TEXT NOT NULL DEFAULT '{}',
+      fetched_at TEXT
+    );
     /* Every operator mutation. No foreign key on purpose: the row survives a
        deleted account and keeps the account name it had at the time. */
     CREATE TABLE IF NOT EXISTS admin_audit (
@@ -643,4 +657,46 @@ export function loadCampusSource(userId) {
 
 export function clearCampusSource(userId) {
   getDb().prepare('DELETE FROM user_campus WHERE user_id = ?').run(scope(userId));
+}
+
+export function saveIliasSource(userId, source, account = null) {
+  const owner = scope(userId);
+  if (source !== 'env' && source !== 'browser') return;
+  getDb()
+    .prepare('INSERT INTO user_ilias (user_id, source, account, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET source = excluded.source, account = COALESCE(excluded.account, user_ilias.account), updated_at = excluded.updated_at')
+    .run(owner, source, account, new Date().toISOString());
+}
+
+export function loadIliasSource(userId) {
+  const owner = scope(userId);
+  const row = getDb().prepare('SELECT source, account, updated_at FROM user_ilias WHERE user_id = ?').get(owner);
+  return row ? { source: row.source, account: row.account ?? null, updatedAt: row.updated_at } : null;
+}
+
+export function clearIliasSource(userId) {
+  getDb().prepare('DELETE FROM user_ilias WHERE user_id = ?').run(scope(userId));
+}
+
+export function saveIliasSnapshot(userId, snapshot) {
+  const owner = scope(userId);
+  const fetchedAt = new Date().toISOString();
+  getDb()
+    .prepare('INSERT INTO user_ilias_snapshot (user_id, payload, fetched_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET payload = excluded.payload, fetched_at = excluded.fetched_at')
+    .run(owner, JSON.stringify(snapshot ?? {}), fetchedAt);
+}
+
+export function loadIliasSnapshot(userId) {
+  const owner = scope(userId);
+  const row = getDb().prepare('SELECT payload, fetched_at FROM user_ilias_snapshot WHERE user_id = ?').get(owner);
+  if (!row) return null;
+  try {
+    const parsed = JSON.parse(row.payload);
+    return parsed && typeof parsed === 'object' ? { dashboard: parsed, fetchedAt: row.fetched_at ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearIliasSnapshot(userId) {
+  getDb().prepare('DELETE FROM user_ilias_snapshot WHERE user_id = ?').run(scope(userId));
 }

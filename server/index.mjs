@@ -18,6 +18,7 @@ import { handleAssist } from './routes/assist.mjs';
 import { handleAuth } from './routes/auth.mjs';
 import { handleCampus } from './routes/campus.mjs';
 import { handleHealth } from './routes/health.mjs';
+import { handleIlias } from './routes/ilias.mjs';
 import { handleMail } from './routes/mail.mjs';
 import { handleOidc } from './routes/oidc.mjs';
 
@@ -28,7 +29,7 @@ const port = Number(process.env.PORT || 8787);
 
 // Order matters only where paths overlap: admin owns /admin, health owns the
 // two unauthenticated status routes, and the assistant is the final fallback.
-const handlers = [handleAdmin, handleHealth, handleAuth, handleMail, handleCampus, handleOidc, handleAssist];
+const handlers = [handleAdmin, handleHealth, handleAuth, handleMail, handleCampus, handleIlias, handleOidc, handleAssist];
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', 'http://127.0.0.1');

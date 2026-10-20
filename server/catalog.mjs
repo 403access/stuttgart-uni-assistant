@@ -19,6 +19,8 @@ export function apiCatalog() {
       { id: 'campus-calendar-events', method: 'GET', path: '/v1/campus/calendar-events', replay: false },
       { id: 'campus-export', method: 'POST', path: '/v1/campus/calendar-export', replay: true },
       { id: 'campus-export-sync', method: 'POST', path: '/v1/campus/calendar-sync', replay: false },
+      { id: 'ilias-config', method: 'GET', path: '/v1/ilias/config', replay: true },
+      { id: 'ilias-dashboard', method: 'GET', path: '/v1/ilias/dashboard', replay: true },
       { id: 'mail-config', method: 'GET', path: '/v1/mail/config', replay: true },
       { id: 'mail-folders', method: 'GET', path: '/v1/mail/folders', replay: false },
       { id: 'mail-credentials', method: 'POST', path: '/v1/mail/credentials', replay: false },

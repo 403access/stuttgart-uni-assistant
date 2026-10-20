@@ -3,6 +3,7 @@
 import { listUserCampusCredentials, publicCampusStatus } from '../campus.mjs';
 import { ASSISTANT_MODEL } from '../config.mjs';
 import { getDb } from '../db.mjs';
+import { listUserIliasSessions, publicIliasStatus } from '../ilias.mjs';
 import { publicMailStatus } from '../mail.mjs';
 import { publicOidcStatus } from '../oidc.mjs';
 import { adminDeviceStats } from './devices.mjs';
@@ -65,6 +66,8 @@ export function databaseCounts() {
         (SELECT COUNT(*) FROM device_links) AS devices,
         (SELECT COUNT(*) FROM user_platforms) AS platforms,
         (SELECT COUNT(*) FROM user_campus) AS campus_sources,
+        (SELECT COUNT(*) FROM user_ilias) AS ilias_sources,
+        (SELECT COUNT(*) FROM user_ilias_snapshot) AS ilias_snapshots,
         (SELECT COUNT(*) FROM user_curriculum_nodes) AS nodes,
         (SELECT COUNT(*) FROM user_courses) AS courses,
         (SELECT COUNT(*) FROM user_exported_events) AS events,
@@ -78,6 +81,8 @@ export function databaseCounts() {
     devices: row?.devices ?? 0,
     platforms: row?.platforms ?? 0,
     campusSources: row?.campus_sources ?? 0,
+    iliasSources: row?.ilias_sources ?? 0,
+    iliasSnapshots: row?.ilias_snapshots ?? 0,
     nodes: row?.nodes ?? 0,
     courses: row?.courses ?? 0,
     events: row?.events ?? 0,
@@ -110,6 +115,7 @@ export function adminStats() {
     .all()
     .map((row) => ({ source: row.source, count: row.n }));
   const credentialsActive = listUserCampusCredentials().length;
+  const iliasActive = listUserIliasSessions().length;
   const data = databaseCounts();
   const deviceStats = adminDeviceStats();
   return {
@@ -121,6 +127,7 @@ export function adminStats() {
     recentUsersMonth: recentMonth,
     activeUsersWeek: activeWeek,
     credentialsActive,
+    iliasActive,
     portalNodes: data.nodes,
     portalCourses: data.courses,
     calendarEvents: data.events,
@@ -134,6 +141,7 @@ export function adminStats() {
     config: {
       admin: { configured: adminConfigured() },
       campus: publicCampusStatus(),
+      ilias: publicIliasStatus(),
       oidc: publicOidcStatus(),
       mail: publicMailStatus(),
       assistant: { model: ASSISTANT_MODEL, configured: Boolean(process.env.XAI_API_KEY) },

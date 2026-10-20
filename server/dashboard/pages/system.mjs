@@ -33,6 +33,7 @@ function renderSystem(data) {
   const config = data.config;
   const db = data.database;
   const campus = config.campus || {};
+  const ilias = config.ilias || {};
   const oidc = config.oidc || {};
   const mail = config.mail || {};
   const jobs = data.syncJobs || [];
@@ -74,6 +75,7 @@ function renderSystem(data) {
           configRow('Dashboard-Token', Boolean(config.admin?.configured), 'DASHBOARD_TOKEN'),
           configRow('Assistent', Boolean(config.assistant?.configured), 'XAI_API_KEY · Modell ' + (config.assistant?.model || '–')),
           configRow('C@MPUS .env', Boolean(campus.tokenConfigured || campus.sessionCookieConfigured), [campus.tokenConfigured ? 'Bearer-Token' : null, campus.sessionCookieConfigured ? 'Session-Cookie' : null].filter(Boolean).join(' + ') || 'kein .env-Zugang'),
+          configRow('ILIAS .env', Boolean(ilias.configured), ilias.configured ? 'ILIAS_SESSION_COOKIE' : 'kein .env-Zugang'),
           configRow('SIAM / OIDC', Boolean(oidc.configured), oidc.issuer || 'OIDC_ISSUER nicht gesetzt'),
           configRow('UniMail', Boolean(mail.configured), mail.account ? mail.account + (mail.address ? ' · ' + mail.address : '') : 'IMAP nicht verbunden'),
           h('div', { className: 'row', style: { paddingTop: '10px' } },
@@ -91,6 +93,7 @@ function renderSystem(data) {
             fieldBox('Geräte', number(db.counts.devices)),
             fieldBox('Plattformen', number(db.counts.platforms)),
             fieldBox('C@MPUS-Quellen', number(db.counts.campusSources)),
+            fieldBox('ILIAS-Stände', number(db.counts.iliasSnapshots)),
             fieldBox('Knoten', number(db.counts.nodes)),
             fieldBox('Kurse', number(db.counts.courses)),
             fieldBox('Termine', number(db.counts.events)),

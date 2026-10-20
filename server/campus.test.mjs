@@ -587,6 +587,8 @@ test('api catalog only names known paths', () => {
     '/v1/campus/calendar-events',
     '/v1/campus/calendar-export',
     '/v1/campus/calendar-sync',
+    '/v1/ilias/config',
+    '/v1/ilias/dashboard',
     '/v1/mail/config',
     '/v1/mail/folders',
     '/v1/mail/credentials',

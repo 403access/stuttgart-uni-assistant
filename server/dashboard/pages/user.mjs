@@ -54,6 +54,7 @@ function renderUserShell(detail) {
     ['devices', 'Geräte', detail.devices.length],
     ['platforms', 'Plattformen', user.platforms.length],
     ['campus', 'C@MPUS'],
+    ['ilias', 'ILIAS', detail.ilias?.counts?.memberships || undefined],
     ['data', 'Studiengänge', detail.studies.length],
     ['calendar', 'Kalender', detail.counts.events],
     ['calls', 'Aufrufe', detail.counts.calls],
@@ -107,6 +108,7 @@ function renderUserTab(detail) {
   else if (tab === 'devices') renderDevicesTab(container, detail);
   else if (tab === 'platforms') renderPlatformsTab(container, detail);
   else if (tab === 'campus') renderCampusTab(container, detail);
+  else if (tab === 'ilias') renderIliasTab(container, detail);
   else if (tab === 'data') renderDataTab(container, detail);
   else if (tab === 'calendar') renderCalendarTab(container, detail);
   else if (tab === 'calls') renderCallsTab(container, detail);
@@ -193,6 +195,9 @@ function renderOverviewTab(container, detail) {
       fieldBox('C@MPUS-Quelle', detail.campus.source || '–'),
       fieldBox('C@MPUS-Konto', detail.campus.account || '–'),
       fieldBox('ENV-Zugang', detail.campus.envConfigured ? 'konfiguriert' : 'nicht konfiguriert'),
+      fieldBox('ILIAS im Speicher', detail.ilias?.active ? 'ja' : 'nein'),
+      fieldBox('ILIAS-Konto', detail.ilias?.account || '–'),
+      fieldBox('ILIAS-Stand', detail.ilias?.fetchedAt ? date(detail.ilias.fetchedAt) : '–'),
       fieldBox('Portal-Studiengänge', String(detail.counts.studies)),
       fieldBox('Portal-Knoten', number(detail.counts.nodes) + ' · ' + detail.counts.completedNodes + ' abgeschlossen'),
       fieldBox('In Arbeit', String(detail.counts.inProgressNodes)),
@@ -453,6 +458,93 @@ function renderCampusTab(container, detail) {
         h('button', { className: 'btn secondary small', type: 'button', onClick: () => clearCalls(detail) }, icon('activity'), 'Aufrufe leeren'),
       ),
     ),
+  );
+}
+
+function renderIliasTab(container, detail) {
+  const ilias = detail.ilias || {};
+  const dashboard = ilias.dashboard;
+  const counts = ilias.counts || {};
+  const hasData = Boolean(dashboard || ilias.source);
+
+  const fields = h('div', { className: 'field-grid' },
+    fieldBox('Sitzung aktiv', ilias.active ? 'ja, im Speicher' : 'nein'),
+    fieldBox('Quelle', ilias.source || '–'),
+    fieldBox('ILIAS-Konto', ilias.account || '–'),
+    fieldBox('ENV-Sitzung', ilias.envConfigured ? 'konfiguriert' : 'nicht konfiguriert'),
+    fieldBox('Gelesen', ilias.fetchedAt ? relative(ilias.fetchedAt) : '–'),
+    fieldBox('Mitgliedschaften', number(counts.memberships)),
+    fieldBox('Kurse', number(counts.courses)),
+    fieldBox('Gruppen', number(counts.groups)),
+    fieldBox('Neuigkeiten', number(counts.news)),
+    fieldBox('Mails', number(counts.mails) + (counts.unreadMails ? ' · ' + counts.unreadMails + ' ungelesen' : '')),
+    fieldBox('To-Dos', number(counts.tasks)),
+  );
+
+  const membershipRows = (dashboard?.memberships || []).length
+    ? dashboard.memberships.map((item) => h('tr', null,
+        h('td', null, item.url ? h('a', { href: item.url, target: '_blank', rel: 'noreferrer', text: item.title }) : h('strong', { text: item.title }), h('div', { className: 'hint', text: item.description || item.group || '–' })),
+        h('td', null, h('span', { className: 'chip', text: item.type || item.kind || '–' })),
+        h('td', { className: 'num' }, item.refId ?? '–'),
+      ))
+    : [h('tr', null, h('td', { colspan: '3' }, h('p', { className: 'hint', text: 'Kein Dashboard-Stand gespeichert.' })))];
+
+  const newsList = (dashboard?.news || []).length
+    ? h('div', { className: 'timeline' }, ...dashboard.news.map((item) => h('div', { className: 'timeline-item' },
+        h('span', { className: 'timeline-dot' }),
+        h('div', { className: 'timeline-body' },
+          h('strong', null, item.url ? h('a', { href: item.url, target: '_blank', rel: 'noreferrer', text: item.title }) : item.title),
+          h('span', { text: item.description || '–' }),
+        ),
+        h('span', { className: 'timeline-time', text: item.date || '' }),
+      )))
+    : h('p', { className: 'hint', text: 'Keine Neuigkeiten im gespeicherten Stand.' });
+
+  const mailList = (dashboard?.mails || []).length
+    ? h('div', { className: 'timeline' }, ...dashboard.mails.map((item) => h('div', { className: 'timeline-item' },
+        h('span', { className: 'timeline-dot' }),
+        h('div', { className: 'timeline-body' },
+          h('strong', null, item.url ? h('a', { href: item.url, target: '_blank', rel: 'noreferrer', text: item.title }) : item.title),
+          h('span', { text: item.properties?.map((entry) => entry.name + ': ' + entry.value).filter(Boolean).join(' · ') || '–' }),
+        ),
+        h('span', { className: 'timeline-time', text: item.date || '' }),
+      )))
+    : h('p', { className: 'hint', text: 'Keine Mails im gespeicherten Stand.' });
+
+  const taskList = (dashboard?.tasks || []).length
+    ? h('div', { className: 'timeline' }, ...dashboard.tasks.map((item) => h('div', { className: 'timeline-item' },
+        h('span', { className: 'timeline-dot' }),
+        h('div', { className: 'timeline-body' }, h('strong', { text: item.title }), h('span', { text: item.description || '–' })),
+      )))
+    : h('p', { className: 'hint', text: 'Keine To-Dos im gespeicherten Stand.' });
+
+  const action = hasData
+    ? h('div', { className: 'detail-section' },
+        h('h3', null, 'ILIAS-Sitzung'),
+        h('div', { className: 'row' },
+          ilias.active ? h('button', { className: 'btn danger-soft', type: 'button', onClick: () => disconnectUserIlias(detail) }, icon('unlink'), 'ILIAS trennen') : null,
+          h('span', { className: 'hint', text: ilias.fetchedAt ? 'Dashboard zuletzt gelesen ' + date(ilias.fetchedAt) : 'Noch kein Dashboard gelesen.' }),
+        ),
+      )
+    : emptyState('grid', 'Keine ILIAS-Verbindung', 'Dieses Konto hat sich noch nicht im ILIAS-Tab angemeldet.');
+
+  container.append(
+    callout('ILIAS liefert kein JSON für Studierende. Der Server meldet sich einmal mit dem Standardformular an und liest danach die Dashboard-Blöcke. Gespeichert werden nur die Sitzung im Speicher und der zuletzt gelesene Stand.', '', 'shield'),
+    fields,
+    action,
+    h('div', { className: 'detail-section' },
+      sectionHead('Kurse und Gruppen', number(counts.memberships) + ' Mitgliedschaften'),
+      h('div', { className: 'table-wrap' },
+        h('table', { className: 'data', style: { minWidth: '680px' } },
+          h('caption', { className: 'sr-only' }, 'ILIAS-Mitgliedschaften'),
+          h('thead', null, h('tr', null, h('th', null, 'Titel'), h('th', null, 'Typ'), h('th', { className: 'num' }, 'Ref-ID'))),
+          h('tbody', null, ...membershipRows),
+        ),
+      ),
+    ),
+    h('div', { className: 'detail-section' }, h('h3', null, 'Neuigkeiten'), newsList),
+    h('div', { className: 'detail-section' }, h('h3', null, 'ILIAS-Postfach'), mailList),
+    h('div', { className: 'detail-section' }, h('h3', null, 'To-Dos'), taskList),
   );
 }
 
@@ -832,6 +924,20 @@ async function disconnectCampus(detail) {
   try {
     const updated = await api('/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/campus/disconnect', { method: 'POST', body: {} });
     toast('C@MPUS getrennt.', 'ok');
+    applyUserDetail(updated);
+  } catch (error) { if (error.code !== 'unauthorized') toast(errorText(error), 'error'); }
+}
+
+async function disconnectUserIlias(detail) {
+  const ok = await confirmAction({
+    title: 'ILIAS-Sitzung trennen?',
+    message: 'Die PHPSESSID dieses Kontos wird aus dem Server-Speicher entfernt. Der gespeicherte Dashboard-Stand bleibt erhalten; ein neuer Abruf braucht eine neue Anmeldung.',
+    confirmLabel: 'ILIAS trennen',
+  });
+  if (!ok) return;
+  try {
+    const updated = await api('/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/disconnect', { method: 'POST', body: {} });
+    toast('ILIAS getrennt.', 'ok');
     applyUserDetail(updated);
   } catch (error) { if (error.code !== 'unauthorized') toast(errorText(error), 'error'); }
 }

@@ -1,7 +1,7 @@
 # Admin dashboard
 
 A server-hosted operator console for the user store, sessions, platform links,
-C@MPUS data, portal activity, and server health. Open
+C@MPUS and ILIAS data, portal activity, and server health. Open
 `http://127.0.0.1:8787/admin` while the assistant server is running. It is a
 plain HTML page served by `server/routes/admin/index.mjs`; there is no separate
 frontend build and no npm dependency. The browser modules are native ES modules,
@@ -40,11 +40,13 @@ that survives reloads and can be shared between operators:
 | `#/overview` | KPI cards, distribution bars, recent accounts, recent audit actions, configuration health |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
 | `#/devices` | QR-linked web browsers with state, account, timestamps, and revoke |
+| `#/ilias` | ILIAS connections, session state, and parsed course/news/mail counts |
 | `#/users/<id>/overview` | Profile, status, per-study summary, audit preview, delete zone |
 | `#/users/<id>/sessions` | App sessions with state, timestamps, copy and revoke |
 | `#/users/<id>/devices` | Web browsers approved by this account through the QR flow |
 | `#/users/<id>/platforms` | C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail links |
 | `#/users/<id>/campus` | C@MPUS credential source, per-study data, calendar/call maintenance |
+| `#/users/<id>/ilias` | ILIAS session state, parsed dashboard, and disconnect |
 | `#/users/<id>/data` | Curriculum nodes and courses per study, with search, state filter, and pagination |
 | `#/users/<id>/calendar` | Imported ICS events with search and pagination |
 | `#/users/<id>/calls` | Portal call log with failure filter and pagination |
@@ -71,6 +73,14 @@ agent, the account that approved it, the pairing and approval timestamps, and
 the session minted when the browser redeemed the code. A browser whose QR code
 expires without approval is shown as expired; revoking a linked device ends
 its web session immediately.
+
+**ILIAS:** one row per account that has connected, with whether the
+`PHPSESSID` is still in server memory, the source (browser or `.env`), the
+parsed counts for courses, groups, news, mails, unread mail, and to-dos, and
+the time of the last read. Opening a row shows the stored dashboard: course and
+group titles with their ILIAS links, the newest news, the ILIAS mailbox, and
+to-dos. **Trennen** forgets the cookie and demotes the platform link; the
+stored snapshot stays readable. The cookie and password are never shown.
 
 **User list:** search by account, name, email, or matriculation; filter by
 sign-in mode, linked platform, C@MPUS source (`env` / browser / active in
@@ -139,6 +149,7 @@ All routes below except `login`/`logout` require the admin cookie.
 | `POST /v1/admin/login` | `{ token }` → sets the cookie and records an audit entry. `503` when unconfigured, `401` when wrong. |
 | `POST /v1/admin/logout` | Clears the cookie and records an audit entry. |
 | `GET /v1/admin/overview` | Stats, mode/platform/source breakdowns, device counts, database counts, and configuration health. |
+| `GET /v1/admin/ilias` | ILIAS connections, active sessions, and aggregated course/news/mail counts. |
 | `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers, newest pairing first. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
 | `GET /v1/admin/users?query=&mode=&platform=&credential=&activity=&data=&sort=&limit=&offset=` | Paginated user list with stored-data counts and platform chips. |
@@ -157,6 +168,7 @@ All routes below except `login`/`logout` require the admin cookie.
 | `POST /v1/admin/users/<id>/platforms/<platform>/touch` | Marks the link connected and sets `lastSyncAt` to now. |
 | `DELETE /v1/admin/users/<id>/platforms/<platform>` | Removes one link. |
 | `POST /v1/admin/users/<id>/campus/disconnect` | Drops the portal credential and source marker. |
+| `POST /v1/admin/users/<id>/ilias/disconnect` | Drops the in-memory ILIAS cookie and demotes the platform link. |
 | `POST /v1/admin/users/<id>/portal/clear` | Deletes the user's portal rows; optional `{ "studyId": 123 }` clears one study. |
 | `POST /v1/admin/users/<id>/portal/events/clear` | Deletes the user's imported calendar events. |
 | `POST /v1/admin/users/<id>/portal/calls/clear` | Deletes the user's portal call log. |
@@ -180,6 +192,7 @@ screen cannot replay them.
 | `server/admin/overview.mjs` | Cross-account counts and statistics. |
 | `server/admin/users.mjs` | Account list and detail reads. |
 | `server/admin/devices.mjs` | QR-linked browser list, stats, and revoke. |
+| `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, and disconnect. |
 | `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
 | `server/admin/sync.mjs` | Manual sync start/cancel. |
@@ -189,7 +202,7 @@ screen cannot replay them.
 | `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, and system routes. |
 | `server/dashboard/index.html` | The page shell. |
 | `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `server/dashboard/pages/*.mjs` | Overview, users, user detail, audit, and system views. |
+| `server/dashboard/pages/*.mjs` | Overview, users, user detail, ILIAS, audit, and system views. |
 | `server/dashboard/assets/styles.css` | The dashboard styles. |
 | `server/db.mjs` | Schema, including the `admin_audit` table. |
 | `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
@@ -201,9 +214,9 @@ screen cannot replay them.
 - The dashboard is for the operator of a local or trusted deployment. Do not
   expose `/admin` on a public host without TLS and a strong `DASHBOARD_TOKEN`.
 - It shows account metadata, counts, and diagnostic text, never a C@MPUS bearer
-  token, `PSESSIONID`, a university password, a session token, or an app bearer
-  token. The browser harvest stays in server memory as described in
-  [accounts.md](accounts.md).
+  token, `PSESSIONID`, an ILIAS `PHPSESSID`, a university password, a session
+  token, or an app bearer token. The browser harvest stays in server memory as
+  described in [accounts.md](accounts.md).
 - The audit log records the operator as `dashboard` because the deployment has
   a single shared `DASHBOARD_TOKEN`; it is not a per-person identity system.
 - Every destructive action is confirmed in the UI and recorded server-side, but

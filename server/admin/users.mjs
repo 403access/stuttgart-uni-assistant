@@ -3,8 +3,10 @@
 import { getUser, listUserDevices } from '../auth.mjs';
 import { getUserCampusCredential, listUserCampusCredentials } from '../campus.mjs';
 import { getDb, loadCampusSource } from '../db.mjs';
+import { getUserIliasSession } from '../ilias.mjs';
 import { listAdminAudit } from './audit.mjs';
 import { adminUserStudies } from './explorers.mjs';
+import { adminUserIlias } from './ilias.mjs';
 import { sessionRow, userCounts } from './overview.mjs';
 import { pageOffset, pageSize } from './util.mjs';
 
@@ -84,6 +86,7 @@ export function listUsers({ query = '', mode = '', platform = '', credential = '
       `SELECT users.*,
         (SELECT COUNT(*) FROM user_sessions s WHERE s.user_id = users.id AND s.revoked_at IS NULL AND s.expires_at > ?) AS active_sessions,
         (SELECT source FROM user_campus c WHERE c.user_id = users.id) AS campus_source,
+        (SELECT source FROM user_ilias i WHERE i.user_id = users.id) AS ilias_source,
         (SELECT COUNT(*) FROM user_platforms p WHERE p.user_id = users.id) AS platform_count,
         (SELECT COUNT(*) FROM device_links d WHERE d.user_id = users.id AND d.revoked_at IS NULL) AS device_count,
         (SELECT COUNT(*) FROM user_curriculum_nodes n WHERE n.user_id = users.id) AS portal_nodes,
@@ -124,6 +127,8 @@ export function listUsers({ query = '', mode = '', platform = '', credential = '
       platforms: platformMap.get(row.id) ?? [],
       campusSource: row.campus_source ?? null,
       campusActive: Boolean(getUserCampusCredential(row.id)),
+      iliasSource: row.ilias_source ?? null,
+      iliasActive: Boolean(getUserIliasSession(row.id)),
       data: {
         nodes: row.portal_nodes ?? 0,
         completedNodes: row.completed_nodes ?? 0,
@@ -146,7 +151,7 @@ export function adminUserDetail(userId) {
   const devices = listUserDevices(userId);
   const deviceBySession = new Map(devices.filter((item) => item.sessionId).map((item) => [item.sessionId, item]));
   const sessions = db
-    .prepare('SELECT id, created_at, expires_at, last_seen_at, revoked_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC')
+    .prepare('SELECT id, created_at, expires_at, last_seen_at, revoked_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC, rowid DESC')
     .all(userId)
     .map((row) => {
       const session = sessionRow(row);
@@ -189,6 +194,7 @@ export function adminUserDetail(userId) {
         (process.env.CAMPUS_BEARER_TOKEN || '').trim() || (process.env.CAMPUS_SESSION_COOKIE || '').trim(),
       ),
     },
+    ilias: adminUserIlias(userId),
     counts: userCounts(userId),
     studies: studies.studies,
     studiesFetchedAt: studies.fetchedAt,

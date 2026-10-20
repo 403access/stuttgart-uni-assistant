@@ -5,7 +5,7 @@
  * only handle endpoints; the data layer lives in `server/admin/`.
  */
 
-import { adminAuthorized, adminConfigured, adminStats } from '../../admin/index.mjs';
+import { adminAuthorized, adminConfigured, adminIlias, adminStats } from '../../admin/index.mjs';
 import { send } from '../../http.mjs';
 import { dashboardAsset, dashboardPage } from './assets.mjs';
 import { handleAudit } from './audit.mjs';
@@ -25,6 +25,10 @@ export async function handleAdmin(request, response, url) {
 
   if (request.method === 'GET' && url.pathname === '/v1/admin/overview') {
     send(response, 200, adminStats());
+    return true;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/admin/ilias') {
+    send(response, 200, adminIlias());
     return true;
   }
   if (await handleUsers(request, response, url)) return true;

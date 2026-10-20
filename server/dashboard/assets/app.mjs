@@ -7,6 +7,7 @@ import { number } from './format.mjs';
 import { icon, paintIcons } from './icons.mjs';
 import { renderAuditPage } from '../pages/audit.mjs';
 import { renderDevicesPage } from '../pages/devices.mjs';
+import { renderIliasPage } from '../pages/ilias.mjs';
 import { renderOverview } from '../pages/overview.mjs';
 import { renderSystemPage } from '../pages/system.mjs';
 import { renderUserPage } from '../pages/user.mjs';
@@ -28,6 +29,7 @@ async function renderRoute() {
     if (route.name === 'overview') await renderOverview();
     else if (route.name === 'users') await renderUsersPage(route);
     else if (route.name === 'user') await renderUserPage(route.id, route.tab);
+    else if (route.name === 'ilias') await renderIliasPage();
     else if (route.name === 'devices') await renderDevicesPage(route);
     else if (route.name === 'audit') await renderAuditPage(route);
     else if (route.name === 'system') await renderSystemPage();
@@ -103,6 +105,7 @@ function wireEvents() {
     state.user = { id: null, detail: null, tab: 'overview', cache: {}, data: null, calendar: null, calls: null, platformEdit: null };
     state.users = { query: '', mode: '', platform: '', credential: '', activity: '', data: '', sort: 'recent', limit: 25, offset: 0, list: [], total: 0, seq: 0, selected: new Set() };
     state.devices = { query: '', state: '', limit: 50, offset: 0, list: [], total: 0, stats: null, seq: 0 };
+    state.ilias = null;
     showLogin();
   });
   $('menu-button').addEventListener('click', () => {

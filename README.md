@@ -65,6 +65,16 @@ The `trycloudflare.com` hostname changes on every run, so restart Expo whenever 
 
 Write the C@MPUS secrets without editing the file by hand. `npm run campus:token -- <token>` sets `CAMPUS_BEARER_TOKEN` and `npm run campus:session -- <value>` sets `CAMPUS_SESSION_COOKIE` in the git-ignored `.env`. A pasted `Bearer <token>` header, an `Authorization:` line, or a full `PSESSIONID=...; ...` cookie string is reduced to the bare value. Omit the value to type it without echoing, or pipe it with `echo "$TOKEN" | npm run campus:token`. `npm run campus:secret -- list` shows which values are set, masked. Restart `npm run assistant` after a change.
 
+ILIAS has no student JSON API, so the server signs in through the standard HTTPS form and parses the dashboard. The ILIAS password is the same as the C@MPUS password; ILIAS expects only the part of the address before the `@` (`st206509@stud.uni-stuttgart.de` → `st206509`). Test the flow from the terminal before changing the app:
+
+```bash
+npm run ilias:login -- --probe
+npm run ilias:login -- --user st206509 --password-stdin
+npm run ilias:login -- --cookie "$ILIAS_SESSION_COOKIE"
+```
+
+The password is used for the single login POST and never stored; a successful run keeps only `PHPSESSID` in server memory. In the app, the **ILIAS** tab connects with the same account or an existing session cookie and shows courses, groups, news, the ILIAS mailbox, and to-dos. If the opt-in C@MPUS credential is in the device vault, the tab offers it directly; the login name is derived from the stored address. The operator dashboard has a matching **ILIAS** page and a per-account tab. `ILIAS_SESSION_COOKIE` and `ILIAS_ACCOUNT` in `.env` let the operator reuse one session without the app.
+
 ## Checks
 
 ```bash

@@ -6,6 +6,7 @@ import { getUser } from '../auth.mjs';
 import { publicCampusStatus } from '../campus.mjs';
 import { ASSISTANT_MODEL } from '../config.mjs';
 import { dbPath } from '../db.mjs';
+import { publicIliasStatus } from '../ilias.mjs';
 import { forgetMailCredentials, publicMailStatus } from '../mail.mjs';
 import { publicOidcStatus } from '../oidc.mjs';
 import { listSyncJobs } from '../sync.mjs';
@@ -48,6 +49,7 @@ export function adminSystem() {
     config: {
       admin: { configured: adminConfigured() },
       campus: publicCampusStatus(),
+      ilias: publicIliasStatus(),
       oidc: publicOidcStatus(),
       mail: publicMailStatus(),
       assistant: { model: ASSISTANT_MODEL, configured: Boolean(process.env.XAI_API_KEY) },

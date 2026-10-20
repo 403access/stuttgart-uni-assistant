@@ -33,6 +33,7 @@ export async function renderOverview() {
   const health = [
     ['Admin', true],
     ['C@MPUS .env', campusReady],
+    ['ILIAS .env', Boolean(config.ilias?.configured)],
     ['SIAM OIDC', Boolean(config.oidc?.configured)],
     ['UniMail', Boolean(config.mail?.configured)],
     ['Assistent', Boolean(config.assistant?.configured)],
@@ -63,6 +64,7 @@ export async function renderOverview() {
     { symbol: 'monitor', value: stats.activeSessions, label: 'Aktive Sitzungen', sub: stats.usersWithSessions + ' Konten angemeldet', href: '#/users?activity=active', tone: 'cyan' },
     { symbol: 'smartphone', value: stats.devicesActive || 0, label: 'Web-Geräte', sub: (stats.devicesPending || 0) + ' warten auf Scan', href: '#/devices', tone: 'blue' },
     { symbol: 'key', value: stats.credentialsActive, label: 'C@MPUS im Speicher', sub: 'nur bis zum Server-Neustart', href: '#/users?credential=active', tone: 'green' },
+    { symbol: 'grid', value: stats.iliasActive || 0, label: 'ILIAS im Speicher', sub: (stats.data?.iliasSources || 0) + ' verknüpfte Konten', href: '#/ilias', tone: 'purple' },
     { symbol: 'list', value: stats.portalNodes, label: 'Portal-Knoten', sub: stats.completedNodes + ' abgeschlossen · ' + stats.inProgressNodes + ' in Arbeit', href: '#/users?data=portal', tone: 'purple' },
     { symbol: 'grid', value: stats.portalCourses, label: 'Kurse', sub: 'aus dem C@MPUS-Export', href: '#/users?data=courses', tone: 'amber' },
     { symbol: 'calendar', value: stats.calendarEvents, label: 'Kalendertermine', sub: 'gespeicherte ICS-Ereignisse', href: '#/users?data=events', tone: 'cyan' },
@@ -131,6 +133,7 @@ export async function renderOverview() {
           h('div', { className: 'health-strip' }, ...health.map(([label, ok]) => h('span', { className: 'health-chip ' + (ok ? 'ok' : 'warn') }, h('span', { className: 'dot' }), label))),
           h('div', { className: 'field-grid' },
             fieldBox('Datenbank', number(stats.data?.nodes || 0) + ' Knoten'),
+            fieldBox('ILIAS', number(stats.data?.iliasSnapshots || 0) + ' Stände'),
             fieldBox('Kalender', number(stats.data?.events || 0) + ' Termine'),
             fieldBox('Audit', number(stats.data?.audit || 0) + ' Einträge'),
             fieldBox('Modell', config.assistant?.model || '–'),

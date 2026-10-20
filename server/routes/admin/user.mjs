@@ -12,6 +12,7 @@ import {
   clearAdminPortalData,
   deleteAdminUser,
   disconnectAdminCampus,
+  disconnectAdminIlias,
   linkAdminPlatform,
   revokeAdminSession,
   revokeAdminSessions,
@@ -130,6 +131,11 @@ export async function handleUser(request, response, url) {
   }
   if (request.method === 'POST' && action === 'campus/disconnect') {
     send(response, 200, disconnectAdminCampus(userId));
+    return true;
+  }
+  if (request.method === 'POST' && action === 'ilias/disconnect') {
+    disconnectAdminIlias(userId);
+    send(response, 200, adminUserDetail(userId));
     return true;
   }
   if (request.method === 'POST' && action === 'portal/clear') {

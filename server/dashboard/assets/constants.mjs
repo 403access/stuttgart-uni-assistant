@@ -27,6 +27,7 @@ export const AUDIT_LABELS = {
   'platform.touch': 'Plattform-Sync markiert',
   'campus.disconnect': 'C@MPUS getrennt',
   'campus.source': 'C@MPUS-Quelle gesetzt',
+  'ilias.disconnect': 'ILIAS getrennt',
   'portal.clear_study': 'Studiengang-Daten gelöscht',
   'portal.clear_all': 'Portal-Daten gelöscht',
   'calendar.clear': 'Kalender geleert',
@@ -35,5 +36,5 @@ export const AUDIT_LABELS = {
   'sync.cancel': 'Synchronisation abgebrochen',
   'mail.disconnect': 'UniMail getrennt',
 };
-export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'mail.disconnect']);
+export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect']);
 

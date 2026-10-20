@@ -65,6 +65,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="ilias"
+        options={{
+          title: tx(locale, 'tabsLayout.ilias'),
+          tabBarIcon: ({ color }) => <BarIcon symbol="graduationcap.fill" material="school" color={color as string} />,
+        }}
+      />
+      <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',
