@@ -51,7 +51,7 @@ The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8
 
 `GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
-The assistant server also hosts an operator dashboard at `http://127.0.0.1:8787/admin`. Set `DASHBOARD_TOKEN` in `.env` to enable it; without the token the page and every `/v1/admin/*` route stay disabled. The dashboard lists users, sessions, platform links, and per-user C@MPUS data, and can edit, revoke, disconnect, clear, or delete. Details: [docs/engineering/admin-dashboard.md](docs/engineering/admin-dashboard.md).
+The assistant server also hosts an operator dashboard at `http://127.0.0.1:8787/admin`. Set `DASHBOARD_TOKEN` in `.env` to enable it; without the token the page and every `/v1/admin/*` route stay disabled. The dashboard lists and explores users, sessions, platform links, C@MPUS curriculum/course/calendar/call data, audit history, and system health, and can create, edit, revoke, disconnect, clear, start or cancel syncs, export CSV, or delete. Details: [docs/engineering/admin-dashboard.md](docs/engineering/admin-dashboard.md).
 
 When the phone is not on the local network, Expo's tunnel carries the bundle but not the assistant, so the assistant needs a tunnel of its own. Run the three processes in this order, because `EXPO_PUBLIC_*` is read at bundle time:
 

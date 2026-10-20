@@ -179,6 +179,19 @@ export function getDb() {
       account TEXT,
       updated_at TEXT NOT NULL
     );
+    /* Every operator mutation. No foreign key on purpose: the row survives a
+       deleted account and keeps the account name it had at the time. */
+    CREATE TABLE IF NOT EXISTS admin_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      action TEXT NOT NULL,
+      user_id TEXT,
+      account TEXT,
+      detail TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS admin_audit_created ON admin_audit(id DESC);
+    CREATE INDEX IF NOT EXISTS admin_audit_user ON admin_audit(user_id, id DESC);
+    CREATE INDEX IF NOT EXISTS admin_audit_action ON admin_audit(action, id DESC);
 
     /* Tables from the single-user store. Left in place so an old database is not
        rewritten; the application no longer reads or writes them. */

@@ -28,6 +28,24 @@ export function getSyncJob(id) {
   return job ? snapshot(job) : null;
 }
 
+/** Newest first. The admin overview shows live jobs; the map itself is memory only. */
+export function listSyncJobs() {
+  return [...jobs.values()].sort((a, b) => b.id - a.id).map(snapshot);
+}
+
+/** Bound the in-memory history so a long-lived server does not grow forever. */
+function pruneJobs() {
+  const MAX_JOBS = 100;
+  if (jobs.size <= MAX_JOBS) return;
+  const finished = [...jobs.values()]
+    .filter((job) => job.state !== 'running' && job.state !== 'cancelling')
+    .sort((a, b) => a.id - b.id);
+  for (const job of finished) {
+    if (jobs.size <= MAX_JOBS) break;
+    jobs.delete(job.id);
+  }
+}
+
 /** A job is visible only to the account that started it. */
 export function getSyncJobForUser(userId, id) {
   const job = jobs.get(Number(id));
@@ -132,6 +150,7 @@ export async function startSyncJob({ userId = null, studyId, elementId, includeC
     error: null,
   };
   jobs.set(job.id, job);
+  pruneJobs();
   runJob(job, fetchImpl).catch((error) => {
     job.state = 'failed';
     job.finishedAt = new Date().toISOString();

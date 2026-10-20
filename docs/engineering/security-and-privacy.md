@@ -44,10 +44,12 @@ constant-time SHA-256 digest and sets `ua_admin` as an `HttpOnly`,
 HTTPS). The token is never logged, never placed in an `EXPO_PUBLIC_` variable,
 and never stored in the page or `localStorage`.
 
-The dashboard shows account metadata, sessions, platform links, and portal
-counts. It never returns a C@MPUS bearer token, `PSESSIONID`, or a password.
-Destructive actions are confirmed in the UI; an action audit log is not
-implemented yet. Details: [admin-dashboard.md](admin-dashboard.md).
+The dashboard shows account metadata, sessions, platform links, portal counts,
+curriculum/course data, calendar events, and portal call diagnostics. It never
+returns a C@MPUS bearer token, `PSESSIONID`, a password, or an app session
+token. Destructive actions are confirmed in the UI, and every mutation writes
+one row to the `admin_audit` table (account snapshot, action, compact detail,
+timestamp) without credentials. Details: [admin-dashboard.md](admin-dashboard.md).
 
 ## API key
 

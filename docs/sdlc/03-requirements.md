@@ -16,7 +16,7 @@ Requirements use three words on purpose:
 - The app must load one named demonstration record, and must show that name even if the typed account differs.
 - The app must keep language, notes, drafts, and chat on the device.
 - The app must create one server-side user per university identity and mint a bearer session for it, and the device must keep only that session token (keychain/Keystore on native) plus a copy of the public user record. The account screen must show C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail as links on that one account. See [accounts.md](../engineering/accounts.md).
-- The server must offer a token-protected operator dashboard at `/admin` for listing users, inspecting sessions/platforms/C@MPUS state, editing profile fields, revoking sessions, disconnecting C@MPUS, clearing portal data, and deleting an account. Without `DASHBOARD_TOKEN` it must stay disabled. See [admin-dashboard.md](../engineering/admin-dashboard.md).
+- The server must offer a token-protected operator dashboard at `/admin` for listing, creating, editing, and deleting users; inspecting sessions/platforms/C@MPUS state and stored curriculum/course/calendar/call data; revoking sessions; managing platform links; disconnecting C@MPUS; clearing portal data; starting/cancelling sync jobs; reviewing an audit trail; and exporting filtered data. Without `DASHBOARD_TOKEN` it must stay disabled. See [admin-dashboard.md](../engineering/admin-dashboard.md).
 
 ## Platforms
 
