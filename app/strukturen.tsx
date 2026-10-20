@@ -1,24 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { clearSessionLog, mergeCampusLogs, useCampusLog } from '@/src/auth/campus-log';
-import { loadServerTree } from '@/src/auth/campus';
+import type { DeviceTreesCache } from '@/src/campus/hydrate-study';
+import { useCampusSync } from '@/src/campus/use-campus-sync';
 import {
   clearApiLog,
   clearCachedCourses,
   clearCachedStudy,
-  getSyncInfo,
-  saveFullStructure,
-  type CurriculumSyncInfo,
 } from '@/src/campus/db';
 import { ApiEntryDetail } from '@/src/components/api-entry-detail';
 import { ApiHistory } from '@/src/components/api-history';
 import { CurriculumNodeDetail } from '@/src/components/curriculum-node-detail';
 import { CurriculumToolbar } from '@/src/components/curriculum-toolbar';
 import { CurriculumTree } from '@/src/components/curriculum-tree';
-import { StudyCacheCard, type StudyFetchProgress } from '@/src/components/study-cache-card';
+import { StudyCacheCard } from '@/src/components/study-cache-card';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
 import {
@@ -30,7 +28,6 @@ import {
   type CurriculumStatusFilter,
 } from '@/src/domain/curriculum';
 import { curriculumDetail } from '@/src/labels';
-import { campusSyncMutation } from '@/src/query/mutations';
 import { keys } from '@/src/query/keys';
 import { apiLogQuery, deviceTreesQuery, serverCallsQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
@@ -58,13 +55,11 @@ export default function StrukturenScreen() {
   const [statusFilter, setStatusFilter] = useState<CurriculumStatusFilter>('all');
   const [sort, setSort] = useState<CurriculumSortKey>('name');
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-  const [fetching, setFetching] = useState<Record<number, StudyFetchProgress>>({});
   const [fetchError, setFetchError] = useState('');
   const [syncNote, setSyncNote] = useState('');
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
   const [showRoot, setShowRoot] = useState(false);
-  const cancelFetch = useRef<Record<number, boolean>>({});
   const rowRefs = useRef(new Map<number, unknown>());
   const studyIds = useMemo(() => campusStudies.map((study) => study.studyId), [campusStudies]);
   // All device-store reads go through queries; writes set the query data directly.
@@ -76,40 +71,28 @@ export default function StrukturenScreen() {
   const storedLog = useMemo(() => deviceLogQ.data ?? [], [deviceLogQ.data]);
   const serverCalls = useMemo(() => portalCallsQ.data ?? [], [portalCallsQ.data]);
 
-  // Structure sync through the shared mutation; the `fetching` map mirrors
-  // per-study progress for the row buttons.
-  const fetchMutation = useMutation({
-    ...campusSyncMutation(),
-    onMutate: (vars) => {
-      cancelFetch.current[vars.studyId] = false;
-      setFetchError('');
-      setSyncNote('');
-      setFetching((current) => ({ ...current, [vars.studyId]: { fetched: 0, nodeCount: 0, retries: 0 } }));
-    },
-    onSuccess: async (job, vars) => {
-      // Hydrate the local sync cache and the browser from the server snapshot.
-      const tree = await loadServerTree(vars.studyId).catch(() => null);
-      if (tree && tree.nodes.length > 0) {
-        queryClient.setQueryData(keys.deviceNodes(vars.studyId), tree.nodes);
-        await saveFullStructure(vars.studyId, vars.elementId ?? null, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
-        const info = await getSyncInfo(vars.studyId).catch(() => null);
-        updateDeviceTrees((current) => ({ trees: { ...current.trees, [vars.studyId]: tree.nodes }, infos: { ...current.infos, [vars.studyId]: info } }));
-        if (vars.studyId === activeStudyId) setCurriculum(tree.nodes, { studyId: vars.studyId, replace: true });
+  // Structure sync through the shared hook: one job per study, progress and
+  // cancel tracked per study, the store and query caches hydrated for us.
+  const sync = useCampusSync({
+    studyIds,
+    onTree: (studyId, tree) => {
+      // Syncing another study must not replace the curriculum the user is
+      // looking at; the aggregate device-tree cache is already updated.
+      if (studyId === activeStudyId) {
+        setCurriculum(tree.nodes, { studyId, replace: true });
       }
+    },
+    onSuccess: ({ job, vars }) => {
       if (job.failedIds.length > 0) {
         const code = 'campus_failed';
-        setFetchError(
-          tx(locale, 'strukturen.knoten', [job.failedIds.length]),
-        );
+        setFetchError(tx(locale, 'strukturen.knoten', [job.failedIds.length]));
         showFetchAlert(locale, {
           title: tx(locale, 'common.knoten_uebersprungen', [job.failedIds.length]),
           code,
-          onRetry: () => fetchMutation.mutate(vars),
+          onRetry: () => sync.run({ studyId: vars.studyId, elementId: vars.elementId, includeCourses: false }),
         });
       } else if (job.state === 'done' && job.fetched === 0) {
-        setSyncNote(
-          tx(locale, 'strukturen.neuen'),
-        );
+        setSyncNote(tx(locale, 'strukturen.neuen'));
       }
     },
     onError: (caught, vars) => {
@@ -118,33 +101,23 @@ export default function StrukturenScreen() {
       showFetchAlert(locale, {
         title: tx(locale, 'common.struktur_sync'),
         code,
-        onRetry: () => fetchMutation.mutate(vars),
-      });
-    },
-    onSettled: (_result, _error, vars) => {
-      setFetching((current) => {
-        const next = { ...current };
-        delete next[vars.studyId];
-        return next;
+        onRetry: () => sync.run({ studyId: vars.studyId, elementId: vars.elementId, includeCourses: false }),
       });
     },
   });
 
   function fetchStudy(studyId: number, elementId: number | null): void {
-    if (elementId == null || fetching[studyId]) return;
-    fetchMutation.mutate({
-      studyId,
-      elementId,
-      includeCourses: false,
-      onProgress: (update) => setFetching((current) => ({ ...current, [studyId]: { fetched: update.fetched, nodeCount: update.nodeCount, retries: update.retries } })),
-      isCancelled: () => cancelFetch.current[studyId] ?? false,
-    });
+    if (elementId == null) return;
+    setFetchError('');
+    setSyncNote('');
+    sync.run({ studyId, elementId, includeCourses: false });
   }
 
   /** Write a change into the device-tree query cache (and per-key device queries). */
-  function updateDeviceTrees(update: (current: { trees: Record<number, CurriculumNode[]>; infos: Record<number, CurriculumSyncInfo | null> }) => { trees: Record<number, CurriculumNode[]>; infos: Record<number, CurriculumSyncInfo | null> }): void {
-    const base = deviceTreesQ.data ?? { trees: {}, infos: {} };
-    queryClient.setQueryData(keys.deviceTrees(studyIds), update(base));
+  function updateDeviceTrees(update: (current: DeviceTreesCache) => DeviceTreesCache): void {
+    queryClient.setQueryData<DeviceTreesCache>(keys.deviceTrees(studyIds), (current) =>
+      update(current ?? { trees: {}, infos: {} }),
+    );
   }
 
   // A fresh session-log entry means something new landed in either store.
@@ -214,14 +187,14 @@ export default function StrukturenScreen() {
   }
 
   async function clearStudy(studyId: number): Promise<void> {
-    if (fetching[studyId]) return;
+    if (sync.isRunningFor(studyId)) return;
     await clearCachedStudy(studyId).catch(() => undefined);
     updateDeviceTrees((current) => ({ trees: { ...current.trees, [studyId]: [] }, infos: { ...current.infos, [studyId]: null } }));
     if (studyId === activeStudyId) setCurriculum([], { studyId, replace: true });
   }
 
   async function clearAll(): Promise<void> {
-    if (Object.keys(fetching).length > 0) return;
+    if (sync.running) return;
     for (const study of campusStudies) {
       await clearCachedStudy(study.studyId).catch(() => undefined);
       await clearCachedCourses(study.studyId).catch(() => undefined);
@@ -282,12 +255,12 @@ export default function StrukturenScreen() {
               study={study}
               info={infos[study.studyId] ?? null}
               count={trees[study.studyId]?.length ?? 0}
-              busy={fetching[study.studyId]}
+              busy={sync.progressFor(study.studyId) ?? undefined}
               active={study.studyId === effectiveSelectedId}
               locale={locale}
               onSelect={() => selectStudy(study.studyId)}
               onLoad={() => fetchStudy(study.studyId, study.elementId)}
-              onCancel={() => (cancelFetch.current[study.studyId] = true)}
+              onCancel={() => sync.cancel(study.studyId)}
               onClear={() => clearStudy(study.studyId)}
             />
           ))}

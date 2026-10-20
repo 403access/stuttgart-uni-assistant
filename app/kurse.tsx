@@ -1,16 +1,16 @@
 import { Stack, router } from 'expo-router';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { activeStudy, campusDetail, loadServerCourses, loadServerTree } from '@/src/auth/campus';
-import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCoursesFetchedIds, saveCourses, saveFullStructure } from '@/src/campus/db';
+import { activeStudy, campusDetail } from '@/src/auth/campus';
+import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCoursesFetchedIds, saveCourses } from '@/src/campus/db';
+import { useCampusSync } from '@/src/campus/use-campus-sync';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
 import { StudySelector } from '@/src/components/study-selector';
 import { keys } from '@/src/query/keys';
-import { campusSyncMutation } from '@/src/query/mutations';
 import { coursesFetchedIdsQuery, coursesSyncQuery, deviceCoursesQuery, deviceNodesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
@@ -27,15 +27,11 @@ export default function KurseScreen() {
   const { locale, sessionMode, campusStudies, activeStudyId, setCurriculum } = useApp();
   const [failedIds, setFailedIds] = useState<number[]>([]);
   const [saveError, setSaveError] = useState('');
-  const [progress, setProgress] = useState({ fetched: 0, total: 0, courseCount: 0 });
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [sort, setSort] = useState<CourseSort>('title');
-  const cancelRun = useRef(false);
-  // Guards the screen-level sync states only: query data is keyed per study,
-  // so a late sync completion can safely write another study's rows.
-  const loadSeq = useRef(0);
-  const activeSeq = useRef(0);
+  // The device-store queries are keyed per study, so a late sync completion
+  // can safely write another study's rows.
   const queryClient = useQueryClient();
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
   const studyId = study?.studyId ?? null;
@@ -85,75 +81,23 @@ export default function KurseScreen() {
     setSort('title');
     setFailedIds([]);
     setSaveError('');
-    setProgress({ fetched: 0, total: 0, courseCount: 0 });
   }
 
-  async function loadAll(): Promise<void> {
-    if (!study || running) return;
-    loadSeq.current += 1;
-    const seq = loadSeq.current;
-    activeSeq.current = seq;
-    const myStudyId = study.studyId;
-    const rootElementId = study.elementId;
-    const current = () => loadSeq.current === seq;
-    cancelRun.current = false;
-    setFailedIds([]);
-    setSaveError('');
-    setProgress({ fetched: 0, total: 0, courseCount: 0 });
-    loadMutation.mutate({
-      studyId: myStudyId,
-      elementId: rootElementId ?? undefined,
-      includeCourses: true,
-      onProgress: (update) => {
-        if (current()) setProgress({ fetched: update.fetched, total: update.fetched, courseCount: update.courseCount });
-      },
-      isCancelled: () => cancelRun.current,
-    });
-  }
-
-  // Course sync through the shared mutation. The screen-level states stay
-  // local; the store writes go through the device-store query keys, so a
-  // late completion can safely write another study's rows.
-  const loadMutation = useMutation({
-    ...campusSyncMutation(),
-    onSuccess: async (job, vars) => {
-      const myStudyId = vars.studyId;
-      const current = () => loadSeq.current === activeSeq.current;
-      // Hydrate the local sync cache from the server snapshots.
-      const [tree, remote] = await Promise.all([
-        loadServerTree(myStudyId).catch(() => null),
-        loadServerCourses(myStudyId).catch(() => null),
-      ]);
-      if (tree && tree.nodes.length > 0) {
-        queryClient.setQueryData(keys.deviceNodes(myStudyId), tree.nodes);
-        if (current()) setCurriculum(tree.nodes, { studyId: myStudyId, replace: true });
-        await saveFullStructure(myStudyId, vars.elementId ?? null, tree.nodes, tree.expandedIds, tree.sync?.complete ?? false).catch(() => undefined);
+  // Course sync through the shared hook: job loop, hydration and cache writes
+  // are shared with the structure screens; this screen adds the course copy,
+  // the progress read-out and its own retry.
+  const sync = useCampusSync({
+    onTree: (treeStudyId, tree, { isLatest }) => {
+      // Only the newest run may drive the curriculum, and only while that
+      // study is still the selected one.
+      if (isLatest && treeStudyId === studyId) setCurriculum(tree.nodes, { studyId: treeStudyId, replace: true });
+    },
+    onSuccess: ({ job, vars, isLatest, saveError: cacheError }) => {
+      if (!isLatest) return;
+      if (cacheError) {
+        setSaveError(tx(locale, 'kurse.kurse_konnten', [cacheError]));
+        showToast({ tone: 'error', title: tx(locale, 'kurse.cache_speichern'), message: cacheError });
       }
-      const storedCourses = await loadCachedCourses(myStudyId).catch(() => []);
-      const storedFetched = await loadCoursesFetchedIds(myStudyId).catch(() => []);
-      const merged = new Map(storedCourses.map((course) => [course.id, course]));
-      for (const course of remote?.courses ?? []) {
-        if (!merged.has(course.id)) merged.set(course.id, { ...course });
-      }
-      const all = [...merged.values()];
-      const allFetched = [...new Set([...storedFetched, ...(remote?.fetchedElementIds ?? [])])];
-      const complete = job.state === 'done' && job.failedIds.length === 0 && (remote?.sync?.complete ?? false);
-      try {
-        await saveCourses(myStudyId, all, allFetched, complete);
-      } catch (caught) {
-        const reason = caught instanceof Error ? caught.message : 'unbekannt';
-        if (current()) {
-          setSaveError(tx(locale, 'kurse.kurse_konnten', [reason]));
-          showToast({ tone: 'error', title: tx(locale, 'kurse.cache_speichern'), message: reason });
-        }
-      }
-      // The device-store keys own the list: write the fresh rows, the
-      // queries pick them up — no matter whether another study is open.
-      queryClient.setQueryData(keys.deviceCourses(myStudyId), all);
-      queryClient.setQueryData(keys.coursesFetchedIds(myStudyId), allFetched);
-      queryClient.setQueryData(keys.coursesSync(myStudyId), await getCoursesSyncInfo(myStudyId).catch(() => null));
-      queryClient.invalidateQueries({ queryKey: keys.serverCourses(myStudyId) });
-      if (!current()) return;
       setFailedIds(job.failedIds);
       if (job.state === 'cancelled') {
         setSaveError(tx(locale, 'kurse.abgebrochen'));
@@ -161,12 +105,12 @@ export default function KurseScreen() {
         showFetchAlert(locale, {
           title: tx(locale, 'kurse.elemente_uebersprungen', [job.failedIds.length]),
           code: 'campus_failed',
-          onRetry: loadAll,
+          onRetry: () => sync.run({ studyId: vars.studyId, elementId: vars.elementId, includeCourses: true }),
         });
       }
     },
-    onError: (caught) => {
-      if (loadSeq.current !== activeSeq.current) return;
+    onError: (caught, vars, { isLatest }) => {
+      if (!isLatest) return;
       const code = caught instanceof Error ? caught.message : 'sync_failed';
       const detail = campusDetail(caught);
       setSaveError(
@@ -176,11 +120,19 @@ export default function KurseScreen() {
         title: tx(locale, 'kurse.kurs_sync_fehlgeschlagen'),
         code,
         detail: detail || undefined,
-        onRetry: loadAll,
+        onRetry: () => sync.run({ studyId: vars.studyId, elementId: vars.elementId, includeCourses: true }),
       });
     },
   });
-  const running = loadMutation.isPending;
+  const running = sync.running;
+  const progress = studyId !== null ? sync.progressFor(studyId) : null;
+
+  function loadAll(): void {
+    if (!study || running) return;
+    setFailedIds([]);
+    setSaveError('');
+    sync.run({ studyId: study.studyId, elementId: study.elementId, includeCourses: true });
+  }
 
   async function clearCourseCache(): Promise<void> {
     if (studyId === null || running) return;
@@ -251,7 +203,7 @@ export default function KurseScreen() {
                 </View>
               </>
             ) : null}
-            {running ? (
+            {running && progress ? (
               <Text style={{ color: colors.blue, fontWeight: '700' }}>
                 {tx(locale, 'kurse.abfragen', [progress.fetched, progress.courseCount])}
               </Text>
@@ -277,7 +229,7 @@ export default function KurseScreen() {
             ) : null}
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {running ? (
-                <Button secondary label={tx(locale, 'common.abbrechen')} onPress={() => (cancelRun.current = true)} />
+                <Button secondary label={tx(locale, 'common.abbrechen')} onPress={() => sync.cancel(study.studyId)} />
               ) : study.elementId != null ? (
                 <Button
                   label={fetchedIds.length > 0 ? tx(locale, 'common.weiter') : tx(locale, 'kurse.alle')}
