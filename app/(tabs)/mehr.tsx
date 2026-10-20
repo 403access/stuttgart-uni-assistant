@@ -14,7 +14,7 @@ import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -88,6 +88,12 @@ export default function MoreScreen() {
                 detail: tx(locale, 'dev.state.detail'),
                 href: '/dev/state' as CampusHref,
                 tags: ['dev', 'zustand', 'state', 'storage', 'asyncstorage', 'sitzung', 'session', 'debug', 'diagnose'],
+              },
+              {
+                title: tx(locale, 'dev.nfc.titel'),
+                detail: tx(locale, 'dev.nfc.detail'),
+                href: '/dev/nfc' as CampusHref,
+                tags: ['dev', 'nfc', 'karte', 'card', 'ausweis', 'student id', 'studierendenausweis', 'chip', 'uid', 'ndef', 'scan', 'lesen', 'read'],
               },
               {
                 title: tx(locale, 'common.schnittstelle'),

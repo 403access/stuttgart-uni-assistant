@@ -78,6 +78,7 @@ profiles **inside Xcode** rather than in the portal.
 | A team is already wired into the generated project: `DEVELOPMENT_TEAM = QML5B57EMH`, automatic signing, `Apple Development` | `ios/UniversityAssistant.xcodeproj/project.pbxproj` |
 | No Packet Tunnel extension target exists | `ios/`, searched for `OVPNEXT` and `PacketTunnelProvider` |
 | `plugins/withVpnTunnel.js` writes `com.apple.developer.networking.networkextension` and `com.apple.security.application-groups` **only** when `EXPO_ENABLE_IOS_VPN_ENTITLEMENTS=1` | `plugins/withVpnTunnel.js` |
+| `plugins/withNfc.js` writes `com.apple.developer.nfc.readersession.formats` **only** when `EXPO_ENABLE_IOS_NFC=1` | `plugins/withNfc.js` |
 | The JS side already addresses an extension that does not exist: `iosExtensionBundleIdentifier` = `<bundle id>.OVPNEXT` | `src/vpn/engine-config.ts`, `src/vpn/engine-openvpn.ts` |
 
 The empty entitlements file is not a mistake to fix. It is the reason the
@@ -162,6 +163,14 @@ The VPN is unaffected either way: there is no iOS tunnel target, so the
 entitlements are inert. See [vpn-tunnel.md](vpn-tunnel.md) — the extension
 target is still open work, and the entitlement needs Apple's grant once a paid
 membership exists.
+
+The NFC Tag Reading entitlement follows the same rule for the same reason. A
+prebuild that carried it produced `Personal development teams do not support the
+NFC Tag Reading capability` on this machine, so `plugins/withNfc.js` leaves it
+out unless `EXPO_ENABLE_IOS_NFC=1` is set. Enabling it also needs **NFC Tag
+Reading** turned on for the App ID in the developer portal; automatic signing
+does not add that capability to an existing App ID. The dev screen and the
+Android path work without it. See [dev-tools.md](dev-tools.md#nfc-card-devnfc).
 
 ## React Native 0.88 prebuilt and the dev-client network inspector
 

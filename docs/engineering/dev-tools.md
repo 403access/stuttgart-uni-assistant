@@ -12,6 +12,7 @@ development builds. It contains:
 | --- | --- | --- |
 | **Onboarding** | `/dev/onboarding` | First-run values and a next-launch override |
 | **Lokaler Zustand** | `/dev/state` | Session summary, local counts, and the raw AsyncStorage payload |
+| **NFC-Karte** | `/dev/nfc` | Read the student ID card over NFC |
 | **Schnittstelle** | `/api` | The existing server-route replay screen |
 
 The entry is registered through the normal `InfoRow` list, so the settings search
@@ -85,6 +86,21 @@ A read-only snapshot for diagnosing the app record:
 The raw payload includes user-visible notes and the demonstration record, so the
 screen is development-only. It does not read `expo-secure-store` or print the
 bearer token.
+
+## NFC card (`/dev/nfc`)
+
+Reads the student ID card through `react-native-nfc-manager` and shows the tag
+UID (hex and decimal), technology, NDEF records, and the raw tag event. It is
+read-only and never logs or uploads what it reads.
+
+Most student cards are MIFARE DESFire or similar, where useful data lives in
+key-protected applications. Without the university's keys the public UID,
+technology, and NDEF payload are all a phone can see.
+
+Android works without extra configuration. iOS needs the NFC Tag Reading
+capability, which is gated behind `EXPO_ENABLE_IOS_NFC=1` and must also be
+enabled for the App ID. Build steps, limits, and the platform matrix are in
+[nfc-card.md](nfc-card.md).
 
 ## Adding another diagnostic
 

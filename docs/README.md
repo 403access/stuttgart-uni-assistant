@@ -62,7 +62,8 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/campus-calendar-export.md](engineering/campus-calendar-export.md) | C@MPUS calendar import (export mask): observed form fields, formats, the download/sync route, and the in-app import history |
 | [engineering/campus-browser-login.md](engineering/campus-browser-login.md) | Beta sign-in through the in-app C@MPUS browser: harvest, validation, failure modes |
 | [engineering/onboarding.md](engineering/onboarding.md) | Post-sign-in onboarding: the gate, the biometrics page and App Lock, storage, settings, native build requirements, and the remaining planned steps |
-| [engineering/dev-tools.md](engineering/dev-tools.md) | Development-only Dev category: onboarding diagnostics and next-launch override, local state snapshot, raw AsyncStorage |
+| [engineering/dev-tools.md](engineering/dev-tools.md) | Development-only Dev category: onboarding diagnostics and next-launch override, local state snapshot, NFC card reader, raw AsyncStorage |
+| [engineering/nfc-card.md](engineering/nfc-card.md) | The read-only student ID card reader: readable values, DESFire limits, platform configuration, and the iOS entitlement flag |
 | [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
 | [engineering/tanstack-query.md](engineering/tanstack-query.md) | Query client wiring, typed key factory, shared sync mutation, device-cache write-back |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |

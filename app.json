@@ -74,7 +74,8 @@
             "networkInspector": false
           }
         }
-      ]
+      ],
+      "./plugins/withNfc"
     ],
     "experiments": {
       "typedRoutes": true
