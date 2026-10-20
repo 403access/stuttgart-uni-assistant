@@ -71,7 +71,13 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   assert.match(html, /DASHBOARD_TOKEN/);
   assert.match(html, /\/admin\/assets\/styles\.css/);
   assert.match(html, /\/admin\/assets\/app\.mjs/);
+  assert.match(html, /\/admin\/assets\/favicon\.png/);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/);
+
+  const favicon = await call('/admin/assets/favicon.png');
+  assert.equal(favicon.status, 200);
+  assert.match(favicon.headers.get('content-type'), /image\/png/);
+  assert.equal((await favicon.arrayBuffer()).byteLength > 0, true);
 
   const styles = await call('/admin/assets/styles.css');
   assert.equal(styles.status, 200);
