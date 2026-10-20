@@ -72,6 +72,14 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="quiz"
+        options={{
+          title: tx(locale, 'quiz.title'),
+          tabBarAccessibilityLabel: tx(locale, 'quiz.title'),
+          tabBarIcon: ({ color }) => <BarIcon symbol="questionmark.circle.fill" material="quiz" color={color as string} />,
+        }}
+      />
+      <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',

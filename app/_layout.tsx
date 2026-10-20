@@ -12,6 +12,7 @@ import { AppLock } from '@/src/components/app-lock';
 import { ToastHost } from '@/src/components/toast';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
+import { QuizProgressProvider } from '@/src/quiz/progress';
 import { QueryProvider } from '@/src/query/client';
 import { AppStateProvider, useApp } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
@@ -33,7 +34,9 @@ export default function RootLayout() {
       <OnboardingProvider>
         <QueryProvider>
           <KeyboardProvider>
-            <Gate />
+            <QuizProgressProvider>
+              <Gate />
+            </QuizProgressProvider>
             <ToastHost />
           </KeyboardProvider>
         </QueryProvider>
