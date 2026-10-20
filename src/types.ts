@@ -1,5 +1,7 @@
 export type Locale = 'de' | 'en';
 
+export type ThemeMode = 'light' | 'dark';
+
 export type Localized = { de: string; en: string };
 
 export type Campus = 'vaihingen' | 'stadtmitte';
@@ -329,6 +331,7 @@ export interface BulkCourse extends CampusCourse {
 
 export interface PersistedState {
   locale: Locale;
+  theme: ThemeMode;
   user: UserAccount | null;
   sessionAccount: string | null;
   sessionMode: SessionMode | null;

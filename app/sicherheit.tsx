@@ -2,14 +2,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { Button, Card } from '@/src/components/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -97,10 +97,10 @@ export default function SecurityScreen() {
       <Stack.Screen
         options={{
           title: tx(locale, 'sicherheit.titel'),
-          headerStyle: { backgroundColor: colors.blue },
+          headerStyle: { backgroundColor: colors.brand },
           headerTintColor: '#FFFFFF',
           headerTitleStyle: { color: '#FFFFFF', fontWeight: '700', fontSize: 17 },
-          contentStyle: { backgroundColor: colors.blue },
+          contentStyle: { backgroundColor: colors.brand },
         }}
       />
       <ScrollView
@@ -161,8 +161,8 @@ export default function SecurityScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.blue },
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand },
   scroll: { flex: 1 },
   content: { flexGrow: 1 },
   hero: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 30, alignItems: 'center', gap: 10, overflow: 'hidden' },
@@ -212,4 +212,4 @@ const styles = StyleSheet.create({
   detail: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   after: { gap: 10 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-});
+}));

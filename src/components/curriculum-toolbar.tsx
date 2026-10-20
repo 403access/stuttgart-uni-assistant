@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Pill, SearchField } from '@/src/components/ui';
 import { curriculumSortOrder, type CurriculumSortKey, type CurriculumStatusFilter } from '@/src/domain/curriculum';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -114,10 +114,10 @@ export function CurriculumToolbar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   search: { flex: 1, minWidth: 160 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   filterPanel: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 10, gap: 8 },
   filterTitle: { color: colors.blue, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
   filterReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
-});
+}));

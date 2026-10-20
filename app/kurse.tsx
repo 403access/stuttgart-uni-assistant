@@ -13,7 +13,7 @@ import { keys } from '@/src/query/keys';
 import { campusSyncMutation } from '@/src/query/mutations';
 import { coursesFetchedIdsQuery, coursesSyncQuery, deviceCoursesQuery, deviceNodesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
 
 type CourseSort = 'title' | 'type' | 'time';
@@ -296,7 +296,7 @@ export default function KurseScreen() {
                 onChangeText={setQuery}
                 placeholder={tx(locale, 'kurse.titel')}
                 placeholderTextColor={colors.mute}
-                style={inputStyle}
+                style={{ ...inputStyle }}
               />
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <Pressable onPress={() => setTypeFilter('all')}>
@@ -344,7 +344,7 @@ export default function KurseScreen() {
   );
 }
 
-const inputStyle = {
+const inputStyle = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -353,4 +353,4 @@ const inputStyle = {
   paddingVertical: 12,
   fontSize: 16,
   color: colors.anthracite,
-};
+}));

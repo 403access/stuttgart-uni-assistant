@@ -7,7 +7,7 @@
  */
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,7 +27,7 @@ import { Button, Mark } from '@/src/components/ui';
 import { student } from '@/src/data';
 import { keys } from '@/src/query/keys';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function LoginScreen() {
@@ -287,8 +287,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.blue },
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand },
   hero: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 28, gap: 8 },
   brand: { color: '#FFFFFF', fontSize: 36, fontWeight: '700', letterSpacing: -0.8 },
   heroText: { color: '#D6E4F5', fontSize: 16, lineHeight: 22 },
@@ -300,4 +300,4 @@ const styles = StyleSheet.create({
   deprecated: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.mist, borderRadius: 14, padding: 12, gap: 6 },
   deprecatedText: { color: colors.inkSoft, fontSize: 13, lineHeight: 19 },
   deprecatedLink: { color: colors.blue, fontSize: 14, fontWeight: '700' },
-});
+}));

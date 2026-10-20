@@ -23,7 +23,7 @@ import {
 import { Button, Card, FieldLabel, Pill, Screen } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { MailFolder, MailMessage, MailStatus } from '@/src/types';
 
@@ -676,7 +676,7 @@ export default function MailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   controlsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stickyBar: {
     backgroundColor: colors.paper,
@@ -804,4 +804,4 @@ const styles = StyleSheet.create({
   subjectSeen: { fontWeight: '600', color: colors.inkSoft },
   from: { color: colors.inkSoft, fontSize: 14 },
   meta: { color: colors.inkSoft, fontSize: 12 },
-});
+}));

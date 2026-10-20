@@ -10,7 +10,7 @@ import { clearLogin } from '@/src/auth/vault';
 import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
 import { platformName } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { AccountPlatformId, PlatformId, PlatformLink } from '@/src/types';
 
@@ -163,7 +163,7 @@ export default function AccountScreen() {
   );
 }
 
-const styles = {
+const styles = themedStyles((colors) => ({
   avatar: {
     width: 56,
     height: 56,
@@ -173,4 +173,4 @@ const styles = {
     justifyContent: 'center' as const,
   },
   avatarText: { color: colors.blue, fontSize: 20, fontWeight: '700' as const },
-} as const;
+}));

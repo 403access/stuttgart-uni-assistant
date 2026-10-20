@@ -1,5 +1,5 @@
 import type { RefObject } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,7 +7,7 @@ import { CAMPUS_START_URL } from '@/src/auth/campus-browser';
 import { ErrorText } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button } from '@/src/components/ui';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -97,11 +97,11 @@ export function CampusBrowserModal({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   shell: { flex: 1, backgroundColor: colors.paper },
   bar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
   title: { color: colors.anthracite, fontSize: 17, fontWeight: '700' },
   close: { color: colors.blue, fontSize: 20, fontWeight: '700' },
   hint: { color: colors.inkSoft, fontSize: 13, lineHeight: 18, paddingHorizontal: 16, paddingBottom: 8 },
   diag: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo', paddingBottom: 8 },
-});
+}));

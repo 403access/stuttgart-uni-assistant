@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -69,7 +69,7 @@ export function MailBody({ text, locale }: { text: string; locale: Locale }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   body: { gap: 8 },
   bodyText: { color: colors.anthracite, fontSize: 15, lineHeight: 22 },
   quote: {
@@ -81,4 +81,4 @@ const styles = StyleSheet.create({
   quoteToggleText: { color: colors.blue, fontSize: 13, fontWeight: '700' },
   quoteBody: { color: colors.inkSoft, fontSize: 14, lineHeight: 21, marginTop: 4 },
   pressed: { opacity: 0.72 },
-});
+}));

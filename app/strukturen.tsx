@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -34,7 +34,7 @@ import { campusSyncMutation } from '@/src/query/mutations';
 import { keys } from '@/src/query/keys';
 import { apiLogQuery, deviceTreesQuery, serverCallsQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { CurriculumNode } from '@/src/types';
 
@@ -407,11 +407,11 @@ export default function StrukturenScreen() {
   );
 }
 
-const pageStyles = StyleSheet.create({
+const pageStyles = themedStyles((colors) => ({
   columns: { flexDirection: 'row', gap: 16, flexWrap: 'wrap' },
   columnsWeb: { flex: 1, flexWrap: 'nowrap', minHeight: 0 },
   columnMain: { flex: 2, minWidth: 280, gap: 14 },
   columnSide: { flex: 1, minWidth: 280, gap: 14 },
   columnDetail: { flex: 1, minWidth: 260, gap: 14 },
   columnScroll: { minHeight: 0, overflowX: 'hidden', overflowY: 'scroll' },
-});
+}));

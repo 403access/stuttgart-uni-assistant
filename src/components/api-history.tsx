@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Card, Muted, Pill, SearchField } from '@/src/components/ui';
 import type { CampusLogEntry } from '@/src/auth/campus-log';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { breakable, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -126,7 +126,7 @@ export function ApiHistory({ entries, locale, selectedUid, onSelect }: ApiHistor
   );
 }
 
-const styles = {
+const styles = themedStyles((colors) => ({
   pills: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8 },
   selected: { borderWidth: 2, borderColor: colors.blue, borderRadius: 20 },
   head: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 8 },
@@ -135,4 +135,4 @@ const styles = {
   time: { color: colors.inkSoft, fontSize: 13 },
   ids: { color: colors.inkSoft, fontSize: 13 },
   failure: { color: colors.danger, fontSize: 13, fontWeight: '700' as const },
-};
+}));

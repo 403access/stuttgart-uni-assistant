@@ -6,7 +6,7 @@ import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
 import { modules } from '@/src/data';
 import { suggestRecognitionTarget } from '@/src/domain/plan';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { pick, tx, uid } from '@/src/text';
 
 export default function RecognitionScreen() {
@@ -121,12 +121,12 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{label}</Text>
-      <TextInput value={value} onChangeText={onChange} style={input} placeholderTextColor={colors.mute} />
+      <TextInput value={value} onChangeText={onChange} style={{ ...input }} placeholderTextColor={colors.mute} />
     </View>
   );
 }
 
-const input = {
+const input = themedStyle((colors) => ({
   borderWidth: 1,
   borderColor: colors.line,
   borderRadius: 12,
@@ -135,4 +135,4 @@ const input = {
   color: colors.anthracite,
   fontSize: 16,
   backgroundColor: colors.paper,
-};
+}));

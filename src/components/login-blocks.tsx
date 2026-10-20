@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import type { Locale } from '@/src/types';
 
 /**
@@ -63,7 +63,7 @@ export function LanguagePicker({ locale, setLocale }: { locale: Locale; setLocal
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   section: { color: colors.anthracite, fontSize: 18, fontWeight: '700', marginTop: 8 },
   notice: { backgroundColor: colors.lightSoft, color: colors.anthracite, borderRadius: 14, padding: 12, lineHeight: 20 },
   field: { gap: 4 },
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderRadius: 999, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: colors.paper },
-  chipOn: { backgroundColor: colors.blue, borderColor: colors.blue },
+  chipOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   chipText: { color: colors.anthracite, fontWeight: '700', fontSize: 13 },
   chipTextOn: { color: '#FFFFFF' },
-});
+}));

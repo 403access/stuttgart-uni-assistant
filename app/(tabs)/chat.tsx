@@ -8,7 +8,7 @@ import { buildLocalAnswer, renderFacts } from '@/src/assistant/answer';
 import { buildAnswerInput, bundledDocument } from '@/src/assistant/context';
 import { askGrok } from '@/src/assistant/remote';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { tx, uid } from '@/src/text';
 
 function one(value: string | string[] | undefined): string {
@@ -103,14 +103,14 @@ export default function ChatScreen() {
         {messages.length === 0 ? (
           <View style={{ gap: 8 }}>
             {suggestions.map((item) => (
-              <Pressable key={item} onPress={() => send(item)} style={chip}>
+              <Pressable key={item} onPress={() => send(item)} style={{ ...chip }}>
                 <Text style={{ color: colors.blue, fontWeight: '700' }}>{item}</Text>
               </Pressable>
             ))}
           </View>
         ) : (
           messages.map((message) => (
-            <View key={message.id} style={[bubble, message.role === 'user' ? userBubble : assistantBubble]}>
+            <View key={message.id} style={[bubble, message.role === 'user' ? { ...userBubble } : { ...assistantBubble }]}>
               <Text style={{ color: message.role === 'user' ? '#FFFFFF' : colors.anthracite, fontSize: 15, lineHeight: 21 }}>{message.text}</Text>
               {message.role === 'assistant' ? (
                 <Text style={{ color: colors.inkSoft, fontSize: 12, marginTop: 8 }}>
@@ -130,10 +130,10 @@ export default function ChatScreen() {
             onChangeText={setDraft}
             placeholder={tx(locale, 'tabsChat.frage')}
             placeholderTextColor={colors.mute}
-            style={[input, { flex: 1 }]}
+            style={[{ ...input }, { flex: 1 }]}
             multiline
           />
-          <Pressable onPress={() => send(draft)} style={sendButton}>
+          <Pressable onPress={() => send(draft)} style={{ ...sendButton }}>
             <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{tx(locale, 'common.senden')}</Text>
           </Pressable>
         </View>
@@ -142,11 +142,11 @@ export default function ChatScreen() {
   );
 }
 
-const chip = { backgroundColor: colors.paper, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 12 };
+const chip = themedStyle((colors) => ({ backgroundColor: colors.paper, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 12 }));
 const bubble = { borderRadius: 16, padding: 12, maxWidth: '100%' as const };
-const userBubble = { backgroundColor: colors.blue, alignSelf: 'flex-end' as const };
-const assistantBubble = { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, alignSelf: 'flex-start' as const };
-const input = {
+const userBubble = themedStyle((colors) => ({ backgroundColor: colors.brand, alignSelf: 'flex-end' as const }));
+const assistantBubble = themedStyle((colors) => ({ backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, alignSelf: 'flex-start' as const }));
+const input = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -156,5 +156,5 @@ const input = {
   fontSize: 16,
   color: colors.anthracite,
   maxHeight: 120,
-};
-const sendButton = { backgroundColor: colors.blue, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 };
+}));
+const sendButton = themedStyle((colors) => ({ backgroundColor: colors.brand, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 }));

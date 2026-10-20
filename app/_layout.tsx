@@ -3,7 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState as NativeAppState, StyleSheet, View } from 'react-native';
+import { AppState as NativeAppState, Platform, StyleSheet, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { getActiveAuthToken } from '@/src/auth/session';
@@ -32,7 +32,6 @@ export default function RootLayout() {
       <OnboardingProvider>
         <QueryProvider>
           <KeyboardProvider>
-            <StatusBar style="dark" />
             <Gate />
             <ToastHost />
           </KeyboardProvider>
@@ -43,7 +42,7 @@ export default function RootLayout() {
 }
 
 function Gate() {
-  const { ready, sessionAccount, authToken, locale, signOut } = useApp();
+  const { ready, sessionAccount, authToken, locale, theme, signOut } = useApp();
   const {
     ready: onboardingReady,
     completed: onboardingCompleted,
@@ -146,8 +145,17 @@ function Gate() {
     if (settled) SplashScreen.hideAsync().catch(() => undefined);
   }, [settled]);
 
+  // The web document sits behind the app shell; keep it on the active
+  // background so overscroll and route transitions do not flash light.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    document.documentElement.style.backgroundColor = colors.mist;
+    document.body.style.backgroundColor = colors.mist;
+  }, [theme]);
+
   return (
     <View style={{ flex: 1, opacity: settled ? 1 : 0 }}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           contentStyle: { backgroundColor: colors.mist },

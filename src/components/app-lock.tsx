@@ -1,13 +1,13 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authenticateWithBiometrics } from '@/src/auth/biometrics';
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { Button, Mark } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -76,8 +76,8 @@ export function AppLock({ onUnlock, onSignOut }: { onUnlock: () => void; onSignO
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.blue, justifyContent: 'center', paddingHorizontal: 24, gap: 24 },
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand, justifyContent: 'center', paddingHorizontal: 24, gap: 24 },
   hero: { alignItems: 'center', gap: 10 },
   markTile: {
     width: 72,
@@ -100,4 +100,4 @@ const styles = StyleSheet.create({
   text: { color: colors.inkSoft, fontSize: 15, lineHeight: 21 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   actions: { gap: 10, marginTop: 4 },
-});
+}));

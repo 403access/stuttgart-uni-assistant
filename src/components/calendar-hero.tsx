@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { activeStudy } from '@/src/auth/campus';
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { formatDay, formatTime, shortMonths, tx, weekdays } from '@/src/text';
 import type { BulkCourse } from '@/src/types';
 
@@ -102,9 +102,9 @@ export function CalendarHero() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   hero: {
-    backgroundColor: colors.anthracite,
+    backgroundColor: colors.inverse,
     borderRadius: 20,
     padding: 18,
     overflow: 'hidden',
@@ -145,4 +145,4 @@ const styles = StyleSheet.create({
   heroNextKicker: { color: '#9FC0E8', fontSize: 11, fontWeight: '700', letterSpacing: 1.2, textTransform: 'uppercase' },
   heroNextTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '700', lineHeight: 22 },
   heroNextMeta: { color: '#D7DBDE', fontSize: 13 },
-});
+}));

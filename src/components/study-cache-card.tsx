@@ -2,7 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Button, Card } from '@/src/components/ui';
 import type { CurriculumSyncInfo } from '@/src/campus/db';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { CampusStudy, Locale } from '@/src/types';
 
@@ -68,9 +68,9 @@ export function StudyCacheCard({ study, info, count, busy, active, locale, onSel
   );
 }
 
-const styles = {
+const styles = themedStyles((colors) => ({
   name: { color: colors.anthracite, fontSize: 17, fontWeight: '700' as const },
   meta: { color: colors.inkSoft, fontSize: 13 },
   actions: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, alignItems: 'center' as const },
   busy: { color: colors.blue, fontWeight: '700' as const },
-};
+}));

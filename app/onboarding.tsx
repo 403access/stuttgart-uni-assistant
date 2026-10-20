@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
@@ -9,7 +9,7 @@ import { Button, Mark } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -130,8 +130,8 @@ function Point({ text }: { text: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.blue },
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand },
   scroll: { flex: 1 },
   content: { flexGrow: 1 },
   hero: { paddingHorizontal: 24, paddingBottom: 30, gap: 10, overflow: 'hidden' },
@@ -213,4 +213,4 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, color: colors.danger, fontSize: 13, lineHeight: 19 },
   actions: { gap: 10, marginTop: 4 },
   hint: { color: colors.mute, fontSize: 13, lineHeight: 19, textAlign: 'center' },
-});
+}));

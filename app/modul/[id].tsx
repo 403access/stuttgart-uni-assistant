@@ -7,7 +7,7 @@ import { documents, exams, modules, people, places, reviews as seedReviews, tuto
 import { lockReason } from '@/src/domain/plan';
 import { moduleStatus, sessionKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { formatGrade, pick, tx, uid, weekdays } from '@/src/text';
 
 function one(value: string | string[] | undefined): string {
@@ -142,16 +142,16 @@ export default function ModuleScreen() {
       ))}
       <Card>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'modul.eigene')}</Text>
-        <TextInput value={rating} onChangeText={setRating} keyboardType="decimal-pad" style={input} placeholder="1–5" placeholderTextColor={colors.mute} />
-        <TextInput value={workload} onChangeText={setWorkload} keyboardType="decimal-pad" style={input} placeholder={tx(locale, 'modul.stunden')} placeholderTextColor={colors.mute} />
-        <TextInput value={comment} onChangeText={setComment} multiline style={[input, { minHeight: 80 }]} placeholder={tx(locale, 'modul.tipp')} placeholderTextColor={colors.mute} />
+        <TextInput value={rating} onChangeText={setRating} keyboardType="decimal-pad" style={{ ...input }} placeholder="1–5" placeholderTextColor={colors.mute} />
+        <TextInput value={workload} onChangeText={setWorkload} keyboardType="decimal-pad" style={{ ...input }} placeholder={tx(locale, 'modul.stunden')} placeholderTextColor={colors.mute} />
+        <TextInput value={comment} onChangeText={setComment} multiline style={[{ ...input }, { minHeight: 80 }]} placeholder={tx(locale, 'modul.tipp')} placeholderTextColor={colors.mute} />
         <Button label={tx(locale, 'modul.diesem')} onPress={publish} />
       </Card>
     </Screen>
   );
 }
 
-const input = {
+const input = themedStyle((colors) => ({
   borderWidth: 1,
   borderColor: colors.line,
   borderRadius: 12,
@@ -159,4 +159,4 @@ const input = {
   paddingVertical: 10,
   color: colors.anthracite,
   fontSize: 16,
-};
+}));

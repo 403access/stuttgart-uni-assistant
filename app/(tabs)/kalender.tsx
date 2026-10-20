@@ -4,12 +4,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { SymbolView } from 'expo-symbols';
 import { useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle, themedStyles } from '@/src/theme';
 import { formatDay, formatTime, shortMonths, tx, weekdays } from '@/src/text';
 import type { BulkCourse, CampusStudy } from '@/src/types';
 
@@ -29,16 +29,17 @@ function isAssigned(status: string): boolean {
   return /fixplatz/i.test(status);
 }
 
-const palettes = [
-  { bg: colors.blueSoft, fg: colors.blue, bar: colors.blue },
-  { bg: colors.successSoft, fg: colors.success, bar: colors.success },
-  { bg: colors.warningSoft, fg: colors.warning, bar: colors.warning },
-  { bg: colors.dangerSoft, fg: colors.danger, bar: colors.danger },
-  { bg: colors.lightSoft, fg: colors.blue, bar: colors.light },
-];
-
-/** Deterministic color per course type. */
+/** Deterministic color per course type. Reads the palette at render time so it follows the theme. */
 function paletteFor(type: string): { bg: string; fg: string; bar: string } {
+  // Rebuilt per call instead of at module load: the palette object is mutable
+  // and switches with the active theme.
+  const palettes = [
+    { bg: colors.blueSoft, fg: colors.blue, bar: colors.blue },
+    { bg: colors.successSoft, fg: colors.success, bar: colors.success },
+    { bg: colors.warningSoft, fg: colors.warning, bar: colors.warning },
+    { bg: colors.dangerSoft, fg: colors.danger, bar: colors.danger },
+    { bg: colors.lightSoft, fg: colors.blue, bar: colors.light },
+  ];
   let hash = 0;
   for (let index = 0; index < type.length; index += 1) hash = (hash * 31 + type.charCodeAt(index)) >>> 0;
   return palettes[hash % palettes.length];
@@ -190,7 +191,7 @@ export default function KalenderScreen() {
                 placeholder={tx(locale, 'common.suchen')}
                 placeholderTextColor={colors.mute}
                 returnKeyType="search"
-                style={[inputStyle, styles.searchInput]}
+                style={[{ ...inputStyle }, styles.searchInput]}
               />
               <Pressable onPress={closeSearch} hitSlop={8} accessibilityRole="button">
                 <Text style={styles.cancel}>{tx(locale, 'common.abbrechen')}</Text>
@@ -426,17 +427,17 @@ function CourseRow({ course, locale, onPress }: { course: StudyCourse; locale: '
   const palette = paletteFor(course.courseType || '?');
   return (
     <Pressable onPress={() => onPress(course)}>
-      <View style={[rowCard, { borderLeftColor: palette.bar }]}>
+      <View style={[{ ...rowCard }, { borderLeftColor: palette.bar }]}>
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={rowTitle} numberOfLines={2}>
+          <Text style={{ ...rowTitle }} numberOfLines={2}>
             {course.title}
           </Text>
-          <Text style={rowMeta}>
+          <Text style={{ ...rowMeta }}>
             {[course.courseTypeShort || course.courseType, course.roomName, course.lecturers.join(', ')].filter(Boolean).join(' · ')}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <Text style={rowTime}>
+          <Text style={{ ...rowTime }}>
             {course.startTime && course.endTime ? `${formatTime(course.startTime)}–${formatTime(course.endTime)}` : formatTime(course.startTime)}
           </Text>
           {isAssigned(course.registrationStatus) ? (
@@ -457,7 +458,7 @@ function AgendaView({ days, locale, onCoursePress }: { days: Map<string, StudyCo
     <>
       {entries.map(([day, items]) => (
         <View key={day} style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={dateBadge}>
+          <View style={{ ...dateBadge }}>
             <Text style={dateDay}>{Number(day.slice(8, 10))}</Text>
             <Text style={dateMonth}>{monthShort(day, locale)}</Text>
             <Text style={dateWeek}>{weekdayOf(day, locale).slice(0, 2)}</Text>
@@ -497,11 +498,11 @@ function WeekView({ days, anchor, setAnchor, setView, locale }: { days: Map<stri
                 setAnchor(day);
                 setView('day');
               }}>
-              <View style={[weekCell, isToday && weekToday, day === anchor && weekAnchor]}>
-                <Text style={weekDay} numberOfLines={1}>
+              <View style={[{ ...weekCell }, isToday && { ...weekToday }, day === anchor && { ...weekAnchor }]}>
+                <Text style={{ ...weekDay }} numberOfLines={1}>
                   {weekdayOf(day, locale).slice(0, 2)}
                 </Text>
-                <Text style={[weekDate, isToday && weekDateToday]}>{Number(day.slice(8, 10))}</Text>
+                <Text style={[{ ...weekDate }, isToday && { ...weekDateToday }]}>{Number(day.slice(8, 10))}</Text>
                 {items.slice(0, 3).map((course) => {
                   const palette = paletteFor(course.courseType || '?');
                   return (
@@ -512,7 +513,7 @@ function WeekView({ days, anchor, setAnchor, setView, locale }: { days: Map<stri
                     </View>
                   );
                 })}
-                {items.length > 3 ? <Text style={weekMore}>+{items.length - 3}</Text> : null}
+                {items.length > 3 ? <Text style={{ ...weekMore }}>+{items.length - 3}</Text> : null}
               </View>
             </Pressable>
           );
@@ -561,17 +562,17 @@ function DayView({ days, anchor, setAnchor, locale, onCoursePress }: { days: Map
         <Muted>{tx(locale, 'tabsKalender.termine')}</Muted>
       ) : null}
       {items.length > 0 ? (
-        <View style={timeline}>
+        <View style={{ ...timeline }}>
           <View style={gutter}>
             {hours.map((hour) => (
-              <Text key={hour} style={gutterText}>
+              <Text key={hour} style={{ ...gutterText }}>
                 {`${String(Math.floor(hour / 60)).padStart(2, '0')}:00`}
               </Text>
             ))}
           </View>
           <View style={track}>
             {hours.map((hour) => (
-              <View key={hour} style={gridLine} />
+              <View key={hour} style={{ ...gridLine }} />
             ))}
             {items.map((course) => {
               const start = minutesOf(course.startTime) ?? DAY_START;
@@ -654,7 +655,7 @@ function MonthView({
       </View>
       <View style={{ flexDirection: 'row', gap: 4 }}>
         {weekdayShort.map((label) => (
-          <Text key={label} style={[weekDay, { flex: 1, textAlign: 'center' }]}>
+          <Text key={label} style={[{ ...weekDay }, { flex: 1, textAlign: 'center' }]}>
             {label}
           </Text>
         ))}
@@ -676,8 +677,8 @@ function MonthView({
                 setAnchor(day);
                 setView('day');
               }}>
-              <View style={[monthCell, isToday && monthToday, isAnchor && monthAnchor]}>
-                <Text style={[weekDate, isToday && monthDateToday]}>{Number(day.slice(8, 10))}</Text>
+              <View style={[{ ...monthCell }, isToday && { ...monthToday }, isAnchor && { ...monthAnchor }]}>
+                <Text style={[{ ...weekDate }, isToday && monthDateToday]}>{Number(day.slice(8, 10))}</Text>
                 <View style={{ flexDirection: 'row', gap: 2, minHeight: 6 }}>
                   {palettes.map((color) => (
                     <View key={color} style={[monthDot, { backgroundColor: color }]} />
@@ -692,7 +693,7 @@ function MonthView({
   );
 }
 
-const inputStyle = {
+const inputStyle = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -701,15 +702,15 @@ const inputStyle = {
   paddingVertical: 12,
   fontSize: 16,
   color: colors.anthracite,
-};
+}));
 
-const toolbarStyles = StyleSheet.create({
+const toolbarStyles = themedStyles((colors) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 4 },
   filterPanel: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 10, gap: 8 },
   filterReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
-});
+}));
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   pressed: { opacity: 0.72 },
   controlBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -725,7 +726,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
-  iconButtonOn: { backgroundColor: colors.blue, borderColor: colors.blue },
+  iconButtonOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   segment: {
     flex: 1,
     flexDirection: 'row',
@@ -737,12 +738,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   segmentItem: { flex: 1, borderRadius: 999, paddingVertical: 7, alignItems: 'center' },
-  segmentOn: { backgroundColor: colors.blue },
+  segmentOn: { backgroundColor: colors.brand },
   segmentText: { color: colors.inkSoft, fontSize: 13, fontWeight: '700' },
   segmentTextOn: { color: '#FFFFFF' },
-});
+}));
 
-const rowCard = {
+const rowCard = themedStyle((colors) => ({
   flexDirection: 'row' as const,
   alignItems: 'center' as const,
   gap: 10,
@@ -753,29 +754,29 @@ const rowCard = {
   borderRadius: 12,
   paddingHorizontal: 12,
   paddingVertical: 10,
-};
+}));
 
-const rowTitle = { color: colors.anthracite, fontSize: 15, fontWeight: '700' as const, lineHeight: 20 };
-const rowMeta = { color: colors.inkSoft, fontSize: 13, lineHeight: 18 };
-const rowTime = { color: colors.blue, fontSize: 14, fontWeight: '700' as const };
+const rowTitle = themedStyle((colors) => ({ color: colors.anthracite, fontSize: 15, fontWeight: '700' as const, lineHeight: 20 }));
+const rowMeta = themedStyle((colors) => ({ color: colors.inkSoft, fontSize: 13, lineHeight: 18 }));
+const rowTime = themedStyle((colors) => ({ color: colors.blue, fontSize: 14, fontWeight: '700' as const }));
 const rowBadge = { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-end' as const };
 const rowBadgeText = { fontSize: 11, fontWeight: '700' as const };
 
-const dateBadge = {
+const dateBadge = themedStyle((colors) => ({
   width: 52,
   alignItems: 'center' as const,
-  backgroundColor: colors.blue,
+  backgroundColor: colors.brand,
   borderRadius: 14,
   paddingVertical: 8,
   gap: 0,
   alignSelf: 'flex-start' as const,
-};
+}));
 
 const dateDay = { color: '#FFFFFF', fontSize: 22, fontWeight: '700' as const, lineHeight: 24 };
 const dateMonth = { color: '#D7DBDE', fontSize: 12, fontWeight: '700' as const };
 const dateWeek = { color: '#9FC0E8', fontSize: 11, fontWeight: '700' as const };
 
-const weekCell = {
+const weekCell = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -783,23 +784,23 @@ const weekCell = {
   padding: 4,
   gap: 2,
   minHeight: 90,
-};
+}));
 
-const weekToday = { borderColor: colors.blue, borderWidth: 2 };
-const weekAnchor = { backgroundColor: colors.blueSoft };
-const weekDateToday = { color: colors.blue };
+const weekToday = themedStyle((colors) => ({ borderColor: colors.blue, borderWidth: 2 }));
+const weekAnchor = themedStyle((colors) => ({ backgroundColor: colors.blueSoft }));
+const weekDateToday = themedStyle((colors) => ({ color: colors.blue }));
 
-const weekDay = { color: colors.inkSoft, fontSize: 11, fontWeight: '700' as const };
-const weekDate = { color: colors.anthracite, fontSize: 14, fontWeight: '700' as const };
+const weekDay = themedStyle((colors) => ({ color: colors.inkSoft, fontSize: 11, fontWeight: '700' as const }));
+const weekDate = themedStyle((colors) => ({ color: colors.anthracite, fontSize: 14, fontWeight: '700' as const }));
 const weekItem = { fontSize: 10, lineHeight: 13 };
 const weekBlock = { borderRadius: 6, paddingHorizontal: 3, paddingVertical: 2 };
-const weekMore = { color: colors.inkSoft, fontSize: 10, fontWeight: '700' as const };
+const weekMore = themedStyle((colors) => ({ color: colors.inkSoft, fontSize: 10, fontWeight: '700' as const }));
 
 const gutter = { width: 40, gap: 0 };
-const gutterText = { color: colors.mute, fontSize: 10, height: 60, textAlign: 'right' as const, paddingRight: 6 };
-const timeline = { flexDirection: 'row' as const, gap: 0, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: 8, overflow: 'hidden' as const };
+const gutterText = themedStyle((colors) => ({ color: colors.mute, fontSize: 10, height: 60, textAlign: 'right' as const, paddingRight: 6 }));
+const timeline = themedStyle((colors) => ({ flexDirection: 'row' as const, gap: 0, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: 8, overflow: 'hidden' as const }));
 const track = { flex: 1, position: 'relative' as const };
-const gridLine = { height: 60, borderTopWidth: 1, borderTopColor: colors.line };
+const gridLine = themedStyle((colors) => ({ height: 60, borderTopWidth: 1, borderTopColor: colors.line }));
 const block = {
   position: 'absolute' as const,
   left: 0,
@@ -817,7 +818,7 @@ const blockMeta = { fontSize: 11, lineHeight: 14 };
 
 const monthCol = { width: '13%' as const };
 
-const monthCell = {
+const monthCell = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -825,11 +826,11 @@ const monthCell = {
   padding: 4,
   gap: 2,
   alignItems: 'center' as const,
-};
+}));
 
-const monthToday = { backgroundColor: colors.blue, borderColor: colors.blue };
+const monthToday = themedStyle((colors) => ({ backgroundColor: colors.brand, borderColor: colors.brand }));
 const monthDateToday = { color: '#FFFFFF' };
-const monthAnchor = { borderColor: colors.blue, borderWidth: 2 };
+const monthAnchor = themedStyle((colors) => ({ borderColor: colors.blue, borderWidth: 2 }));
 const monthDot = { width: 5, height: 5, borderRadius: 99 };
 
 function CourseDetailPanel({ course, locale, onClose }: { course: StudyCourse; locale: 'de' | 'en'; onClose: () => void }) {
@@ -865,12 +866,12 @@ function CourseDetailPanel({ course, locale, onClose }: { course: StudyCourse; l
           </View>
         ))}
         {when ? (
-          <Text style={[rowTime, { color: palette.fg }]}>
+          <Text style={[{ ...rowTime }, { color: palette.fg }]}>
             {tx(locale, 'tabsKalender.naechster')}
             {when}
           </Text>
         ) : null}
-        {course.roomName ? <Text style={rowMeta}>{course.roomName}</Text> : null}
+        {course.roomName ? <Text style={{ ...rowMeta }}>{course.roomName}</Text> : null}
       </Card>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Button secondary label={tx(locale, 'tabsKalender.vollansicht')} onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })} />

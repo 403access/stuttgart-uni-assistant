@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Text, View } from 'react-native';
 
 import { CAMPUS_LOGIN_PHASES, isPhaseDone, type CampusLoginPhase } from '@/src/auth/campus-progress';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -97,7 +97,7 @@ function OrbitingMark({ size, animate }: { size: number; animate: boolean }) {
           width: big,
           height: big,
           borderRadius: big,
-          backgroundColor: colors.blue,
+          backgroundColor: colors.brand,
           left: (size - big) / 2,
           top: (size - big) / 2,
         }}
@@ -210,7 +210,7 @@ export function SigningIn({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   // The full-screen wait spreads the mark, the current phase and the step list
   // across the available sheet, so the surface reads as progress rather than as
   // a block parked in the middle.
@@ -239,4 +239,4 @@ const styles = StyleSheet.create({
   rowLabel: { color: colors.mute, fontSize: 14 },
   rowLabelActive: { color: colors.anthracite, fontWeight: '700' },
   rowLabelDone: { color: colors.inkSoft },
-});
+}));

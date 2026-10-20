@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Stack } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { StyleSheet, Text, TextInput } from 'react-native';
+import { Text, TextInput } from 'react-native';
 
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
 import { asCampusCourses, asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
@@ -10,7 +10,7 @@ import type { CampusCourse } from '@/src/types';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
 import { keys } from '@/src/query/keys';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 function summary(locale: 'de' | 'en', id: string): string {
@@ -255,7 +255,7 @@ export default function ApiScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   method: { color: colors.anthracite, fontSize: 15, fontWeight: '700' },
   input: {
     borderWidth: 1,
@@ -268,4 +268,4 @@ const styles = StyleSheet.create({
   },
   notice: { color: colors.blue, fontSize: 15, lineHeight: 21 },
   preview: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo' },
-});
+}));

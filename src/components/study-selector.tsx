@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 
@@ -6,7 +6,7 @@ import { activeStudy, campusDetail, loadCampusCurriculum } from '@/src/auth/camp
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -118,7 +118,7 @@ function CampusLogView({ entries }: { entries: CampusLogEntry[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   single: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -137,11 +137,11 @@ const styles = StyleSheet.create({
   kicker: { color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.paper, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
-  chipOn: { backgroundColor: colors.blue, borderColor: colors.blue },
+  chipOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   chipText: { color: colors.anthracite, fontSize: 14, fontWeight: '700' },
   chipTextOn: { color: '#FFFFFF' },
   chipMeta: { color: colors.inkSoft, fontSize: 12 },
   error: { color: colors.danger, fontSize: 13, lineHeight: 18 },
   log: { backgroundColor: colors.mist, borderRadius: 10, padding: 8, gap: 2 },
   logLine: { color: colors.inkSoft, fontSize: 11, lineHeight: 15, fontFamily: 'Menlo' },
-});
+}));

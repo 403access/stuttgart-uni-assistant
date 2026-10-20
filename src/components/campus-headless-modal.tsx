@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import type { RefObject } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,7 @@ import type { CampusLoginPhase } from '@/src/auth/campus-progress';
 import { ErrorText } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -121,8 +121,8 @@ export function CampusHeadlessModal({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.blue },
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand },
   hero: {
     paddingHorizontal: 24,
     paddingBottom: 26,
@@ -176,4 +176,4 @@ const styles = StyleSheet.create({
   dumpText: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, fontFamily: 'Menlo' },
   footer: { gap: 10 },
   hidden: { position: 'absolute', left: 0, top: 0, right: 0, bottom: 0, opacity: 0 },
-});
+}));

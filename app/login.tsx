@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,7 +10,7 @@ import { Field, LanguagePicker } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -174,8 +174,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.blue },
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.brand },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },
   hero: { paddingHorizontal: 24, paddingBottom: 30, gap: 10, overflow: 'hidden' },
@@ -208,4 +208,4 @@ const styles = StyleSheet.create({
   warningText: { flex: 1, color: colors.anthracite, fontSize: 13, lineHeight: 19 },
   primary: { borderRadius: 18, padding: 16, gap: 10, backgroundColor: colors.paper },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-});
+}));

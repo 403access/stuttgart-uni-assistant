@@ -5,7 +5,7 @@ import { loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/sr
 import type { CampusLogEntry } from '@/src/auth/campus-log';
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Muted, Pill, Section } from '@/src/components/ui';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { breakable, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -207,6 +207,6 @@ export function ApiEntryDetail({ entry, locale, onClose }: ApiEntryDetailProps) 
   );
 }
 
-const styles = {
+const styles = themedStyles((colors) => ({
   label: { color: colors.blue, fontSize: 12, fontWeight: '700' as const, letterSpacing: 1.1, textTransform: 'uppercase' as const },
-};
+}));

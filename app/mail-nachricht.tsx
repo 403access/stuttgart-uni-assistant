@@ -7,7 +7,7 @@ import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage } 
 import { MailBody } from '@/src/components/mailBody';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { MailBody as MailBodyData, MailMessage } from '@/src/types';
 
@@ -144,7 +144,7 @@ export default function MailMessageScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   subject: { color: colors.anthracite, fontSize: 19, fontWeight: '700', lineHeight: 25 },
   line: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   meta: { color: colors.inkSoft, fontSize: 12 },
@@ -170,4 +170,4 @@ const styles = StyleSheet.create({
   webviewLabel: { color: colors.mute, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   webviewFlag: { color: colors.mute, fontSize: 12, fontWeight: '600' },
   webview: { height: WEBVIEW_HEIGHT, backgroundColor: colors.paper },
-});
+}));

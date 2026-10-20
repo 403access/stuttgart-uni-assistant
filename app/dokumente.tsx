@@ -6,7 +6,7 @@ import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents } from '@/src/data';
 import { pickStudyFile } from '@/src/documents/io';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { pick, tx, uid } from '@/src/text';
 
 export default function DocumentsScreen() {
@@ -94,15 +94,15 @@ export default function DocumentsScreen() {
       ))}
       <Card>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'dokumente.notiz')}</Text>
-        <TextInput value={title} onChangeText={setTitle} placeholder={tx(locale, 'common.titel')} placeholderTextColor={colors.mute} style={input} />
-        <TextInput value={body} onChangeText={setBody} multiline placeholder={tx(locale, 'dokumente.zusammenfassung')} placeholderTextColor={colors.mute} style={[input, { minHeight: 100 }]} />
+        <TextInput value={title} onChangeText={setTitle} placeholder={tx(locale, 'common.titel')} placeholderTextColor={colors.mute} style={{ ...input }} />
+        <TextInput value={body} onChangeText={setBody} multiline placeholder={tx(locale, 'dokumente.zusammenfassung')} placeholderTextColor={colors.mute} style={[{ ...input }, { minHeight: 100 }]} />
         <Button label={tx(locale, 'dokumente.notiz_speichern')} onPress={saveNote} />
       </Card>
     </Screen>
   );
 }
 
-const input = {
+const input = themedStyle((colors) => ({
   borderWidth: 1,
   borderColor: colors.line,
   borderRadius: 12,
@@ -110,4 +110,4 @@ const input = {
   paddingVertical: 10,
   color: colors.anthracite,
   fontSize: 16,
-};
+}));

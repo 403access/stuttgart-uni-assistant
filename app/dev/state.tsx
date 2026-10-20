@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { APP_STATE_STORAGE_KEY, useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /**
@@ -107,7 +107,7 @@ function Row({ label, value }: { label: string; value: string | number | boolean
 
 const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   warning: {
     color: colors.warning,
     backgroundColor: colors.warningSoft,
@@ -122,4 +122,4 @@ const styles = StyleSheet.create({
   key: { color: colors.mute, fontSize: 12, fontFamily: mono, marginBottom: 4 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   muted: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
-});
+}));

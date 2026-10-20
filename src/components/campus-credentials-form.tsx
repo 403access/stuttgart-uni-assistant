@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Chip, Field, Notice, SectionTitle } from '@/src/components/login-blocks';
 import { Button } from '@/src/components/ui';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -91,8 +91,8 @@ export function CampusCredentialsForm({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   shell: { gap: 10 },
   toggles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-});
+}));

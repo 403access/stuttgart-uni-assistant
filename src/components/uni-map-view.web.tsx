@@ -1,5 +1,7 @@
 import { useState, type ComponentType } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
+
+import { themedStyles } from '@/src/theme';
 
 const Iframe = 'iframe' as unknown as ComponentType<{
   src: string;
@@ -31,6 +33,6 @@ export function UniMapView({ url, onError }: { url: string; onError: () => void 
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, minHeight: 520, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: '#E1E5E8' },
-});
+const styles = themedStyles((colors) => ({
+  wrap: { flex: 1, minHeight: 520, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
+}));

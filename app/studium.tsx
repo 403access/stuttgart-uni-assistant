@@ -10,7 +10,7 @@ import { modules, program } from '@/src/data';
 import { searchModules, totals } from '@/src/domain/plan';
 import { moduleStatus } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import type { ModuleStatus } from '@/src/types';
 
@@ -62,7 +62,7 @@ export default function StudyScreen() {
             onChangeText={setQuery}
             placeholder={tx(locale, 'studium.modul')}
             placeholderTextColor={colors.mute}
-            style={inputStyle}
+            style={{ ...inputStyle }}
           />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {filters.map((item) => {
@@ -105,7 +105,7 @@ function Shortcut({ label, onPress }: { label: string; onPress: () => void }) {
 
 const segmentRow: ViewStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: -4 };
 
-const inputStyle = {
+const inputStyle = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -114,4 +114,4 @@ const inputStyle = {
   paddingVertical: 12,
   fontSize: 16,
   color: colors.anthracite,
-};
+}));

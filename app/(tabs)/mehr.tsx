@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 
 import { activeStudy } from '@/src/auth/campus';
 import { endUniversitySession } from '@/src/auth/oidc';
@@ -11,15 +11,15 @@ import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/u
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/darstellung' | '/sicherheit' | '/dev/onboarding' | '/dev/state' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
 export default function MoreScreen() {
-  const { locale, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId, signOut, oidcSessionId } = useApp();
+  const { locale, theme, sessionAccount, sessionMode, sessionName, sessionEmail, campusStudies, activeStudyId, signOut, oidcSessionId } = useApp();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const study = sessionMode === 'campus' ? activeStudy(campusStudies, activeStudyId) : null;
@@ -59,6 +59,7 @@ export default function MoreScreen() {
     {
       title: tx(locale, 'common.app'),
       entries: [
+        { title: tx(locale, 'einstellungen.design'), detail: theme === 'dark' ? tx(locale, 'einstellungen.dunkel') : tx(locale, 'einstellungen.hell'), href: '/darstellung', tags: ['design', 'darstellung', 'theme', 'appearance', 'dark', 'dunkel', 'hell', 'light', 'modus', 'mode', 'aussehen'] },
         { title: tx(locale, 'sicherheit.titel'), detail: tx(locale, 'sicherheit.untertitel'), href: '/sicherheit', tags: ['sicherheit', 'security', 'biometrie', 'biometrics', 'face id', 'fingerabdruck', 'fingerprint', 'app lock', 'entsperren', 'unlock'] },
         { title: tx(locale, 'common.einstellungen'), detail: tx(locale, 'tabsMehr.sprache'), href: '/einstellungen', tags: ['einstellungen', 'settings', 'sprache', 'language', 'daten', 'data', 'hinweis', 'notice'] },
         {
@@ -205,7 +206,7 @@ export default function MoreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   pressed: { opacity: 0.72 },
   iconButton: {
     width: 40,
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
-  iconButtonOn: { backgroundColor: colors.blue, borderColor: colors.blue },
+  iconButtonOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   searchInput: {
     flex: 1,
@@ -231,4 +232,4 @@ const styles = StyleSheet.create({
     color: colors.anthracite,
   },
   cancel: { color: colors.blue, fontSize: 15, fontWeight: '700' },
-});
+}));

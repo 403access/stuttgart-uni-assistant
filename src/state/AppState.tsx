@@ -28,14 +28,17 @@ import type {
   PlatformId,
   PlatformLinkStatus,
   Review,
+  ThemeMode,
   TransferDraft,
   UserAccount,
 } from '@/src/types';
+import { applyTheme } from '@/src/theme';
 
 export const APP_STATE_STORAGE_KEY = 'university-assistant/v1';
 
 const empty: PersistedState = {
   locale: 'de',
+  theme: 'light',
   user: null,
   sessionAccount: null,
   sessionMode: null,
@@ -95,6 +98,7 @@ type AppContextValue = PersistedState & {
   unlinkAccount: (platform: AccountPlatformId) => Promise<void>;
   signOut: () => void;
   setLocale: (locale: Locale) => void;
+  setTheme: (theme: ThemeMode) => void;
   syncPlatform: (platform: PlatformId) => void;
   toggleDownload: (id: string) => void;
   addImport: (document: ImportedDocument) => void;
@@ -173,6 +177,7 @@ function sanitize(value: Partial<PersistedState> | null): PersistedState {
   const user = asUserAccount(value.user);
   return {
     locale: value.locale === 'en' ? 'en' : 'de',
+    theme: value.theme === 'dark' ? 'dark' : 'light',
     user,
     // The flat session fields predate the account record. A stored user fills them in
     // when an older payload did not carry them yet.
@@ -220,7 +225,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     AsyncStorage.getItem(APP_STATE_STORAGE_KEY)
       .then((raw) => {
         if (!active) return;
-        if (raw) setState(sanitize(JSON.parse(raw) as Partial<PersistedState>));
+        if (raw) {
+          const restored = sanitize(JSON.parse(raw) as Partial<PersistedState>);
+          // Apply before the state update so the first visible render already
+          // uses the stored palette.
+          applyTheme(restored.theme);
+          setState(restored);
+        }
       })
       .catch(() => undefined)
       .finally(() => {
@@ -434,6 +445,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         }));
       },
       setLocale: (locale) => setState((current) => ({ ...current, locale })),
+      setTheme: (theme) => {
+        if (theme === state.theme) return;
+        applyTheme(theme);
+        setState((current) => ({ ...current, theme }));
+      },
       syncPlatform: (platform) =>
         setState((current) => ({
           ...current,
@@ -475,6 +491,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         setState((current) => ({
           ...empty,
           locale: current.locale,
+          theme: current.theme,
           user: current.user,
           sessionAccount: current.sessionAccount,
           sessionMode: current.sessionMode,

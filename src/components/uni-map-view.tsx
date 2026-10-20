@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
+
+import { themedStyles } from '@/src/theme';
 
 /** Native map embed. The web build uses `uni-map-view.web.tsx` (iframe) instead. */
 export function UniMapView({ url, onError }: { url: string; onError: () => void }) {
@@ -21,7 +23,7 @@ export function UniMapView({ url, onError }: { url: string; onError: () => void 
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flex: 1, minHeight: 520, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: '#E1E5E8' },
+const styles = themedStyles((colors) => ({
+  wrap: { flex: 1, minHeight: 520, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
   web: { flex: 1 },
-});
+}));

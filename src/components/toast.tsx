@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/src/theme';
+import { themedStyle, themedStyles } from '@/src/theme';
 
 export type ToastTone = 'error' | 'info' | 'success';
 
@@ -34,11 +34,11 @@ export function showToast(input: ToastInput): void {
   listeners.forEach((push) => push(item));
 }
 
-const toneColor: Record<ToastTone, string> = {
-  error: colors.danger,
-  info: colors.blue,
-  success: colors.success,
-};
+const toneColor: Record<ToastTone, string> = themedStyle((colors) => ({
+  error: colors.toastError,
+  info: colors.toastInfo,
+  success: colors.toastSuccess,
+}));
 
 export function ToastHost() {
   const insets = useSafeAreaInsets();
@@ -106,7 +106,7 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles(() => ({
   host: {
     position: 'absolute',
     left: 0,
@@ -143,4 +143,4 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   close: { paddingHorizontal: 12, paddingTop: 8, alignSelf: 'flex-start' },
   closeText: { color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: '700' },
-});
+}));

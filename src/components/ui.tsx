@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import type { StyleProp, TextInputProps, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 
 export function Mark({ size = 36 }: { size?: number }) {
   return (
@@ -240,7 +240,7 @@ export function InfoRow({ title, meta, detail, onPress, position, tone }: { titl
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.mist },
   scroll: { paddingBottom: 28 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 12, fontWeight: '700' },
   track: { height: 8, borderRadius: 99, backgroundColor: colors.blueSoft, overflow: 'hidden' },
   fill: { height: 8, borderRadius: 99, backgroundColor: colors.blue },
-  button: { backgroundColor: colors.blue, borderRadius: 14, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  button: { backgroundColor: colors.brand, borderRadius: 14, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   buttonSecondary: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
   buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   buttonTextSecondary: { color: colors.blue },
@@ -287,4 +287,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' },
   flex: { flex: 1 },
   meta: { color: colors.blue, fontSize: 13, fontWeight: '700' },
-});
+}));

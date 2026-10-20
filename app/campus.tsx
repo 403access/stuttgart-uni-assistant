@@ -8,7 +8,7 @@ import { UniMapView } from '@/src/components/uni-map-view';
 import { places } from '@/src/data';
 import { campusName, placeKind } from '@/src/labels';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyle } from '@/src/theme';
 import { hay, pick, tx } from '@/src/text';
 import type { Campus } from '@/src/types';
 
@@ -92,15 +92,15 @@ function Overview({
           </Pressable>
         ))}
       </View>
-      <View style={mapStyle}>
-        <View style={pathStyle} />
+      <View style={{ ...mapStyle }}>
+        <View style={{ ...pathStyle }} />
         {onCampus.map((place) => (
           <Pressable
             key={place.id}
             onPress={() => router.push({ pathname: '/raum/[id]', params: { id: place.id } })}
             style={{ position: 'absolute', left: `${place.x}%`, top: `${place.y}%`, width: 92, marginLeft: -8, marginTop: -8 }}>
-            <View style={[dot, place.kind === 'mensa' || place.kind === 'transit' ? dotLight : null]} />
-            <Text style={label} numberOfLines={2}>
+            <View style={[{ ...dot }, place.kind === 'mensa' || place.kind === 'transit' ? { ...dotLight } : null]} />
+            <Text style={{ ...label }} numberOfLines={2}>
               {place.name}
             </Text>
           </Pressable>
@@ -111,7 +111,7 @@ function Overview({
         onChangeText={setQuery}
         placeholder={tx(locale, 'campus.raum')}
         placeholderTextColor={colors.mute}
-        style={input}
+        style={{ ...input }}
       />
       {visible.map((place) => (
         <InfoRow
@@ -126,27 +126,27 @@ function Overview({
   );
 }
 
-const mapStyle = {
+const mapStyle = themedStyle((colors) => ({
   height: 280,
   borderRadius: 18,
-  backgroundColor: '#E7EEF6',
+  backgroundColor: colors.blueSoft,
   borderWidth: 1,
   borderColor: colors.line,
   overflow: 'hidden' as const,
-};
-const pathStyle = {
+}));
+const pathStyle = themedStyle((colors) => ({
   position: 'absolute' as const,
   left: '18%' as const,
   right: '12%' as const,
   top: '46%' as const,
   height: 10,
   borderRadius: 99,
-  backgroundColor: '#D5E2F2',
-};
-const dot = { width: 14, height: 14, borderRadius: 99, backgroundColor: colors.blue };
-const dotLight = { backgroundColor: colors.light };
-const label = { color: colors.anthracite, fontSize: 11, fontWeight: '700' as const, marginTop: 2 };
-const input = {
+  backgroundColor: colors.line,
+}));
+const dot = themedStyle((colors) => ({ width: 14, height: 14, borderRadius: 99, backgroundColor: colors.blue }));
+const dotLight = themedStyle((colors) => ({ backgroundColor: colors.light }));
+const label = themedStyle((colors) => ({ color: colors.anthracite, fontSize: 11, fontWeight: '700' as const, marginTop: 2 }));
+const input = themedStyle((colors) => ({
   backgroundColor: colors.paper,
   borderWidth: 1,
   borderColor: colors.line,
@@ -155,4 +155,4 @@ const input = {
   paddingVertical: 12,
   fontSize: 16,
   color: colors.anthracite,
-};
+}));

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
 import { Pill } from '@/src/components/ui';
-import { colors } from '@/src/theme';
+import { themedStyles } from '@/src/theme';
 
 /**
  * One curriculum node in a single row: toggle arrow, name, designation,
@@ -72,7 +72,7 @@ export function TreeChildren({ children }: { children: ReactNode }) {
   return <View style={styles.kids}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   box: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
   selectFrame: { borderWidth: 2, borderColor: 'transparent', borderRadius: 14 },
   selected: { borderColor: colors.blue },
@@ -85,4 +85,4 @@ const styles = StyleSheet.create({
   branch: { position: 'relative' },
   stub: { position: 'absolute', left: -12, top: 21, width: 12, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
   kids: { marginLeft: 11, borderLeftWidth: 1, borderColor: colors.line, paddingLeft: 12, gap: 6 },
-});
+}));

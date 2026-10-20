@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import {
   forgetMail,
@@ -13,7 +13,7 @@ import {
 } from '@/src/auth/mail';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { useApp } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { MailStatus } from '@/src/types';
 
@@ -118,7 +118,7 @@ export default function MailConnectionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themedStyles((colors) => ({
   note: { color: colors.success, fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-});
+}));
