@@ -399,7 +399,19 @@ Apple's DPLA allows distribution through the App Store, Custom App Distribution,
 | **2.3.9 Fictional account info** | Use fictional account information, not a real person's data. | The demo record is fictional and labelled. Good. |
 | **5.2.1 Trademarks** | Do not use third-party trademarks without permission. | C@MPUS/ILIAS names are used nominatively; no university signet. Low risk, but avoid implying endorsement. |
 
-### 11.3 What to do before submitting
+### 11.3 What 5.2.2 means here
+
+Apple's text is:
+
+> "If your app uses, accesses, monetizes access to, or displays content from a third-party service, ensure that you are specifically permitted to do so under the service's terms of use. Authorization must be provided upon request."
+
+This is not a general anti-scraping law, and Apple is not interpreting the university's rules for you. It is an **App Review evidence requirement**: if the app accesses C@MPUS content, the developer must be able to show that the university permits that access. A student's own account does not, by itself, prove that a third-party app or server is permitted. Apple can ask for the authorization, and the project currently has no written permission, no C@MPUS API client id, and no official API integration to show.
+
+That is why the document says **"not shown to be permitted"**, not **"prohibited."** The absence of a public permission is the finding. A written TIK approval or an official API/OIDC registration would satisfy this specific Apple requirement, even though it would not automatically resolve the separate IuK questions.
+
+Source: Apple, [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/), section 5.2.2, retrieved 20 October 2026.
+
+### 11.4 What to do before submitting
 
 1. Get written permission for C@MPUS access, or remove the scraping from the store build.
 2. Add an in-app privacy policy link and an in-app account-deletion flow.
