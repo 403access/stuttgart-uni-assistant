@@ -736,8 +736,6 @@ p { margin: 0; }
   z-index: 1;
 }
 
-.blue-world .status-table-wrap { border-radius: 22px; }
-
 .blue-world .faq details {
   border-radius: 18px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -763,56 +761,6 @@ p { margin: 0; }
 .site-footer .fine { margin-top: 26px; padding-top: 22px; border-top: 1px solid rgba(255, 255, 255, 0.16); max-width: 62rem; }
 .site-footer .fine p + p { margin-top: 8px; }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 10px 22px; }
-
-/* ---------- status ---------- */
-
-.status-table-wrap {
-  margin-top: 38px;
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  background: var(--paper);
-}
-
-.status-table {
-  width: 100%;
-  min-width: 620px;
-  border-collapse: collapse;
-  font-size: 0.94rem;
-}
-.status-table th,
-.status-table td {
-  padding: 14px 18px;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid var(--line);
-}
-.status-table th {
-  background: var(--mist);
-  color: var(--ink);
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.status-table tbody tr:last-child td { border-bottom: 0; }
-.status-table td:first-child { font-weight: 700; color: var(--ink); }
-.status-table td:last-child { color: var(--ink-soft); }
-
-.badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.badge-live { background: var(--ok-bg); color: var(--ok-ink); }
-.badge-demo { background: var(--warn-bg); color: var(--warn-ink); }
-.badge-external { background: var(--blue-soft); color: var(--blue); }
-.badge-dev { background: var(--warn-bg); color: var(--warn-ink); }
-.badge-limited { background: var(--limited-bg); color: var(--limited-ink); }
-.badge-unavailable { background: var(--muted-bg); color: var(--muted-ink); }
 
 /* ---------- FAQ ---------- */
 

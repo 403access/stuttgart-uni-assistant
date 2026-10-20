@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.png" sizes="64x64" />
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <link rel="stylesheet" href="styles.css?v=10" />
+    <link rel="stylesheet" href="styles.css?v=11" />
     <link rel="preload" as="image" href="assets/shots/dashboard.jpg" fetchpriority="high" />
     <noscript>
       <style>
@@ -99,7 +99,6 @@
         </a>
         <nav class="nav" id="site-nav" aria-label="Hauptnavigation" data-i18n-aria="ariaNav">
           <a href="#funktionen" data-i18n="navFeatures">Funktionen</a>
-          <a href="#status" data-i18n="navStatus">Status</a>
           <a href="#assistent" data-i18n="navAssistant">Assistent</a>
           <a href="#einblicke" data-i18n="navGallery">Einblicke</a>
           <a href="#faq" data-i18n="navFaq">FAQ</a>
@@ -313,81 +312,6 @@
               <p data-i18n="f8Body">PaperCut-Drucken und Netzzugang, erklärt in den richtigen Schritten.</p>
             </article>
           </div>
-        </div>
-      </section>
-
-      <section class="section tight" id="status">
-        <div class="container">
-          <div class="section-head reveal">
-            <p class="eyebrow" data-i18n="statusKicker">Status</p>
-            <h2 data-i18n="statusTitle">Was jetzt funktioniert — und was Demo ist</h2>
-            <p class="lead" data-i18n="statusLead">
-              Die App mischt Live-Zugriffe mit einem fiktiven Demonstrationsdatensatz. Diese Tabelle sagt, was was ist.
-            </p>
-          </div>
-
-          <div class="status-table-wrap reveal">
-            <table class="status-table">
-              <caption class="sr-only" data-i18n="statusCaption">Statusübersicht: live, Demo und eingeschränkt</caption>
-              <thead>
-                <tr>
-                  <th scope="col" data-i18n="statusH1">Bereich</th>
-                  <th scope="col" data-i18n="statusH2">Status</th>
-                  <th scope="col" data-i18n="statusH3">Was das heißt</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td data-i18n="status1Area">C@MPUS-Struktur &amp; Studiengänge</td>
-                  <td><span class="badge badge-live" data-i18n="badgeLive">Live</span></td>
-                  <td data-i18n="status1Detail">Die App liest Struktur und Studiengangsliste, wenn der Assistant-Server eingerichtet ist.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status2Area">SIAM-Anmeldung</td>
-                  <td><span class="badge badge-limited" data-i18n="badgeLimited">Eingeschränkt</span></td>
-                  <td data-i18n="status2Detail">Öffnet den Identity Provider; die OIDC-Client-Registrierung bei TIK ist Voraussetzung.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status3Area">UniMail</td>
-                  <td><span class="badge badge-live" data-i18n="badgeLive">Live</span></td>
-                  <td data-i18n="status3Detail">IMAP-Zugriff über den Assistant-Server; read-only, sobald verbunden.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status4Area">Stundenplan, Noten, ECTS</td>
-                  <td><span class="badge badge-demo" data-i18n="badgeDemo">Demo</span></td>
-                  <td data-i18n="status4Detail">Fiktiver Datensatz von Lena Hartmann.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status5Area">ILIAS, SDG, Fristen, News, Altklausuren</td>
-                  <td><span class="badge badge-demo" data-i18n="badgeDemo">Demo</span></td>
-                  <td data-i18n="status5Detail">Fiktive Inhalte; keine Live-Synchronisation.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status6Area">Lageplan</td>
-                  <td><span class="badge badge-external" data-i18n="badgeExternal">Extern</span></td>
-                  <td data-i18n="status6Detail">Karte von maps.uni-stuttgart.de; beim Öffnen wird die externe Seite geladen.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status7Area">VPN</td>
-                  <td><span class="badge badge-dev" data-i18n="badgeDev">Dev-Build</span></td>
-                  <td data-i18n="status7Detail">Android-Engine gebaut; iOS-Tunnel und Gerätetest stehen aus.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status8Area">App Store / TestFlight</td>
-                  <td><span class="badge badge-unavailable" data-i18n="badgeUnavailable">Nicht verfügbar</span></td>
-                  <td data-i18n="status8Detail">Beta über Tally; kein Store-Build.</td>
-                </tr>
-                <tr>
-                  <td data-i18n="status9Area">Web</td>
-                  <td><span class="badge badge-limited" data-i18n="badgeLimited">Eingeschränkt</span></td>
-                  <td data-i18n="status9Detail">Export möglich; C@MPUS-Browser-Login und VPN funktionieren dort nicht.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="note reveal" data-i18n="statusNote">
-            Demo-Daten sind fiktiv. Offizielle Auskünfte der Universität haben immer Vorrang.
-          </p>
         </div>
       </section>
 
@@ -819,7 +743,7 @@
 
     <p class="sr-only" id="lang-status" aria-live="polite"></p>
 
-    <script src="main.js?v=11"></script>
+    <script src="main.js?v=12"></script>
     <script src="theme.js?v=9"></script>
   </body>
 </html>
