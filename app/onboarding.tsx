@@ -5,6 +5,8 @@ import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
+import { AmbientBackground } from '@/src/components/ambient-background';
+import { ChoiceCard } from '@/src/components/choice-card';
 import { Button, Mark } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
@@ -12,9 +14,9 @@ import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { formatTime, shortMonths, tx } from '@/src/text';
-import type { CampusCalendarEvent, MailMessage } from '@/src/types';
+import type { CampusCalendarEvent, DesignMode, MailMessage, ThemeMode } from '@/src/types';
 
-type Step = 'biometrics' | 'calendar' | 'mail' | 'timetable';
+type Step = 'biometrics' | 'appearance' | 'calendar' | 'mail' | 'timetable';
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
 /** Caption plus one list row; used to fit the fixed-height import pages. */
@@ -23,6 +25,7 @@ const LIST_ROW_HEIGHT = 66;
 
 const STEP_KICKER = {
   biometrics: 'onboarding.kicker',
+  appearance: 'onboarding.stil_kicker',
   calendar: 'onboarding.kalender_kicker',
   mail: 'onboarding.mail_kicker',
   timetable: 'onboarding.stundenplan_kicker',
@@ -30,6 +33,7 @@ const STEP_KICKER = {
 
 const STEP_ICON = {
   biometrics: 'auto-awesome',
+  appearance: 'palette',
   calendar: 'event',
   mail: 'mail',
   timetable: 'schedule',
@@ -37,14 +41,14 @@ const STEP_ICON = {
 
 /**
  * First-run flow after a successful sign-in. Biometrics comes first, then the
- * three imports as separate pages: personal calendar, UniMail inbox, and the
- * study structure plus courses that feed the timetable. All three pipelines
- * start with this screen, so each page opens on its result when possible and
- * falls back to a loader while the import is still running.
+ * visual style, then the three imports as separate pages: personal calendar,
+ * UniMail inbox, and the study structure plus courses that feed the timetable.
+ * All three pipelines start with this screen, so each page opens on its result
+ * when possible and falls back to a loader while the import is still running.
  */
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { locale } = useApp();
+  const { locale, theme, setTheme, design, setDesign } = useApp();
   const { enableBiometrics, completeOnboarding } = useOnboarding();
   const imports = useOnboardingImport();
   const [step, setStep] = useState<Step>('biometrics');
@@ -69,18 +73,18 @@ export default function OnboardingScreen() {
     );
     setBusy(false);
     if (result.success) {
-      setStep('calendar');
+      setStep('appearance');
       return;
     }
     if (isBiometricCancel(result.error)) {
       // Cancelling the prompt is a decline, not a failure. Continue to the
-      // calendar step so the flow does not greet the user again on every launch.
+      // style step so the flow does not greet the user again on every launch.
       showToast({
         tone: 'info',
         title: tx(locale, 'onboarding.nicht_aktiviert'),
         message: tx(locale, 'onboarding.hinweis'),
       });
-      setStep('calendar');
+      setStep('appearance');
       return;
     }
     setError(biometricMessage(locale, result.error));
@@ -89,18 +93,30 @@ export default function OnboardingScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
-      {step === 'biometrics' ? (
+      {step === 'biometrics' || step === 'appearance' ? (
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) }]}>
           <OnboardingHero locale={locale} step={step} topInset={insets.top} />
-          <BiometricsPage
-            locale={locale}
-            busy={busy}
-            error={error}
-            onEnable={() => void enable()}
-            onSkip={() => setStep('calendar')}
-          />
+          {step === 'biometrics' ? (
+            <BiometricsPage
+              locale={locale}
+              busy={busy}
+              error={error}
+              onEnable={() => void enable()}
+              onSkip={() => setStep('appearance')}
+            />
+          ) : (
+            <AppearancePage
+              locale={locale}
+              theme={theme}
+              setTheme={setTheme}
+              design={design}
+              setDesign={setDesign}
+              onBack={() => setStep('biometrics')}
+              onContinue={() => setStep('calendar')}
+            />
+          )}
         </ScrollView>
       ) : (
         // The import result steps are deliberately fixed: the page takes the
@@ -197,6 +213,73 @@ function BiometricsPage({
         <Button secondary label={tx(locale, 'onboarding.nicht_jetzt')} onPress={onSkip} />
       </View>
       <Text style={styles.hint}>{tx(locale, 'onboarding.hinweis')}</Text>
+    </View>
+  );
+}
+
+function AppearancePage({
+  locale,
+  theme,
+  setTheme,
+  design,
+  setDesign,
+  onBack,
+  onContinue,
+}: {
+  locale: 'de' | 'en';
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
+  design: DesignMode;
+  setDesign: (design: DesignMode) => void;
+  onBack: () => void;
+  onContinue: () => void;
+}) {
+  return (
+    <View style={[styles.sheet, styles.previewSheet]}>
+      <AmbientBackground />
+      <StepIntro
+        icon="palette"
+        title={tx(locale, 'onboarding.stil_titel')}
+        lead={tx(locale, 'onboarding.stil_text')}
+      />
+
+      <Text style={styles.groupLabel}>{tx(locale, 'einstellungen.design')}</Text>
+      <View style={styles.choices}>
+        <ChoiceCard
+          icon="light-mode"
+          label={tx(locale, 'einstellungen.hell')}
+          active={theme === 'light'}
+          onPress={() => setTheme('light')}
+        />
+        <ChoiceCard
+          icon="dark-mode"
+          label={tx(locale, 'einstellungen.dunkel')}
+          active={theme === 'dark'}
+          onPress={() => setTheme('dark')}
+        />
+      </View>
+
+      <Text style={styles.groupLabel}>{tx(locale, 'einstellungen.stil')}</Text>
+      <View style={styles.choices}>
+        <ChoiceCard
+          icon="grid-view"
+          label={tx(locale, 'einstellungen.clean')}
+          active={design === 'clean'}
+          onPress={() => setDesign('clean')}
+        />
+        <ChoiceCard
+          icon="auto-awesome"
+          label={tx(locale, 'einstellungen.playful')}
+          active={design === 'playful'}
+          onPress={() => setDesign('playful')}
+        />
+      </View>
+
+      <View style={styles.spacer} />
+      <View style={styles.actions}>
+        <Button label={tx(locale, 'onboarding.stil_weiter')} onPress={onContinue} />
+        <Button secondary label={tx(locale, 'onboarding.stil_zurueck')} onPress={onBack} />
+      </View>
     </View>
   );
 }
@@ -817,6 +900,8 @@ const styles = themedStyles((colors) => ({
     padding: 22,
     gap: 12,
   },
+  /** The style step doubles as a live preview of the app background. */
+  previewSheet: { backgroundColor: colors.mist, overflow: 'hidden' },
   sheetFixed: { minHeight: 0, overflow: 'hidden' },
   flexListArea: { flex: 1, minHeight: 0, overflow: 'hidden' },
   centeredListArea: { justifyContent: 'center' },
@@ -843,6 +928,15 @@ const styles = themedStyles((colors) => ({
     marginTop: 1,
   },
   pointText: { flex: 1, color: colors.anthracite, fontSize: 14, lineHeight: 21 },
+  groupLabel: {
+    color: colors.blue,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  choices: { gap: 8 },
   errorBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: colors.dangerSoft, borderRadius: 14, padding: 12 },
   errorText: { flex: 1, color: colors.danger, fontSize: 13, lineHeight: 19 },
   actions: { gap: 10, marginTop: 4 },
