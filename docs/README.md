@@ -83,6 +83,12 @@ Read these in order. Each file states the decision for this project, the artifac
 | [delivery/backlog.md](delivery/backlog.md) | What is in this build, and the ordered work after it |
 | [delivery/release-and-operations.md](delivery/release-and-operations.md) | Environments, release shape, and how to run it day to day |
 
+## Legal
+
+| Document | Contents |
+| --- | --- |
+| [legal/terms-review.md](legal/terms-review.md) | Service-by-service terms review: University IuK/C@MPUS/ILIAS/SIAM/UniMail, xAI, Cloudflare, ngrok, Tally, Apple, and the OpenVPN licence, with code evidence and a prioritized action plan |
+
 ## Funding
 
 | Document | Contents |

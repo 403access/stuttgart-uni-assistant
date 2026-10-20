@@ -12,6 +12,8 @@ This repository is a student demonstration. It is not a service of the Universit
 
 **Generative AI.** Parts of this codebase were written with AI coding assistants, and the project says so. AI is also a runtime feature: when an xAI key is set, the assistant server may rewrite answers through Grok, opt-in and with `store: false`. The design, the domain model, the credit rules in `src/domain/plan.ts`, the privacy boundary and the tests are human-authored and accountable. Contributors mark generated code in their commit messages; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+**Service terms.** A service-by-service review of the university's IuK/C@MPUS/ILIAS/SIAM/UniMail rules, xAI, Cloudflare, ngrok, Tally, Apple, and the OpenVPN licence is in [docs/legal/terms-review.md](docs/legal/terms-review.md). It is a compliance review, not legal advice.
+
 ## Run the app
 
 Requirements: Node.js 22 or newer.

@@ -87,7 +87,7 @@ The project is careful — no university logo, bundle id `dev.demo.universityass
 
 The demonstration stores sessions and (in the beta C@MPUS browser path) an opt-in credential vault, and harvests a session to sign in. Even with fictional data, a funder that evaluates ethics — NLnet, Sovereign Tech, StIL — will read [`docs/engineering/campus-browser-login.md`](../engineering/campus-browser-login.md) and [`docs/engineering/security-and-privacy.md`](../engineering/security-and-privacy.md). Before applying:
 
-- Be able to state whether the sign-in harvesting is consistent with the university's terms of use and with the identity provider's rules.
+- Be able to state whether the sign-in harvesting is consistent with the university's terms of use and with the identity provider's rules. The current evidence is in [`docs/legal/terms-review.md`](../legal/terms-review.md): the `.env` fallback, hosted/tunnelled server, and unauthenticated mail routes are the items that must be fixed or approved before claiming consistency.
 - Keep the "password is typed only on the university page" property, and describe the opt-in vault as a beta exception with its own rules, as the repository already does.
 - State plainly that the demonstration data is fictional and that no real transcript is shipped.
 

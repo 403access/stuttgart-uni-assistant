@@ -81,6 +81,11 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'Legal',
+      items: ['legal/terms-review'],
+    },
+    {
+      type: 'category',
       label: 'Funding',
       link: { type: 'doc', id: 'funding/README' },
       items: [
