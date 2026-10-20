@@ -68,7 +68,7 @@ export default function DevOnboardingScreen() {
   const storedCompletedAt = stored?.completedAt ?? null;
   const storedBiometrics = stored?.biometricsEnabled ?? false;
   const storedForce = stored?.forceOnboarding ?? false;
-  const nextLaunch = Boolean(sessionAccount) && !storedCompletedAt && (biometricsAvailable || storedForce);
+  const nextLaunch = Boolean(sessionAccount) && !storedCompletedAt;
 
   return (
     <Screen kicker={tx(locale, 'tabsMehr.dev')}>
@@ -76,9 +76,6 @@ export default function DevOnboardingScreen() {
       <Text style={styles.warning}>{tx(locale, 'dev.hinweis')}</Text>
 
       <Section title={tx(locale, 'dev.onboarding.status')} />
-      {!biometricsAvailable && !storedForce ? (
-        <Text style={styles.warning}>{tx(locale, 'dev.onboarding.no_biometrics')}</Text>
-      ) : null}
       <Card>
         <Row label="ready" value={ready} />
         <Row label="completed" value={completed} />

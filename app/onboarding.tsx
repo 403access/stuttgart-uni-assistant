@@ -35,9 +35,12 @@ const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable']
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { locale, theme, setTheme, design, setDesign } = useApp();
-  const { enableBiometrics, completeOnboarding } = useOnboarding();
+  const { enableBiometrics, completeOnboarding, biometricsAvailable } = useOnboarding();
   const imports = useOnboardingImport();
-  const [step, setStep] = useState<Step>('biometrics');
+  const [step, setStep] = useState<Step>(() => (biometricsAvailable ? 'biometrics' : 'appearance'));
+  const flowSteps: readonly Step[] = biometricsAvailable
+    ? STEP_ORDER
+    : STEP_ORDER.filter((entry) => entry !== 'biometrics');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const finishing = useRef(false);
@@ -83,7 +86,7 @@ export default function OnboardingScreen() {
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <OnboardingHero locale={locale} step={step} topInset={insets.top} />
+          <OnboardingHero locale={locale} step={step} steps={flowSteps} topInset={insets.top} />
           {step === 'biometrics' ? (
             <BiometricsPage
               locale={locale}
@@ -99,7 +102,7 @@ export default function OnboardingScreen() {
               setTheme={setTheme}
               design={design}
               setDesign={setDesign}
-              onBack={() => setStep('biometrics')}
+              onBack={biometricsAvailable ? () => setStep('biometrics') : undefined}
               onContinue={() => setStep('calendar')}
             />
           )}
@@ -109,19 +112,26 @@ export default function OnboardingScreen() {
         // full height, the button stays at the bottom, and each list shows only
         // the rows that actually fit.
         <>
-          <OnboardingHero locale={locale} step={step} topInset={insets.top} />
+          <OnboardingHero locale={locale} step={step} steps={flowSteps} topInset={insets.top} />
           {step === 'calendar' ? (
             <CalendarImportPage
               locale={locale}
               calendar={imports.calendar}
+              onBack={() => setStep('appearance')}
               onContinue={() => setStep('mail')}
             />
           ) : step === 'mail' ? (
-            <MailImportPage locale={locale} mail={imports.mail} onContinue={() => setStep('timetable')} />
+            <MailImportPage
+              locale={locale}
+              mail={imports.mail}
+              onBack={() => setStep('calendar')}
+              onContinue={() => setStep('timetable')}
+            />
           ) : (
             <TimetableImportPage
               locale={locale}
               timetable={imports.timetable}
+              onBack={() => setStep('mail')}
               onContinue={() => void finish()}
             />
           )}
@@ -134,14 +144,16 @@ export default function OnboardingScreen() {
 function OnboardingHero({
   locale,
   step,
+  steps,
   topInset,
 }: {
   locale: 'de' | 'en';
   step: Step;
+  steps: readonly Step[];
   topInset: number;
 }) {
-  const currentStep = STEP_ORDER.indexOf(step) + 1;
-  const totalSteps = STEP_ORDER.length;
+  const currentStep = Math.max(1, steps.indexOf(step) + 1);
+  const totalSteps = steps.length;
   const progressLabel = tx(locale, 'onboarding.fortschritt', [currentStep, totalSteps]);
   return (
     <View style={[styles.hero, { paddingTop: topInset + 12 }]}>
@@ -164,7 +176,7 @@ function OnboardingHero({
         accessibilityLabel={progressLabel}
         accessibilityValue={{ min: 1, max: totalSteps, now: currentStep }}
         accessibilityHint={tx(locale, 'onboarding.fortschritt_hinweis')}>
-        {STEP_ORDER.map((entry, index) => (
+        {steps.map((entry, index) => (
           <View
             key={entry}
             style={[styles.progressSegment, index < currentStep && styles.progressSegmentDone]}
@@ -236,7 +248,7 @@ function AppearancePage({
   setTheme: (theme: ThemeMode) => void;
   design: DesignMode;
   setDesign: (design: DesignMode) => void;
-  onBack: () => void;
+  onBack?: () => void;
   onContinue: () => void;
 }) {
   return (
@@ -281,9 +293,15 @@ function AppearancePage({
       </View>
 
       <View style={styles.spacer} />
-      <View style={styles.actions}>
-        <Button label={tx(locale, 'onboarding.stil_weiter')} onPress={onContinue} />
-        <Button secondary label={tx(locale, 'onboarding.stil_zurueck')} onPress={onBack} />
+      <View style={styles.actionRow}>
+        {onBack ? (
+          <View style={styles.actionItem}>
+            <Button secondary label={tx(locale, 'onboarding.zurueck')} onPress={onBack} />
+          </View>
+        ) : null}
+        <View style={styles.actionItem}>
+          <Button label={tx(locale, 'onboarding.weiter')} onPress={onContinue} />
+        </View>
       </View>
     </View>
   );
@@ -292,10 +310,12 @@ function AppearancePage({
 function CalendarImportPage({
   locale,
   calendar,
+  onBack,
   onContinue,
 }: {
   locale: 'de' | 'en';
   calendar: ReturnType<typeof useOnboardingImport>['calendar'];
+  onBack: () => void;
   onContinue: () => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -388,9 +408,10 @@ function CalendarImportPage({
         error={calendar.error}
         continueLabel={tx(locale, 'onboarding.kalender_weiter')}
         retryLabel={tx(locale, 'onboarding.kalender_erneut')}
-        skipLabel={tx(locale, 'onboarding.kalender_ueberspringen')}
+        backLabel={tx(locale, 'onboarding.zurueck')}
         onContinue={onContinue}
         onRetry={calendar.retry}
+        onBack={onBack}
       />
     </View>
   );
@@ -399,10 +420,12 @@ function CalendarImportPage({
 function MailImportPage({
   locale,
   mail,
+  onBack,
   onContinue,
 }: {
   locale: 'de' | 'en';
   mail: ReturnType<typeof useOnboardingImport>['mail'];
+  onBack: () => void;
   onContinue: () => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -487,9 +510,10 @@ function MailImportPage({
         error={mail.error}
         continueLabel={tx(locale, 'onboarding.mail_weiter')}
         retryLabel={tx(locale, 'onboarding.mail_erneut')}
-        skipLabel={tx(locale, 'onboarding.mail_ueberspringen')}
+        backLabel={tx(locale, 'onboarding.zurueck')}
         onContinue={onContinue}
         onRetry={mail.retry}
+        onBack={onBack}
       />
     </View>
   );
@@ -498,10 +522,12 @@ function MailImportPage({
 function TimetableImportPage({
   locale,
   timetable,
+  onBack,
   onContinue,
 }: {
   locale: 'de' | 'en';
   timetable: ReturnType<typeof useOnboardingImport>['timetable'];
+  onBack: () => void;
   onContinue: () => void;
 }) {
   const insets = useSafeAreaInsets();
@@ -593,9 +619,10 @@ function TimetableImportPage({
         error={timetable.error}
         continueLabel={tx(locale, 'onboarding.stundenplan_weiter')}
         retryLabel={tx(locale, 'onboarding.stundenplan_erneut')}
-        skipLabel={tx(locale, 'onboarding.stundenplan_ueberspringen')}
+        backLabel={tx(locale, 'onboarding.zurueck')}
         onContinue={onContinue}
         onRetry={timetable.retry}
+        onBack={onBack}
       />
     </View>
   );
@@ -656,23 +683,31 @@ function StepActions({
   error,
   continueLabel,
   retryLabel,
-  skipLabel,
+  backLabel,
   onContinue,
   onRetry,
+  onBack,
 }: {
   loading: boolean;
   error: string;
   continueLabel: string;
   retryLabel: string;
-  skipLabel: string;
+  backLabel: string;
   onContinue: () => void;
   onRetry: () => void;
+  onBack: () => void;
 }) {
-  if (loading) return <Button secondary label={skipLabel} onPress={onContinue} />;
   return (
     <View style={styles.actions}>
-      <Button label={continueLabel} onPress={onContinue} />
-      {error ? <Button secondary label={retryLabel} onPress={onRetry} /> : null}
+      {!loading && error ? <Button secondary label={retryLabel} onPress={onRetry} /> : null}
+      <View style={styles.actionRow}>
+        <View style={styles.actionItem}>
+          <Button secondary label={backLabel} onPress={onBack} />
+        </View>
+        <View style={styles.actionItem}>
+          <Button label={continueLabel} onPress={onContinue} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -924,6 +959,8 @@ const styles = themedStyles((colors) => ({
   errorBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: colors.dangerSoft, borderRadius: 14, padding: 12 },
   errorText: { flex: 1, color: colors.danger, fontSize: 13, lineHeight: 19 },
   actions: { gap: 10, marginTop: 4 },
+  actionRow: { flexDirection: 'row', gap: 10 },
+  actionItem: { flex: 1 },
   hint: { color: colors.mute, fontSize: 13, lineHeight: 19, textAlign: 'center' },
   loadingCard: {
     flexDirection: 'row',

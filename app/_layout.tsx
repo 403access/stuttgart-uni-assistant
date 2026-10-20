@@ -56,8 +56,7 @@ function Gate() {
   const router = useRouter();
   const onLogin = segments[0] === 'login' || segments[0] === 'login-legacy' || segments[0] === 'oidc';
   const onOnboarding = segments[0] === 'onboarding';
-  const needsOnboarding =
-    Boolean(sessionAccount) && onboardingReady && !onboardingCompleted && (biometricsAvailable || forceOnboarding);
+  const needsOnboarding = Boolean(sessionAccount) && onboardingReady && !onboardingCompleted;
   // Settled once the route matches the session and, while signed in, the
   // onboarding decision has been made. The effects below only perform redirects.
   const settled =
@@ -80,8 +79,9 @@ function Gate() {
     });
   }, [ready, onboardingReady, sessionAccount, onboardingCompleted, forceOnboarding, biometricsAvailable, needsOnboarding, onLogin, onOnboarding]);
 
-  // A device without an enrolled biometric has no first page to show, so the
-  // flow is skipped without being marked complete. Enrolling later still works.
+  // Onboarding always runs after sign-in until it is completed. Its first page
+  // is biometrics when the device supports it; otherwise it starts with the
+  // style step, so every device still gets the appearance choice.
   useEffect(() => {
     if (!ready || !onboardingReady) return;
     if (!sessionAccount) {
