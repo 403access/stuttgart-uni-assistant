@@ -1,0 +1,70 @@
+import { Text, View } from 'react-native';
+
+import { Card } from '@/src/components/ui';
+import { themedStyles } from '@/src/theme';
+import { tx } from '@/src/text';
+import type { Locale, MailMessage } from '@/src/types';
+
+import type { InboxFilter } from '../types';
+import { MailRow } from './mail-row';
+
+/** The loaded rows plus the meta line and empty hints that describe the current view. */
+export function MailMessageList({
+  locale,
+  folder,
+  folderValueText,
+  query,
+  filter,
+  messages,
+  visibleMessages,
+}: {
+  locale: Locale;
+  folder: string;
+  folderValueText: string;
+  query: string;
+  filter: InboxFilter;
+  messages: MailMessage[];
+  visibleMessages: MailMessage[];
+}) {
+  return (
+    <>
+      {filter.kind !== 'all' || query ? (
+        <Text style={styles.meta}>
+          {tx(locale, 'tabsMail.von', [
+            visibleMessages.length,
+            messages.length,
+            filter.kind === 'sender' ? ` · ${filter.sender}` : '',
+            query ? ` · „${query.trim()}“` : '',
+          ])}
+        </Text>
+      ) : null}
+      {messages.length === 0 ? (
+        <Text style={styles.hint}>{tx(locale, 'tabsMail.nachrichten', [folderValueText])}</Text>
+      ) : visibleMessages.length === 0 ? (
+        <Text style={styles.hint}>{tx(locale, 'tabsMail.treffer')}</Text>
+      ) : null}
+      {visibleMessages.length > 0 ? (
+        <View style={styles.list}>
+          {visibleMessages.map((message, index) => (
+            <MailRow key={message.uid} message={message} folder={folder} last={index === visibleMessages.length - 1} locale={locale} />
+          ))}
+        </View>
+      ) : null}
+      <Card>
+        <Text style={styles.hint}>{tx(locale, 'tabsMail.gelesen')}</Text>
+      </Card>
+    </>
+  );
+}
+
+const styles = themedStyles((colors) => ({
+  list: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 0,
+    backgroundColor: colors.paper,
+    marginHorizontal: -20,
+  },
+  hint: { color: colors.inkSoft, fontSize: 13, lineHeight: 19 },
+  meta: { color: colors.inkSoft, fontSize: 12 },
+}));
