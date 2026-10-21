@@ -25,21 +25,25 @@ export function ToolButton({
   material,
   label,
   onPress,
+  active = false,
 }: {
   symbol: SymbolViewProps['name'];
   material: ComponentProps<typeof MaterialIcons>['name'];
   label: string;
   onPress: () => void;
+  /** Marks an applied filter or an open drawer. */
+  active?: boolean;
 }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.toolButton, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.toolButton, active && styles.toolButtonActive, pressed && styles.pressed]}
       onPress={onPress}
       accessibilityLabel={label}
       accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       hitSlop={4}
     >
-      <ControlIcon symbol={symbol} material={material} color={colors.anthracite} />
+      <ControlIcon symbol={symbol} material={material} color={active ? colors.blue : colors.anthracite} />
     </Pressable>
   );
 }
@@ -56,5 +60,6 @@ const styles = themedStyles((colors) => ({
     borderRadius: 12,
     backgroundColor: colors.paper,
   },
+  toolButtonActive: { backgroundColor: colors.blueSoft, borderColor: colors.blueSoft },
   pressed: { opacity: 0.72 },
 }));

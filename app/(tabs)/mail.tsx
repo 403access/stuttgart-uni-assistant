@@ -3,12 +3,12 @@ import { RefreshControl, Text, useWindowDimensions } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
 import { Screen } from '@/src/components/ui';
-import { DrawerPanel } from '@/src/mail/components/drawer-panel';
+import { DrawerPanel } from '@/src/components/drawer-panel';
 import { MailConnectionPanel } from '@/src/mail/components/mail-connection-panel';
 import { MailMessageList } from '@/src/mail/components/mail-message-list';
 import { MailReveal } from '@/src/mail/components/mail-skeletons';
 import { MailToolbar } from '@/src/mail/components/mail-toolbar';
-import { OptionRows } from '@/src/mail/components/option-rows';
+import { OptionRows } from '@/src/components/option-rows';
 import { useMailInbox } from '@/src/mail/use-mail-inbox';
 import { useMailList } from '@/src/mail/use-mail-list';
 import { useAppSelector } from '@/src/state/AppState';

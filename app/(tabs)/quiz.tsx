@@ -1,9 +1,12 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Drawer } from 'react-native-drawer-layout';
 
-import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
+import { DrawerPanel } from '@/src/components/drawer-panel';
+import { OptionRows, type DropdownOption } from '@/src/components/option-rows';
+import { Card, Meter, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import {
   findQuizStudy,
@@ -14,6 +17,7 @@ import {
   quizModulesForStudy,
   quizStudies,
 } from '@/src/quiz/content';
+import { QuizToolbar } from '@/src/quiz/components/quiz-toolbar';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@/src/quiz/session';
 import type { QuestionProgress, QuizMode, QuizModule, QuizStudy, QuizTopic } from '@/src/quiz/types';
@@ -26,11 +30,8 @@ const ALL_STUDIES = 'all';
 
 type StatusFilter = 'all' | 'done' | 'review' | 'progress' | 'new';
 type SemesterFilter = 'all' | number;
-type SortKey = 'progress' | 'title' | 'semester' | 'questions';
-type FilterPanel = 'status' | 'semester' | 'sort' | null;
 
 const STATUS_FILTERS: StatusFilter[] = ['all', 'done', 'review', 'progress', 'new'];
-const SORT_KEYS: SortKey[] = ['progress', 'title', 'semester', 'questions'];
 
 function startTopic(topic: QuizTopic, mode: QuizMode) {
   router.push({ pathname: '/quiz/[topic]', params: { topic: topic.id, mode } });
@@ -59,23 +60,6 @@ function statusLabel(status: StatusFilter, locale: Locale): string {
     default:
       return tx(locale, 'common.alle');
   }
-}
-
-function sortLabel(sort: SortKey, locale: Locale): string {
-  switch (sort) {
-    case 'title':
-      return tx(locale, 'quiz.sort_title');
-    case 'semester':
-      return tx(locale, 'quiz.sort_semester');
-    case 'questions':
-      return tx(locale, 'quiz.sort_questions');
-    default:
-      return tx(locale, 'quiz.sort_progress');
-  }
-}
-
-function questionCount(module: QuizModule): number {
-  return module.topics.reduce((sum, topic) => sum + topic.questions.length, 0);
 }
 
 function matchesStatus(
@@ -116,47 +100,17 @@ function matchesSearch(module: QuizModule, study: QuizStudy, needle: string): bo
   return fields.some((value) => hay(value).includes(needle));
 }
 
-function sortModules(
-  modules: QuizModule[],
-  sort: SortKey,
-  locale: Locale,
-  attempts: Record<string, QuestionProgress>,
-): QuizModule[] {
-  const order = new Map(modules.map((module, index) => [module.id, index]));
-  const ratios = new Map<string, number>();
-  for (const module of modules) {
-    const stats = moduleStats(module, attempts);
-    ratios.set(module.id, stats.total ? stats.mastered / stats.total : 0);
-  }
-  const byOrder = (a: QuizModule, b: QuizModule) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0);
-  const byTitle = (a: QuizModule, b: QuizModule) =>
-    pick(a.title, locale).localeCompare(pick(b.title, locale), locale);
-  return [...modules].sort((a, b) => {
-    switch (sort) {
-      case 'title':
-        return byTitle(a, b) || byOrder(a, b);
-      case 'semester':
-        return a.semester - b.semester || byTitle(a, b) || byOrder(a, b);
-      case 'questions':
-        return questionCount(b) - questionCount(a) || byTitle(a, b);
-      default: {
-        const ratioA = ratios.get(a.id) ?? 0;
-        const ratioB = ratios.get(b.id) ?? 0;
-        return ratioB - ratioA || byOrder(a, b);
-      }
-    }
-  });
-}
-
 export default function QuizScreen() {
   const locale = useAppSelector((state) => state.locale);
   const { ready, attempts, sessions, resetProgress } = useQuizProgress();
   const [studyFilter, setStudyFilter] = useState<string>(ALL_STUDIES);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [semesterFilter, setSemesterFilter] = useState<SemesterFilter>('all');
-  const [sort, setSort] = useState<SortKey>('progress');
   const [query, setQuery] = useState('');
-  const [panel, setPanel] = useState<FilterPanel>(null);
+  const [studiesOpen, setStudiesOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  const drawerWidth = Math.min(340, Math.round(width * 0.86));
 
   if (!ready) {
     return (
@@ -183,273 +137,268 @@ export default function QuizScreen() {
           matchesStatus(module, statusFilter, attempts) &&
           matchesSearch(module, study, needle),
       );
-      return modules.length ? [{ study, modules: sortModules(modules, sort, locale, attempts) }] : [];
+      return modules.length ? [{ study, modules }] : [];
     })
     .filter((group) => studyFilter === ALL_STUDIES || group.study.id === studyFilter);
   const resultCount = groups.reduce((sum, group) => sum + group.modules.length, 0);
   const filtersActive =
     query.trim() !== '' || statusFilter !== 'all' || semesterFilter !== 'all' || studyFilter !== ALL_STUDIES;
+  const filterActive = statusFilter !== 'all' || semesterFilter !== 'all';
   const selectedStudy = studyFilter === ALL_STUDIES ? undefined : findQuizStudy(studyFilter);
   const practiceTopic = selectedStudy ? mixedTopicForStudy(selectedStudy.id) : mixedTopic;
+
+  const studyOptions: DropdownOption[] = [
+    {
+      key: ALL_STUDIES,
+      label: tx(locale, 'quiz.study_all'),
+      meta: moduleCountLabel(quizModules.length, locale),
+      selected: studyFilter === ALL_STUDIES,
+      group: tx(locale, 'quiz.drawer_studies'),
+    },
+    ...studiesWithModules.map((study) => ({
+      key: study.id,
+      label: pick(study.title, locale),
+      meta: moduleCountLabel(quizModulesForStudy(study.id).length, locale),
+      selected: studyFilter === study.id,
+      group: tx(locale, 'quiz.drawer_studies'),
+    })),
+  ];
+
+  const filterOptions: DropdownOption[] = [
+    ...STATUS_FILTERS.map((status) => ({
+      key: `status:${status}`,
+      label: statusLabel(status, locale),
+      selected: statusFilter === status,
+      group: tx(locale, 'quiz.filter_status'),
+    })),
+    ...(semesters.length > 1
+      ? [
+          {
+            key: 'semester:all',
+            label: tx(locale, 'common.alle'),
+            selected: semesterFilter === 'all',
+            group: tx(locale, 'quiz.semester'),
+          },
+          ...semesters.map((semester) => ({
+            key: `semester:${semester}`,
+            label: tx(locale, 'quiz.semester_value', [semester]),
+            selected: semesterFilter === semester,
+            group: tx(locale, 'quiz.semester'),
+          })),
+        ]
+      : []),
+  ];
 
   function resetFilters(): void {
     setQuery('');
     setStatusFilter('all');
     setSemesterFilter('all');
     setStudyFilter(ALL_STUDIES);
-    setPanel(null);
   }
 
+  function applyStudyKey(key: string): void {
+    setStudiesOpen(false);
+    setStudyFilter(key);
+  }
+
+  function applyFilterKey(key: string): void {
+    setFilterOpen(false);
+    if (key.startsWith('status:')) setStatusFilter(key.slice(7) as StatusFilter);
+    else if (key === 'semester:all') setSemesterFilter('all');
+    else if (key.startsWith('semester:')) setSemesterFilter(Number(key.slice(9)));
+  }
+
+  function clearStatusAndSemester(): void {
+    setFilterOpen(false);
+    setStatusFilter('all');
+    setSemesterFilter('all');
+  }
+
+  function confirmResetProgress(): void {
+    setStudiesOpen(false);
+    confirmQuizAction({
+      title: tx(locale, 'quiz.reset_title'),
+      message: tx(locale, 'quiz.reset_text'),
+      cancelLabel: tx(locale, 'common.abbrechen'),
+      confirmLabel: tx(locale, 'common.zuruecksetzen'),
+      onConfirm: resetProgress,
+    });
+  }
+
+  const toolbar = (
+    <QuizToolbar
+      locale={locale}
+      query={query}
+      onQueryChange={setQuery}
+      onOpenStudies={() => setStudiesOpen(true)}
+      onOpenFilter={() => setFilterOpen(true)}
+      studyActive={studyFilter !== ALL_STUDIES}
+      filterActive={filterActive}
+    />
+  );
+
   return (
-    <Screen topInset>
-      <Card>
-        <View style={styles.statsHeader}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.statsLabel}>{tx(locale, 'quiz.mastered')}</Text>
-            <Text style={styles.statsValue}>
-              {overall.mastered}
-              <Text style={styles.statsTotal}> / {overall.total}</Text>
-            </Text>
-          </View>
-          <View style={styles.accuracy}>
-            <Text style={styles.accuracyValue}>{overall.accuracy}%</Text>
-            <Text style={styles.accuracyLabel}>{tx(locale, 'quiz.accuracy')}</Text>
-          </View>
-        </View>
-        <Meter value={overall.mastered} max={overall.total} />
-        <Text style={styles.muted}>
-          {tx(locale, 'quiz.stats_line', [overall.correct, overall.total, overall.wrong])}
-        </Text>
-        {lastSession && lastTopic ? (
-          <Pressable
-            onPress={() =>
-              startTopic(
-                lastTopic,
-                lastSession.mode === 'review' && topicStats(lastTopic, attempts).wrong === 0
-                  ? 'all'
-                  : lastSession.mode,
-              )
-            }
-            style={styles.lastSession}
-          >
-            <MaterialIcons name="history" size={18} color={colors.blue} />
-            <Text style={styles.lastSessionText}>
-              {tx(locale, 'quiz.last_session', [
-                lastSession.correct,
-                lastSession.total,
-                pick(lastTopic.title, locale),
-              ])}
-            </Text>
-            <MaterialIcons name="chevron-right" size={18} color={colors.blue} />
-          </Pressable>
-        ) : null}
-      </Card>
-
-      <Section title={tx(locale, 'quiz.modules')} />
-      <View style={styles.controls}>
-        <View style={styles.searchRow}>
-          <MaterialIcons name="search" size={20} color={colors.mute} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={tx(locale, 'quiz.search_placeholder')}
-            placeholderTextColor={colors.mute}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="search"
-            style={styles.searchInput}
-          />
-          {query ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={tx(locale, 'common.zuruecksetzen')}
-              hitSlop={8}
-              onPress={() => setQuery('')}
-            >
-              <MaterialIcons name="close" size={18} color={colors.mute} />
-            </Pressable>
-          ) : null}
-        </View>
-
-        {studiesWithModules.length > 1 ? (
-          <View style={styles.filters}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: studyFilter === ALL_STUDIES }}
-              onPress={() => {
-                setStudyFilter(ALL_STUDIES);
-                setPanel(null);
-              }}
-            >
-              <Pill label={tx(locale, 'quiz.study_all')} active={studyFilter === ALL_STUDIES} />
-            </Pressable>
-            {studiesWithModules.map((study) => (
-              <Pressable
-                key={study.id}
-                accessibilityRole="button"
-                accessibilityState={{ selected: studyFilter === study.id }}
-                onPress={() => {
-                  setStudyFilter(study.id);
-                  setPanel(null);
-                }}
-              >
-                <Pill label={pick(study.title, locale)} active={studyFilter === study.id} />
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-
-        <View style={styles.toolbar}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: panel === 'status', selected: statusFilter !== 'all' }}
-            onPress={() => setPanel(panel === 'status' ? null : 'status')}
-          >
-            <Pill
-              label={`${statusFilter === 'all' ? tx(locale, 'quiz.filter_status') : statusLabel(statusFilter, locale)} ▾`}
-              active={panel === 'status' || statusFilter !== 'all'}
-            />
-          </Pressable>
-          {semesters.length > 1 ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: panel === 'semester', selected: semesterFilter !== 'all' }}
-              onPress={() => setPanel(panel === 'semester' ? null : 'semester')}
-            >
-              <Pill
-                label={`${semesterFilter === 'all' ? tx(locale, 'quiz.semester') : tx(locale, 'quiz.semester_value', [semesterFilter])} ▾`}
-                active={panel === 'semester' || semesterFilter !== 'all'}
-              />
-            </Pressable>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: panel === 'sort' }}
-            onPress={() => setPanel(panel === 'sort' ? null : 'sort')}
-          >
-            <Pill label={`${sortLabel(sort, locale)} ▾`} active={panel === 'sort'} />
-          </Pressable>
-        </View>
-
-        {panel === 'status' ? (
-          <View style={styles.panel}>
-            <View style={styles.panelRow}>
-              {STATUS_FILTERS.map((status) => (
-                <Pressable key={status} onPress={() => setStatusFilter(status)}>
-                  <Pill label={statusLabel(status, locale)} active={statusFilter === status} />
-                </Pressable>
-              ))}
-            </View>
-            {statusFilter !== 'all' ? (
-              <Pressable onPress={() => setStatusFilter('all')}>
-                <Text style={styles.panelReset}>{tx(locale, 'common.zuruecksetzen')}</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
-
-        {panel === 'semester' ? (
-          <View style={styles.panel}>
-            <View style={styles.panelRow}>
-              <Pressable onPress={() => setSemesterFilter('all')}>
-                <Pill label={tx(locale, 'common.alle')} active={semesterFilter === 'all'} />
-              </Pressable>
-              {semesters.map((semester) => (
-                <Pressable key={semester} onPress={() => setSemesterFilter(semester)}>
-                  <Pill
-                    label={tx(locale, 'quiz.semester_value', [semester])}
-                    active={semesterFilter === semester}
-                  />
-                </Pressable>
-              ))}
-            </View>
-            {semesterFilter !== 'all' ? (
-              <Pressable onPress={() => setSemesterFilter('all')}>
-                <Text style={styles.panelReset}>{tx(locale, 'common.zuruecksetzen')}</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
-
-        {panel === 'sort' ? (
-          <View style={styles.panel}>
-            <View style={styles.panelRow}>
-              {SORT_KEYS.map((key) => (
-                <Pressable key={key} onPress={() => setSort(key)}>
-                  <Pill label={sortLabel(key, locale)} active={sort === key} />
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        {filtersActive ? (
-          <Text style={styles.resultCount}>
-            {tx(locale, 'quiz.result_count', [resultCount, quizModules.length])}
-          </Text>
-        ) : null}
-      </View>
-
-      {groups.length ? (
-        groups.map(({ study, modules }) => (
-          <StudyGroup
-            key={study.id}
-            study={study}
-            modules={modules}
-            locale={locale}
-            attempts={attempts}
-          />
-        ))
-      ) : (
-        <Card>
-          <Text style={styles.muted}>{tx(locale, 'quiz.no_matches')}</Text>
-          <Pressable accessibilityRole="button" onPress={resetFilters}>
-            <Text style={styles.link}>{tx(locale, 'quiz.reset_filters')}</Text>
-          </Pressable>
-        </Card>
-      )}
-
-      {practiceTopic ? (
-        <>
-          <Section title={tx(locale, 'quiz.practice')} />
-          <Card>
-            <View style={styles.mixedHeader}>
-              <View style={styles.mixedIcon}>
-                <MaterialIcons name="shuffle" size={22} color={colors.blue} />
-              </View>
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text style={styles.topicTitle}>{pick(practiceTopic.title, locale)}</Text>
-                <Text style={styles.muted}>{pick(practiceTopic.summary, locale)}</Text>
-              </View>
-            </View>
-            <View style={styles.actions}>
-              <Pressable onPress={() => startTopic(practiceTopic, 'mixed')} style={styles.primaryAction}>
-                <MaterialIcons name="play-arrow" size={18} color="#FFFFFF" />
-                <Text style={styles.primaryActionText}>{tx(locale, 'quiz.start_mixed')}</Text>
-              </Pressable>
-            </View>
-          </Card>
-        </>
-      ) : null}
-
-      {overall.seen > 0 ? (
-        <Pressable
-          onPress={() =>
-            confirmQuizAction({
-              title: tx(locale, 'quiz.reset_title'),
-              message: tx(locale, 'quiz.reset_text'),
-              cancelLabel: tx(locale, 'common.abbrechen'),
-              confirmLabel: tx(locale, 'common.zuruecksetzen'),
-              onConfirm: resetProgress,
-            })
-          }
-          style={styles.reset}
+    <Drawer
+      open={studiesOpen}
+      onOpen={() => setStudiesOpen(true)}
+      onClose={() => setStudiesOpen(false)}
+      drawerPosition="left"
+      drawerType="front"
+      drawerStyle={{ width: drawerWidth }}
+      overlayAccessibilityLabel={tx(locale, 'common.schliessen')}
+      renderDrawerContent={() => (
+        <DrawerPanel
+          title={tx(locale, 'quiz.drawer_menu')}
+          closeLabel={tx(locale, 'common.schliessen')}
+          onClose={() => setStudiesOpen(false)}
         >
-          <MaterialIcons name="delete-outline" size={16} color={colors.mute} />
-          <Text style={styles.resetText}>{tx(locale, 'quiz.reset')}</Text>
-        </Pressable>
-      ) : null}
-    </Screen>
+          <OptionRows options={studyOptions} onSelect={applyStudyKey} />
+          {overall.seen > 0 ? (
+            <>
+              <Text style={styles.drawerGroup}>{tx(locale, 'quiz.actions')}</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={confirmResetProgress}
+                style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
+              >
+                <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
+                <Text style={styles.drawerActionText}>{tx(locale, 'quiz.reset')}</Text>
+              </Pressable>
+            </>
+          ) : null}
+        </DrawerPanel>
+      )}
+    >
+      <Drawer
+        open={filterOpen}
+        onOpen={() => setFilterOpen(true)}
+        onClose={() => setFilterOpen(false)}
+        drawerPosition="right"
+        drawerType="front"
+        drawerStyle={{ width: drawerWidth }}
+        overlayAccessibilityLabel={tx(locale, 'common.schliessen')}
+        renderDrawerContent={() => (
+          <DrawerPanel
+            title={tx(locale, 'quiz.drawer_filter')}
+            closeLabel={tx(locale, 'common.schliessen')}
+            onClose={() => setFilterOpen(false)}
+          >
+            <OptionRows options={filterOptions} onSelect={applyFilterKey} />
+            {filterActive ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={clearStatusAndSemester}
+                style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
+              >
+                <MaterialIcons name="filter-alt-off" size={18} color={colors.blue} />
+                <Text style={[styles.drawerActionText, styles.drawerActionBlue]}>
+                  {tx(locale, 'quiz.reset_filters')}
+                </Text>
+              </Pressable>
+            ) : null}
+          </DrawerPanel>
+        )}
+      >
+        <Screen stickyHeader={toolbar} topInset>
+          <Card>
+            <View style={styles.statsHeader}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={styles.statsLabel}>{tx(locale, 'quiz.mastered')}</Text>
+                <Text style={styles.statsValue}>
+                  {overall.mastered}
+                  <Text style={styles.statsTotal}> / {overall.total}</Text>
+                </Text>
+              </View>
+              <View style={styles.accuracy}>
+                <Text style={styles.accuracyValue}>{overall.accuracy}%</Text>
+                <Text style={styles.accuracyLabel}>{tx(locale, 'quiz.accuracy')}</Text>
+              </View>
+            </View>
+            <Meter value={overall.mastered} max={overall.total} />
+            <Text style={styles.muted}>
+              {tx(locale, 'quiz.stats_line', [overall.correct, overall.total, overall.wrong])}
+            </Text>
+            {lastSession && lastTopic ? (
+              <Pressable
+                onPress={() =>
+                  startTopic(
+                    lastTopic,
+                    lastSession.mode === 'review' && topicStats(lastTopic, attempts).wrong === 0
+                      ? 'all'
+                      : lastSession.mode,
+                  )
+                }
+                style={styles.lastSession}
+              >
+                <MaterialIcons name="history" size={18} color={colors.blue} />
+                <Text style={styles.lastSessionText}>
+                  {tx(locale, 'quiz.last_session', [
+                    lastSession.correct,
+                    lastSession.total,
+                    pick(lastTopic.title, locale),
+                  ])}
+                </Text>
+                <MaterialIcons name="chevron-right" size={18} color={colors.blue} />
+              </Pressable>
+            ) : null}
+          </Card>
+
+          <Section
+            title={tx(locale, 'quiz.modules')}
+            action={filtersActive ? tx(locale, 'quiz.reset_filters') : undefined}
+            onAction={resetFilters}
+          />
+          {filtersActive ? (
+            <Text style={styles.resultCount}>
+              {tx(locale, 'quiz.result_count', [resultCount, quizModules.length])}
+            </Text>
+          ) : null}
+
+          {groups.length ? (
+            groups.map(({ study, modules }) => (
+              <StudyGroup
+                key={study.id}
+                study={study}
+                modules={modules}
+                locale={locale}
+                attempts={attempts}
+              />
+            ))
+          ) : (
+            <Card>
+              <Text style={styles.muted}>{tx(locale, 'quiz.no_matches')}</Text>
+              <Pressable accessibilityRole="button" onPress={resetFilters}>
+                <Text style={styles.link}>{tx(locale, 'quiz.reset_filters')}</Text>
+              </Pressable>
+            </Card>
+          )}
+
+          {practiceTopic ? (
+            <>
+              <Section title={tx(locale, 'quiz.practice')} />
+              <Card>
+                <View style={styles.mixedHeader}>
+                  <View style={styles.mixedIcon}>
+                    <MaterialIcons name="shuffle" size={22} color={colors.blue} />
+                  </View>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={styles.topicTitle}>{pick(practiceTopic.title, locale)}</Text>
+                    <Text style={styles.muted}>{pick(practiceTopic.summary, locale)}</Text>
+                  </View>
+                </View>
+                <View style={styles.actions}>
+                  <Pressable onPress={() => startTopic(practiceTopic, 'mixed')} style={styles.primaryAction}>
+                    <MaterialIcons name="play-arrow" size={18} color="#FFFFFF" />
+                    <Text style={styles.primaryActionText}>{tx(locale, 'quiz.start_mixed')}</Text>
+                  </Pressable>
+                </View>
+              </Card>
+            </>
+          ) : null}
+
+        </Screen>
+      </Drawer>
+    </Drawer>
   );
 }
 
@@ -579,32 +528,33 @@ const styles = themedStyles((colors) => ({
     borderTopColor: colors.line,
   },
   lastSessionText: { flex: 1, color: colors.blue, fontSize: 13, fontWeight: '600', lineHeight: 18 },
-  controls: { gap: 8 },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.paper,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-  },
-  searchInput: { flex: 1, paddingVertical: 11, fontSize: 15, color: colors.anthracite },
-  toolbar: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  panel: {
-    backgroundColor: colors.paper,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 12,
-    padding: 10,
-    gap: 8,
-  },
-  panelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  panelReset: { color: colors.blue, fontSize: 13, fontWeight: '700' },
   resultCount: { color: colors.mute, fontSize: 12, fontWeight: '600', marginTop: -2 },
   link: { color: colors.blue, fontSize: 13, fontWeight: '700' },
-  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: -6 },
+  drawerAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  drawerActionText: { flex: 1, color: colors.danger, fontSize: 15, fontWeight: '600' },
+  drawerActionBlue: { color: colors.blue },
+  drawerGroup: {
+    alignSelf: 'flex-start',
+    color: colors.inkSoft,
+    backgroundColor: colors.mist,
+    borderRadius: 8,
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 16,
+    marginBottom: 2,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
   studyGroup: { gap: 8 },
   studyHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
   studyTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
@@ -677,6 +627,4 @@ const styles = themedStyles((colors) => ({
     paddingHorizontal: 14,
   },
   primaryActionText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
-  reset: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8 },
-  resetText: { color: colors.mute, fontSize: 12, fontWeight: '600' },
 }));

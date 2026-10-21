@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { colors, themedStyles } from '@/src/theme';
 
-import type { DropdownOption } from '../types';
+import type { DropdownOption } from './option-rows';
 import { ControlIcon } from './control-icon';
 import { OptionRows } from './option-rows';
 
