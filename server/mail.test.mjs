@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Contract for the pure parts of server/mail.mjs — fixtures, no network. */
+/** Contract for the pure parts of `server/mail/*.mjs` — fixtures, no network. */
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';

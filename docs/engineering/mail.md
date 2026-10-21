@@ -49,6 +49,22 @@ Student → app (list, read flag, compose) → assistant server (process memory)
         → imap.uni-stuttgart.de:993 / smtp.uni-stuttgart.de:587
 ```
 
+## Modules
+
+`server/mail.mjs` is the stable public facade for routes and tests. The
+implementation lives in `server/mail/`:
+
+| File | Responsibility |
+| --- | --- |
+| `config.mjs` | Endpoints, limits, process state (credentials, body cache, send guard), failure and quoting helpers |
+| `session.mjs` | TLS IMAP session, `LOGIN`/`LOGOUT` wrapper, literal-capable commands |
+| `accounts.mjs` | Credential proof, account/address normalisation, public status |
+| `folders.mjs` | `LIST` parsing, modified UTF-7, folder ordering |
+| `inbox.mjs` | Message rows: headers, flags, preview and `FETCH` parsing |
+| `body.mjs` | `BODYSTRUCTURE` part selection and full body reads |
+| `parse.mjs` | Pure header/RFC 2047/BODYSTRUCTURE/HTML parsing shared by inbox and body |
+| `send.mjs` | Read flag, SMTP submission, Sent copy |
+
 ## Flow
 
 1. **Credentials** (`app/login.tsx` via `src/auth/use-login-flow.ts`, then
@@ -57,7 +73,7 @@ Student → app (list, read flag, compose) → assistant server (process memory)
    tab opens already connected; the same submission runs when the tab's credential form
    is used, where the account is prefilled from the session and only the password is
    asked for. Either way both values are `POST`ed to the assistant server.
-2. **Proof and keep** (`POST /v1/mail/credentials`, `server/mail.mjs`). The server
+2. **Proof and keep** (`POST /v1/mail/credentials`, `server/mail/accounts.mjs`). The server
    normalizes the long form (`st123456@stud.uni-stuttgart.de` → `st123456`), then proves
    the pair by opening a TLS session and logging in. On success it keeps
    `{ username, password }` in process memory only — never logged, never echoed, never
@@ -91,11 +107,11 @@ Student → app (list, read flag, compose) → assistant server (process memory)
 
    Opening the view calls `POST /v1/mail/seen` once, and a button flips the same flag
    back. The route runs one IMAP session (`SELECT`, `UID STORE <uid> ±FLAGS (\Seen)`);
-   `server/mail.mjs` publishes the new row state into the snapshot optimistically first
+   `src/auth/mail.ts` publishes the new row state into the snapshot optimistically first
    and restores it when the request fails, so the list dot, the "Neu" filter and the
    detail pill stay in agreement. `BODY.PEEK` still keeps the body fetch from changing
    the flag implicitly.
-4. **Write and send** (`POST /v1/mail/send`, `server/mail.mjs`). The compose screen posts
+4. **Write and send** (`POST /v1/mail/send`, `server/mail/send.mjs`). The compose screen posts
    `{ to, cc, bcc, subject, text, attachments, sentFolder, inReplyTo, references }`.
    `server/mail-mime.mjs` parses and dedupes addresses, rejects header injection, caps
    recipients (20), subject (255), body (100 KB) and attachments (5 files, 6 MB each,
@@ -118,7 +134,7 @@ Student → app (list, read flag, compose) → assistant server (process memory)
 
 `GET /v1/mail/folders` lists the account's mailboxes with one IMAP session
 (`LIST "" "*"`): name verbatim plus a `selectable` flag (non-selectable `\Noselect`
-entries are kept out of the dropdown by the app). `server/mail.mjs` parses the mailbox
+entries are kept out of the dropdown by the app). `server/mail/folders.mjs` parses the mailbox
 name as the astring after the hierarchy delimiter, covering quoted names, bare atoms
 (`"/" INBOX` — reading the last quoted token would turn the delimiter into the name) and
 inline `{n}` literals.

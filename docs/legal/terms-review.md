@@ -245,11 +245,11 @@ The app sends the st-account **password** to the assistant server. The server pr
 This is the most serious implementation finding in the repository:
 
 ```js
-// server/mail.mjs:29
-let secrets = null; // { username, password } — process memory only.
+// server/mail/config.mjs
+export const state = { secrets: null, bodyCache: new Map(), sends: [] };
 
-// server/mail.mjs:80
-secrets = { username: account, password };
+// server/mail/accounts.mjs
+state.secrets = { username: account, password };
 ```
 
 There is **one** mailbox for the whole server. The read routes do not check the caller:
@@ -621,7 +621,7 @@ All URLs retrieved on 20 October 2026.
 
 ### Repository evidence
 
-- `server/mail.mjs` — global `secrets`, IMAP handling.
+- `server/mail/config.mjs` and `server/mail/accounts.mjs` — global `secrets`, IMAP handling.
 - `server/routes/mail.mjs` — unauthenticated mail routes.
 - `server/campus.mjs` — C@MPUS REST calls, credential resolution, `.env` fallback.
 - `server/routes/campus.mjs` — credential and login routes.
