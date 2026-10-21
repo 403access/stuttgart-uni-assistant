@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { capSource, cleanPdfText } from './quiz-pipeline/extract';
+import { generateDraftTopic } from './quiz-pipeline/generate';
 import {
   InvalidDraftError,
   normalizeTopic,
@@ -235,6 +236,21 @@ expectInvalid(
   () =>
     topic(
       draft([
+        question(1, {
+          options: [
+            { label: { de: 'Gleich', en: 'Same' } },
+            { label: { de: 'Gleich', en: 'Same' } },
+          ],
+        }),
+        ...mixedQuestions.slice(1),
+      ]),
+    ),
+  'duplicate options are rejected',
+);
+expectInvalid(
+  () =>
+    topic(
+      draft([
         question(1, { kind: 'multiple', correctOptions: [0, 1, 2, 3], correctOption: null }),
         ...mixedQuestions.slice(1),
       ]),
@@ -263,7 +279,46 @@ const quoted = topic(
 const quotedSource = serializeTopicFile(quoted, 'pragQuote');
 expect(quotedSource.includes("l('Karls \\'Zitat\\'\\nneu', 'Karl\\'s \\'quote\\'\\nnew')"), 'serializer escapes quotes and newlines');
 
+async function checkGeneration() {
+  const originalFetch = globalThis.fetch;
+  let request: { url: string; body: Record<string, unknown> } | undefined;
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    request = {
+      url: String(input),
+      body: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>,
+    };
+    return new Response(JSON.stringify({ output_text: JSON.stringify(draft(mixedQuestions)) }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }) as typeof fetch;
+
+  try {
+    const generated = await generateDraftTopic({
+      apiKey: 'test-key',
+      model: 'test-model',
+      fileName: 'test.pdf',
+      pages: 3,
+      text: 'Test document text',
+      moduleTitle: 'Pragmatik I',
+      questionCount: mixedQuestions.length,
+      kinds: ['single', 'multiple', 'true-false', 'free-text', 'matching', 'ordering', 'cloze', 'flashcard'],
+      sourceLanguage: 'de',
+    });
+    expect(generated.questions.length === mixedQuestions.length, 'generation parses the structured answer');
+    expect(Boolean(request?.url.endsWith('/v1/responses')), 'generation calls the Responses API');
+    expect(request?.body.model === 'test-model', 'generation sends the model');
+    const format = (request?.body.text as { format?: Record<string, unknown> } | undefined)?.format;
+    expect(format?.type === 'json_schema' && format.strict === true, 'generation requests strict JSON schema output');
+    const input = request?.body.input as { role: string; content: string }[] | undefined;
+    expect(Boolean(input?.[1]?.content.includes('Test document text')), 'generation sends the document text');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 async function checkRegistryAndArgs() {
+  await checkGeneration();
   const temporary = await mkdtemp(join(tmpdir(), 'quiz-registry-'));
   try {
     const path = join(temporary, 'index.ts');

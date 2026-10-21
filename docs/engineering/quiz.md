@@ -100,8 +100,8 @@ Each PDF becomes one topic in
 `src/quiz/content/generated/<module>-<file>.ts`, and the CLI rewrites
 `src/quiz/content/generated/index.ts`. `content/index.ts` attaches those topics
 to their modules, so generated and hand-authored content share progress,
-modes, search, and validation. The pipeline never overwrites hand-authored
-topics.
+modes, the module hub, and validation. The pipeline never overwrites
+hand-authored topics.
 
 Only embedded text is read. A scanned PDF has to be OCRed first. The extracted
 text is capped at 120,000 characters by default (`--max-chars`); the pipeline

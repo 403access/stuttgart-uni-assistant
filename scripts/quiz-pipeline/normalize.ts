@@ -74,6 +74,15 @@ function labels(value: unknown, field: string): Localized[] {
   });
 }
 
+function distinct(list: Localized[], field: string): void {
+  const seen = new Set<string>();
+  for (const item of list) {
+    const key = `${item.de.toLowerCase()}|${item.en.toLowerCase()}`;
+    if (seen.has(key)) fail(`${field} contains a duplicate`);
+    seen.add(key);
+  }
+}
+
 function normalizeQuestion(
   draft: DraftQuestion,
   topicId: string,
@@ -100,6 +109,7 @@ function normalizeQuestion(
     case 'single': {
       const options = labels(draft.options, `${at}.options`);
       if (options.length < 2) fail(`${at} needs at least two options`);
+      distinct(options, `${at}.options`);
       const correct = draft.correctOption;
       if (!Number.isInteger(correct) || correct === null || correct < 0 || correct >= options.length) {
         fail(`${at}.correctOption must index one of its options`);
@@ -114,6 +124,7 @@ function normalizeQuestion(
     case 'multiple': {
       const options = labels(draft.options, `${at}.options`);
       if (options.length < 3) fail(`${at} needs at least three options`);
+      distinct(options, `${at}.options`);
       const raw = Array.isArray(draft.correctOptions) ? draft.correctOptions : [];
       const correct = [...new Set(raw)];
       if (correct.length === 0) fail(`${at} has no correct options`);
@@ -160,6 +171,8 @@ function normalizeQuestion(
         left: localized(pair?.left, `${at}.pairs[${pairIndex}].left`),
         right: localized(pair?.right, `${at}.pairs[${pairIndex}].right`),
       }));
+      distinct(pairs.map((pair) => pair.left), `${at}.pairs.left`);
+      distinct(pairs.map((pair) => pair.right), `${at}.pairs.right`);
       return withExtras({ ...base, kind: 'matching' as const, pairs });
     }
     case 'ordering': {
@@ -170,6 +183,7 @@ function normalizeQuestion(
         id: `i${itemIndex + 1}`,
         label: localized(item, `${at}.items[${itemIndex}]`),
       }));
+      distinct(items.map((item) => item.label), `${at}.items`);
       return withExtras({ ...base, kind: 'ordering' as const, items });
     }
     case 'cloze': {

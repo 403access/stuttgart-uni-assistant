@@ -75,8 +75,9 @@ export async function writeRegistry(
     '}',
     '',
     '/**',
-    ' * Topics written by `npm run quiz:from-pdf`. The CLI owns this file: change a',
-    ' * generated topic in its own file, then rerun the command with --force.',
+    ' * Topics written by `bun run quiz:from-pdf`. The CLI owns this file; edit a',
+    ' * generated topic in its own file, and rerun the command with --force to',
+    ' * replace it.',
     ' */',
     ...(sorted.length
       ? [

@@ -84,6 +84,17 @@ npm run check
 
 `npm run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary). It also runs the server tests and the secrets CLI tests (`scripts/set-campus-secret.test.mjs`), which exercise the token and session updater against a throwaway `.env` copy and assert the real one is never touched.
 
+## Generate quiz content from PDFs
+
+Quiz topics can be generated from lecture PDFs and attached to an existing module. The command reads embedded PDF text, asks xAI for a validated bilingual topic (it needs `XAI_API_KEY`), and writes TypeScript under `src/quiz/content/generated/`:
+
+```bash
+bun run quiz:from-pdf --module prag ./sitzung-2.pdf
+bun run quiz:from-pdf --module phil ./pdfs/ --questions 12 --dry-run
+```
+
+Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--force` replaces an existing generated topic. The full options, validation rules, and review checklist are in [docs/engineering/quiz.md](docs/engineering/quiz.md).
+
 ## Where things live
 
 | Path | What it is |
@@ -101,6 +112,7 @@ npm run check
 | `app/api.tsx` | API overview. Replays known server routes |
 | `server/index.mjs` | Assistant server entry point. Loads `.env`, owns the listener, and dispatches to `server/routes/` |
 | `server/routes/` | Route modules for admin, health, auth, mail, C@MPUS, OIDC, and the Grok rewrite |
+| `scripts/quiz-from-pdf.ts` | Builds quiz topics from PDF handouts; see [docs/engineering/quiz.md](docs/engineering/quiz.md) |
 | `scripts/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
 | `scripts/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |
