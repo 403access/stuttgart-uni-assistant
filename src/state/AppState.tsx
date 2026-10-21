@@ -2,15 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { clearMailCache, hydrateMailSnapshot } from '@/src/auth/mail';
-import { loadCampusStudies } from '@/src/auth/campus';
+import { loadCampusStudies, signInWithCampusToken, submitBrowserCredentials } from '@/src/auth/campus';
 import {
-  clearAuthToken,
+  clearAuthSession,
   createServerSession,
   fetchSessionUser,
   getActiveAuthToken,
   linkServerPlatform,
   logoutServerSession,
+  readAuthSessionId,
   readAuthToken,
+  saveAuthSessionId,
   saveAuthToken,
   setActiveAuthToken,
   syncServerPlatform,
@@ -18,6 +20,7 @@ import {
   type AuthSession,
 } from '@/src/auth/session';
 import { asUserAccount, findPlatform, localUser } from '@/src/auth/user';
+import { clearCampusHarvest, readCampusHarvest } from '@/src/auth/vault';
 import { documents } from '@/src/data';
 import type {
   AccountPlatformId,
@@ -87,6 +90,10 @@ type AppContextValue = PersistedState & {
   ready: boolean;
   /** Bearer token of the server session, or null while offline / signed out. Never persisted in AsyncStorage. */
   authToken: string | null;
+  /** Server row id of that session; stored next to the token in the device vault. */
+  authSessionId: string | null;
+  /** Revalidate the session; if the server rejected it, re-establish it without UI when possible. */
+  refreshOrReauthenticate: () => Promise<boolean>;
   signInDemo: (account: string) => Promise<void>;
   signInLocal: (account: string) => Promise<void>;
   /** Finish a web sign-in with the session minted after the phone approved the QR code. */
@@ -227,6 +234,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PersistedState>(empty);
   const [ready, setReady] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authSessionId, setAuthSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -264,22 +272,24 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     (async () => {
-      const token = await readAuthToken();
+      const [token, sessionId] = await Promise.all([readAuthToken(), readAuthSessionId()]);
       if (!active || !token) return;
       setAuthToken(token);
       setActiveAuthToken(token);
+      setAuthSessionId(sessionId);
       const result = await fetchSessionUser(token);
       if (!active) return;
       if (result && 'unauthorized' in result) {
-        await clearAuthToken();
-        if (!active) return;
-        void clearMailCache();
-        setAuthToken(null);
-        setActiveAuthToken(null);
-        setState((current) => ({ ...current, user: null, sessionAccount: null, sessionMode: null, sessionName: null, sessionEmail: null, sessionSubject: null, mailAccount: null, oidcSessionId: null }));
+        // Keep the cached account for one resume attempt: `SessionRefresh`
+        // re-establishes it without UI (demo/local or a saved C@MPUS harvest)
+        // before anything is dropped.
         return;
       }
       if (result && 'user' in result) {
+        if (result.sessionId) {
+          setAuthSessionId(result.sessionId);
+          void saveAuthSessionId(result.sessionId);
+        }
         setState((current) => ({ ...current, ...sessionFields(result.user) }));
       }
     })().catch(() => undefined);
@@ -314,18 +324,142 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, [authToken, state.sessionMode, state.campusStudies.length]);
 
   const api = useMemo<AppContextValue>(() => {
-    /** Sign-in: persist the server token, then the user and its mirrored fields. */
+    /** Sign-in: persist the server token and session id, then the user and its mirrored fields. */
     const establish = (session: AuthSession, extra: Partial<PersistedState> = {}) => {
+      const sessionId = session.sessionId || null;
       setAuthToken(session.token);
       setActiveAuthToken(session.token);
+      setAuthSessionId(sessionId);
       void saveAuthToken(session.token);
+      void saveAuthSessionId(sessionId);
       setState((current) => ({ ...current, ...sessionFields(session.user), ...extra }));
+    };
+
+    /** Drop this device's session after the server rejected it and no re-login worked. */
+    const clearLocalSession = async () => {
+      await clearAuthSession();
+      void clearMailCache();
+      setAuthToken(null);
+      setActiveAuthToken(null);
+      setAuthSessionId(null);
+      setState((current) => ({
+        ...current,
+        user: null,
+        sessionAccount: null,
+        sessionMode: null,
+        sessionName: null,
+        sessionEmail: null,
+        sessionSubject: null,
+        mailAccount: null,
+        oidcSessionId: null,
+      }));
+    };
+
+    /** Apply a C@MPUS profile from either the login screen or the resume path. */
+    const applyCampusProfile = (profile: CampusSignInProfile) => {
+      const studies = profile.studies ?? state.campusStudies;
+      const activeStudyId =
+        profile.activeStudyId !== undefined && profile.activeStudyId !== null
+          ? profile.activeStudyId
+          : pickActiveStudyId(studies, state.activeStudyId);
+      const extra: Partial<PersistedState> = {
+        oidcSessionId: null,
+        // A fresh login replaces the tree so nodes from another study never linger.
+        curriculumNodes: profile.nodes ?? state.curriculumNodes,
+        curriculumStudyId: profile.nodes ? (profile.studyId ?? null) : state.curriculumStudyId,
+        campusStudies: studies,
+        activeStudyId,
+        syncAt: { ...state.syncAt, campus: new Date().toISOString() },
+      };
+      if (profile.auth) {
+        establish(profile.auth, extra);
+        return;
+      }
+      setState((current) => ({
+        ...current,
+        ...sessionFields(localUser({ account: profile.account, name: profile.name, mode: 'campus' })),
+        ...extra,
+      }));
+    };
+
+    /**
+     * Re-establish the app session without UI. Demo and local accounts can be
+     * minted from the stored account. C@MPUS re-submits the last portal session
+     * the server accepted; that is the same validation the browser login does,
+     * so the server mints a fresh app session for the same account. OIDC has no
+     * reusable credential and returns `failed`.
+     */
+    const relogin = async (): Promise<'ok' | 'failed' | 'unreachable'> => {
+      const { sessionMode: mode, sessionAccount: account, sessionName: name, sessionEmail: email } = state;
+      if (!mode || !account) return 'failed';
+      if (mode === 'demo' || mode === 'local') {
+        try {
+          const session = await createServerSession({ mode, account, name, email });
+          establish(session);
+          return 'ok';
+        } catch (caught) {
+          return caught instanceof Error && caught.message === 'server_unreachable' ? 'unreachable' : 'failed';
+        }
+      }
+      if (mode === 'campus') {
+        const harvest = await readCampusHarvest();
+        if (!harvest) return 'failed';
+        try {
+          const validated = await submitBrowserCredentials(harvest);
+          if (!validated.ticket) return 'failed';
+          applyCampusProfile(await signInWithCampusToken(validated.ticket));
+          return 'ok';
+        } catch (caught) {
+          const code = caught instanceof Error ? caught.message : '';
+          // A network failure keeps the session and the harvest for the next
+          // resume. A rejected harvest is gone for good; an upstream 5xx keeps
+          // it in case the portal recovers.
+          if (code === 'server_unreachable') return 'unreachable';
+          if (code !== 'campus_failed') await clearCampusHarvest();
+          return 'failed';
+        }
+      }
+      return 'failed';
+    };
+
+    /**
+     * Ask the server who this token belongs to. On a rejection, try the silent
+     * re-login once and only then drop the account. A network failure keeps the
+     * cached session, matching the app's offline behaviour.
+     */
+    const refreshOrReauthenticate = async (): Promise<boolean> => {
+      const token = getActiveAuthToken() ?? (await readAuthToken());
+      if (!token) {
+        // Signed out, or the vault lost the token while the account record is
+        // still cached (offline launch). Try the silent path once; if it fails,
+        // keep the cached account rather than dropping it for good.
+        return state.sessionAccount ? (await relogin()) === 'ok' : false;
+      }
+      const result = await fetchSessionUser(token);
+      if (result && 'user' in result) {
+        setAuthToken(token);
+        setActiveAuthToken(token);
+        setAuthSessionId(result.sessionId || null);
+        void saveAuthSessionId(result.sessionId || null);
+        setState((current) => ({ ...current, ...sessionFields(result.user) }));
+        return true;
+      }
+      if (result && 'unauthorized' in result) {
+        const restored = await relogin();
+        // Only a definitive rejection drops the account; an unreachable server
+        // leaves the cached session for the next resume.
+        if (restored === 'failed') await clearLocalSession();
+        return restored === 'ok';
+      }
+      return true;
     };
 
     return {
       ...state,
       ready,
       authToken,
+      authSessionId,
+      refreshOrReauthenticate,
       signInDemo: async (account) => {
         const accountValue = account.trim() || 'st123456';
         try {
@@ -376,30 +510,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           activeStudyId: null,
         });
       },
-      signInCampus: (profile) => {
-        const studies = profile.studies ?? state.campusStudies;        const activeStudyId =
-          profile.activeStudyId !== undefined && profile.activeStudyId !== null
-            ? profile.activeStudyId
-            : pickActiveStudyId(studies, state.activeStudyId);
-        const extra: Partial<PersistedState> = {
-          oidcSessionId: null,
-          // A fresh login replaces the tree so nodes from another study never linger.
-          curriculumNodes: profile.nodes ?? state.curriculumNodes,
-          curriculumStudyId: profile.nodes ? (profile.studyId ?? null) : state.curriculumStudyId,
-          campusStudies: studies,
-          activeStudyId,
-          syncAt: { ...state.syncAt, campus: new Date().toISOString() },
-        };
-        if (profile.auth) {
-          establish(profile.auth, extra);
-          return;
-        }
-        setState((current) => ({
-          ...current,
-          ...sessionFields(localUser({ account: profile.account, name: profile.name, mode: 'campus' })),
-          ...extra,
-        }));
-      },
+      signInCampus: applyCampusProfile,
       setCurriculum: (nodes, options) =>
         setState((current) => {
           const studyId = options?.studyId !== undefined ? options.studyId : current.curriculumStudyId;
@@ -437,19 +548,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       setMailAccount: (account) => setState((current) => (current.mailAccount === account ? current : { ...current, mailAccount: account })),
       refreshUser: async () => {
-        const token = getActiveAuthToken();
-        if (!token) return;
-        const result = await fetchSessionUser(token);
-        if (result && 'unauthorized' in result) {
-          await clearAuthToken();
-          setAuthToken(null);
-          setActiveAuthToken(null);
-          setState((current) => ({ ...current, user: null, sessionAccount: null, sessionMode: null, sessionName: null, sessionEmail: null, sessionSubject: null, mailAccount: null }));
-          return;
-        }
-        if (result && 'user' in result) {
-          setState((current) => ({ ...current, ...sessionFields(result.user) }));
-        }
+        await refreshOrReauthenticate();
       },
       linkAccount: async (platform, account, status = 'connected', source = 'client') => {
         const user = await linkServerPlatform(getActiveAuthToken(), platform, account, status, source);
@@ -473,10 +572,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       signOut: () => {
         void logoutServerSession(authToken);
-        void clearAuthToken();
+        void clearAuthSession();
+        void clearCampusHarvest();
         void clearMailCache();
         setAuthToken(null);
         setActiveAuthToken(null);
+        setAuthSessionId(null);
         setState((current) => ({
           ...current,
           user: null,
@@ -563,7 +664,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                 : {},
         })),
     };
-  }, [ready, state, authToken]);
+  }, [ready, state, authToken, authSessionId]);
 
   return <AppContext.Provider value={api}>{children}</AppContext.Provider>;
 }

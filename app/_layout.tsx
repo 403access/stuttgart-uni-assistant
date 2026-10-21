@@ -7,6 +7,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { getActiveAuthToken } from '@/src/auth/session';
+import { SessionRefresh } from '@/src/auth/session-refresh';
 import { clearLogin } from '@/src/auth/vault';
 import { AppLock } from '@/src/components/app-lock';
 import { ToastHost } from '@/src/components/toast';
@@ -31,6 +32,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <AppStateProvider>
+      <SessionRefresh />
       <OnboardingProvider>
         <QueryProvider>
           <KeyboardProvider>

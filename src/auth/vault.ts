@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+import type { BrowserHarvest } from '@/src/auth/campus-harvest';
+
 /**
  * Device vault for the opt-in C@MPUS autologin credential. This is the only
  * place in the project that keeps a university password, and it is deleted on
@@ -24,6 +26,14 @@ const KEY = 'campus.autologin.v1';
  * is already in plain storage in the session record.
  */
 const HINT_KEY = 'campus.autologin.hint.v1';
+
+/**
+ * The last C@MPUS session the server accepted, kept so the app can re-establish
+ * its app session on resume without asking for the password again. It holds the
+ * portal cookies and storage keys the server already validated — no password.
+ * Cleared on sign-out and when the server rejects it.
+ */
+const HARVEST_KEY = 'campus.harvest.v1';
 
 export interface StoredLogin {
   account: string;
@@ -135,6 +145,63 @@ export async function clearLogin(): Promise<void> {
   await AsyncStorage.removeItem(HINT_KEY).catch(() => undefined);
   if (!module) return;
   await module.deleteItemAsync(KEY).catch(() => undefined);
+}
+
+/** Remember the portal session that `/v1/campus/credentials` just validated. */
+export async function saveCampusHarvest(harvest: BrowserHarvest): Promise<void> {
+  const storage = harvest.storage ?? {};
+  if (!harvest.cookies && !Object.keys(storage).length) return;
+  const raw = JSON.stringify({ cookies: harvest.cookies.slice(0, 8000), storage });
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(HARVEST_KEY, raw).catch(() => undefined);
+    return;
+  }
+  const module = await secureStore();
+  if (!module) return;
+  // Deliberately not biometric-gated: the resume path runs without a prompt.
+  await module
+    .setItemAsync(HARVEST_KEY, raw, { keychainAccessible: module.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY })
+    .catch(() => undefined);
+}
+
+/** The last accepted portal session, or null when there is none. */
+export async function readCampusHarvest(): Promise<BrowserHarvest | null> {
+  let raw: string | null = null;
+  if (Platform.OS === 'web') {
+    raw = await AsyncStorage.getItem(HARVEST_KEY).catch(() => null);
+  } else {
+    const module = await secureStore();
+    if (!module) return null;
+    try {
+      raw = await module.getItemAsync(HARVEST_KEY);
+    } catch {
+      return null;
+    }
+  }
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { cookies?: unknown; storage?: unknown };
+    if (typeof parsed.cookies !== 'string') return null;
+    const storage: Record<string, string> = {};
+    if (parsed.storage && typeof parsed.storage === 'object') {
+      for (const [key, value] of Object.entries(parsed.storage)) {
+        if (typeof value === 'string') storage[key] = value;
+      }
+    }
+    return { cookies: parsed.cookies, storage };
+  } catch {
+    return null;
+  }
+}
+
+export async function clearCampusHarvest(): Promise<void> {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(HARVEST_KEY).catch(() => undefined);
+    return;
+  }
+  const module = await secureStore();
+  if (!module) return;
+  await module.deleteItemAsync(HARVEST_KEY).catch(() => undefined);
 }
 
 /** Account id and biometric flag of a vaulted login, or `null`. Never reads the secret. */

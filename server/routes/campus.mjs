@@ -72,7 +72,7 @@ export async function handleCampus(request, response, url) {
       saveCampusSource(session.user.id, credential.source, profileData.account);
       storeCampusLogin(session.user.id, profileData);
       console.log(`[campus #${reqId}] login ok name=${profileData.name} account=${profileData.account} nodes=${profileData.nodes.length} studies=${profileData.studies?.length ?? 0} user=${session.user.id}`);
-      send(response, 200, { ...profileData, user: session.user, token: session.token, expiresAt: session.expiresAt });
+      send(response, 200, { ...profileData, user: session.user, token: session.token, sessionId: session.sessionId, expiresAt: session.expiresAt });
     } catch (error) {
       logFailure(reqId, 'login', error);
       send(response, Number(error.status) || 500, errorBody(error));

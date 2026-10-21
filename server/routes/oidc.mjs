@@ -34,7 +34,9 @@ export async function handleOidc(request, response, url) {
         mode: 'oidc',
         platforms: oidcPlatformLinks({ account: exchanged.profile.account }),
       });
-      send(response, 200, { ...exchanged, user: session.user, token: session.token, expiresAt: session.expiresAt });
+      // `exchanged.sessionId` is the IdP session (used for logout); the app
+      // session id travels separately so the two cannot overwrite each other.
+      send(response, 200, { ...exchanged, user: session.user, token: session.token, authSessionId: session.sessionId, expiresAt: session.expiresAt });
       return true;
     }
     send(response, 200, await endRemoteSession(body.sessionId));

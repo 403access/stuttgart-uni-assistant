@@ -50,10 +50,12 @@ test('platform links are per user, ordered, and removable', () => {
 
 test('a session token authenticates, then stops after revoke', () => {
   const user = auth.upsertUser({ account: 'st123456', mode: 'campus' });
-  const { token, expiresAt } = auth.issueSession(user.id);
+  const { token, sessionId, expiresAt } = auth.issueSession(user.id);
   assert.ok(expiresAt > new Date().toISOString());
+  assert.match(sessionId, /^ses_[A-Za-z0-9_-]+$/);
   const auth1 = auth.authenticateToken(token);
   assert.equal(auth1.user.id, user.id);
+  assert.equal(auth1.sessionId, sessionId);
   assert.equal(auth.revokeSession(token), true);
   assert.equal(auth.authenticateToken(token), null);
   assert.equal(auth.revokeSession('not-a-session'), false);

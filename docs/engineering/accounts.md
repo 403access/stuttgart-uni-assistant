@@ -57,9 +57,26 @@ links the proven platforms, and issues a token.
   Android Keystore) on native and in AsyncStorage on web, where no secure store
   exists. It is **not** in the `university-assistant/v1` AsyncStorage payload.
 
-On launch `AppState` reads the token and asks `/v1/auth/me`. A 401 drops both the
-token and the session. A network failure keeps the cached user, so the app still
-opens offline with the last account shown.
+On launch `AppState` reads the token and asks `/v1/auth/me`. A network failure
+keeps the cached user, so the app still opens offline with the last account
+shown.
+
+The token is stored with the server **session id** (`session.id` from
+`/v1/auth/me`, also returned by every sign-in route). The id is not a bearer and
+cannot authenticate a request; it names the session row next to the token.
+
+`SessionRefresh` (`src/auth/session-refresh.tsx`) repeats the check whenever the
+app becomes active. A 401 triggers one silent re-login before anything is
+dropped:
+
+- `demo` and `local` accounts are minted again from the stored mode and account.
+- C@MPUS re-submits the last portal harvest the server accepted (kept in the
+  device vault, without the password) to `/v1/campus/credentials` and then
+  `/v1/campus/login`. When the portal session is gone, the harvest is deleted.
+- SIAM/OIDC has no reusable credential on the device, so a rejected token still
+  signs the account out.
+
+A successful refresh or re-login stores the new token and session id together.
 
 ## Web device pairing
 
@@ -91,7 +108,7 @@ token to another host.
 | Route | Auth | Behavior |
 | --- | --- | --- |
 | `POST /v1/auth/session` | none | Creates a `demo` or `local` user and session. Campus and OIDC sessions are only minted by their verified routes. |
-| `GET /v1/auth/me` | Bearer | The public user with platform links, plus the session expiry. |
+| `GET /v1/auth/me` | Bearer | The public user with platform links, plus the session id and expiry. |
 | `POST /v1/auth/logout` | Bearer | Revokes the token and drops the in-memory portal credential. |
 | `POST /v1/auth/devices/start` | none | Creates a ten-minute browser pairing; returns the one-time token and deep link. |
 | `POST /v1/auth/devices/approve` | Bearer | Attaches a scanned pairing token to the signed-in account. |

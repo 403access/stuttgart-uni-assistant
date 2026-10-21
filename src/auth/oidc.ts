@@ -94,6 +94,7 @@ export async function signInWithUniversity(): Promise<OidcProfile> {
     sessionId: string;
     profile: Omit<OidcProfile, 'sessionId' | 'auth'>;
     token?: unknown;
+    authSessionId?: unknown;
     expiresAt?: unknown;
     user?: unknown;
   }>('/v1/oidc/exchange', {
@@ -101,7 +102,12 @@ export async function signInWithUniversity(): Promise<OidcProfile> {
     state,
     redirectUri,
   });
-  const auth = asAuthSession({ token: exchanged.token, expiresAt: exchanged.expiresAt, user: exchanged.user });
+  const auth = asAuthSession({
+    token: exchanged.token,
+    sessionId: exchanged.authSessionId,
+    expiresAt: exchanged.expiresAt,
+    user: exchanged.user,
+  });
   return { ...exchanged.profile, sessionId: exchanged.sessionId, auth: auth ?? undefined };
 }
 

@@ -13,6 +13,8 @@ import { asUserAccount } from '@/src/auth/user';
 import type { AccountPlatformId, PlatformLinkStatus, UserAccount } from '@/src/types';
 
 const TOKEN_KEY = 'university-assistant/auth.v1';
+/** Server-side id of the session the token belongs to (`ses_…`). Not a credential. */
+const SESSION_KEY = 'university-assistant/auth-session.v1';
 
 /** In-memory token for the API modules that are not React components. */
 let activeToken: string | null = null;
@@ -32,6 +34,8 @@ export function authHeaders(): Record<string, string> {
 
 export interface AuthSession {
   token: string;
+  /** Server-side session row this token belongs to. Empty from older servers. */
+  sessionId: string;
   expiresAt: string;
   user: UserAccount;
 }
@@ -140,14 +144,62 @@ export async function clearAuthToken(): Promise<void> {
   await module.deleteItemAsync(TOKEN_KEY).catch(() => undefined);
 }
 
+/**
+ * The session id is stored next to the token so a later refresh can prove which
+ * server session is being resumed. It is not a bearer and cannot authenticate a
+ * request on its own; the token stays the only credential.
+ */
+export async function readAuthSessionId(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return AsyncStorage.getItem(SESSION_KEY).catch(() => null);
+  }
+  const module = await secureStore();
+  if (!module) return null;
+  try {
+    return await module.getItemAsync(SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveAuthSessionId(sessionId: string | null): Promise<void> {
+  if (!sessionId) {
+    await clearAuthSessionId();
+    return;
+  }
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(SESSION_KEY, sessionId).catch(() => undefined);
+    return;
+  }
+  const module = await secureStore();
+  if (!module) return;
+  await module.setItemAsync(SESSION_KEY, sessionId).catch(() => undefined);
+}
+
+export async function clearAuthSessionId(): Promise<void> {
+  if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(SESSION_KEY).catch(() => undefined);
+    return;
+  }
+  const module = await secureStore();
+  if (!module) return;
+  await module.deleteItemAsync(SESSION_KEY).catch(() => undefined);
+}
+
+/** Drop the token and the session id together, so a later launch cannot mix them. */
+export async function clearAuthSession(): Promise<void> {
+  await Promise.all([clearAuthToken(), clearAuthSessionId()]);
+}
+
 export function asAuthSession(value: unknown): AuthSession | null {
   if (!value || typeof value !== 'object') return null;
-  const payload = value as { token?: unknown; expiresAt?: unknown; user?: unknown };
+  const payload = value as { token?: unknown; sessionId?: unknown; expiresAt?: unknown; user?: unknown };
   if (typeof payload.token !== 'string' || !payload.token) return null;
   const user = asUserAccount(payload.user);
   if (!user) return null;
   return {
     token: payload.token,
+    sessionId: typeof payload.sessionId === 'string' ? payload.sessionId : '',
     expiresAt: typeof payload.expiresAt === 'string' ? payload.expiresAt : '',
     user,
   };
@@ -367,7 +419,9 @@ export function deviceTokenFromScan(data: string): string | null {
 }
 
 /** `null` means the server could not be asked; `{ unauthorized: true }` means the token is dead. */
-export async function fetchSessionUser(token: string): Promise<{ user: UserAccount; expiresAt: string } | { unauthorized: true } | null> {
+export async function fetchSessionUser(
+  token: string,
+): Promise<{ user: UserAccount; sessionId: string; expiresAt: string } | { unauthorized: true } | null> {
   let response: Response;
   try {
     response = await request('/v1/auth/me', { method: 'GET' }, token);
@@ -376,10 +430,17 @@ export async function fetchSessionUser(token: string): Promise<{ user: UserAccou
   }
   if (response.status === 401) return { unauthorized: true };
   if (!response.ok) return null;
-  const payload = (await response.json().catch(() => ({}))) as { user?: unknown; session?: { expiresAt?: unknown } };
+  const payload = (await response.json().catch(() => ({}))) as {
+    user?: unknown;
+    session?: { id?: unknown; expiresAt?: unknown };
+  };
   const user = asUserAccount(payload.user);
   if (!user) return null;
-  return { user, expiresAt: typeof payload.session?.expiresAt === 'string' ? payload.session.expiresAt : '' };
+  return {
+    user,
+    sessionId: typeof payload.session?.id === 'string' ? payload.session.id : '',
+    expiresAt: typeof payload.session?.expiresAt === 'string' ? payload.session.expiresAt : '',
+  };
 }
 
 export async function logoutServerSession(token: string | null): Promise<void> {

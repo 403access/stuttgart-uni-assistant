@@ -8,6 +8,7 @@ import { fetchMailStatus, mailDetail, mailMessage, submitMailCredentials } from 
 import { fetchOidcStatus, signInWithUniversity, universityRedirectUri } from '@/src/auth/oidc';
 import { useCampusBrowserLogin } from '@/src/auth/use-campus-browser-login';
 import { useCampusHeadlessLogin } from '@/src/auth/use-campus-headless-login';
+import { saveCampusHarvest } from '@/src/auth/vault';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
 import { keys } from '@/src/query/keys';
@@ -62,7 +63,10 @@ export function useLoginFlow() {
     mutationKey: ['campus-browser-harvest'],
     mutationFn: (harvest: { cookies: string; storage: Record<string, string> }) => submitBrowserCredentials(harvest),
     onMutate: () => browser.setError(''),
-    onSuccess: (result) => {
+    onSuccess: (result, harvest) => {
+      // Keep the portal session the server just accepted: when the app session
+      // expires, `AppState` re-submits this harvest instead of asking again.
+      void saveCampusHarvest(harvest);
       // Deliberately do not close the waiting view here. The session is not set
       // until the profile loads, and hiding it now would flash the login screen
       // between the wait and the home tabs.

@@ -53,7 +53,7 @@ export async function handleAuth(request, response, url) {
       send(response, 401, { error: 'unauthorized' });
       return true;
     }
-    send(response, 200, { user: auth.user, session: { expiresAt: auth.expiresAt }, preferences: getUserPreferences(auth.user.id) });
+    send(response, 200, { user: auth.user, session: { id: auth.sessionId, expiresAt: auth.expiresAt }, preferences: getUserPreferences(auth.user.id) });
     return true;
   }
   if (request.method === 'GET' && url.pathname === '/v1/auth/preferences') {

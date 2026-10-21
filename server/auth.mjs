@@ -257,14 +257,13 @@ export function pollDeviceLink(token) {
   if (!user) throw authError(404, 'device_link_unknown');
   const session = issueSession(user.id);
   const now = nowIso();
-  const sessionId = db.prepare('SELECT id FROM user_sessions WHERE token_hash = ?').get(hashToken(session.token))?.id ?? null;
-  db.prepare('UPDATE device_links SET consumed_at = ?, last_seen_at = ?, session_id = ? WHERE id = ?').run(now, now, sessionId, row.id);
+  db.prepare('UPDATE device_links SET consumed_at = ?, last_seen_at = ?, session_id = ? WHERE id = ?').run(now, now, session.sessionId, row.id);
   db.prepare('UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?').run(now, now, user.id);
   const fresh = db.prepare('SELECT * FROM device_links WHERE id = ?').get(row.id);
   return {
     status: 'approved',
     device: deviceLinkRow(fresh),
-    session: { token: session.token, expiresAt: session.expiresAt, user },
+    session: { sessionId: session.sessionId, token: session.token, expiresAt: session.expiresAt, user },
   };
 }
 
@@ -343,13 +342,14 @@ export function saveUserPreferences(userId, input = {}) {
 export function issueSession(userId) {
   const db = getDb();
   const token = randomBytes(32).toString('base64url');
+  const sessionId = `ses_${randomBytes(12).toString('base64url')}`;
   const now = nowIso();
   const expiresAt = new Date(Date.now() + sessionTtlMs()).toISOString();
   db.prepare(
     'INSERT INTO user_sessions (id, user_id, token_hash, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?)',
-  ).run(`ses_${randomBytes(12).toString('base64url')}`, userId, hashToken(token), now, expiresAt, now);
+  ).run(sessionId, userId, hashToken(token), now, expiresAt, now);
   pruneSessions();
-  return { token, expiresAt };
+  return { sessionId, token, expiresAt };
 }
 
 export function readBearer(request) {
@@ -407,7 +407,7 @@ export function createUserSession(input = {}) {
     linkPlatform(user.id, link);
   }
   const session = issueSession(user.id);
-  return { user: getUser(user.id), token: session.token, expiresAt: session.expiresAt };
+  return { user: getUser(user.id), token: session.token, sessionId: session.sessionId, expiresAt: session.expiresAt };
 }
 
 /** Platform links that a C@MPUS sign-in proves about the same st-account. */
