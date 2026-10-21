@@ -45,7 +45,7 @@ export default function QuizScreen() {
 
   if (!ready) {
     return (
-      <Screen topInset kicker={tx(locale, 'quiz.kicker')} title={tx(locale, 'quiz.title')}>
+      <Screen topInset>
         <Card>
           <Text style={styles.muted}>{tx(locale, 'quiz.loading')}</Text>
         </Card>
@@ -66,11 +66,7 @@ export default function QuizScreen() {
   const practiceTopic = selectedStudy ? mixedTopicForStudy(selectedStudy.id) : mixedTopic;
 
   return (
-    <Screen
-      topInset
-      kicker={tx(locale, 'quiz.kicker')}
-      title={tx(locale, 'quiz.title')}
-      subtitle={tx(locale, 'quiz.subtitle')}>
+    <Screen topInset>
       <Card>
         <View style={styles.statsHeader}>
           <View style={{ flex: 1, gap: 2 }}>
