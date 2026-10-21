@@ -4,6 +4,7 @@ import { l } from './helpers';
 import { phonemMorphem } from './linguistik/phonem-morphem';
 import { sprachfamilien } from './linguistik/sprachfamilien';
 import { spracheDialekt } from './linguistik/sprache-dialekt';
+import { philosophieModule } from './philosophie';
 
 export const quizModules: QuizModule[] = [
   {
@@ -18,6 +19,7 @@ export const quizModules: QuizModule[] = [
     ),
     topics: [sprachfamilien, spracheDialekt, phonemMorphem],
   },
+  philosophieModule,
 ];
 
 const allQuestions = quizModules.flatMap((module) =>

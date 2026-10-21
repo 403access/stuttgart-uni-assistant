@@ -55,6 +55,15 @@ has questions:
 bilingual. `mixedTopic` in `content/index.ts` combines all module questions for
 the mixed round; do not add it to a module.
 
+Registered modules:
+
+- `ling` — Einführung in die Linguistik, three topics from the first session
+  (56 questions).
+- `phil` — Einführung in die Geschichte der Philosophie, three topics from the
+  first lecture on 19 October 2026 (93 questions). `QuizModule` also supports
+  optional `lecturer` and `email` fields; the tab shows
+  `Prof. Dr. Christian Martin · christian.martin@philo.uni-stuttgart.de`.
+
 ### Free text checking
 
 `src/quiz/evaluate.ts` lower-cases, strips accents and punctuation, collapses

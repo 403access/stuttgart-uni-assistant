@@ -144,6 +144,12 @@ function ModuleBlock({
     <Card>
       <View style={{ gap: 2 }}>
         <Text style={styles.moduleTitle}>{pick(module.title, locale)}</Text>
+        {module.lecturer ? (
+          <Text style={styles.moduleMeta}>
+            {module.lecturer}
+            {module.email ? ` · ${module.email}` : ''}
+          </Text>
+        ) : null}
         <Text style={styles.muted}>{pick(module.subtitle, locale)}</Text>
       </View>
       <Meter value={stats.mastered} max={stats.total} />
@@ -231,6 +237,7 @@ const styles = themedStyles((colors) => ({
   },
   lastSessionText: { flex: 1, color: colors.blue, fontSize: 13, fontWeight: '600', lineHeight: 18 },
   moduleTitle: { color: colors.anthracite, fontSize: 18, fontWeight: '800', lineHeight: 24 },
+  moduleMeta: { color: colors.blue, fontSize: 12, fontWeight: '600', lineHeight: 17 },
   topic: {
     borderTopWidth: 1,
     borderTopColor: colors.line,

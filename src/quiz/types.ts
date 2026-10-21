@@ -161,6 +161,9 @@ export interface QuizModule {
   code?: string;
   title: Localized;
   subtitle: Localized;
+  /** Shown in the module header, e.g. the professor's name. */
+  lecturer?: string;
+  email?: string;
   topics: QuizTopic[];
 }
 
