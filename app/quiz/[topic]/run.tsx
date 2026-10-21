@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen } from '@/src/components/ui';
 import { initialAnswer } from '@/src/quiz/answer';
-import { findQuizQuestion, findQuizTopic, mixedTopic } from '@/src/quiz/content';
+import { findQuizQuestion, findQuizTopic, isMixedTopic } from '@/src/quiz/content';
 import { QuestionFeedback } from '@/src/quiz/components/question-feedback';
 import { QuestionView } from '@/src/quiz/components/question-view';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
@@ -52,7 +52,7 @@ export default function QuizRunScreen() {
   const { ready, activeSessions } = useQuizProgress();
   const topicId = firstParam(params.topic);
   const topic = findQuizTopic(topicId);
-  const mode = topicId === mixedTopic.id ? 'mixed' : parseMode(firstParam(params.mode));
+  const mode = isMixedTopic(topicId) ? 'mixed' : parseMode(firstParam(params.mode));
   const fresh = firstParam(params.fresh) === '1';
 
   if (!ready) {

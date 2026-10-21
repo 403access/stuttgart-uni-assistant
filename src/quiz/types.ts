@@ -156,9 +156,20 @@ export interface QuizTopic {
   questions: QuizQuestion[];
 }
 
+export interface QuizStudy {
+  id: string;
+  title: Localized;
+  /** Degree the study belongs to, e.g. `Bachelor of Arts`. */
+  degree: Localized;
+  /** Accent used for the study marker and tile edge. */
+  color: string;
+}
+
 export interface QuizModule {
   id: string;
   code?: string;
+  /** Study this module is taught in. See `quizStudies`. */
+  studyId: string;
   title: Localized;
   subtitle: Localized;
   /** Shown in the module header, e.g. the professor's name. */

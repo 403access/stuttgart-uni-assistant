@@ -1,5 +1,5 @@
 import { initialAnswer } from '../src/quiz/answer';
-import { mixedTopic, quizModules, quizTopics } from '../src/quiz/content';
+import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '../src/quiz/content';
 import { evaluateAnswer, isAnswerComplete, matchesAccepted } from '../src/quiz/evaluate';
 import { questionKindLabel } from '../src/quiz/labels';
 import { questionsForMode, statsForQuestions } from '../src/quiz/session';
@@ -201,6 +201,24 @@ for (const topic of quizTopics) {
 expect(
   quizModules.every((module) => module.topics.every((topic) => quizTopics.includes(topic))),
   'every module topic is registered',
+);
+
+for (const module of quizModules) {
+  const study = quizStudies.find((item) => item.id === module.studyId);
+  expect(Boolean(study), `module belongs to a study: ${module.id}`);
+  expect(
+    Boolean(study?.title.de && study?.title.en && study?.degree.de && study?.degree.en),
+    `study is bilingual: ${module.studyId}`,
+  );
+  expect(Boolean(study?.color), `study has an accent color: ${module.studyId}`);
+}
+expect(
+  quizStudies.every((study) => quizModules.some((module) => module.studyId === study.id)),
+  'every study has at least one module',
+);
+expect(
+  studyMixedTopics.every((entry) => entry.topic.questions.length > 0 && quizTopics.includes(entry.topic)),
+  'every study mixed round has questions and is registered',
 );
 
 const english = quizModules[0].topics[0];

@@ -3,7 +3,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
-import { findQuizModuleById } from '@/src/quiz/content';
+import { findQuizModuleById, studyForModule } from '@/src/quiz/content';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, topicStats } from '@/src/quiz/session';
 import type { QuizModule, QuizMode, QuizTopic } from '@/src/quiz/types';
@@ -64,9 +64,13 @@ function ModuleOverview({
 }) {
   const stats = moduleStats(module, attempts);
   const title = pick(module.title, locale);
+  const study = studyForModule(module);
+  const kicker = study
+    ? `${pick(study.title, locale)} · ${pick(study.degree, locale)}`
+    : tx(locale, 'quiz.module_kicker');
 
   return (
-    <Screen kicker={tx(locale, 'quiz.module_kicker')} title={title} subtitle={pick(module.subtitle, locale)}>
+    <Screen kicker={kicker} title={title} subtitle={pick(module.subtitle, locale)}>
       <Stack.Screen options={{ title }} />
 
       <Card>

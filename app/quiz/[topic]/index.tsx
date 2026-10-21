@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
-import { findQuizTopic, mixedTopic } from '@/src/quiz/content';
+import { findQuizTopic, isMixedTopic } from '@/src/quiz/content';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
 import { questionKindLabel } from '@/src/quiz/labels';
 import { useQuizProgress } from '@/src/quiz/progress';
@@ -50,7 +50,7 @@ export default function QuizTopicOverviewScreen() {
     <TopicOverview
       topic={topic}
       locale={locale}
-      initialMode={topic.id === mixedTopic.id ? 'mixed' : parseMode(firstParam(params.mode))}
+      initialMode={isMixedTopic(topic.id) ? 'mixed' : parseMode(firstParam(params.mode))}
       attempts={attempts}
       sessions={sessions}
       active={activeSessions[topic.id]}
@@ -83,7 +83,7 @@ function TopicOverview({
   active: ReturnType<typeof useQuizProgress>['activeSessions'][string] | undefined;
   clearActiveSession: (topicId: string) => void;
 }) {
-  const isMixed = topic.id === mixedTopic.id;
+  const isMixed = isMixedTopic(topic.id);
   const [mode, setMode] = useState<QuizMode>(isMixed ? 'mixed' : initialMode === 'mixed' ? 'all' : initialMode);
   const stats = topicStats(topic, attempts);
   const lastCompleted = sessions.find((session) => session.topicId === topic.id);

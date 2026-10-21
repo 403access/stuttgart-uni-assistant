@@ -8,6 +8,7 @@ import { pragSprechakte } from './sprechakte';
 
 export const pragmatikModule: QuizModule = {
   id: 'prag',
+  studyId: 'linguistik',
   title: l('Pragmatik I', 'Pragmatics I'),
   lecturer: 'Fabian Dirscherl',
   email: 'fabian.dirscherl@ling.uni-stuttgart.de',

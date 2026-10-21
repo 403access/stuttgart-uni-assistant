@@ -1,17 +1,28 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Card, Meter, Screen, Section } from '@/src/components/ui';
+import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
-import { mixedTopic, quizModules } from '@/src/quiz/content';
+import {
+  findQuizStudy,
+  findQuizTopic,
+  mixedTopic,
+  mixedTopicForStudy,
+  quizModules,
+  quizModulesForStudy,
+  quizStudies,
+} from '@/src/quiz/content';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@/src/quiz/session';
-import type { QuestionProgress, QuizMode, QuizModule, QuizTopic } from '@/src/quiz/types';
+import type { QuestionProgress, QuizMode, QuizModule, QuizStudy, QuizTopic } from '@/src/quiz/types';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
+
+const ALL_STUDIES = 'all';
 
 function startTopic(topic: QuizTopic, mode: QuizMode) {
   router.push({ pathname: '/quiz/[topic]', params: { topic: topic.id, mode } });
@@ -21,9 +32,16 @@ function openModule(moduleId: string) {
   router.push({ pathname: '/quiz/modul/[id]', params: { id: moduleId } });
 }
 
+function moduleCountLabel(count: number, locale: Locale): string {
+  return count === 1
+    ? tx(locale, 'quiz.study_module_count_one')
+    : tx(locale, 'quiz.study_module_count', [count]);
+}
+
 export default function QuizScreen() {
   const { locale } = useApp();
   const { ready, attempts, sessions, resetProgress } = useQuizProgress();
+  const [studyFilter, setStudyFilter] = useState<string>(ALL_STUDIES);
 
   if (!ready) {
     return (
@@ -38,7 +56,14 @@ export default function QuizScreen() {
   const allQuestions = quizModules.flatMap((module) => module.topics.flatMap((topic) => topic.questions));
   const overall = statsForQuestions(allQuestions, attempts);
   const lastSession = sessions[0];
-  const lastTopic = lastSession ? [mixedTopic, ...quizModules.flatMap((module) => module.topics)].find((topic) => topic.id === lastSession.topicId) : undefined;
+  const lastTopic = lastSession ? findQuizTopic(lastSession.topicId) : undefined;
+  const groups = quizStudies.flatMap((study) => {
+    const modules = quizModulesForStudy(study.id);
+    return modules.length ? [{ study, modules }] : [];
+  });
+  const visibleGroups = studyFilter === ALL_STUDIES ? groups : groups.filter((group) => group.study.id === studyFilter);
+  const selectedStudy = studyFilter === ALL_STUDIES ? undefined : findQuizStudy(studyFilter);
+  const practiceTopic = selectedStudy ? mixedTopicForStudy(selectedStudy.id) : mixedTopic;
 
   return (
     <Screen
@@ -90,30 +115,59 @@ export default function QuizScreen() {
       </Card>
 
       <Section title={tx(locale, 'quiz.modules')} />
-      <View style={styles.grid}>
-        {quizModules.map((module) => (
-          <ModuleTile key={module.id} module={module} locale={locale} attempts={attempts} />
-        ))}
-      </View>
-
-      <Section title={tx(locale, 'quiz.practice')} />
-      <Card>
-        <View style={styles.mixedHeader}>
-          <View style={styles.mixedIcon}>
-            <MaterialIcons name="shuffle" size={22} color={colors.blue} />
-          </View>
-          <View style={{ flex: 1, gap: 3 }}>
-            <Text style={styles.topicTitle}>{pick(mixedTopic.title, locale)}</Text>
-            <Text style={styles.muted}>{pick(mixedTopic.summary, locale)}</Text>
-          </View>
-        </View>
-        <View style={styles.actions}>
-          <Pressable onPress={() => startTopic(mixedTopic, 'mixed')} style={styles.primaryAction}>
-            <MaterialIcons name="play-arrow" size={18} color="#FFFFFF" />
-            <Text style={styles.primaryActionText}>{tx(locale, 'quiz.start_mixed')}</Text>
+      {groups.length > 1 ? (
+        <View style={styles.filters}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: studyFilter === ALL_STUDIES }}
+            onPress={() => setStudyFilter(ALL_STUDIES)}
+          >
+            <Pill label={tx(locale, 'quiz.study_all')} active={studyFilter === ALL_STUDIES} />
           </Pressable>
+          {groups.map(({ study }) => (
+            <Pressable
+              key={study.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected: studyFilter === study.id }}
+              onPress={() => setStudyFilter(study.id)}
+            >
+              <Pill label={pick(study.title, locale)} active={studyFilter === study.id} />
+            </Pressable>
+          ))}
         </View>
-      </Card>
+      ) : null}
+      {visibleGroups.map(({ study, modules }) => (
+        <StudyGroup
+          key={study.id}
+          study={study}
+          modules={modules}
+          locale={locale}
+          attempts={attempts}
+        />
+      ))}
+
+      {practiceTopic ? (
+        <>
+          <Section title={tx(locale, 'quiz.practice')} />
+          <Card>
+            <View style={styles.mixedHeader}>
+              <View style={styles.mixedIcon}>
+                <MaterialIcons name="shuffle" size={22} color={colors.blue} />
+              </View>
+              <View style={{ flex: 1, gap: 3 }}>
+                <Text style={styles.topicTitle}>{pick(practiceTopic.title, locale)}</Text>
+                <Text style={styles.muted}>{pick(practiceTopic.summary, locale)}</Text>
+              </View>
+            </View>
+            <View style={styles.actions}>
+              <Pressable onPress={() => startTopic(practiceTopic, 'mixed')} style={styles.primaryAction}>
+                <MaterialIcons name="play-arrow" size={18} color="#FFFFFF" />
+                <Text style={styles.primaryActionText}>{tx(locale, 'quiz.start_mixed')}</Text>
+              </Pressable>
+            </View>
+          </Card>
+        </>
+      ) : null}
 
       {overall.seen > 0 ? (
         <Pressable
@@ -136,12 +190,56 @@ export default function QuizScreen() {
   );
 }
 
+function StudyGroup({
+  study,
+  modules,
+  locale,
+  attempts,
+}: {
+  study: QuizStudy;
+  modules: QuizModule[];
+  locale: Locale;
+  attempts: Record<string, QuestionProgress>;
+}) {
+  const questions = modules.flatMap((module) => module.topics.flatMap((topic) => topic.questions));
+  const stats = statsForQuestions(questions, attempts);
+  return (
+    <View style={styles.studyGroup}>
+      <View style={styles.studyHeader}>
+        <View style={styles.studyTitleRow}>
+          <View style={[styles.studyDot, { backgroundColor: study.color }]} />
+          <Text style={styles.studyName}>{pick(study.title, locale)}</Text>
+        </View>
+        <Text style={styles.studyProgress}>
+          {tx(locale, 'quiz.topic_progress', [stats.mastered, stats.total])}
+        </Text>
+      </View>
+      <Text style={styles.studyMeta}>
+        {pick(study.degree, locale)} · {moduleCountLabel(modules.length, locale)}
+      </Text>
+      <View style={styles.grid}>
+        {modules.map((module) => (
+          <ModuleTile
+            key={module.id}
+            module={module}
+            studyColor={study.color}
+            locale={locale}
+            attempts={attempts}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function ModuleTile({
   module,
+  studyColor,
   locale,
   attempts,
 }: {
   module: QuizModule;
+  studyColor: string;
   locale: Locale;
   attempts: Record<string, QuestionProgress>;
 }) {
@@ -156,7 +254,11 @@ function ModuleTile({
       accessibilityRole="button"
       accessibilityLabel={tx(locale, 'quiz.open_module', [title])}
       onPress={() => openModule(module.id)}
-      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.tile,
+        { borderTopColor: studyColor, borderTopWidth: 3 },
+        pressed && styles.pressed,
+      ]}
     >
       <View style={[styles.badge, started && styles.badgeStarted, complete && styles.badgeComplete]}>
         {complete ? (
@@ -213,6 +315,14 @@ const styles = themedStyles((colors) => ({
     borderTopColor: colors.line,
   },
   lastSessionText: { flex: 1, color: colors.blue, fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  filters: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: -6 },
+  studyGroup: { gap: 8 },
+  studyHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
+  studyTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
+  studyDot: { width: 10, height: 10, borderRadius: 5 },
+  studyName: { color: colors.anthracite, fontSize: 17, fontWeight: '800', flexShrink: 1 },
+  studyProgress: { color: colors.inkSoft, fontSize: 12, fontWeight: '700' },
+  studyMeta: { color: colors.mute, fontSize: 12, marginTop: -4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   tile: {
     width: '48%',
