@@ -3,6 +3,7 @@ import * as appearance from '@/src/state/actions/appearance';
 import * as auth from '@/src/state/actions/auth-session';
 import * as chat from '@/src/state/actions/chat';
 import * as content from '@/src/state/actions/content';
+import * as profile from '@/src/state/actions/profile';
 import * as session from '@/src/state/actions/session-resume';
 import * as signIn from '@/src/state/actions/sign-in';
 
@@ -23,6 +24,8 @@ export const appActions = {
   setTheme: appearance.setTheme,
   setDesign: appearance.setDesign,
   reset: appearance.reset,
+  setProfileVisibility: profile.setProfileVisibility,
+  setProfileSearchable: profile.setProfileSearchable,
   setCurriculum: content.setCurriculum,
   setStudies: content.setStudies,
   setActiveStudy: content.setActiveStudy,

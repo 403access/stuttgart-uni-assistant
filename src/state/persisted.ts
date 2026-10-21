@@ -1,4 +1,5 @@
 import { asUserAccount, findPlatform } from '@/src/auth/user';
+import { emptyProfilePrivacy, sanitizeProfilePrivacy } from '@/src/profile/privacy';
 import type { CampusStudy, CurriculumNode, PersistedState, UserAccount } from '@/src/types';
 
 export const APP_STATE_STORAGE_KEY = 'university-assistant/v1';
@@ -8,6 +9,7 @@ export const emptyState: PersistedState = {
   theme: 'light',
   design: 'clean',
   user: null,
+  profilePrivacy: emptyProfilePrivacy(),
   sessionAccount: null,
   sessionMode: null,
   sessionName: null,
@@ -94,6 +96,7 @@ export function sanitize(value: Partial<PersistedState> | null): PersistedState 
     theme: value.theme === 'dark' ? 'dark' : 'light',
     design: value.design === 'playful' ? 'playful' : 'clean',
     user,
+    profilePrivacy: sanitizeProfilePrivacy(value.profilePrivacy),
     // The flat session fields predate the account record. A stored user fills them in
     // when an older payload did not carry them yet.
     sessionAccount: typeof value.sessionAccount === 'string' ? value.sessionAccount : user?.account ?? null,

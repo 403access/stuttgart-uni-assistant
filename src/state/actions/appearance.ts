@@ -30,6 +30,7 @@ export function reset(): void {
     locale: current.locale,
     theme: current.theme,
     design: current.design,
+    profilePrivacy: current.profilePrivacy,
     user: current.user,
     sessionAccount: current.sessionAccount,
     sessionMode: current.sessionMode,

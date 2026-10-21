@@ -35,13 +35,6 @@ function statusLabel(link: PlatformLink | null, locale: 'de' | 'en', campusActiv
   return link.status === 'connected' ? tx(locale, 'konto.verbunden') : tx(locale, 'konto.verknuepft');
 }
 
-function modeLabel(mode: string, locale: 'de' | 'en'): string {
-  if (mode === 'campus') return tx(locale, 'konto.modus.campus');
-  if (mode === 'oidc') return tx(locale, 'konto.modus.oidc');
-  if (mode === 'demo') return tx(locale, 'konto.modus.demo');
-  return tx(locale, 'konto.modus.local');
-}
-
 function formatStamp(value: string | null, locale: 'de' | 'en'): string {
   if (!value) return tx(locale, 'konto.nie');
   const date = new Date(value);
@@ -53,7 +46,6 @@ export default function AccountScreen() {
   const locale = useAppSelector((state) => state.locale);
   const user = useAppSelector((state) => state.user);
   const authToken = useAppSelector((state) => state.authToken);
-  const sessionMode = useAppSelector((state) => state.sessionMode);
   const syncAt = useAppSelector((state) => state.syncAt);
   const { syncPlatform, syncAccount } = appActions;
   const leave = useLeaveSession();
@@ -136,13 +128,11 @@ export default function AccountScreen() {
       </View>
       <Section title={tx(locale, 'konto.details')} />
       <View>
-        <InfoRow title={tx(locale, 'konto.name')} meta={user?.name ?? tx(locale, 'konto.unbekannt')} position="first" />
-        <InfoRow title={tx(locale, 'konto.kennung')} meta={user?.account ?? tx(locale, 'konto.unbekannt')} position="middle" />
-        <InfoRow title={tx(locale, 'konto.email')} meta={user?.email ?? tx(locale, 'konto.unbekannt')} position="middle" />
-        <InfoRow title={tx(locale, 'konto.matrikel')} meta={user?.matriculation ?? tx(locale, 'konto.unbekannt')} position="middle" />
-        <InfoRow title={tx(locale, 'konto.angemeldet_ueber')} meta={modeLabel(user?.mode ?? sessionMode ?? 'local', locale)} position="middle" />
-        <InfoRow title={tx(locale, 'konto.seit')} meta={formatStamp(user?.createdAt ?? null, locale)} position="middle" />
-        <InfoRow title={tx(locale, 'konto.letzte_anmeldung')} meta={formatStamp(user?.lastLoginAt ?? null, locale)} position="last" />
+        <InfoRow
+          title={tx(locale, 'profil.titel')}
+          detail={tx(locale, 'profil.daten_detail')}
+          onPress={() => router.push('/profil/daten')}
+        />
       </View>
 
       <Card>

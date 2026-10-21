@@ -1,16 +1,20 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
+import { Text, View } from 'react-native';
 
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents, modules, reviews as seedReviews } from '@/src/data';
+import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
-import { Text } from 'react-native';
 
 export default function PeersScreen() {
   const locale = useAppSelector((state) => state.locale);
   const reviews = useAppSelector((state) => state.reviews);
   const imports = useAppSelector((state) => state.imports);
+  const privacy = useAppSelector((state) => state.profilePrivacy);
+  const publicCount = publicProfileFieldCount(privacy);
   const all = [...reviews, ...seedReviews];
   const sharedNotes = [
     ...documents.filter((item) => item.source === 'peer').map((item) => ({ id: item.id, title: pick(item.title, locale), detail: item.author })),
@@ -19,6 +23,22 @@ export default function PeersScreen() {
   return (
     <Screen kicker={tx(locale, 'common.kommilitonen')} subtitle={tx(locale, 'kommilitonen.bewertungen')}>
       <Stack.Screen options={{ title: tx(locale, 'common.austausch') }} />
+      <Section title={tx(locale, 'kommilitonen.profil_titel')} />
+      <Card onPress={() => router.push('/profil/auffindbarkeit')}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <MaterialIcons name={privacy.searchable ? 'public' : 'visibility-off'} size={22} color={colors.blue} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{tx(locale, 'profil.suche_status')}</Text>
+            <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
+              {tx(locale, privacy.searchable ? 'kommilitonen.profil_auffindbar' : 'kommilitonen.profil_privat')}
+            </Text>
+            <Text style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>
+              {tx(locale, 'kommilitonen.profil_oeffentlich', [publicCount, PROFILE_FIELDS.length])}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={22} color={colors.blue} />
+        </View>
+      </Card>
       <Section title={tx(locale, 'kommilitonen.empfehlungen')} />
       {all.map((review) => {
         const module = modules.find((item) => item.id === review.moduleId);

@@ -51,6 +51,17 @@ export interface PlatformLink {
   lastSyncAt: string | null;
 }
 
+/** One personal detail on the profile page that can be published to other students. */
+export type ProfileFieldId = 'name' | 'account' | 'email' | 'matriculation' | 'study' | 'platforms';
+
+export type ProfileVisibility = 'public' | 'private';
+
+/** Who may see the profile: searchable decides whether peers find it at all. */
+export interface ProfilePrivacy {
+  searchable: boolean;
+  fields: Record<ProfileFieldId, ProfileVisibility>;
+}
+
 /** The server-side user, mirrored on the device for display and offline use. */
 export interface UserAccount {
   id: string;
@@ -349,6 +360,7 @@ export interface PersistedState {
   theme: ThemeMode;
   design: DesignMode;
   user: UserAccount | null;
+  profilePrivacy: ProfilePrivacy;
   sessionAccount: string | null;
   sessionMode: SessionMode | null;
   sessionName: string | null;

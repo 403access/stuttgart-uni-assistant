@@ -9,11 +9,12 @@ import { useActiveStudy } from '@/src/campus/use-active-study';
 import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
+import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -26,11 +27,42 @@ export default function MoreScreen() {
   const sessionName = useAppSelector((state) => state.sessionName);
   const sessionEmail = useAppSelector((state) => state.sessionEmail);
   const authToken = useAppSelector((state) => state.authToken);
+  const privacy = useAppSelector((state) => state.profilePrivacy);
   const { study } = useActiveStudy();
   const leave = useLeaveSession();
+  const publicCount = publicProfileFieldCount(privacy);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const groups: CampusGroup[] = [
+    {
+      title: tx(locale, 'profil.kategorie'),
+      entries: [
+        {
+          title: tx(locale, 'profil.uebersicht'),
+          detail: tx(locale, 'profil.uebersicht_detail'),
+          href: '/profil',
+          tags: ['profil', 'profile', 'übersicht', 'overview', 'teilen', 'share', 'konto', 'account'],
+        },
+        {
+          title: tx(locale, 'profil.daten'),
+          detail: tx(locale, 'profil.daten_detail'),
+          href: '/profil/daten',
+          tags: ['profil', 'profile', 'daten', 'data', 'matrikelnummer', 'matriculation', 'name', 'email', 'studiengang', 'study', 'plattformen', 'platforms'],
+        },
+        {
+          title: tx(locale, 'profil.sichtbarkeit_titel'),
+          detail: tx(locale, 'profil.sichtbarkeit_detail', [publicCount, PROFILE_FIELDS.length]),
+          href: '/profil/sichtbarkeit',
+          tags: ['sichtbarkeit', 'visibility', 'teilen', 'share', 'öffentlich', 'privat', 'public', 'private', 'profil', 'profile'],
+        },
+        {
+          title: tx(locale, 'profil.auffindbarkeit'),
+          detail: privacy.searchable ? tx(locale, 'profil.auffindbar_an') : tx(locale, 'profil.auffindbar_aus'),
+          href: '/profil/auffindbarkeit',
+          tags: ['auffindbar', 'auffindbarkeit', 'discoverable', 'search', 'suche', 'kommilitonen', 'peers', 'profil', 'profile'],
+        },
+      ],
+    },
     {
       title: tx(locale, 'common.campus'),
       entries: [
@@ -161,16 +193,19 @@ export default function MoreScreen() {
         </View>
       ) : null}
       {sessionMode === 'campus' ? <StudySelector /> : null}
-      <Card>
-        <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>
-          {sessionMode === 'oidc' || sessionMode === 'campus' ? sessionName || sessionAccount : sessionMode === 'local' ? sessionAccount : student.name}
-        </Text>
+      <Card onPress={() => router.push('/profil')}>
+        <View style={styles.profileHead}>
+          <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700', flex: 1 }}>
+            {sessionMode === 'oidc' || sessionMode === 'campus' ? sessionName || sessionAccount : sessionMode === 'local' ? sessionAccount : student.name}
+          </Text>
+          <MaterialIcons name="chevron-right" size={22} color={colors.blue} />
+        </View>
         <Text style={{ color: colors.inkSoft }}>
           {sessionMode === 'local'
             ? tx(locale, 'tabsMehr.lokal')
             : sessionMode === 'campus'
               ? sessionAccount
-              : `${sessionAccount ?? ''}${sessionEmail ? ` · ${sessionEmail}` : ` · ${student.matriculation}`}`}
+              : `${sessionAccount ?? ''}${sessionEmail ? ` · ${sessionEmail}` : ''}`}
         </Text>
         <Text style={{ color: colors.inkSoft }}>
           {sessionMode === 'oidc'
@@ -186,6 +221,7 @@ export default function MoreScreen() {
             ? `${study.intendedDegree ? `${study.intendedDegree} ` : ''}${study.name}`
             : `${pick(program.degree, locale)} ${pick(program.title, locale)}`}
         </Text>
+        <Text style={styles.profileOpen}>{tx(locale, 'profil.oeffnen')}</Text>
       </Card>
       {visibleGroups.length === 0 ? (
         <Card>
@@ -218,6 +254,8 @@ export default function MoreScreen() {
 
 const styles = themedStyles((colors) => ({
   pressed: { opacity: 0.72 },
+  profileHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  profileOpen: { color: colors.blue, fontSize: 13, fontWeight: '700' },
   iconButton: {
     width: 40,
     height: 40,
