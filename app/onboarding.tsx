@@ -74,60 +74,50 @@ export default function OnboardingScreen() {
   return (
     <View style={styles.screen}>
       <Stack.Screen options={{ headerShown: false, gestureEnabled: false }} />
-      {step === 'biometrics' || step === 'appearance' ? (
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-          <OnboardingHero locale={locale} step={step} steps={flowSteps} topInset={insets.top} />
-          {step === 'biometrics' ? (
-            <BiometricsPage
-              locale={locale}
-              busy={biometrics.busy}
-              error={biometrics.error}
-              onEnable={() => void enable()}
-              onSkip={() => setStep('appearance')}
-            />
-          ) : (
-            <AppearancePage
-              locale={locale}
-              theme={theme}
-              setTheme={setTheme}
-              design={design}
-              setDesign={setDesign}
-              onBack={biometricsAvailable ? () => setStep('biometrics') : undefined}
-              onContinue={() => setStep('calendar')}
-            />
-          )}
-        </ScrollView>
+      <OnboardingHero locale={locale} step={step} steps={flowSteps} topInset={insets.top} />
+      {/* Every step fills the remaining height, so the sheet reaches the bottom
+          edge and the brand background never shows below it. The import result
+          steps are deliberately fixed: the button stays at the bottom and each
+          list shows only the rows that actually fit. */}
+      {step === 'biometrics' ? (
+        <BiometricsPage
+          locale={locale}
+          busy={biometrics.busy}
+          error={biometrics.error}
+          onEnable={() => void enable()}
+          onSkip={() => setStep('appearance')}
+        />
+      ) : step === 'appearance' ? (
+        <AppearancePage
+          locale={locale}
+          theme={theme}
+          setTheme={setTheme}
+          design={design}
+          setDesign={setDesign}
+          onBack={biometricsAvailable ? () => setStep('biometrics') : undefined}
+          onContinue={() => setStep('calendar')}
+        />
+      ) : step === 'calendar' ? (
+        <CalendarImportPage
+          locale={locale}
+          calendar={imports.calendar}
+          onBack={() => setStep('appearance')}
+          onContinue={() => setStep('mail')}
+        />
+      ) : step === 'mail' ? (
+        <MailImportPage
+          locale={locale}
+          mail={imports.mail}
+          onBack={() => setStep('calendar')}
+          onContinue={() => setStep('timetable')}
+        />
       ) : (
-        // The import result steps are deliberately fixed: the page takes the
-        // full height, the button stays at the bottom, and each list shows only
-        // the rows that actually fit.
-        <>
-          <OnboardingHero locale={locale} step={step} steps={flowSteps} topInset={insets.top} />
-          {step === 'calendar' ? (
-            <CalendarImportPage
-              locale={locale}
-              calendar={imports.calendar}
-              onBack={() => setStep('appearance')}
-              onContinue={() => setStep('mail')}
-            />
-          ) : step === 'mail' ? (
-            <MailImportPage
-              locale={locale}
-              mail={imports.mail}
-              onBack={() => setStep('calendar')}
-              onContinue={() => setStep('timetable')}
-            />
-          ) : (
-            <TimetableImportPage
-              locale={locale}
-              timetable={imports.timetable}
-              onBack={() => setStep('mail')}
-              onContinue={() => void finish()}
-            />
-          )}
-        </>
+        <TimetableImportPage
+          locale={locale}
+          timetable={imports.timetable}
+          onBack={() => setStep('mail')}
+          onContinue={() => void finish()}
+        />
       )}
     </View>
   );
@@ -192,36 +182,39 @@ function BiometricsPage({
   onEnable: () => void;
   onSkip: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.sheet}>
-      <StepIntro
-        icon="fingerprint"
-        title={tx(locale, 'onboarding.titel')}
-        lead={tx(locale, 'onboarding.text')}
-      />
-
-      <View style={styles.points}>
-        <Point text={tx(locale, 'onboarding.punkt1')} />
-        <Point text={tx(locale, 'onboarding.punkt2')} />
-      </View>
-
-      {error ? <ErrorBox text={error} /> : null}
-
-      <View style={styles.actions}>
-        <Button
-          label={busy ? tx(locale, 'onboarding.aktivieren_laeuft') : tx(locale, 'onboarding.aktivieren')}
-          onPress={onEnable}
+    <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <StepIntro
+          icon="fingerprint"
+          title={tx(locale, 'onboarding.titel')}
+          lead={tx(locale, 'onboarding.text')}
         />
-        {error ? (
+
+        <View style={styles.points}>
+          <Point text={tx(locale, 'onboarding.punkt1')} />
+          <Point text={tx(locale, 'onboarding.punkt2')} />
+        </View>
+
+        {error ? <ErrorBox text={error} /> : null}
+
+        <View style={styles.actions}>
           <Button
-            secondary
-            label={tx(locale, 'onboarding.systemeinstellungen')}
-            onPress={() => void Linking.openSettings().catch(() => undefined)}
+            label={busy ? tx(locale, 'onboarding.aktivieren_laeuft') : tx(locale, 'onboarding.aktivieren')}
+            onPress={onEnable}
           />
-        ) : null}
-        <Button secondary label={tx(locale, 'onboarding.nicht_jetzt')} onPress={onSkip} />
-      </View>
-      <Text style={styles.hint}>{tx(locale, 'onboarding.hinweis')}</Text>
+          {error ? (
+            <Button
+              secondary
+              label={tx(locale, 'onboarding.systemeinstellungen')}
+              onPress={() => void Linking.openSettings().catch(() => undefined)}
+            />
+          ) : null}
+          <Button secondary label={tx(locale, 'onboarding.nicht_jetzt')} onPress={onSkip} />
+        </View>
+        <Text style={styles.hint}>{tx(locale, 'onboarding.hinweis')}</Text>
+      </ScrollView>
     </View>
   );
 }
@@ -243,58 +236,66 @@ function AppearancePage({
   onBack?: () => void;
   onContinue: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.sheet, styles.previewSheet]}>
+    <View
+      style={[
+        styles.sheet,
+        styles.previewSheet,
+        { paddingBottom: Math.max(insets.bottom, 20) },
+      ]}>
       <AmbientBackground />
-      <StepIntro
-        icon="palette"
-        title={tx(locale, 'onboarding.stil_titel')}
-        lead={tx(locale, 'onboarding.stil_text')}
-      />
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <StepIntro
+          icon="palette"
+          title={tx(locale, 'onboarding.stil_titel')}
+          lead={tx(locale, 'onboarding.stil_text')}
+        />
 
-      <Text style={styles.groupLabel}>{tx(locale, 'einstellungen.design')}</Text>
-      <View style={styles.choices}>
-        <ChoiceCard
-          icon="light-mode"
-          label={tx(locale, 'einstellungen.hell')}
-          active={theme === 'light'}
-          onPress={() => setTheme('light')}
-        />
-        <ChoiceCard
-          icon="dark-mode"
-          label={tx(locale, 'einstellungen.dunkel')}
-          active={theme === 'dark'}
-          onPress={() => setTheme('dark')}
-        />
-      </View>
-
-      <Text style={styles.groupLabel}>{tx(locale, 'einstellungen.stil')}</Text>
-      <View style={styles.choices}>
-        <ChoiceCard
-          icon="grid-view"
-          label={tx(locale, 'einstellungen.clean')}
-          active={design === 'clean'}
-          onPress={() => setDesign('clean')}
-        />
-        <ChoiceCard
-          icon="auto-awesome"
-          label={tx(locale, 'einstellungen.playful')}
-          active={design === 'playful'}
-          onPress={() => setDesign('playful')}
-        />
-      </View>
-
-      <View style={styles.spacer} />
-      <View style={styles.actionRow}>
-        {onBack ? (
-          <View style={styles.actionItem}>
-            <Button secondary label={tx(locale, 'onboarding.zurueck')} onPress={onBack} />
-          </View>
-        ) : null}
-        <View style={styles.actionItem}>
-          <Button label={tx(locale, 'onboarding.weiter')} onPress={onContinue} />
+        <Text style={styles.groupLabel}>{tx(locale, 'einstellungen.design')}</Text>
+        <View style={styles.choices}>
+          <ChoiceCard
+            icon="light-mode"
+            label={tx(locale, 'einstellungen.hell')}
+            active={theme === 'light'}
+            onPress={() => setTheme('light')}
+          />
+          <ChoiceCard
+            icon="dark-mode"
+            label={tx(locale, 'einstellungen.dunkel')}
+            active={theme === 'dark'}
+            onPress={() => setTheme('dark')}
+          />
         </View>
-      </View>
+
+        <Text style={styles.groupLabel}>{tx(locale, 'einstellungen.stil')}</Text>
+        <View style={styles.choices}>
+          <ChoiceCard
+            icon="grid-view"
+            label={tx(locale, 'einstellungen.clean')}
+            active={design === 'clean'}
+            onPress={() => setDesign('clean')}
+          />
+          <ChoiceCard
+            icon="auto-awesome"
+            label={tx(locale, 'einstellungen.playful')}
+            active={design === 'playful'}
+            onPress={() => setDesign('playful')}
+          />
+        </View>
+
+        <View style={styles.spacer} />
+        <View style={styles.actionRow}>
+          {onBack ? (
+            <View style={styles.actionItem}>
+              <Button secondary label={tx(locale, 'onboarding.zurueck')} onPress={onBack} />
+            </View>
+          ) : null}
+          <View style={styles.actionItem}>
+            <Button label={tx(locale, 'onboarding.weiter')} onPress={onContinue} />
+          </View>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -870,7 +871,7 @@ function Point({ text }: { text: string }) {
 const styles = themedStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.brand },
   scroll: { flex: 1 },
-  content: { flexGrow: 1 },
+  content: { flexGrow: 1, gap: 12 },
   hero: { paddingHorizontal: 22, paddingBottom: 16, gap: 12, overflow: 'hidden' },
   heroGlow: {
     position: 'absolute',
