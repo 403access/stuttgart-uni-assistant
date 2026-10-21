@@ -8,6 +8,7 @@ import { philWahrheit } from './wahrheit-aussagesatz';
 export const philosophieModule: QuizModule = {
   id: 'phil',
   studyId: 'philosophie',
+  semester: 1,
   title: l(
     'Einführung in die Geschichte der Philosophie',
     'Introduction to the History of Philosophy',

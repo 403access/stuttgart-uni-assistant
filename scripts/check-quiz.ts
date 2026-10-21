@@ -221,6 +221,7 @@ for (const module of quizModules) {
     `study is bilingual: ${module.studyId}`,
   );
   expect(Boolean(study?.color), `study has an accent color: ${module.studyId}`);
+  expect(Number.isInteger(module.semester) && module.semester > 0, `module has a semester: ${module.id}`);
 }
 expect(
   quizStudies.every((study) => quizModules.some((module) => module.studyId === study.id)),

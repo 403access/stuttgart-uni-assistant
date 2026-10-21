@@ -170,6 +170,8 @@ export interface QuizModule {
   code?: string;
   /** Study this module is taught in. See `quizStudies`. */
   studyId: string;
+  /** Recommended semester in the degree program. */
+  semester: number;
   title: Localized;
   subtitle: Localized;
   /** Shown in the module header, e.g. the professor's name. */

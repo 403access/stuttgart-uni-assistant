@@ -44,6 +44,7 @@ export const quizModules: QuizModule[] = [
   {
     id: 'ling',
     studyId: 'linguistik',
+    semester: 1,
     title: l(
       'Einführung in die Linguistik (für Linguist/inn/en)',
       'Introduction to Linguistics',
