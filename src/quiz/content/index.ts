@@ -53,6 +53,10 @@ export function findQuizModule(topicId: string | undefined): QuizModule | undefi
   return quizModules.find((module) => module.topics.some((topic) => topic.id === topicId));
 }
 
+export function findQuizModuleById(moduleId: string | undefined): QuizModule | undefined {
+  return quizModules.find((module) => module.id === moduleId);
+}
+
 export function findQuizQuestion(questionId: string): QuizQuestion | undefined {
   return allQuestions.find((question) => question.id === questionId);
 }

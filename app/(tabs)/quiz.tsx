@@ -17,6 +17,10 @@ function startTopic(topic: QuizTopic, mode: QuizMode) {
   router.push({ pathname: '/quiz/[topic]', params: { topic: topic.id, mode } });
 }
 
+function openModule(moduleId: string) {
+  router.push({ pathname: '/quiz/modul/[id]', params: { id: moduleId } });
+}
+
 export default function QuizScreen() {
   const { locale } = useApp();
   const { ready, attempts, sessions, resetProgress } = useQuizProgress();
@@ -86,9 +90,11 @@ export default function QuizScreen() {
       </Card>
 
       <Section title={tx(locale, 'quiz.modules')} />
-      {quizModules.map((module) => (
-        <ModuleBlock key={module.id} module={module} locale={locale} attempts={attempts} />
-      ))}
+      <View style={styles.grid}>
+        {quizModules.map((module) => (
+          <ModuleTile key={module.id} module={module} locale={locale} attempts={attempts} />
+        ))}
+      </View>
 
       <Section title={tx(locale, 'quiz.practice')} />
       <Card>
@@ -130,7 +136,7 @@ export default function QuizScreen() {
   );
 }
 
-function ModuleBlock({
+function ModuleTile({
   module,
   locale,
   attempts,
@@ -140,80 +146,51 @@ function ModuleBlock({
   attempts: Record<string, QuestionProgress>;
 }) {
   const stats = moduleStats(module, attempts);
-  return (
-    <Card>
-      <View style={{ gap: 2 }}>
-        <Text style={styles.moduleTitle}>{pick(module.title, locale)}</Text>
-        {module.lecturer ? (
-          <Text style={styles.moduleMeta}>
-            {module.lecturer}
-            {module.email ? ` · ${module.email}` : ''}
-          </Text>
-        ) : null}
-        <Text style={styles.muted}>{pick(module.subtitle, locale)}</Text>
-      </View>
-      <Meter value={stats.mastered} max={stats.total} />
-      <Text style={styles.muted}>
-        {tx(locale, 'quiz.module_line', [stats.mastered, stats.total, stats.wrong])}
-      </Text>
-      <View style={{ gap: 8 }}>
-        {module.topics.map((topic) => (
-          <TopicBlock key={topic.id} topic={topic} locale={locale} attempts={attempts} />
-        ))}
-      </View>
-    </Card>
-  );
-}
+  const percent = stats.total > 0 ? Math.round((stats.mastered / stats.total) * 100) : 0;
+  const complete = stats.total > 0 && stats.mastered === stats.total;
+  const started = stats.seen > 0;
+  const title = pick(module.title, locale);
 
-function TopicBlock({
-  topic,
-  locale,
-  attempts,
-}: {
-  topic: QuizTopic;
-  locale: Locale;
-  attempts: Record<string, QuestionProgress>;
-}) {
-  const stats = topicStats(topic, attempts);
   return (
-    <View style={styles.topic}>
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => startTopic(topic, 'all')}
-        style={({ pressed }) => [styles.topicPress, pressed && styles.pressed]}
-      >
-        <View style={styles.topicHeader}>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.topicTitle}>{pick(topic.title, locale)}</Text>
-            <Text style={styles.topicMeta}>
-              {topic.meeting ? `${pick(topic.meeting, locale)} · ` : ''}
-              {tx(locale, 'quiz.question_count', [topic.questions.length])}
-            </Text>
-          </View>
-          <View style={styles.play}>
-            <MaterialIcons name="play-arrow" size={20} color={colors.blue} />
-          </View>
-        </View>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={tx(locale, 'quiz.open_module', [title])}
+      onPress={() => openModule(module.id)}
+      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+    >
+      <View style={[styles.badge, started && styles.badgeStarted, complete && styles.badgeComplete]}>
+        {complete ? (
+          <MaterialIcons name="check" size={20} color={colors.success} />
+        ) : (
+          <Text style={[styles.badgeText, started && styles.badgeTextStarted]}>{percent}%</Text>
+        )}
+      </View>
+
+      <View style={[styles.tileIcon, complete && styles.tileIconComplete]}>
+        <MaterialIcons
+          name={complete ? 'verified' : 'menu-book'}
+          size={20}
+          color={complete ? colors.success : colors.blue}
+        />
+      </View>
+
+      <Text style={styles.tileTitle} numberOfLines={4}>
+        {title}
+      </Text>
+      <Text style={styles.tileMeta}>
+        {tx(locale, 'quiz.module_meta', [module.topics.length, stats.total])}
+      </Text>
+
+      <View style={styles.tileProgress}>
         <Meter value={stats.mastered} max={stats.total} />
-      </Pressable>
-      <View style={styles.topicFooter}>
-        <Text style={styles.topicProgress}>
-          {tx(locale, 'quiz.topic_progress', [stats.mastered, stats.total])}
-        </Text>
-        <View style={styles.topicLinks}>
-          <Pressable accessibilityRole="button" hitSlop={6} onPress={() => startTopic(topic, 'quick')}>
-            <Text style={styles.link}>{tx(locale, 'quiz.quick')}</Text>
-          </Pressable>
-          {stats.wrong > 0 ? (
-            <Pressable accessibilityRole="button" hitSlop={6} onPress={() => startTopic(topic, 'review')}>
-              <Text style={styles.link}>
-                {tx(locale, 'quiz.review')} ({stats.wrong})
-              </Text>
-            </Pressable>
-          ) : null}
+        <View style={styles.tileFooter}>
+          <Text style={styles.tileProgressText}>
+            {tx(locale, 'quiz.topic_progress', [stats.mastered, stats.total])}
+          </Text>
+          <MaterialIcons name="chevron-right" size={18} color={colors.blue} />
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -236,31 +213,50 @@ const styles = themedStyles((colors) => ({
     borderTopColor: colors.line,
   },
   lastSessionText: { flex: 1, color: colors.blue, fontSize: 13, fontWeight: '600', lineHeight: 18 },
-  moduleTitle: { color: colors.anthracite, fontSize: 18, fontWeight: '800', lineHeight: 24 },
-  moduleMeta: { color: colors.blue, fontSize: 12, fontWeight: '600', lineHeight: 17 },
-  topic: {
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    paddingTop: 10,
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
+  tile: {
+    width: '48%',
+    backgroundColor: colors.paper,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: 14,
     gap: 6,
   },
-  topicPress: { gap: 7, borderRadius: 10 },
   pressed: { opacity: 0.7 },
-  topicHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  topicTitle: { color: colors.anthracite, fontSize: 15, fontWeight: '700', lineHeight: 20 },
-  topicMeta: { color: colors.mute, fontSize: 11, fontWeight: '600' },
-  play: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  badge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    minWidth: 40,
+    height: 40,
+    borderRadius: 20,
+    paddingHorizontal: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.mist,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  badgeStarted: { backgroundColor: colors.blueSoft, borderColor: colors.blueSoft },
+  badgeComplete: { backgroundColor: colors.successSoft, borderColor: colors.successSoft },
+  badgeText: { color: colors.mute, fontSize: 12, fontWeight: '800' },
+  badgeTextStarted: { color: colors.blue },
+  tileIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: colors.blueSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topicFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  topicProgress: { color: colors.mute, fontSize: 11 },
-  topicLinks: { flexDirection: 'row', gap: 12 },
-  link: { color: colors.blue, fontSize: 12, fontWeight: '700' },
+  tileIconComplete: { backgroundColor: colors.successSoft },
+  tileTitle: { color: colors.anthracite, fontSize: 15, fontWeight: '800', lineHeight: 20, paddingRight: 2 },
+  tileMeta: { color: colors.mute, fontSize: 11, fontWeight: '600', lineHeight: 15 },
+  tileProgress: { marginTop: 'auto', gap: 6 },
+  tileFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 4 },
+  tileProgressText: { color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
+  topicTitle: { color: colors.anthracite, fontSize: 15, fontWeight: '700', lineHeight: 20 },
   mixedHeader: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   mixedIcon: {
     width: 42,
