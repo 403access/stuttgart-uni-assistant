@@ -595,6 +595,7 @@ test('api catalog only names known paths', () => {
     '/v1/mail/messages',
     '/v1/mail/body',
     '/v1/mail/seen',
+    '/v1/mail/send',
     '/v1/mail/logout',
     '/v1/auth/session',
     '/v1/auth/me',

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { RefreshControl, Text, useWindowDimensions } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
@@ -50,6 +51,7 @@ export default function MailScreen() {
       onSortSelect={list.applySortKey}
       onOpenMailbox={() => setMailboxOpen(true)}
       onOpenFilter={() => setFilterOpen(true)}
+      onCompose={() => router.push('/mail-verfassen')}
       loadingLabel={loadingLabel}
     />
   ) : null;

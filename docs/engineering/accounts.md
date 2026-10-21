@@ -128,6 +128,7 @@ token to another host.
 | `GET/POST /v1/campus/*` | Bearer | Every other campus route resolves the user from the token and reads that user's rows only. |
 | `POST /v1/oidc/exchange` | none | Returns the profile **and** `user`, `token`, `expiresAt`. |
 | `POST /v1/mail/credentials` | optional Bearer | Links `mail` when the caller is signed in. |
+| `POST /v1/mail/send` | Bearer | Submits a message over SMTP and appends a copy to Sent. |
 | `POST /v1/mail/logout` | optional Bearer | Unlinks `mail` when the caller is signed in. |
 
 The public user shape:

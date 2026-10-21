@@ -225,11 +225,13 @@
         <h3>8.5 UniMail</h3>
         <p>
           Für UniMail gibst du dein Universitätskonto und dein Passwort in der App ein. Die App sendet beides an den
-          Assistant-Server. Der Server prüft die Kombination einmal gegen <code>imap.uni-stuttgart.de:993</code> und
-          behält sie danach nur im Prozessspeicher, um dein Postfach zu lesen. Das Passwort wird nicht auf dem Gerät
-          gespeichert, nicht in <code>.env</code> geschrieben und nicht geloggt. Beim Trennen der Verbindung oder beim
-          Abmelden löscht der Server es. UniMail ist in diesem Build read-only: Die App liest, durchsucht und
-          sortiert, versendet aber keine E-Mails und legt keine Entwürfe an. Rechtsgrundlage ist die Bereitstellung
+          Assistant-Server. Der Server prüft die Kombination einmal gegen <code>imap.uni-stuttgart.de:993</code>,
+          behält sie danach nur im Prozessspeicher, um dein Postfach zu lesen, und nutzt sie für den Versand über
+          <code>smtp.uni-stuttgart.de:587</code>. Das Passwort wird nicht auf dem Gerät gespeichert, nicht in
+          <code>.env</code> geschrieben und nicht geloggt. Beim Trennen der Verbindung oder beim Abmelden löscht der
+          Server es. Die App liest, durchsucht und sortiert Nachrichten und kann E-Mails mit Anhängen senden;
+          Entwürfe und die Liste zuletzt verwendeter Empfänger liegen nur lokal auf dem Gerät und werden beim
+          Abmelden gelöscht. Große Anhänge werden nicht im Entwurf gespeichert. Rechtsgrundlage ist die Bereitstellung
           der von dir angeforderten Mail-Funktion (Art. 6 Abs. 1 lit. b DSGVO); mit dem Verbinden willigst du in die
           Verarbeitung des Passworts ein und kannst sie jederzeit durch Trennen beenden. Die eigentliche
           Mailverarbeitung findet bei der Universität Stuttgart statt.
@@ -510,13 +512,15 @@
         <h3>8.5 UniMail</h3>
         <p>
           For UniMail, you enter your university account and password in the app. The app sends both to the assistant
-          server. The server validates the pair once against <code>imap.uni-stuttgart.de:993</code> and then keeps it
-          only in process memory to read your mailbox. The password is not stored on the device, not written to
-          <code>.env</code> and not logged. Disconnecting or signing out deletes it from the server. UniMail is
-          read-only in this build: the app reads, searches and sorts, but does not send email or create drafts. The
-          legal basis is the provision of the mail function you requested (Art. 6(1)(b) GDPR); by connecting, you
-          consent to the processing of the password and can end it at any time by disconnecting. The actual mail
-          processing takes place at the University of Stuttgart.
+          server. The server validates the pair once against <code>imap.uni-stuttgart.de:993</code>, keeps it only in
+          process memory to read your mailbox, and uses it to submit mail through
+          <code>smtp.uni-stuttgart.de:587</code>. The password is not stored on the device, not written to
+          <code>.env</code> and not logged. Disconnecting or signing out deletes it from the server. The app reads,
+          searches and sorts messages and can send email with attachments; drafts and the recent-recipient list stay
+          on the device and are deleted on sign-out. Large attachments are not stored in drafts. The legal basis is
+          the provision of the mail function you requested (Art. 6(1)(b) GDPR); by connecting, you consent to the
+          processing of the password and can end it at any time by disconnecting. The actual mail processing takes
+          place at the University of Stuttgart.
         </p>
 
         <h3>8.6 xAI / Grok</h3>

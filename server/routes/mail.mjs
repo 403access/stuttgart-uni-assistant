@@ -1,7 +1,8 @@
 /** UniMail routes. Credentials arrive here and stay in this process. */
 
 import { authenticateRequest, getUser, linkPlatform, unlinkPlatform } from '../auth.mjs';
-import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials, setMailSeen } from '../mail.mjs';
+import { MAIL_SEND_REQUEST_BYTES } from '../mail-mime.mjs';
+import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials, sendMail, setMailSeen } from '../mail.mjs';
 import { readJsonBody, send } from '../http.mjs';
 import { logRequest } from '../request-log.mjs';
 
@@ -90,6 +91,37 @@ export async function handleMail(request, response, url) {
       const code = error.message || 'mail_failed';
       const status = code === 'mail_not_configured' ? 409 : code === 'mail_auth_failed' ? 401 : code === 'bad_uid' ? 400 : 500;
       console.log(`[mail #${reqId}] seen failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, status, { error: code, detail: error.detail });
+    }
+    return true;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/mail/send') {
+    const reqId = logRequest('POST /v1/mail/send');
+    // Sending mail in the user's name needs the app session; reads stay open like before.
+    const auth = authenticateRequest(request);
+    if (!auth) {
+      send(response, 401, { error: 'unauthorized' });
+      return true;
+    }
+    const parsed = await readJsonBody(request, response, MAIL_SEND_REQUEST_BYTES);
+    if (!parsed) return true;
+    try {
+      const result = await sendMail(parsed.body);
+      console.log(`[mail #${reqId}] send ok accepted=${result.accepted.length} rejected=${result.rejected.length} saved=${result.saved} bytes=${result.attachmentBytes}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'mail_failed';
+      const status =
+        code === 'mail_not_configured'
+          ? 409
+          : code === 'mail_auth_failed'
+            ? 401
+            : code === 'mail_rate_limited'
+              ? 429
+              : code.startsWith('bad_') || code.startsWith('missing_') || code.startsWith('too_') || code.endsWith('_too_large') || code === 'subject_too_long'
+                ? 400
+                : 502;
+      console.log(`[mail #${reqId}] send failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, status, { error: code, detail: error.detail });
     }
     return true;

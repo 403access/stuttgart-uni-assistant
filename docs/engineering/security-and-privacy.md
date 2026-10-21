@@ -80,7 +80,7 @@ Implementation details are in [onboarding.md](onboarding.md).
 | Data | Leaves the device? |
 | --- | --- |
 | Password (SIAM path) | No. It is typed at the identity provider |
-| Password (automated C@MPUS path) | Not to C@MPUS or the identity provider: the harvested session signs the device in. The same st-password is reused to connect UniMail and is sent to the assistant server, which proves it against TIK IMAP (see [mail.md](mail.md)) |
+| Password (automated C@MPUS path) | Not to C@MPUS or the identity provider: the harvested session signs the device in. The same st-password is reused to connect UniMail and is sent to the assistant server, which proves it against TIK IMAP and uses it for SMTP submission (see [mail.md](mail.md)) |
 | Authorization code | Sent once to this server, then exchanged. Not stored |
 | Access token and refresh token | Stay in the server process. Not sent back to the app |
 | Account, name, email from UserInfo | Stored on the device so the profile can show them |
@@ -91,8 +91,10 @@ Implementation details are in [onboarding.md](onboarding.md).
 | Focused document text | Included in that fact sheet when a document is open |
 | Imported personal notes | Included only when that note is the focused document or part of the facts the client already builds |
 | Reviews and recognition drafts | Stay in Async Storage unless a later feature adds them to the fact sheet |
+| Mail rows, body text and attachments | Travel between the app and the assistant server over the configured assistant URL; the server talks IMAP/SMTP. Attachments are only held in memory during submission |
+| Mail drafts and recipient history | Stay in Async Storage on the device and are cleared on sign-out; large attachments are not stored in drafts |
 
-The fact sheet is capped at 24,000 characters. The request body on the server is capped at 200 KB.
+The fact sheet is capped at 24,000 characters. The assistant request body is capped at 200 KB; the mail send route separately accepts up to 12 MB so attachments fit as base64.
 
 `store: false` is set on the Responses API call so the provider is asked not to retain the stored response. The request still transits xAI for the duration of the call. Do not send a real transcript until that is an accepted processing purpose.
 

@@ -1,12 +1,12 @@
 /** HTTP helpers shared by the route modules. No route logic lives here. */
 
-export function readBody(request) {
+export function readBody(request, limit = 200_000) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
     request.on('data', (chunk) => {
       size += chunk.length;
-      if (size > 200_000) {
+      if (size > limit) {
         reject(new Error('body too large'));
         request.destroy();
         return;
@@ -28,10 +28,10 @@ export function readBody(request) {
  * Parse a JSON body. On failure this answers 400 and returns null, so callers
  * only have to check for null and stop.
  */
-export async function readJsonBody(request, response) {
+export async function readJsonBody(request, response, limit) {
   try {
     // A JSON `null` is valid syntax but no body; routes then read `{}`.
-    return { body: (await readBody(request)) ?? {} };
+    return { body: (await readBody(request, limit)) ?? {} };
   } catch {
     send(response, 400, { error: 'bad_json' });
     return null;

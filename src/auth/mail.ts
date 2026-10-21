@@ -2,8 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createStore } from '@tanstack/store';
 
 import { assistantUrl } from '@/src/assistant/remote';
+import { MAIL_DRAFT_KEY } from '@/src/mail/draft-storage';
+import { MAIL_RECIPIENTS_KEY } from '@/src/mail/recent-recipients';
 import { tx } from '@/src/text';
-import type { MailBody, MailFolder, MailMessage, MailStatus } from '@/src/types';
+import type { MailAttachment, MailBody, MailFolder, MailMessage, MailRecipient, MailSendResult, MailStatus } from '@/src/types';
 
 /**
  * UniMail (https://mail.uni-stuttgart.de/) — Exchange of Universität Stuttgart.
@@ -14,6 +16,7 @@ import type { MailBody, MailFolder, MailMessage, MailStatus } from '@/src/types'
 
 export const UNIMAIL_WEBMAIL = 'https://mail.uni-stuttgart.de/';
 export const UNIMAIL_IMAP = 'imap.uni-stuttgart.de:993';
+export const UNIMAIL_SMTP = 'smtp.uni-stuttgart.de:587';
 
 const DISCONNECTED_STATUS: MailStatus = {
   configured: false,
@@ -21,6 +24,7 @@ const DISCONNECTED_STATUS: MailStatus = {
   address: null,
   webmail: UNIMAIL_WEBMAIL,
   imap: UNIMAIL_IMAP,
+  smtp: UNIMAIL_SMTP,
 };
 
 /**
@@ -130,7 +134,7 @@ export async function clearMailCache(): Promise<void> {
   mailStore.setState(() => emptySnapshot);
   hydrated = true;
   hydration = null;
-  cacheWrite = cacheWrite.then(() => AsyncStorage.removeItem(MAIL_CACHE_KEY)).catch(() => undefined);
+  cacheWrite = cacheWrite.then(() => AsyncStorage.multiRemove([MAIL_CACHE_KEY, MAIL_DRAFT_KEY, MAIL_RECIPIENTS_KEY])).catch(() => undefined);
   await cacheWrite;
 }
 
@@ -180,6 +184,7 @@ export function asMailStatus(value: unknown): MailStatus | null {
     address: typeof payload.address === 'string' ? payload.address : null,
     webmail: typeof payload.webmail === 'string' && payload.webmail ? payload.webmail : UNIMAIL_WEBMAIL,
     imap: typeof payload.imap === 'string' && payload.imap ? payload.imap : UNIMAIL_IMAP,
+    smtp: typeof payload.smtp === 'string' && payload.smtp ? payload.smtp : UNIMAIL_SMTP,
   };
 }
 
@@ -196,7 +201,9 @@ export function asMailMessages(value: unknown): MailMessage[] {
         date: typeof message.date === 'string' ? message.date : '',
         from: typeof message.from === 'string' ? message.from : '',
         to: typeof message.to === 'string' ? message.to : '',
+        cc: typeof message.cc === 'string' ? message.cc : '',
         subject: typeof message.subject === 'string' ? message.subject : '',
+        messageId: typeof message.messageId === 'string' ? message.messageId : '',
         preview: typeof message.preview === 'string' ? message.preview : '',
       },
     ];
@@ -319,8 +326,56 @@ export async function setMailSeen(folder: string, uid: number, seen: boolean): P
   console.info('[mail-seen] status', response.status, seen ? 'read' : 'unread');
 }
 
+export interface SendMailInput {
+  to: MailRecipient[];
+  cc?: MailRecipient[];
+  bcc?: MailRecipient[];
+  subject: string;
+  text: string;
+  attachments?: MailAttachment[];
+  /** IMAP name of the Sent mailbox, so the server can keep a copy. */
+  sentFolder?: string | null;
+  /** `Message-ID` of the message being replied to, for proper threading. */
+  inReplyTo?: string;
+  references?: string;
+}
+
 /**
- * Full body of one message, read through the assistant server (`BODY.PEEK`, so nothing is
+ * Submit a message through the assistant server (`smtp.uni-stuttgart.de:587`,
+ * STARTTLS). The server holds the credentials, builds the MIME message, and also
+ * appends a copy to Sent when a folder name is supplied. Requires an app session:
+ * this is the only mail route that sends mail in the user's name.
+ */
+export async function sendMail(input: SendMailInput, token?: string | null): Promise<MailSendResult> {
+  const url = endpoint('/v1/mail/send');
+  console.info('[mail-send] POST', url);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw new Error('server_unreachable');
+  }
+  const payload = (await response.json().catch(() => ({}))) as Partial<MailSendResult> & MailCredentialsFailure;
+  console.info('[mail-send] status', response.status, payload.error ?? payload.messageId ?? 'ok');
+  if (!response.ok) throw mailFailure(payload, 'mail_failed', response.status);
+  return {
+    messageId: typeof payload.messageId === 'string' ? payload.messageId : '',
+    accepted: Array.isArray(payload.accepted) ? payload.accepted.filter((entry): entry is string => typeof entry === 'string') : [],
+    rejected: Array.isArray(payload.rejected) ? payload.rejected.filter((entry): entry is string => typeof entry === 'string') : [],
+    saved: Boolean(payload.saved),
+    attachmentBytes: typeof payload.attachmentBytes === 'number' ? payload.attachmentBytes : 0,
+  };
+}
+
+/**
+ * Body of one message, read through the assistant server (`BODY.PEEK`, so nothing is
  * marked read). The server never exposes raw active content: script blocks, event handler
  * attributes and meta-refresh are already stripped when the HTML lands here.
  */
@@ -427,5 +482,17 @@ export function mailMessage(locale: 'de' | 'en', code: string, detail = ''): str
   if (code === 'mail_network' || code === 'mail_disconnected' || code === 'imap_timeout') {
     return tx(locale, 'mail.verbindung', [code, suffix]);
   }
+  if (code === 'missing_recipient') return tx(locale, 'mailVerfassen.empfaenger_fehlt');
+  if (code === 'unauthorized') return tx(locale, 'mailVerfassen.anmeldung');
+  if (code === 'bad_recipient') return tx(locale, 'mailVerfassen.empfaenger_ungueltig', [suffix]);
+  if (code === 'too_many_recipients') return tx(locale, 'mailVerfassen.zu_viele_empfaenger', [suffix]);
+  if (code === 'mail_recipients_rejected') return tx(locale, 'mailVerfassen.empfaenger_abgelehnt', [suffix]);
+  if (code === 'attachment_too_large' || code === 'attachments_too_large' || code === 'too_many_attachments') {
+    return tx(locale, 'mailVerfassen.anhang_zu_gross', [suffix]);
+  }
+  if (code === 'body_too_large' || code === 'subject_too_long') return tx(locale, 'mailVerfassen.zu_lang');
+  if (code === 'mail_rate_limited') return tx(locale, 'mailVerfassen.zu_schnell');
+  if (code === 'mail_smtp_timeout') return tx(locale, 'mailVerfassen.zeitueberschreitung');
+  if (code === 'mail_smtp_failed') return tx(locale, 'mailVerfassen.smtp', [suffix]);
   return tx(locale, 'mail.unimail', [code, suffix]);
 }

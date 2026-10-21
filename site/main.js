@@ -65,7 +65,7 @@
     f4Title: 'Assistant',
     f4Body: 'Ask about deadlines, credits, modules or rooms — answered from your own record.',
     f5Title: 'UniMail',
-    f5Body: 'Read, search and sort your mailbox over IMAP once the server is connected.',
+    f5Body: 'Read, search, reply and send mail with attachments over IMAP and SMTP once the server is connected.',
     f6Title: 'Campus map',
     f6Body: 'Buildings, rooms and contact points on the university map.',
     f7Title: 'Notes & past exams',

@@ -11,8 +11,9 @@ import { DropdownPicker } from '@/src/components/dropdown-picker';
 import { ToolbarReveal, ToolbarSkeleton } from './mail-skeletons';
 
 /**
- * Sticky controls: mailbox drawer (left), full-width search, sort sheet, and the
- * filter drawer on the right edge. The search keeps the remaining width.
+ * Sticky controls: mailbox drawer (left), compose, full-width search, sort
+ * sheet, and the filter drawer on the right edge. The search keeps the
+ * remaining width.
  */
 export function MailToolbar({
   locale,
@@ -25,6 +26,7 @@ export function MailToolbar({
   onSortSelect,
   onOpenMailbox,
   onOpenFilter,
+  onCompose,
   loadingLabel,
 }: {
   locale: Locale;
@@ -37,6 +39,7 @@ export function MailToolbar({
   onSortSelect: (key: string) => void;
   onOpenMailbox: () => void;
   onOpenFilter: () => void;
+  onCompose: () => void;
   loadingLabel: string;
 }) {
   const reduced = useReducedMotion();
@@ -44,6 +47,7 @@ export function MailToolbar({
     <View style={styles.stickyBar}>
       <View style={styles.controlsRow}>
         <ToolButton symbol="line.3.horizontal" material="menu" label={tx(locale, 'tabsMail.postfach')} onPress={onOpenMailbox} />
+        <ToolButton symbol="square.and.pencil" material="edit" label={tx(locale, 'tabsMail.verfassen')} onPress={onCompose} />
         {revealPending ? (
           <ToolbarSkeleton label={loadingLabel} animate={!reduced} />
         ) : hasMessages ? (

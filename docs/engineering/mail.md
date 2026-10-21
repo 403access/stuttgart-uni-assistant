@@ -2,13 +2,14 @@
 
 University e-mail runs on the Exchange service of IZUS/TIK. The browser surface is
 `https://mail.uni-stuttgart.de/` (login with the short user id, `st…` for students, `ac…`
-for staff). For mail clients TIK documents `imap.uni-stuttgart.de:993` with the same
-account; this is the interface this feature uses, because it is published precisely for
-third-party mail programs and stays stable while OWA markup would not.
+for staff). For mail clients TIK documents `imap.uni-stuttgart.de:993` and
+`smtp.uni-stuttgart.de:587` (STARTTLS) with the same account; these are the interfaces
+this feature uses, because they are published precisely for third-party mail programs and
+stay stable while OWA markup would not.
 
 ## Screens
 
-Two surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
+Three surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
 
 - **Messages tab** (`app/(tabs)/mail.tsx`): while not connected it shows the credential
   form; once connected it becomes a clean inbox — subject, sender, date, read/unread dot,
@@ -31,6 +32,12 @@ Two surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
   "Absender" with two or more senders, "Neu zuerst" while unread rows exist. The stored
   selection is intent only; the effective value is derived in render, so a refresh that
   removes the variety silently falls back to newest.
+- **Compose screen** (`app/mail-verfassen.tsx`, pushed from the toolbar pencil or the
+  read view's reply/forward actions): recipient chips with an address-book dropdown
+  (lecturers, mailbox contacts, recent recipients — each with source badges), Cc/Bcc,
+  subject, plain-text body, templates, attachments, autosaved drafts and the send action.
+  The recipient registry is derived in `src/mail/recipients.ts`; drafts and history live
+  in `src/mail/draft-storage.ts` / `src/mail/recent-recipients.ts`.
 - **Connection screen** (`app/mail-verbindung.tsx`, pushed outside the tabs): the status
   card with the two actions "Posteingang aktualisieren" and "Verbindung lösen". Both
   screens apply each other's results through the published snapshot, so dropping the
@@ -38,7 +45,8 @@ Two surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
   refresh here is visible in the inbox the moment the user comes back.
 
 ```text
-Student → app (list + read flag) → assistant server (process memory) → imap.uni-stuttgart.de:993
+Student → app (list, read flag, compose) → assistant server (process memory)
+        → imap.uni-stuttgart.de:993 / smtp.uni-stuttgart.de:587
 ```
 
 ## Flow
@@ -60,7 +68,8 @@ Student → app (list + read flag) → assistant server (process memory) → ima
    IMAP
    session: `LOGIN`, `SELECT` of the chosen folder (INBOX by default), then `FETCH` of the
    newest rows with
-   `UID FLAGS INTERNALDATE BODY.PEEK[HEADER.FIELDS (DATE FROM TO SUBJECT)]` and a
+   `UID FLAGS INTERNALDATE BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC SUBJECT MESSAGE-ID)]`
+   and a
    `BODY.PEEK[TEXT]<0.1024>` excerpt. `BODY.PEEK` keeps the list read from touching
    any flag; read state changes only through the explicit `POST /v1/mail/seen` route.
 
@@ -86,9 +95,26 @@ Student → app (list + read flag) → assistant server (process memory) → ima
    and restores it when the request fails, so the list dot, the "Neu" filter and the
    detail pill stay in agreement. `BODY.PEEK` still keeps the body fetch from changing
    the flag implicitly.
-4. **Drop** (`POST /v1/mail/logout`). Clears the memory on the server (credentials and
-   the body cache); nothing was on
-   the device anyway. Signing out also clears the local `mailAccount` reference.
+4. **Write and send** (`POST /v1/mail/send`, `server/mail.mjs`). The compose screen posts
+   `{ to, cc, bcc, subject, text, attachments, sentFolder, inReplyTo, references }`.
+   `server/mail-mime.mjs` parses and dedupes addresses, rejects header injection, caps
+   recipients (20), subject (255), body (100 KB) and attachments (5 files, 6 MB each,
+   8 MB total, base64 in JSON), and builds a `multipart/mixed` message with a
+   `multipart/alternative` text/plain + text/html body. Non-ASCII headers become RFC 2047
+   words, attachment names carry an ASCII fallback plus `filename*`, Bcc never appears in
+   the headers, and reply headers point at the original `Message-ID`.
+   `server/smtp.mjs` opens one `smtp.uni-stuttgart.de:587` session (`EHLO`, `STARTTLS`,
+   `AUTH PLAIN` with `LOGIN` fallback, `MAIL FROM`, one `RCPT TO` per envelope address,
+   `DATA` with dot-stuffing). A rejected recipient is reported without failing the whole
+   message; no accepted recipient is an error. The route requires the app bearer token —
+   the only mail route that acts in the user's name. After submission the server appends
+   the same bytes to the Sent mailbox via IMAP `APPEND` (`\Seen`); a failed append is
+   logged and never turns a delivered message into an error. A per-minute guard (10
+   submissions) answers `mail_rate_limited`.
+5. **Drop** (`POST /v1/mail/logout`). Clears the memory on the server (credentials, the
+   body cache and the send guard); nothing was on
+   the device anyway. Signing out also clears the local `mailAccount` reference and the
+   draft/recipient history keys.
 
 `GET /v1/mail/folders` lists the account's mailboxes with one IMAP session
 (`LIST "" "*"`): name verbatim plus a `selectable` flag (non-selectable `\Noselect`
@@ -99,20 +125,25 @@ inline `{n}` literals.
 
 ## Scope
 
-Read-mostly: subject, sender, date, read/unread state, and a text excerpt, browsable per
-folder. The read flag is the only mailbox mutation this build performs (`UID STORE`);
-replying, sending, and drafts remain in the webmail the university itself operates.
-There is no IMAP for ILIAS notifications beyond what the university already forwards to
-the mailbox.
+Inbox browsing per folder (subject, sender, date, read/unread, text excerpt) plus
+composing: recipients from the app's people directory and the loaded mailbox, Cc/Bcc,
+templates, attachments, autosaved drafts, reply/forward with threading headers, and SMTP
+submission with a Sent copy. The read flag (`UID STORE`) and sending (`SMTP`/`APPEND`) are
+the mailbox mutations this build performs. There is no IMAP for ILIAS notifications beyond
+what the university already forwards to the mailbox.
 
 ## Security notes
 
 - The password only travels on the local loopback to the assistant server and over TLS
-  to the TIK IMAP host. AsyncStorage is not a vault (see
+  to the TIK IMAP/SMTP hosts. AsyncStorage is not a vault (see
   [security-and-privacy.md](security-and-privacy.md)), so the app persists nothing but
-  the account id. Over the assistant tunnel described in
+  the account id; drafts and recipient history are plain text on the device. Over the
+  assistant tunnel described in
   [assistant-tunnel.md](assistant-tunnel.md) the first hop is the Cloudflare edge rather
   than the loopback, so the tunnel is up only for the demonstration it serves.
+- `POST /v1/mail/send` requires the bearer token, so an exposed tunnel cannot be used to
+  send mail without an app session. The server validates every address and header value,
+  caps bodies and attachments, and rate-limits submissions.
 - Errors map to stable codes: `mail_auth_failed` (wrong pair, HTTP 401),
   `mail_not_configured` (HTTP 409), `mail_network` / `imap_timeout` /
   `mail_disconnected` / `bad_uid`. Server text arrives only as a capped `detail`, never
@@ -124,8 +155,11 @@ the mailbox.
   links cannot open tracking or phishing pages inside the app.
 - Tests in `server/mail.test.mjs` cover the pure parser parts (FETCH pieces with inline
   `{n}` literals, folded headers, RFC 2047 words, HTML preview flatten, LIST lines, the
-  HTML sanitizer, BODYSTRUCTURE picking, quoted-printable decoding). No network in
-  tests; the IMAP session class is exercised only in production against the real host.
+  HTML sanitizer, BODYSTRUCTURE picking, quoted-printable decoding).
+  `server/mail-mime.test.mjs` covers address parsing, header encoding, MIME structure,
+  Bcc suppression, threading headers and dot-stuffing; `scripts/mail-compose.test.mjs`
+  covers recipient search and reply/forward prefill. No network in tests; the IMAP and
+  SMTP session classes are exercised only in production against the real hosts.
 
 ## Restart note
 

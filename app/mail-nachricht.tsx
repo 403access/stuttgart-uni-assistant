@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview';
 import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage, setMailSeen } from '@/src/auth/mail';
 import { MailBody } from '@/src/components/mailBody';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
+import { MailComposeActions } from '@/src/mail/components/compose-actions';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
@@ -114,6 +115,8 @@ export default function MailMessageScreen() {
         </Text>
         {message && !message.seen ? <Pill tone="wait" label={tx(locale, 'mailNachricht.neu')} /> : null}
       </Card>
+
+      {message && !invalidUid ? <MailComposeActions uid={uid} folder={folder} locale={locale} /> : null}
 
       {message && !invalidUid ? (
         <Button

@@ -318,6 +318,7 @@ export interface MailStatus {
   address: string | null;
   webmail: string;
   imap: string;
+  smtp: string;
 }
 
 /** One mailbox folder as listed by the IMAP server (INBOX, sent, drafts, …). */
@@ -336,8 +337,48 @@ export interface MailMessage {
   date: string;
   from: string;
   to: string;
+  cc: string;
   subject: string;
+  /** `Message-ID` of the original mail, used for reply threading. */
+  messageId: string;
   preview: string;
+}
+
+/** One addressee the compose screen can suggest: mailbox contact, lecturer, or recent recipient. */
+export interface MailContact {
+  /** Lowercase address; the stable key for chips and suggestions. */
+  id: string;
+  name: string;
+  email: string;
+  /** Where the entry comes from; multiple sources merge into one row. */
+  sources: MailContactSource[];
+  /** Institute, last subject, or another short line shown under the name. */
+  detail?: string;
+}
+
+export type MailContactSource = 'lecturer' | 'mailbox' | 'recent';
+
+/** One recipient of an outgoing message, with an optional display name. */
+export interface MailRecipient {
+  name: string;
+  email: string;
+}
+
+/** Attachment as the compose screen hands it to the server (base64, no data URL prefix). */
+export interface MailAttachment {
+  name: string;
+  type: string;
+  size: number;
+  data: string;
+}
+
+/** Result of `POST /v1/mail/send`. */
+export interface MailSendResult {
+  messageId: string;
+  accepted: string[];
+  rejected: string[];
+  saved: boolean;
+  attachmentBytes: number;
 }
 
 /**

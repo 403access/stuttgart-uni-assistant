@@ -13,9 +13,13 @@
 
 import { connect as tlsConnect } from 'node:tls';
 
+import { buildMailMime, prepareMail } from './mail-mime.mjs';
+import { sendSmtpMail } from './smtp.mjs';
+
 export const mailService = {
   webmail: 'https://mail.uni-stuttgart.de/',
   imap: 'imap.uni-stuttgart.de:993',
+  smtp: 'smtp.uni-stuttgart.de:587',
 };
 
 const IMAP_HOST = 'imap.uni-stuttgart.de';
@@ -24,10 +28,11 @@ const PREVIEW_BYTES = 1024;
 const BODY_BYTES = 262_144;
 const MAX_RESPONSE_BYTES = 4_000_000;
 const COMMAND_TIMEOUT_MS = 30_000;
-const HEADER_FIELDS = 'DATE FROM TO SUBJECT';
+const HEADER_FIELDS = 'DATE FROM TO CC SUBJECT MESSAGE-ID';
 
 let secrets = null; // { username, password } — process memory only.
 const bodyCache = new Map(); // "account␀folder␀uid" → body — bounded, process memory only.
+let sends = []; // timestamps of recent submissions for the per-minute guard.
 
 export function publicMailStatus() {
   return {
@@ -36,12 +41,14 @@ export function publicMailStatus() {
     address: secrets ? mailAddressFor(secrets.username) : null,
     webmail: mailService.webmail,
     imap: mailService.imap,
+    smtp: mailService.smtp,
   };
 }
 
 export function forgetMailCredentials() {
   secrets = null;
   bodyCache.clear();
+  sends = [];
   return { ok: true };
 }
 
@@ -216,6 +223,68 @@ export async function setMailSeen(folderRaw, uidRaw, seen) {
     console.log(`[mail] seen uid=${uid} seen=${read} folder=${folder}`);
     return { uid, seen: read };
   });
+}
+
+/** Copy of a sent message into the account's Sent mailbox (`APPEND`); failures never fail the send. */
+export async function appendToSent(folderRaw, raw) {
+  if (!secrets) throw mailFailure('mail_not_configured');
+  const folder = String(folderRaw ?? '').trim().slice(0, 128);
+  if (!folder) return false;
+  const bytes = Buffer.from(String(raw ?? '').replace(/\r?\n/g, '\r\n'), 'utf8');
+  if (!bytes.length) return false;
+  return withSession(secrets.username, secrets.password, async (session) => {
+    const append = await session.commandWithLiteral(`APPEND ${imapQuoted(folder)} (\\Seen)`, bytes);
+    if (append.status !== 'OK') throw mailFailure('imap_error', append.text);
+    return true;
+  });
+}
+
+/**
+ * Submit one message through SMTP (`smtp.uni-stuttgart.de:587`, STARTTLS) and
+ * keep a copy in Sent when the client names that mailbox. The per-minute guard
+ * keeps a stuck retry loop from becoming a mail flood.
+ */
+export async function sendMail(input) {
+  if (!secrets) throw mailFailure('mail_not_configured');
+  const now = Date.now();
+  sends = sends.filter((at) => now - at < 60_000);
+  if (sends.length >= 10) throw mailFailure('mail_rate_limited');
+  sends.push(now);
+  const prepared = prepareMail(input);
+  const from = mailAddressFor(secrets.username);
+  const built = buildMailMime({
+    from,
+    to: prepared.to,
+    cc: prepared.cc,
+    bcc: prepared.bcc,
+    subject: prepared.subject,
+    text: prepared.text,
+    attachments: prepared.attachments,
+    inReplyTo: input?.inReplyTo,
+    references: input?.references,
+  });
+  const result = await sendSmtpMail({
+    username: secrets.username,
+    password: secrets.password,
+    from,
+    envelope: built.envelope,
+    raw: built.raw,
+  });
+  let saved = false;
+  if (input?.sentFolder) {
+    try {
+      saved = await appendToSent(input.sentFolder, built.raw);
+    } catch (error) {
+      console.log(`[mail] sent copy failed ${error.message}${error.detail ? ` detail=${error.detail}` : ''}`);
+    }
+  }
+  return {
+    messageId: built.messageId,
+    accepted: result.accepted,
+    rejected: result.rejected,
+    saved,
+    attachmentBytes: prepared.bytes,
+  };
 }
 
 /** Recent messages of one mailbox in IMAP sequence order (newest last). Read-only. */
@@ -552,6 +621,15 @@ class ImapSession {
   }
 
   command(text) {
+    return this.enqueue(text);
+  }
+
+  /** Command with a trailing `{n}` literal, e.g. `APPEND "Sent" (\\Seen)`. */
+  commandWithLiteral(text, bytes) {
+    return this.enqueue(text, Buffer.from(bytes));
+  }
+
+  enqueue(text, literal = null) {
     const run = () =>
       new Promise((resolve, reject) => {
         if (this.pending) {
@@ -564,8 +642,8 @@ class ImapSession {
         }
         const tag = `A${++this.tagSeq}`;
         const timer = setTimeout(() => this.fail(mailFailure('imap_timeout')), COMMAND_TIMEOUT_MS);
-        this.pending = { tag, lines: [], resolve, reject, timer };
-        this.socket.write(`${tag} ${text}\r\n`);
+        this.pending = { tag, lines: [], resolve, reject, timer, literal };
+        this.socket.write(literal ? `${tag} ${text} {${literal.length}}\r\n` : `${tag} ${text}\r\n`);
       });
     const result = this.queue.then(run, run);
     this.queue = result.catch(() => undefined);
@@ -615,6 +693,14 @@ class ImapSession {
     this.pieces = [];
     if (!this.pending) return; // greeting or a server update without a pending command
     this.pending.lines.push(line);
+    // A `+` continuation asks for the literal of an APPEND command.
+    if (this.pending.literal && joined.startsWith('+')) {
+      const bytes = this.pending.literal;
+      this.pending.literal = null;
+      this.socket.write(bytes);
+      this.socket.write('\r\n');
+      return;
+    }
     if (joined.startsWith(`${this.pending.tag} `)) {
       const rest = joined.slice(this.pending.tag.length + 1);
       const status = rest.split(' ', 1)[0]?.toUpperCase() ?? '';
@@ -690,7 +776,9 @@ export function parseFetchLines(lines) {
         date,
         from: decodeMimeWords(headers.from ?? ''),
         to: decodeMimeWords(headers.to ?? ''),
+        cc: decodeMimeWords(headers.cc ?? ''),
         subject: decodeMimeWords(headers.subject ?? ''),
+        messageId: String(headers['message-id'] ?? '').trim(),
         preview: previewBytes ? textPreview(previewBytes) : '',
       },
     ];

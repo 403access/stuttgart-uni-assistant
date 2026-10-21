@@ -41,7 +41,7 @@ The commercial services are mostly fine for development use. xAI and Apple are *
 
 1. **The operator credential path is the clearest university-rules breach.** `resolveLoginCredential()` falls back to `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` when the caller has no ticket and no session. The deprecated `/login-legacy` screen still calls that path, and the server exposes it to any direct caller. Any user who can reach the server can therefore trigger a C@MPUS read under the operator's account. The university's rules say the user must ensure that no other person gains access through their credentials.
 2. **Server-side scraping of C@MPUS has no published permission.** I found no C@MPUS-specific "no bots" clause, and no explicit "automation is allowed" clause either. What I did find: no public API or client registration for this app, `campus.uni-stuttgart.de/robots.txt` set to `Disallow: /`, and a CERT precedent that treats provider-side web scraping plus credential processing as a violation. This is a permission gap with strong negative signals, not a quoted prohibition.
-3. **The UniMail routes are unauthenticated and share one global credential.** `server/mail.mjs` has a single `secrets` object; `server/routes/mail.mjs` never calls `requireAuth`; `GET /v1/mail/config` even returns the connected account and address to anyone. With the tunnel up, that is a public mailbox.
+3. **The UniMail read routes are unauthenticated and share one global credential.** `server/mail.mjs` has a single `secrets` object; the read routes in `server/routes/mail.mjs` never call `requireAuth`, and `GET /v1/mail/config` even returns the connected account and address to anyone. `POST /v1/mail/send` is the exception and does require the token. With the tunnel up, the mailbox is still publicly readable.
 4. **xAI is not being used on xAI's terms for personal data.** The Enterprise Terms require personal data to go through the ZDR-enabled API. The app uses `store: false`, which is a request flag, not ZDR. The privacy notice itself says the Grok forwarding cannot yet be switched off.
 5. **Apple is likely to reject the current shape** on third-party-service permission (5.2.2), account deletion (5.1.1(v)), explicit third-party-AI consent (5.1.2(i)), and VPN apps from an individual developer (5.4). Ad Hoc is for testing on registered devices, not a general distribution channel.
 
@@ -230,7 +230,7 @@ What is missing:
 
 ### 6.1 The interface is allowed
 
-TIK publishes IMAP (`imap.uni-stuttgart.de:993`, SSL) as an interface for mail clients. Using IMAP to read an inbox and set its read flag is within the published service description. The app does not send mail or create drafts.
+TIK publishes IMAP (`imap.uni-stuttgart.de:993`, SSL) and SMTP (`smtp.uni-stuttgart.de:587`, STARTTLS) as interfaces for mail clients. Reading an inbox, setting its read flag, and submitting mail are within the published service description. The app does not create drafts in the mailbox.
 
 ### 6.2 The handling is the problem
 
@@ -252,14 +252,14 @@ let secrets = null; // { username, password } — process memory only.
 secrets = { username: account, password };
 ```
 
-There is **one** mailbox for the whole server. The routes do not check the caller:
+There is **one** mailbox for the whole server. The read routes do not check the caller:
 
 - `GET /v1/mail/config` returns `configured`, `account`, and `address` to anyone.
 - `GET /v1/mail/folders` calls `loadMailFolders()` with no user id.
 - `GET /v1/mail/messages` calls `loadMailMessages(...)` with no user id.
 - `GET /v1/mail/body` calls `loadMailBody(...)` with no user id.
 - `POST /v1/mail/logout` clears the global credential for everyone.
-- `server/routes/mail.mjs` does not import or call `requireAuth`.
+- `POST /v1/mail/send` is the exception: it requires a bearer token.
 
 The docs already say "every assistant route is public while that tunnel is up" (`docs/engineering/security-and-privacy.md:56`). That means: while the demo tunnel is running, anyone with the URL can read the connected mailbox. The tunnel URL is in the client bundle (`EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`), so "anyone with the URL" is not a small set.
 
@@ -556,7 +556,7 @@ This is not a project that ignores the issues. The repository already does sever
 - The university signet and Univers typeface are not embedded; the bundle id is not a `uni-stuttgart.de` id.
 - The SIAM path does not collect the password in the app.
 - The xAI key stays on the server; the client bundle does not contain it.
-- The mail interface is the published IMAP service, and the app only writes the read flag.
+- The mail interface is the published IMAP and SMTP service; the app sets the read flag, submits mail, and keeps a Sent copy.
 - Exam PDFs and lecture decks are not redistributed.
 - The privacy notice is detailed and names the main recipients.
 - The Tally forms do not ask for C@MPUS passwords or tokens.

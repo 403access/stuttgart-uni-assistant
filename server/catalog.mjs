@@ -27,6 +27,7 @@ export function apiCatalog() {
       { id: 'mail-messages', method: 'GET', path: '/v1/mail/messages', replay: false },
       { id: 'mail-body', method: 'GET', path: '/v1/mail/body', replay: false },
       { id: 'mail-seen', method: 'POST', path: '/v1/mail/seen', replay: false },
+      { id: 'mail-send', method: 'POST', path: '/v1/mail/send', replay: false },
       { id: 'mail-logout', method: 'POST', path: '/v1/mail/logout', replay: false },
       { id: 'auth-session', method: 'POST', path: '/v1/auth/session', replay: false },
       { id: 'auth-me', method: 'GET', path: '/v1/auth/me', replay: false },

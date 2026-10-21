@@ -181,6 +181,7 @@ test('publicMailStatus starts unconfigured and never leaks secrets', () => {
   const status = publicMailStatus();
   assert.equal(status.webmail, 'https://mail.uni-stuttgart.de/');
   assert.equal(status.imap, 'imap.uni-stuttgart.de:993');
+  assert.equal(status.smtp, 'smtp.uni-stuttgart.de:587');
   if (!status.configured) {
     assert.equal(status.account, null);
     assert.equal(status.address, null);
