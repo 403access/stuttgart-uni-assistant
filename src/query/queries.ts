@@ -17,6 +17,7 @@ import {
 import type { CampusLogEntry } from '@/src/auth/campus-log';
 import type { BulkCourse, CurriculumNode } from '@/src/types';
 import { keys } from '@/src/query/keys';
+import { fetchPublishedNews } from '@/src/news/api';
 
 interface QueryOpt {
   /** Pass false to keep the question without running it — e.g. no study selected. */
@@ -155,6 +156,16 @@ export function apiLogQuery(limit: number, options?: QueryOpt) {
     queryKey: keys.apiLog(limit),
     queryFn: () => readApiLog(limit).catch(() => [] as CampusLogEntry[]),
     staleTime: Infinity,
+    ...opt(options),
+  });
+}
+
+/** Operator-published news (`GET /v1/news`). Bundled items stay as fallback. */
+export function publishedNewsQuery(options?: QueryOpt) {
+  return queryOptions({
+    queryKey: keys.news(),
+    queryFn: fetchPublishedNews,
+    staleTime: 60_000,
     ...opt(options),
   });
 }

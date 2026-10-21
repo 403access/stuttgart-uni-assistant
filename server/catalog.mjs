@@ -4,6 +4,7 @@ export function apiCatalog() {
   return {
     operations: [
       { id: 'health', method: 'GET', path: '/health', replay: true },
+      { id: 'news', method: 'GET', path: '/v1/news', replay: true },
       { id: 'campus-config', method: 'GET', path: '/v1/campus/config', replay: true },
       { id: 'oidc-config', method: 'GET', path: '/v1/oidc/config', replay: true },
       { id: 'campus-login', method: 'POST', path: '/v1/campus/login', replay: true },

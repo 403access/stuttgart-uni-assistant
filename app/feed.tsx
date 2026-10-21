@@ -1,18 +1,32 @@
 import { Stack, router } from 'expo-router';
+import { RefreshControl } from 'react-native';
 
 import { InfoRow, Screen } from '@/src/components/ui';
-import { news } from '@/src/data';
 import { newsSource } from '@/src/labels';
+import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
+import { colors } from '@/src/theme';
 import { formatDate, pick, tx } from '@/src/text';
 
 export default function FeedScreen() {
   const locale = useAppSelector((state) => state.locale);
-  const rows = [...news].sort((a, b) => b.date.localeCompare(a.date));
+  const { items, query } = useNewsItems();
   return (
-    <Screen kicker={tx(locale, 'feed.kommunikationsquellen')}>
+    <Screen
+      kicker={tx(locale, 'feed.kommunikationsquellen')}
+      refreshControl={
+        <RefreshControl
+          refreshing={query.isRefetching}
+          onRefresh={() => {
+            query.refetch();
+          }}
+          tintColor={colors.blue}
+          colors={[colors.blue]}
+          progressBackgroundColor={colors.paper}
+        />
+      }>
       <Stack.Screen options={{ title: tx(locale, 'common.meldungen') }} />
-      {rows.map((item) => (
+      {items.map((item) => (
         <InfoRow
           key={item.id}
           title={pick(item.title, locale)}

@@ -10,6 +10,7 @@ import { send } from '../../http.mjs';
 import { dashboardAsset, dashboardPage } from './assets.mjs';
 import { handleAudit } from './audit.mjs';
 import { handleDevices } from './devices.mjs';
+import { handleNews } from './news.mjs';
 import { handleSession } from './session.mjs';
 import { adminGate } from './shared.mjs';
 import { handleSystem } from './system.mjs';
@@ -32,6 +33,7 @@ export async function handleAdmin(request, response, url) {
     return true;
   }
   if (await handleUsers(request, response, url)) return true;
+  if (await handleNews(request, response, url)) return true;
   if (handleDevices(request, response, url)) return true;
   if (handleAudit(request, response, url)) return true;
   if (handleSystem(request, response, url)) return true;

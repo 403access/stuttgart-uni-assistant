@@ -226,6 +226,24 @@ export function getDb() {
       payload TEXT NOT NULL DEFAULT '{}',
       fetched_at TEXT
     );
+    /* News published from the admin dashboard. Only rows with published = 1
+       are served to the app; date is the editorial day, not the write time. */
+    CREATE TABLE IF NOT EXISTS news_items (
+      id TEXT PRIMARY KEY,
+      source TEXT NOT NULL DEFAULT 'university',
+      title_de TEXT NOT NULL DEFAULT '',
+      title_en TEXT NOT NULL DEFAULT '',
+      summary_de TEXT NOT NULL DEFAULT '',
+      summary_en TEXT NOT NULL DEFAULT '',
+      body_de TEXT NOT NULL DEFAULT '',
+      body_en TEXT NOT NULL DEFAULT '',
+      date TEXT NOT NULL,
+      published INTEGER NOT NULL DEFAULT 0,
+      published_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS news_items_state ON news_items(published, date DESC);
     /* Every operator mutation. No foreign key on purpose: the row survives a
        deleted account and keeps the account name it had at the time. */
     CREATE TABLE IF NOT EXISTS admin_audit (

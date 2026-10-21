@@ -72,6 +72,7 @@ export function databaseCounts() {
         (SELECT COUNT(*) FROM user_courses) AS courses,
         (SELECT COUNT(*) FROM user_exported_events) AS events,
         (SELECT COUNT(*) FROM user_portal_calls) AS calls,
+        (SELECT COUNT(*) FROM news_items) AS news,
         (SELECT COUNT(*) FROM admin_audit) AS audit`,
     )
     .get();
@@ -87,6 +88,7 @@ export function databaseCounts() {
     courses: row?.courses ?? 0,
     events: row?.events ?? 0,
     calls: row?.calls ?? 0,
+    news: row?.news ?? 0,
     audit: row?.audit ?? 0,
   };
 }

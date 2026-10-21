@@ -35,6 +35,9 @@ export const AUDIT_LABELS = {
   'sync.start': 'Synchronisation gestartet',
   'sync.cancel': 'Synchronisation abgebrochen',
   'mail.disconnect': 'UniMail getrennt',
+  'news.create': 'Meldung angelegt',
+  'news.update': 'Meldung geändert',
+  'news.delete': 'Meldung gelöscht',
 };
-export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect']);
+export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect', 'news.delete']);
 

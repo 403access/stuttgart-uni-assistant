@@ -53,6 +53,7 @@
         <nav class="nav" aria-label="Hauptnavigation">
           <p class="nav-label">Betrieb</p>
           <a class="nav-item" data-nav="overview" href="#/overview"><span data-icon="overview"></span><span>Übersicht</span></a>
+          <a class="nav-item" data-nav="news" href="#/news"><span data-icon="inbox"></span><span>News</span></a>
           <a class="nav-item" data-nav="users" href="#/users"><span data-icon="users"></span><span>Nutzer</span><span class="nav-badge" id="nav-users-count" hidden></span></a>
           <a class="nav-item" data-nav="ilias" href="#/ilias"><span data-icon="grid"></span><span>ILIAS</span></a>
           <a class="nav-item" data-nav="devices" href="#/devices"><span data-icon="smartphone"></span><span>Geräte</span><span class="nav-badge" id="nav-devices-count" hidden></span></a>
@@ -142,6 +143,57 @@
         <div class="modal-actions">
           <button id="create-cancel" class="btn secondary" type="button">Abbrechen</button>
           <button id="create-submit" class="btn" type="submit">Konto anlegen</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="news-editor" class="modal modal-wide">
+      <form id="news-form" class="modal-body">
+        <div class="modal-head">
+          <div class="modal-icon warn"><span data-icon="inbox"></span></div>
+          <div><h2 id="news-editor-title">Meldung anlegen</h2><p id="news-editor-lead">Veröffentlichte Meldungen erscheinen im Feed der App.</p></div>
+        </div>
+        <div class="form-grid">
+          <label class="field stack-field compact">Titel (Deutsch)
+            <input id="news-title-de" type="text" required maxlength="160" autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">Titel (Englisch)
+            <input id="news-title-en" type="text" maxlength="160" placeholder="optional" autocomplete="off" />
+          </label>
+          <label class="field stack-field compact">Quelle
+            <select id="news-source">
+              <option value="university">Universität</option>
+              <option value="faculty">Fakultät</option>
+              <option value="institute">Institut</option>
+              <option value="stuvus">stuvus</option>
+              <option value="sdg">SDG Campus</option>
+            </select>
+          </label>
+          <label class="field stack-field compact">Datum
+            <input id="news-date" type="date" required />
+          </label>
+          <label class="field stack-field compact full">Kurzfassung (Deutsch)
+            <textarea id="news-summary-de" rows="2" maxlength="400" placeholder="Ein bis zwei Sätze für die Liste"></textarea>
+          </label>
+          <label class="field stack-field compact full">Kurzfassung (Englisch)
+            <textarea id="news-summary-en" rows="2" maxlength="400" placeholder="optional"></textarea>
+          </label>
+          <label class="field stack-field compact full">Text (Deutsch)
+            <textarea id="news-body-de" rows="6" required maxlength="8000"></textarea>
+          </label>
+          <label class="field stack-field compact full">Text (Englisch)
+            <textarea id="news-body-en" rows="6" maxlength="8000" placeholder="optional"></textarea>
+          </label>
+        </div>
+        <label class="check-row">
+          <input id="news-published" type="checkbox" class="checkbox" />
+          Sofort in der App veröffentlichen
+        </label>
+        <p class="hint">Englische Felder sind optional; fehlen sie, zeigt die App den deutschen Text.</p>
+        <div id="news-error" class="auth-error" role="alert"></div>
+        <div class="modal-actions">
+          <button id="news-cancel" class="btn secondary" type="button">Abbrechen</button>
+          <button id="news-submit" class="btn" type="submit">Speichern</button>
         </div>
       </form>
     </dialog>

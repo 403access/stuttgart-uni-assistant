@@ -1,7 +1,7 @@
 # Admin dashboard
 
 A server-hosted operator console for the user store, sessions, platform links,
-C@MPUS and ILIAS data, portal activity, and server health. Open
+C@MPUS and ILIAS data, portal activity, app news, and server health. Open
 `http://127.0.0.1:8787/admin` while the assistant server is running. It is a
 plain HTML page served by `server/routes/admin/index.mjs`; there is no separate
 frontend build and no npm dependency. The browser modules are native ES modules,
@@ -38,6 +38,7 @@ that survives reloads and can be shared between operators:
 | Hash | View |
 | --- | --- |
 | `#/overview` | KPI cards, distribution bars, recent accounts, recent audit actions, configuration health |
+| `#/news` | Operator-managed app news with drafts, publishing, editing, and deletion |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
 | `#/devices` | QR-linked web browsers with state, account, timestamps, and revoke |
 | `#/ilias` | ILIAS connections, session state, and parsed course/news/mail counts |
@@ -67,6 +68,15 @@ progress), courses, calendar events, portal calls, new accounts in 7/30 days,
 platform/channel distribution, sign-in modes, C@MPUS sources, the newest
 accounts, the newest audit actions, and the health of the admin token,
 assistant key, C@MPUS `.env`, OIDC, and UniMail.
+
+**News:** create, edit, publish, withdraw, and delete the messages the app's
+feed shows. Every row carries a source (university, faculty, institute, stuvus,
+SDG Campus), an editorial date, German title/summary/body, and optional English
+translations. German title and body are required; missing English fields fall
+back to German in the app. Drafts stay visible in the console but are never
+returned by `GET /v1/news`. The search matches title, summary, and body; the
+status filter narrows to published items or drafts. Publishing and deleting are
+confirmed and recorded in the audit log.
 
 **Web devices:** every browser pairing carries the browser label and user
 agent, the account that approved it, the pairing and approval timestamps, and
@@ -149,6 +159,13 @@ All routes below except `login`/`logout` require the admin cookie.
 | `POST /v1/admin/login` | `{ token }` → sets the cookie and records an audit entry. `503` when unconfigured, `401` when wrong. |
 | `POST /v1/admin/logout` | Clears the cookie and records an audit entry. |
 | `GET /v1/admin/overview` | Stats, mode/platform/source breakdowns, device counts, database counts, and configuration health. |
+| `GET /v1/admin/news?query=&state=&limit=&offset=` | News list with drafts; `state` is `published` or `draft`. |
+| `POST /v1/admin/news` | Creates a news item; German title and body are required. |
+| `GET /v1/admin/news/<id>` | One news item, including drafts. |
+| `POST /v1/admin/news/<id>` | Updates supplied fields, including `published`. |
+| `DELETE /v1/admin/news/<id>` | Deletes one news item. |
+| `GET /v1/news?limit=` | Public published news for the app, newest editorial date first. No cookie. |
+| `GET /v1/news/<id>` | One published item, or `404`. No cookie. |
 | `GET /v1/admin/ilias` | ILIAS connections, active sessions, and aggregated course/news/mail counts. |
 | `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers, newest pairing first. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
@@ -193,26 +210,33 @@ screen cannot replay them.
 | `server/admin/users.mjs` | Account list and detail reads. |
 | `server/admin/devices.mjs` | QR-linked browser list, stats, and revoke. |
 | `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, and disconnect. |
+| `server/admin/news.mjs` | News list, create, update, publish, and delete. |
 | `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
 | `server/admin/sync.mjs` | Manual sync start/cancel. |
 | `server/admin/system.mjs` | Runtime, configuration, database, and mail status. |
 | `server/admin/util.mjs` | Shared validation and pagination helpers. |
+| `server/news.mjs` | Published news read model and admin input validation. |
+| `server/routes/news.mjs` | Public `/v1/news` routes. |
 | `server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
 | `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, and system routes. |
 | `server/dashboard/index.html` | The page shell. |
 | `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `server/dashboard/pages/*.mjs` | Overview, users, user detail, ILIAS, audit, and system views. |
+| `server/dashboard/pages/*.mjs` | Overview, news, users, user detail, ILIAS, audit, and system views. |
 | `server/dashboard/assets/styles.css` | The dashboard styles. |
 | `server/db.mjs` | Schema, including the `admin_audit` table. |
 | `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
 | `server/admin.test.mjs` | Token matching, stats, filters, detail, editors, audit, system status, destructive actions. |
 | `server/admin-route.test.mjs` | Endpoint-level cookie gate, login, readers, mutations, audit, and deletion over a throwaway HTTP listener. |
+| `server/news.test.mjs` | News CRUD, draft visibility, public filtering, ordering, and validation. |
 
 ## Limits
 
 - The dashboard is for the operator of a local or trusted deployment. Do not
   expose `/admin` on a public host without TLS and a strong `DASHBOARD_TOKEN`.
+- Published news is public by design: `GET /v1/news` needs no session or admin
+  cookie. Never put credentials, personal data, or internal-only details in a
+  news item.
 - It shows account metadata, counts, and diagnostic text, never a C@MPUS bearer
   token, `PSESSIONID`, an ILIAS `PHPSESSID`, a university password, a session
   token, or an app bearer token. The browser harvest stays in server memory as

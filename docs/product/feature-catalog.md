@@ -39,7 +39,7 @@ Planning an open module (`plannedIds`) is a local mark. It does not change earne
 | Capability | Screen | Status | What this build does |
 | --- | --- | --- | --- |
 | Deadlines, exam dates, due dates | Heute, `/fristen`, Chat | In this build | Dashboard plus natural-language answers. Exam registration closes 16 November 2026. Answers say they are a demonstration record. |
-| Unified news | `/feed`, `/meldung/[id]`, Heute | In this build | Items from the university, the faculty, an institute, stuvus, and SDG Campus. |
+| Unified news | `/feed`, `/meldung/[id]`, Heute | In this build | Operator-published items from the admin dashboard replace the feed when any exist; bundled university, faculty, institute, stuvus, and SDG Campus samples remain as the offline fallback. |
 | AI chatbot | `/chat` | In this build | Local answer first. If `npm run assistant` is up and `XAI_API_KEY` is set, Grok rewrites that answer from the same facts. |
 
 ## 4. Peers (Kommilitonen)

@@ -8,6 +8,7 @@ import { icon, paintIcons } from './icons.mjs';
 import { renderAuditPage } from '../pages/audit.mjs';
 import { renderDevicesPage } from '../pages/devices.mjs';
 import { renderIliasPage } from '../pages/ilias.mjs';
+import { renderNewsPage, submitNewsForm } from '../pages/news.mjs';
 import { renderOverview } from '../pages/overview.mjs';
 import { renderSystemPage } from '../pages/system.mjs';
 import { renderUserPage } from '../pages/user.mjs';
@@ -27,6 +28,7 @@ async function renderRoute() {
   view.setAttribute('aria-busy', 'true');
   try {
     if (route.name === 'overview') await renderOverview();
+    else if (route.name === 'news') await renderNewsPage(route);
     else if (route.name === 'users') await renderUsersPage(route);
     else if (route.name === 'user') await renderUserPage(route.id, route.tab);
     else if (route.name === 'ilias') await renderIliasPage();
@@ -97,7 +99,9 @@ function wireEvents() {
   $('login-form').addEventListener('submit', handleLogin);
   $('create-form').addEventListener('submit', submitCreateUser);
   $('create-cancel').addEventListener('click', () => $('create-user').close());
-  for (const id of ['create-user', 'confirm']) {
+  $('news-form').addEventListener('submit', submitNewsForm);
+  $('news-cancel').addEventListener('click', () => $('news-editor').close());
+  for (const id of ['create-user', 'news-editor', 'confirm']) {
     $(id).addEventListener('click', (event) => { if (event.target === event.currentTarget) event.currentTarget.close(); });
   }
   $('logout').addEventListener('click', async () => {
@@ -105,6 +109,7 @@ function wireEvents() {
     state.user = { id: null, detail: null, tab: 'overview', cache: {}, data: null, calendar: null, calls: null, platformEdit: null };
     state.users = { query: '', mode: '', platform: '', credential: '', activity: '', data: '', sort: 'recent', limit: 25, offset: 0, list: [], total: 0, seq: 0, selected: new Set() };
     state.devices = { query: '', state: '', limit: 50, offset: 0, list: [], total: 0, stats: null, seq: 0 };
+    state.news = { query: '', state: '', limit: 50, offset: 0, list: [], total: 0 };
     state.ilias = null;
     showLogin();
   });

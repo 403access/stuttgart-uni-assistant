@@ -6,6 +6,7 @@
  * - `campus`  — every C@MPUS read, device store and server snapshot
  * - `oidc`    — identity-provider status
  * - `catalog` — the assistant-server API list
+ * - `news`    — operator-published app news
  *
  * `device*` keys answer from the on-device store; `server*` keys from the
  * assistant server. Both live under `campus` so a sync can invalidate the
@@ -15,6 +16,7 @@ export const keys = {
   all: () => ['app'] as const,
   campus: () => ['app', 'campus'] as const,
   catalog: () => ['app', 'catalog'] as const,
+  news: () => ['app', 'news'] as const,
 
   campusStatus: () => ['app', 'campus', 'status'] as const,
   campusStudies: () => ['app', 'campus', 'studies'] as const,

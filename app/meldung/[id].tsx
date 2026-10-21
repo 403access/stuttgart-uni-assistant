@@ -2,8 +2,8 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, Screen } from '@/src/components/ui';
-import { news } from '@/src/data';
 import { newsSource } from '@/src/labels';
+import { useNewsItem } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { firstParam, formatDate, pick, tx } from '@/src/text';
@@ -11,11 +11,13 @@ import { firstParam, formatDate, pick, tx } from '@/src/text';
 export default function NewsDetailScreen() {
   const locale = useAppSelector((state) => state.locale);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const item = news.find((entry) => entry.id === firstParam(id));
+  const { item, isLoading } = useNewsItem(firstParam(id));
   if (!item) {
     return (
-      <Screen kicker={tx(locale, 'meldung.meldung')} subtitle={tx(locale, 'common.eintrag')}>
-        <Stack.Screen options={{ title: tx(locale, 'meldung.meldung') }} />
+      <Screen
+        kicker={isLoading ? tx(locale, 'common.meldungen') : tx(locale, 'meldung.meldung')}
+        subtitle={isLoading ? undefined : tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'common.meldungen') }} />
       </Screen>
     );
   }

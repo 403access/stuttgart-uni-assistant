@@ -572,6 +572,7 @@ test('api catalog only names known paths', () => {
   const paths = operations.map((item) => item.path);
   assert.deepEqual(paths, [
     '/health',
+    '/v1/news',
     '/v1/campus/config',
     '/v1/oidc/config',
     '/v1/campus/login',

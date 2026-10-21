@@ -6,6 +6,7 @@
 export { listAdminAudit, recordAdminAudit } from './audit.mjs';
 export { adminDeviceStats, listAdminDevices, revokeAdminDevice } from './devices.mjs';
 export { adminIlias, adminUserIlias, disconnectAdminIlias } from './ilias.mjs';
+export { createAdminNews, deleteAdminNews, getAdminNews, listAdminNews, updateAdminNews } from './news.mjs';
 export { adminUserCalls, adminUserCourses, adminUserEvents, adminUserNodes, adminUserStudies } from './explorers.mjs';
 export {
   clearAdminCalls,

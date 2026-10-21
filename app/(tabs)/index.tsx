@@ -3,21 +3,23 @@ import { Text } from 'react-native';
 
 import { CalendarHero } from '@/src/components/calendar-hero';
 import { Card, InfoRow, Meter, Screen, Section } from '@/src/components/ui';
-import { deadlines, modules, news, places, program } from '@/src/data';
+import { deadlines, modules, places, program } from '@/src/data';
 import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
 import { newsSource, sessionKind } from '@/src/labels';
+import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDate, formatGrade, localDay, pick, tx, weekdays } from '@/src/text';
 
 export default function TodayScreen() {
   const locale = useAppSelector((state) => state.locale);
+  const { items: newsItems } = useNewsItems();
   const now = new Date();
   const credit = totals(modules);
   const average = weightedAverage(modules);
   const sessions = scheduleForDay(modules, now.getDay(), places);
   const upcoming = deadlines.filter((item) => item.date >= localDay(now)).slice(0, 3);
-  const latest = [...news].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2);
+  const latest = newsItems.slice(0, 2);
 
   return (
     <Screen topInset>

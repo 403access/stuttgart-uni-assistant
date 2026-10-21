@@ -66,6 +66,12 @@ const ERROR_TEXT = {
   bad_json: 'Die Anfrage konnte nicht gelesen werden.',
   bad_study_id: 'Ungültige Studiengangs-ID.',
   campus_credentials_missing: 'Für dieses Konto ist gerade kein C@MPUS-Zugang im Speicher. Das Konto muss sich zuerst neu mit C@MPUS verbinden.',
+  news_title_missing: 'Die Meldung braucht einen deutschen Titel.',
+  news_body_missing: 'Die Meldung braucht einen deutschen Text.',
+  bad_news_source: 'Unbekannte Quelle.',
+  bad_news_date: 'Ungültiges Datum.',
+  bad_news_state: 'Ungültiger Veröffentlichungsstatus.',
+  unknown_news: 'Die Meldung existiert nicht mehr.',
 };
 
 export function errorText(error) {
