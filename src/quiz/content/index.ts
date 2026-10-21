@@ -1,6 +1,7 @@
 import type { QuizModule, QuizQuestion, QuizStudy, QuizTopic } from '@/src/quiz/types';
 
 import { l } from './helpers';
+import { generatedTopics } from './generated';
 import { phonemMorphem } from './linguistik/phonem-morphem';
 import { sprachfamilien } from './linguistik/sprachfamilien';
 import { spracheDialekt } from './linguistik/sprache-dialekt';
@@ -27,6 +28,18 @@ export const quizStudies: QuizStudy[] = [
   },
 ];
 
+/**
+ * PDF-generated topics live in their own registry so the pipeline can add and
+ * replace them without editing hand-authored module files.
+ */
+function attachGenerated(module: QuizModule): QuizModule {
+  const generated = generatedTopics
+    .filter((entry) => entry.moduleId === module.id)
+    .map((entry) => entry.topic);
+  if (generated.length === 0) return module;
+  return { ...module, topics: [...module.topics, ...generated] };
+}
+
 export const quizModules: QuizModule[] = [
   {
     id: 'ling',
@@ -43,7 +56,7 @@ export const quizModules: QuizModule[] = [
   },
   philosophieModule,
   pragmatikModule,
-];
+].map(attachGenerated);
 
 const allQuestions = quizModules.flatMap((module) =>
   module.topics.flatMap((topic) => topic.questions),
