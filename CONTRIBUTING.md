@@ -30,6 +30,19 @@ npm run typecheck
 npm run check
 ```
 
+`npm run check` is an aggregate of the smaller checks, so you can run only the part
+you touched while iterating:
+
+```bash
+npm run check:types        # tsc --noEmit
+npm run check:lint         # expo lint
+npm run check:catalog      # curriculum, quiz, and PDF-pipeline assertions
+npm run check:campus-db    # campus cache round-trips
+npm run check:app-tests    # app and script tests (jsdom, headless login, ...)
+npm run check:server-tests # assistant server tests
+npm run check:tooling-tests # build, tunnel, secret, and dist-service tests
+```
+
 ## Generative AI
 
 This project uses AI coding tools, and it says so. If you contribute with the help of a code assistant or an LLM:
