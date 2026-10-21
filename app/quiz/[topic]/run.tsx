@@ -20,7 +20,7 @@ import type {
   QuizQuestion,
   QuizTopic,
 } from '@/src/quiz/types';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { firstParam, pick, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
@@ -47,7 +47,7 @@ function hasDraft(value: QuizAnswer | undefined): boolean {
 }
 
 export default function QuizRunScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{ topic: string; mode?: string; fresh?: string }>();
   const { ready, activeSessions } = useQuizProgress();
   const topicId = firstParam(params.topic);

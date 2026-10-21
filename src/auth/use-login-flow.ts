@@ -12,7 +12,7 @@ import { saveCampusHarvest } from '@/src/auth/vault';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
 import { keys } from '@/src/query/keys';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 
 /**
@@ -37,7 +37,8 @@ function sameAccount(stored: string | null, entered: string): boolean {
  * purpose — it is frozen, and this hook is where the live flow is maintained.
  */
 export function useLoginFlow() {
-  const { locale, signInCampus, signInOidc, setMailAccount, refreshUser } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const { signInCampus, signInOidc, setMailAccount, refreshUser } = appActions;
   // The status probes resolve to null when the server is unreachable — the
   // screen renders unknown, not an error toast.
   const status = useQuery({ queryKey: keys.oidcStatus(), queryFn: () => fetchOidcStatus() }).data ?? null;

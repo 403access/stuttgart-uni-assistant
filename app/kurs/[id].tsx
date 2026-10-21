@@ -7,14 +7,14 @@ import { cacheCampusCourses, getCachedCourse } from '@/src/auth/campus';
 import { findCachedCourse } from '@/src/campus/db';
 import { Button, Card, InfoRow, Muted, Screen } from '@/src/components/ui';
 import { deviceCourseQuery } from '@/src/query/queries';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { firstParam, formatDay, formatTime, tx } from '@/src/text';
 import type { CampusCourse } from '@/src/types';
 
 /** One C@MPUS course: session cache first, persisted course cache after a restart. */
 export default function CourseScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const id = Number(firstParam(useLocalSearchParams<{ id: string }>().id));
   // The session memory map answers instantly; the device-cache query fills
   // the gap after a restart (the query back-fills the session map too).

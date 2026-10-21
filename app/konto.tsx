@@ -9,7 +9,7 @@ import { findPlatform, initialsFor } from '@/src/auth/user';
 import { useLeaveSession } from '@/src/auth/use-leave-session';
 import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
 import { platformName } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { AccountPlatformId, PlatformId, PlatformLink } from '@/src/types';
@@ -50,7 +50,12 @@ function formatStamp(value: string | null, locale: 'de' | 'en'): string {
 }
 
 export default function AccountScreen() {
-  const { locale, user, authToken, sessionMode, syncAt, syncPlatform, syncAccount } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const user = useAppSelector((state) => state.user);
+  const authToken = useAppSelector((state) => state.authToken);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const syncAt = useAppSelector((state) => state.syncAt);
+  const { syncPlatform, syncAccount } = appActions;
   const leave = useLeaveSession();
   const [campusActive, setCampusActive] = useState<boolean | null>(null);
 

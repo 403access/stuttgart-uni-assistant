@@ -1,4 +1,5 @@
-import { useSyncExternalStore } from 'react';
+import { createStore } from '@tanstack/store';
+import { useSelector } from '@tanstack/react-store';
 
 import { appendApiCall } from '@/src/campus/db';
 
@@ -49,8 +50,8 @@ export interface PersistedApiCall {
 const MAX_ENTRIES = 30;
 
 let seq = 0;
-let snapshot: CampusLogEntry[] = [];
-const listeners = new Set<() => void>();
+/** The session log is a store so the history and calendar screens subscribe to it directly. */
+export const campusLogStore = createStore<CampusLogEntry[]>([]);
 
 function timeNow(): string {
   const now = new Date();
@@ -60,8 +61,7 @@ function timeNow(): string {
 
 export function recordCampusCall(entry: Omit<CampusLogEntry, 'id' | 'uid' | 'time' | 'createdAt'>): CampusLogEntry {
   const full: CampusLogEntry = { ...entry, id: ++seq, uid: `${Date.now().toString(36)}-${seq}`, time: timeNow(), createdAt: new Date().toISOString() };
-  snapshot = [full, ...snapshot].slice(0, MAX_ENTRIES);
-  listeners.forEach((notify) => notify());
+  campusLogStore.setState((current) => [full, ...current].slice(0, MAX_ENTRIES));
   // Persisted for the history page; never blocks or throws into the caller.
   appendApiCall(full).catch(() => undefined);
   // Metro/Expo console keeps the same line for `adb logcat` and devtools.
@@ -73,30 +73,18 @@ export function recordCampusCall(entry: Omit<CampusLogEntry, 'id' | 'uid' | 'tim
   return full;
 }
 
-function subscribe(notify: () => void): () => void {
-  listeners.add(notify);
-  return () => {
-    listeners.delete(notify);
-  };
-}
-
-function getSnapshot(): CampusLogEntry[] {
-  return snapshot;
-}
-
 /** Last campus calls, newest first. Re-renders the component on every new entry. */
 export function useCampusLog(): CampusLogEntry[] {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useSelector(campusLogStore);
 }
 
 export function lastCampusLog(count = 3): CampusLogEntry[] {
-  return snapshot.slice(0, count);
+  return campusLogStore.state.slice(0, count);
 }
 
 /** Empty the in-memory session log (the stored log is cleared separately). */
 export function clearSessionLog(): void {
-  snapshot = [];
-  listeners.forEach((notify) => notify());
+  campusLogStore.setState(() => []);
 }
 
 /**

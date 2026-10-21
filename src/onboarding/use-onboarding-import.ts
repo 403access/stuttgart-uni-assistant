@@ -13,7 +13,7 @@ import {
 } from '@/src/campus/db';
 import { decodeBase64Utf8, parseIcsEvents } from '@/src/onboarding/ics';
 import { keys } from '@/src/query/keys';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import type { BulkCourse, CampusCalendarEvent, CampusStudy, MailFolder, MailMessage, MailStatus } from '@/src/types';
 
 /** A cached course tagged with the study it belongs to (the timetable spans all studies). */
@@ -74,7 +74,7 @@ function calendarRange(): { dateFrom: string; dateTo: string } {
 
 /** C@MPUS personal calendar (ICS) -> server store -> the rows the overview renders. */
 export function useCalendarImport() {
-  const { sessionMode } = useApp();
+  const sessionMode = useAppSelector((state) => state.sessionMode);
   const queryClient = useQueryClient();
   const [state, setState] = useState<CalendarImportState>({ ready: false, busy: true, events: [], result: null, error: '' });
   const session = useRef({ sessionMode });
@@ -166,7 +166,8 @@ export function useCalendarImport() {
 
 /** UniMail inbox rows, read through the assistant server and mirrored into the device cache. */
 export function useMailImport() {
-  const { locale, setMailAccount } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const { setMailAccount } = appActions;
   const [state, setState] = useState<MailImportState>({
     ready: false,
     busy: true,
@@ -311,7 +312,9 @@ async function hydrateSnapshot(studyId: number, complete: boolean): Promise<Bulk
  * overview as rows arrive.
  */
 export function useTimetableImport() {
-  const { sessionMode, campusStudies, activeStudyId } = useApp();
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
+  const activeStudyId = useAppSelector((state) => state.activeStudyId);
   const queryClient = useQueryClient();
   const [state, setState] = useState<TimetableImportState>({
     ready: false,

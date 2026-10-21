@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { Button, Mark } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -14,7 +14,7 @@ import { tx } from '@/src/text';
  * navigator stays mounted underneath) and asks the system prompt immediately.
  */
 export function AppLock({ onUnlock, onSignOut }: { onUnlock: () => void; onSignOut: () => void }) {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const insets = useSafeAreaInsets();
   const { prompt, busy, error } = useBiometricPrompt({ persist: false });
   const started = useRef(false);

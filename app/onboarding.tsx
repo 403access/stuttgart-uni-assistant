@@ -12,7 +12,7 @@ import { Button, Mark } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { formatTime, localDay, monthShort, tx } from '@/src/text';
 import type { CampusCalendarEvent, DesignMode, MailMessage, ThemeMode } from '@/src/types';
@@ -35,7 +35,10 @@ const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable']
  */
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const { locale, theme, setTheme, design, setDesign } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const theme = useAppSelector((state) => state.theme);
+  const design = useAppSelector((state) => state.design);
+  const { setTheme, setDesign } = appActions;
   const { completeOnboarding, biometricsAvailable } = useOnboarding();
   const biometrics = useBiometricPrompt();
   const imports = useOnboardingImport();

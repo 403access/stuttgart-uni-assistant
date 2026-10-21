@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { useActiveStudy } from '@/src/campus/use-active-study';
 import { useCoursesForStudy } from '@/src/campus/use-courses';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { formatDay, formatTime, localDay, monthShort, tx, weekdayOf } from '@/src/text';
 import type { BulkCourse } from '@/src/types';
@@ -20,7 +20,7 @@ function isAssigned(status: string): boolean {
  * view-read, nothing is written back.
  */
 export function CalendarHero() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const { study, studyId, isCampus } = useActiveStudy();
   const courses = useCoursesForStudy(studyId, { enabled: isCampus });
 

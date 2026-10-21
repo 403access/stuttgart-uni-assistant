@@ -4,12 +4,14 @@ import { Text, View } from 'react-native';
 import { universityUrls } from '@/src/auth/oidc';
 import { assistantUrl } from '@/src/assistant/remote';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function SettingsScreen() {
-  const { locale, reset, authToken } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const authToken = useAppSelector((state) => state.authToken);
+  const { reset } = appActions;
   return (
     <Screen kicker={tx(locale, 'common.app')}>
       <Stack.Screen options={{ title: tx(locale, 'common.einstellungen') }} />

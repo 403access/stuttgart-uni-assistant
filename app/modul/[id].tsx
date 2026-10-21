@@ -6,13 +6,15 @@ import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
 import { documents, exams, modules, people, places, reviews as seedReviews, tutorials } from '@/src/data';
 import { lockReason } from '@/src/domain/plan';
 import { moduleStatus, sessionKind } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { appActions, useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { firstParam, formatGrade, pick, tx, uid, weekdays } from '@/src/text';
 
 export default function ModuleScreen() {
-  const app = useApp();
-  const { locale, plannedIds, togglePlanned, reviews, addReview } = app;
+  const locale = useAppSelector((state) => state.locale);
+  const plannedIds = useAppSelector((state) => state.plannedIds);
+  const reviews = useAppSelector((state) => state.reviews);
+  const { togglePlanned, addReview } = appActions;
   const params = useLocalSearchParams<{ id: string }>();
   const module = modules.find((item) => item.id === firstParam(params.id));
   const [comment, setComment] = useState('');

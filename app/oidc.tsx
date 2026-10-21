@@ -1,13 +1,13 @@
 import * as WebBrowser from 'expo-web-browser';
 
 import { Screen } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function OidcReturnScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   return (
     <Screen
       topInset

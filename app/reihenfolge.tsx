@@ -4,12 +4,12 @@ import { Text } from 'react-native';
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { modules, program } from '@/src/data';
 import { lockReason, suggestNextSemester } from '@/src/domain/plan';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
 export default function SequenceScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const suggestion = suggestNextSemester(modules, program.areas);
   const sum = suggestion.reduce((count, item) => count + item.ects, 0);
   const semesters = [1, 2, 3, 4, 5, 6];

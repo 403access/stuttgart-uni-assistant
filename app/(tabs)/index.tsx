@@ -6,12 +6,12 @@ import { Card, InfoRow, Meter, Screen, Section } from '@/src/components/ui';
 import { deadlines, modules, news, places, program } from '@/src/data';
 import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
 import { newsSource, sessionKind } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDate, formatGrade, localDay, pick, tx, weekdays } from '@/src/text';
 
 export default function TodayScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const now = new Date();
   const credit = totals(modules);
   const average = weightedAverage(modules);

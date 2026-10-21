@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 
 /**
  * Keeps the app session honest across background visits. Every return to the
@@ -12,7 +12,8 @@ import { useApp } from '@/src/state/AppState';
  * token was already dead, which the launch restore deliberately does not drop.
  */
 export function SessionRefresh() {
-  const { ready, refreshOrReauthenticate } = useApp();
+  const ready = useAppSelector((state) => state.ready);
+  const { refreshOrReauthenticate } = appActions;
   const busy = useRef(false);
   const started = useRef(false);
 

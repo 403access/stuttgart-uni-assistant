@@ -8,12 +8,15 @@ import { buildLocalAnswer, renderFacts } from '@/src/assistant/answer';
 import { buildAnswerInput, bundledDocument } from '@/src/assistant/context';
 import { askGrok } from '@/src/assistant/remote';
 import { AmbientBackground } from '@/src/components/ambient-background';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { firstParam, tx, uid } from '@/src/text';
 
 export default function ChatScreen() {
-  const { locale, messages, imports, addMessage, replaceMessage, clearChat } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const messages = useAppSelector((state) => state.messages);
+  const imports = useAppSelector((state) => state.imports);
+  const { addMessage, replaceMessage, clearChat } = appActions;
   const params = useLocalSearchParams<{ doc?: string }>();
   const docId = firstParam(params.doc);
   const insets = useSafeAreaInsets();

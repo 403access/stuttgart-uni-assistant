@@ -9,7 +9,7 @@ import { useActiveStudy } from '@/src/campus/use-active-study';
 import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
@@ -18,7 +18,14 @@ type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?:
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
 export default function MoreScreen() {
-  const { locale, theme, design, sessionAccount, sessionMode, sessionName, sessionEmail, authToken } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const theme = useAppSelector((state) => state.theme);
+  const design = useAppSelector((state) => state.design);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const sessionName = useAppSelector((state) => state.sessionName);
+  const sessionEmail = useAppSelector((state) => state.sessionEmail);
+  const authToken = useAppSelector((state) => state.authToken);
   const { study } = useActiveStudy();
   const leave = useLeaveSession();
   const [searchOpen, setSearchOpen] = useState(false);

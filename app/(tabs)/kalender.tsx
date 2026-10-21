@@ -7,7 +7,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { studyCourseKey, useCoursesForStudies, type StudyCourse } from '@/src/campus/use-courses';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle, themedStyles } from '@/src/theme';
 import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@/src/text';
 import type { CampusStudy } from '@/src/types';
@@ -46,7 +46,9 @@ function minutesOf(value: string): number | null {
 
 /** Agenda, week, day, and month views over cached course appointments. No portal calls. */
 export default function KalenderScreen() {
-  const { locale, sessionMode, campusStudies } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
   const [view, setView] = useState<CalView>('agenda');
   const [anchor, setAnchor] = useState(localDay());
   const [query, setQuery] = useState('');

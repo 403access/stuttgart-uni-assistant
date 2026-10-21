@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 import { authenticateWithBiometrics, biometricsStatus, type BiometricAuthResult, type BiometricsStatus } from '@/src/auth/biometrics';
 import { fetchServerPreferences, saveServerPreferences } from '@/src/auth/session';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 
 /**
  * First-run onboarding and the device-level biometric preference. These are
@@ -92,7 +92,11 @@ async function loadPreferences(): Promise<OnboardingPreferences> {
 const emptyStatus: BiometricsStatus = { module: false, hardware: false, enrolled: false, available: false };
 
 export function OnboardingProvider({ children }: { children: ReactNode }) {
-  const { authToken, theme, design, locale, setTheme, setDesign, setLocale } = useApp();
+  const authToken = useAppSelector((state) => state.authToken);
+  const theme = useAppSelector((state) => state.theme);
+  const design = useAppSelector((state) => state.design);
+  const locale = useAppSelector((state) => state.locale);
+  const { setTheme, setDesign, setLocale } = appActions;
   const [preferences, setPreferences] = useState<OnboardingPreferences>(defaults);
   const [pending, setPending] = useState(true);
   const [biometrics, setBiometrics] = useState<BiometricsStatus>(emptyStatus);

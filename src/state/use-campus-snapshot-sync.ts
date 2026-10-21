@@ -1,32 +1,27 @@
-import { useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useEffect } from 'react';
 
 import { loadCampusStudies } from '@/src/auth/campus';
+import { updateApp } from '@/src/state/app-store';
 import { pickActiveStudyId } from '@/src/state/persisted';
-import type { PersistedState } from '@/src/types';
+import { useAppSelector } from '@/src/state/use-app-store';
 
 /**
  * A web session starts without the phone's local study list. The server holds
  * the cross-device snapshot, so fetch it once the campus session is present;
  * the calendar and course tabs then read the server snapshots too.
  */
-export function useCampusSnapshot({
-  authToken,
-  sessionMode,
-  hasStudies,
-  setState,
-}: {
-  authToken: string | null;
-  sessionMode: PersistedState['sessionMode'];
-  hasStudies: boolean;
-  setState: Dispatch<SetStateAction<PersistedState>>;
-}): void {
+export function useCampusSnapshotSync(): void {
+  const authToken = useAppSelector((state) => state.authToken);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const hasStudies = useAppSelector((state) => state.campusStudies.length > 0);
+
   useEffect(() => {
     if (!authToken || sessionMode !== 'campus' || hasStudies) return;
     let active = true;
     loadCampusStudies()
       .then((loaded) => {
         if (!active || !loaded.studies.length) return;
-        setState((current) => {
+        updateApp((current) => {
           if (current.campusStudies.length) return current;
           return {
             ...current,
@@ -40,5 +35,5 @@ export function useCampusSnapshot({
     return () => {
       active = false;
     };
-  }, [authToken, hasStudies, sessionMode, setState]);
+  }, [authToken, hasStudies, sessionMode]);
 }

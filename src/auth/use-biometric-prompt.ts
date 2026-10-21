@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { authenticateWithBiometrics, type BiometricAuthResult } from '@/src/auth/biometrics';
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { tx, type TranslationKey } from '@/src/text';
 
 export interface BiometricPrompt {
@@ -23,7 +23,7 @@ export interface BiometricPrompt {
  */
 export function useBiometricPrompt(options: { persist?: boolean } = {}): BiometricPrompt {
   const { persist = true } = options;
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const { enableBiometrics } = useOnboarding();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

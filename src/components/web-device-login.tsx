@@ -9,7 +9,7 @@ import { LanguagePicker } from '@/src/components/login-blocks';
 import { Button, Mark } from '@/src/components/ui';
 import { useCountdown } from '@/src/hooks/use-countdown';
 import { usePolling } from '@/src/hooks/use-polling';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -25,7 +25,8 @@ function describeBrowser(): string {
 
 export function WebDeviceLogin() {
   const insets = useSafeAreaInsets();
-  const { locale, setLocale, signInDevice } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const { setLocale, signInDevice } = appActions;
   const [link, setLink] = useState<DeviceLinkStart | null>(null);
   const [phase, setPhase] = useState<Phase>('starting');
   const [error, setError] = useState<string | null>(null);

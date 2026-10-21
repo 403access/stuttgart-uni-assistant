@@ -8,7 +8,7 @@ import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { Button, Card } from '@/src/components/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -21,7 +21,7 @@ import { tx } from '@/src/text';
  * accents, and the mark tile treatment.
  */
 export default function SecurityScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const insets = useSafeAreaInsets();
   const {
     biometricsEnabled,

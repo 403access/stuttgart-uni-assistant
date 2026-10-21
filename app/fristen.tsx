@@ -2,11 +2,11 @@ import { Stack } from 'expo-router';
 
 import { InfoRow, Screen } from '@/src/components/ui';
 import { deadlines } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { formatDate, pick, tx } from '@/src/text';
 
 export default function DeadlinesScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const rows = [...deadlines].sort((a, b) => a.date.localeCompare(b.date));
   return (
     <Screen kicker={tx(locale, 'fristen.termine')} subtitle={tx(locale, 'fristen.demonstrationsstand')}>

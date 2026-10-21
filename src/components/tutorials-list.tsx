@@ -3,11 +3,11 @@ import { View } from 'react-native';
 
 import { InfoRow, Muted } from '@/src/components/ui';
 import { modules, places, tutorials } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { pick, tx, weekdays } from '@/src/text';
 
 export function TutorialsList() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   if (tutorials.length === 0) {
     return (
       <Muted>{tx(locale, 'tutorialsList.tutorien')}</Muted>

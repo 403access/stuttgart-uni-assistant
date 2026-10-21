@@ -7,7 +7,7 @@ import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { cancelCardScan, isNfcSupported, readStudentCard } from '@/src/nfc/card';
 import type { CardReading } from '@/src/nfc/types';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -17,7 +17,7 @@ import { tx } from '@/src/text';
  * The card is only read; nothing is written or uploaded.
  */
 export default function DevNfcScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const [supported, setSupported] = useState<boolean | null>(null);
   const [reading, setReading] = useState<CardReading | null>(null);
 

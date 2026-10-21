@@ -3,12 +3,15 @@ import { View } from 'react-native';
 
 import { ChoiceCard } from '@/src/components/choice-card';
 import { Muted, Screen, Section } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 
 /** Dedicated appearance screen reached from the App group on the Campus tab. */
 export default function AppearanceScreen() {
-  const { locale, theme, setTheme, design, setDesign } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const theme = useAppSelector((state) => state.theme);
+  const design = useAppSelector((state) => state.design);
+  const { setTheme, setDesign } = appActions;
   return (
     <Screen
       kicker={tx(locale, 'common.app')}

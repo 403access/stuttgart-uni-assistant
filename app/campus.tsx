@@ -7,7 +7,7 @@ import { Button, Card, InfoRow, Muted, Pill, Screen } from '@/src/components/ui'
 import { UniMapView } from '@/src/components/uni-map-view';
 import { places } from '@/src/data';
 import { campusName, placeKind } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { hay, pick, tx } from '@/src/text';
 import type { Campus } from '@/src/types';
@@ -17,7 +17,7 @@ const UNI_MAPS_URL = 'https://maps.uni-stuttgart.de/';
 type MapView = 'uni' | 'overview';
 
 export default function CampusScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const [view, setView] = useState<MapView>('uni');
   const [campus, setCampus] = useState<Campus>('vaihingen');
   const [query, setQuery] = useState('');

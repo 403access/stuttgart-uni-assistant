@@ -4,7 +4,7 @@ Every read and mutation that touches a server, the SQLite device cache, or a por
 
 ## Wiring
 
-`src/query/client.tsx` creates the `QueryClient` and mounts `QueryProvider` inside `AppStateProvider` (queries key on its state, so the provider order matters).
+`src/query/client.tsx` creates the `QueryClient` and mounts `QueryProvider` inside `AppStateProvider` (queries key on the app store, so the provider order matters).
 
 Defaults:
 
@@ -37,7 +37,7 @@ Other flows use one `useMutation` per screen:
 
 | Flow | Screen | Notes |
 | --- | --- | --- |
-| C@MPUS token sign-in, SIAM sign-in, browser harvest | `src/auth/use-login-flow.ts` (rendered by `app/login.tsx`) | Success commits to AppState; failure sets the inline message and the retry toast targets `mutate()`. |
+| C@MPUS token sign-in, SIAM sign-in, browser harvest | `src/auth/use-login-flow.ts` (rendered by `app/login.tsx`) | Success commits to the app store; failure sets the inline message and the retry toast targets `mutate()`. |
 | Study switch | `src/components/study-selector.tsx` | Commits only when the portal answered; `variables` names the pending study for the chip label. |
 | Calendar export and database sync | `app/(tabs)/kalender.tsx` | The download side effects (blob link, share sheet) live in the mutation function. |
 | API replays | `app/api.tsx` | Adopting nodes, studies, and a login from a portal response happens in `onSuccess`. |
@@ -60,4 +60,4 @@ Writers update the query cache instead of copying rows into screens:
 1. Reads never call SQLite or the fetch wrappers directly; they go through `useQuery(...)` with a factory from `src/query/queries.ts`.
 2. User-triggered server and store writes go through `useMutation`; no fire-and-forget `.catch(() => undefined)` chains in screens.
 3. Screen-local state remains for progress, selection, filters, and mirroring flags (`running`, `syncing` map to `isPending` derived values).
-4. AppState stays authoritative for session, profile, and curriculum commitment; queries only move data in and out around it.
+4. The app store stays authoritative for session, profile, and curriculum commitment; queries only move data in and out around it. See [tanstack-store.md](tanstack-store.md).

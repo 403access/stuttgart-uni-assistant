@@ -9,7 +9,7 @@ import { Card, InfoRow, Meter, Pill, Screen, Section } from '@/src/components/ui
 import { modules, program } from '@/src/data';
 import { searchModules, totals } from '@/src/domain/plan';
 import { moduleStatus } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import type { ModuleStatus } from '@/src/types';
@@ -26,7 +26,8 @@ const segments = [
 type SegmentKey = (typeof segments)[number]['key'];
 
 export default function StudyScreen() {
-  const { locale, plannedIds } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const plannedIds = useAppSelector((state) => state.plannedIds);
   const [segment, setSegment] = useState<SegmentKey>('module');
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<ModuleStatus | 'all'>('all');

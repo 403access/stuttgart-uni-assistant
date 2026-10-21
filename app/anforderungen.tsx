@@ -3,13 +3,13 @@ import { Stack, router } from 'expo-router';
 import { Card, Meter, Screen } from '@/src/components/ui';
 import { modules, program, student } from '@/src/data';
 import { areaTotals, totals, weightedAverage } from '@/src/domain/plan';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatGrade, pick, tx } from '@/src/text';
 import { Text } from 'react-native';
 
 export default function RequirementsScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const credit = totals(modules);
   const average = weightedAverage(modules);
   const expected = (student.semester - 1) * program.standardSemesterEcts;

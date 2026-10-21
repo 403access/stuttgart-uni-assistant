@@ -142,7 +142,7 @@ keywords: [
 - `review` repeats only questions whose last answer was wrong,
 - `mixed` shuffles all questions and caps the round at twenty.
 
-Progress is stored separately from `AppState` under
+Progress is stored separately from the app store under
 `university-assistant/quiz/v1` (`src/quiz/progress.tsx`). It keeps per-question
 attempts, correct counts, the last result, the latest 60 sessions, and one
 **active session per topic**. Keeping it separate means an older persisted app

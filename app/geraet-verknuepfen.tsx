@@ -14,7 +14,7 @@ import {
 } from '@/src/auth/session';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -46,7 +46,11 @@ function lastSeen(device: DeviceLinkInfo, locale: 'de' | 'en'): string | null {
 }
 
 export default function LinkDeviceScreen() {
-  const { locale, theme, design, authToken, signOut } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const theme = useAppSelector((state) => state.theme);
+  const design = useAppSelector((state) => state.design);
+  const authToken = useAppSelector((state) => state.authToken);
+  const { signOut } = appActions;
   const { completedAt } = useOnboarding();
   const [permission, requestPermission] = useCameraPermissions();
   const [phase, setPhase] = useState<Phase>('idle');

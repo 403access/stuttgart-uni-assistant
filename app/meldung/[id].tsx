@@ -4,12 +4,12 @@ import { Text } from 'react-native';
 import { Card, Screen } from '@/src/components/ui';
 import { news } from '@/src/data';
 import { newsSource } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { firstParam, formatDate, pick, tx } from '@/src/text';
 
 export default function NewsDetailScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const { id } = useLocalSearchParams<{ id: string }>();
   const item = news.find((entry) => entry.id === firstParam(id));
   if (!item) {

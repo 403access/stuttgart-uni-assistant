@@ -5,7 +5,7 @@ import { showToast } from '@/src/components/toast';
 import { iliasAccountFrom } from '@/src/ilias/account';
 import { connectIlias, disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
 import type { IliasDashboard, IliasStatus } from '@/src/ilias/types';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 
 function describe(caught: unknown, locale: 'de' | 'en'): string {
@@ -19,7 +19,9 @@ function describe(caught: unknown, locale: 'de' | 'en'): string {
 
 /** Owns status, dashboard rows, and the one-shot credential handoff. */
 export function useIlias() {
-  const { locale, authToken, refreshUser } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const authToken = useAppSelector((state) => state.authToken);
+  const { refreshUser } = appActions;
   const [status, setStatus] = useState<IliasStatus | null>(null);
   const [dashboard, setDashboard] = useState<IliasDashboard | null>(null);
   const [settledToken, setSettledToken] = useState<string | null>(null);

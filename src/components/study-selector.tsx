@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { activeStudy, campusDetail, loadCampusCurriculum } from '@/src/auth/campus';
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
 import { showFetchAlert } from '@/src/components/fetch-alert';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -15,7 +15,11 @@ import { tx } from '@/src/text';
  * This is production data, not the demonstration record.
  */
 export function StudySelector() {
-  const { locale, sessionMode, campusStudies, activeStudyId, setActiveStudy, setCurriculum } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
+  const activeStudyId = useAppSelector((state) => state.activeStudyId);
+  const { setActiveStudy, setCurriculum } = appActions;
   const [error, setError] = useState('');
   const log = useCampusLog();
 

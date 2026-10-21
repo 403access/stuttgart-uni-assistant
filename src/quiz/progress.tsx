@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createStore } from '@tanstack/store';
+import { useSelector } from '@tanstack/react-store';
+import { useEffect, type ReactNode } from 'react';
 
 import { uid } from '@/src/text';
 
@@ -15,8 +17,11 @@ interface StoredProgress {
   activeSessions: Record<string, ActiveQuizSession>;
 }
 
-interface QuizProgressValue extends StoredProgress {
+interface QuizProgressState extends StoredProgress {
   ready: boolean;
+}
+
+interface QuizProgressValue extends QuizProgressState {
   recordAnswer: (questionId: string, correct: boolean) => void;
   recordSession: (session: Omit<QuizSessionRecord, 'id' | 'at'>) => void;
   saveActiveSession: (session: ActiveQuizSession) => void;
@@ -26,7 +31,8 @@ interface QuizProgressValue extends StoredProgress {
 
 const empty: StoredProgress = { attempts: {}, sessions: [], activeSessions: {} };
 
-const QuizProgressContext = createContext<QuizProgressValue | null>(null);
+/** Quiz progress lives beside the main app state instead of inside it: the quiz is optional. */
+export const quizProgressStore = createStore<QuizProgressState>({ ...empty, ready: false });
 
 function isQuizMode(value: unknown): value is QuizMode {
   return value === 'all' || value === 'quick' || value === 'review' || value === 'mixed';
@@ -76,38 +82,11 @@ function parseStored(raw: string | null): StoredProgress {
   }
 }
 
-/**
- * Quiz progress lives beside the main app state instead of inside it: the quiz
- * is optional, and an older persisted app state without quiz fields should keep
- * loading unchanged.
- */
-export function QuizProgressProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<StoredProgress>(empty);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    AsyncStorage.getItem(QUIZ_PROGRESS_STORAGE_KEY)
-      .then((raw) => {
-        if (active) setState(parseStored(raw));
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (active) setReady(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    AsyncStorage.setItem(QUIZ_PROGRESS_STORAGE_KEY, JSON.stringify(state)).catch(() => undefined);
-  }, [ready, state]);
-
-  const recordAnswer = useCallback((questionId: string, correct: boolean) => {
+/** Stable action handles; usable from components and plain modules alike. */
+export const quizProgressActions = {
+  recordAnswer(questionId: string, correct: boolean) {
     const at = new Date().toISOString();
-    setState((current) => {
+    quizProgressStore.setState((current) => {
       const previous = current.attempts[questionId];
       return {
         ...current,
@@ -122,57 +101,68 @@ export function QuizProgressProvider({ children }: { children: ReactNode }) {
         },
       };
     });
-  }, []);
-
-  const recordSession = useCallback((session: Omit<QuizSessionRecord, 'id' | 'at'>) => {
-    setState((current) => ({
+  },
+  recordSession(session: Omit<QuizSessionRecord, 'id' | 'at'>) {
+    quizProgressStore.setState((current) => ({
       ...current,
-      sessions: [
-        { ...session, id: uid('quiz'), at: new Date().toISOString() },
-        ...current.sessions,
-      ].slice(0, MAX_SESSIONS),
+      sessions: [{ ...session, id: uid('quiz'), at: new Date().toISOString() }, ...current.sessions].slice(0, MAX_SESSIONS),
     }));
-  }, []);
-
-  const saveActiveSession = useCallback((session: ActiveQuizSession) => {
-    setState((current) => ({
+  },
+  saveActiveSession(session: ActiveQuizSession) {
+    quizProgressStore.setState((current) => ({
       ...current,
       activeSessions: { ...current.activeSessions, [session.topicId]: session },
     }));
-  }, []);
-
-  const clearActiveSession = useCallback((topicId: string) => {
-    setState((current) => {
+  },
+  clearActiveSession(topicId: string) {
+    quizProgressStore.setState((current) => {
       if (!current.activeSessions[topicId]) return current;
       const next = { ...current.activeSessions };
       delete next[topicId];
       return { ...current, activeSessions: next };
     });
-  }, []);
-
-  const resetProgress = useCallback(() => {
-    setState(empty);
+  },
+  resetProgress() {
+    quizProgressStore.setState((current) => ({ ...empty, ready: current.ready }));
     AsyncStorage.removeItem(QUIZ_PROGRESS_STORAGE_KEY).catch(() => undefined);
+  },
+} as const;
+
+/** Hydrates and persists the quiz store. No context: consumers subscribe directly. */
+export function QuizProgressProvider({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem(QUIZ_PROGRESS_STORAGE_KEY)
+      .then((raw) => {
+        if (!active) return;
+        const stored = parseStored(raw);
+        quizProgressStore.setState((current) => ({ ...current, ...stored, ready: true }));
+      })
+      .catch(() => {
+        if (active) quizProgressStore.setState((current) => ({ ...current, ready: true }));
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const value = useMemo<QuizProgressValue>(
-    () => ({
-      ...state,
-      ready,
-      recordAnswer,
-      recordSession,
-      saveActiveSession,
-      clearActiveSession,
-      resetProgress,
-    }),
-    [state, ready, recordAnswer, recordSession, saveActiveSession, clearActiveSession, resetProgress],
-  );
+  useEffect(() => {
+    const subscription = quizProgressStore.subscribe((state) => {
+      if (!state.ready) return;
+      const stored: StoredProgress = {
+        attempts: state.attempts,
+        sessions: state.sessions,
+        activeSessions: state.activeSessions,
+      };
+      AsyncStorage.setItem(QUIZ_PROGRESS_STORAGE_KEY, JSON.stringify(stored)).catch(() => undefined);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
-  return <QuizProgressContext.Provider value={value}>{children}</QuizProgressContext.Provider>;
+  return <>{children}</>;
 }
 
 export function useQuizProgress(): QuizProgressValue {
-  const value = useContext(QuizProgressContext);
-  if (!value) throw new Error('useQuizProgress must be used inside QuizProgressProvider');
-  return value;
+  const state = useSelector(quizProgressStore);
+  return { ...state, ...quizProgressActions };
 }

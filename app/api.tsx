@@ -9,7 +9,7 @@ import { asAuthSession } from '@/src/auth/session';
 import type { CampusCourse } from '@/src/types';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
 import { keys } from '@/src/query/keys';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -35,7 +35,11 @@ function preview(value: unknown): string {
 }
 
 export default function ApiScreen() {
-  const { locale, curriculumNodes, campusStudies, activeStudyId, setCurriculum, setStudies, setActiveStudy, signInCampus } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const curriculumNodes = useAppSelector((state) => state.curriculumNodes);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
+  const activeStudyId = useAppSelector((state) => state.activeStudyId);
+  const { setCurriculum, setStudies, setActiveStudy, signInCampus } = appActions;
   // The catalog fetch never fails here: it answers the bundled fallback with
   // `live: false`, which the screen renders as the stale-list hint.
   const catalog = useQuery({ queryKey: keys.catalog(), queryFn: () => fetchApiCatalog() });

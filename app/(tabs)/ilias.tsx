@@ -6,12 +6,14 @@ import { iliasAccountFrom } from '@/src/ilias/account';
 import { IliasConnectionPanel } from '@/src/ilias/components/ilias-connection-panel';
 import { IliasDashboardView } from '@/src/ilias/components/ilias-dashboard';
 import { useIlias } from '@/src/ilias/use-ilias';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function IliasScreen() {
-  const { locale, sessionAccount, sessionEmail } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
+  const sessionEmail = useAppSelector((state) => state.sessionEmail);
   const ilias = useIlias();
   const [account, setAccount] = useState(() => iliasAccountFrom(sessionEmail || sessionAccount));
   const [password, setPassword] = useState('');

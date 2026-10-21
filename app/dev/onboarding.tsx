@@ -12,7 +12,7 @@ import {
   useOnboarding,
   type OnboardingPreferences,
 } from '@/src/onboarding/OnboardingState';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -22,7 +22,8 @@ import { tx } from '@/src/text';
  * for the next launch without re-opening it in the running session.
  */
 export default function DevOnboardingScreen() {
-  const { locale, sessionAccount } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
   const {
     ready,
     completed,

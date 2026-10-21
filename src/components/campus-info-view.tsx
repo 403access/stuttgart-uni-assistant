@@ -14,14 +14,17 @@ import { CurriculumTree } from '@/src/components/curriculum-tree';
 import { StudySelector } from '@/src/components/study-selector';
 import { keys } from '@/src/query/keys';
 import { deviceNodesQuery, syncInfoQuery } from '@/src/query/queries';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
 import type { CampusStudy } from '@/src/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export function CampusInfoView() {
-  const { locale, curriculumNodes, curriculumStudyId, setCurriculum } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const curriculumNodes = useAppSelector((state) => state.curriculumNodes);
+  const curriculumStudyId = useAppSelector((state) => state.curriculumStudyId);
+  const { setCurriculum } = appActions;
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [busyNode, setBusyNode] = useState<number | null>(null);

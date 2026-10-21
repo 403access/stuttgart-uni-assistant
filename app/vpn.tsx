@@ -5,7 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Button, Card, Pill, Screen, SearchField, Section } from '@/src/components/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx, type TranslationKey } from '@/src/text';
 import {
@@ -32,7 +32,7 @@ const importMessages: Record<Exclude<ProfileImportResult, 'cancelled'>, Translat
 };
 
 export default function VpnScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const { state, busy, error, network, printerReachable, connect, disconnect, probePrinter } = useVpn();
   const { profile, importFromPicker, remove } = useVpnProfile();
   const [providerId, setProviderId] = useState<VpnProviderId>(defaultVpnProviderId);

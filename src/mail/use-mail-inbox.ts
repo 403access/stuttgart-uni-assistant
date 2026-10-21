@@ -16,7 +16,7 @@ import {
 import { showToast } from '@/src/components/toast';
 import { useInterval } from '@/src/hooks/use-interval';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 import type { MailMessage } from '@/src/types';
 
@@ -31,7 +31,11 @@ const REFRESH_INTERVAL_MS = 60_000;
  * visual lives in the components; this hook only exposes state and actions.
  */
 export function useMailInbox() {
-  const { locale, sessionAccount, mailAccount, setMailAccount, authToken, refreshUser } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
+  const mailAccount = useAppSelector((state) => state.mailAccount);
+  const authToken = useAppSelector((state) => state.authToken);
+  const { setMailAccount, refreshUser } = appActions;
   // Status and folder list are published by the mail module; the rows keep a
   // local copy so `LayoutAnimation` can compare the previous order.
   const { status, folders: liveFolders } = useMailSnapshot();

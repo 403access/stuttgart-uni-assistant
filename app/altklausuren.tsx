@@ -2,11 +2,11 @@ import { Stack, router } from 'expo-router';
 
 import { InfoRow, Screen } from '@/src/components/ui';
 import { exams, modules } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { pick, tx } from '@/src/text';
 
 export default function ExamsScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   return (
     <Screen
       kicker={tx(locale, 'altklausuren.index')}

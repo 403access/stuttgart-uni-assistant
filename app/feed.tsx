@@ -3,11 +3,11 @@ import { Stack, router } from 'expo-router';
 import { InfoRow, Screen } from '@/src/components/ui';
 import { news } from '@/src/data';
 import { newsSource } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { formatDate, pick, tx } from '@/src/text';
 
 export default function FeedScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const rows = [...news].sort((a, b) => b.date.localeCompare(a.date));
   return (
     <Screen kicker={tx(locale, 'feed.kommunikationsquellen')}>

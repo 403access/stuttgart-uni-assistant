@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createStore } from '@tanstack/store';
 
 import { assistantUrl } from '@/src/assistant/remote';
 import { tx } from '@/src/text';
@@ -36,8 +37,10 @@ export interface MailSnapshot {
   folder: string | null;
 }
 
-let snapshot: MailSnapshot = { status: null, messages: null, folders: null, folder: null };
-const listeners = new Set<() => void>();
+const emptySnapshot: MailSnapshot = { status: null, messages: null, folders: null, folder: null };
+
+/** The shared snapshot is a TanStack Store, so screens subscribe through `useSelector` without a context. */
+export const mailStore = createStore<MailSnapshot>(emptySnapshot);
 
 /**
  * The snapshot is mirrored on the device so the next launch can show the last
@@ -59,6 +62,7 @@ interface StoredMailSnapshot {
 }
 
 function persistSnapshot() {
+  const snapshot = mailStore.state;
   const payload: StoredMailSnapshot = {
     status: snapshot.status,
     messages: snapshot.messages ?? [],
@@ -75,16 +79,17 @@ function persistSnapshot() {
 function publish(next: Partial<MailSnapshot>) {
   if (cacheSuspended && !next.status?.configured) return;
   if (next.status?.configured) cacheSuspended = false;
-  const previousAccount = snapshot.status?.account ?? null;
-  snapshot = { ...snapshot, ...next };
+  const previous = mailStore.state;
+  const previousAccount = previous.status?.account ?? null;
+  let nextSnapshot = { ...previous, ...next };
   // A disconnected status or a different mail account invalidates the cached
   // rows; keeping them would show one account's mail to the next session.
   const accountChanged =
     Boolean(next.status?.configured && previousAccount && next.status?.account && next.status.account !== previousAccount);
   if ((next.status && !next.status.configured) || accountChanged) {
-    snapshot = { ...snapshot, messages: [], folders: [], folder: 'INBOX' };
+    nextSnapshot = { ...nextSnapshot, messages: [], folders: [], folder: 'INBOX' };
   }
-  for (const listener of listeners) listener();
+  mailStore.setState(() => nextSnapshot);
   persistSnapshot();
 }
 
@@ -101,12 +106,13 @@ export function hydrateMailSnapshot(): Promise<void> {
       const raw = await AsyncStorage.getItem(MAIL_CACHE_KEY);
       if (!raw) return;
       const stored = JSON.parse(raw) as Partial<StoredMailSnapshot>;
+      const current = mailStore.state;
       const next: Partial<MailSnapshot> = {};
       const status = asMailStatus(stored.status);
-      if (snapshot.status === null && status) next.status = status;
-      if (snapshot.messages === null) next.messages = asMailMessages(stored.messages);
-      if (snapshot.folders === null) next.folders = asMailFolders(stored.folders);
-      if (snapshot.folder === null && typeof stored.folder === 'string' && stored.folder) next.folder = stored.folder;
+      if (current.status === null && status) next.status = status;
+      if (current.messages === null) next.messages = asMailMessages(stored.messages);
+      if (current.folders === null) next.folders = asMailFolders(stored.folders);
+      if (current.folder === null && typeof stored.folder === 'string' && stored.folder) next.folder = stored.folder;
       if (Object.keys(next).length > 0) publish(next);
     } catch {
       // A corrupt or unreadable cache is simply ignored; the server read follows.
@@ -121,23 +127,19 @@ export function hydrateMailSnapshot(): Promise<void> {
 /** Drop the local copy, e.g. on sign-out. The in-memory snapshot is reset too. */
 export async function clearMailCache(): Promise<void> {
   cacheSuspended = true;
-  snapshot = { status: null, messages: null, folders: null, folder: null };
+  mailStore.setState(() => emptySnapshot);
   hydrated = true;
   hydration = null;
-  for (const listener of listeners) listener();
   cacheWrite = cacheWrite.then(() => AsyncStorage.removeItem(MAIL_CACHE_KEY)).catch(() => undefined);
   await cacheWrite;
 }
 
 export function subscribeMailSnapshot(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+  return mailStore.subscribe(listener).unsubscribe;
 }
 
 export function getMailSnapshot(): MailSnapshot {
-  return snapshot;
+  return mailStore.state;
 }
 
 

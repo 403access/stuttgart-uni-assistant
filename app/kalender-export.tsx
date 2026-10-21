@@ -9,7 +9,7 @@ import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
 import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
 import { keys } from '@/src/query/keys';
 import { apiLogQuery } from '@/src/query/queries';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
@@ -43,7 +43,8 @@ function importDetail(entry: CampusLogEntry): string {
 
 /** Import screen: pull the personal calendar through the C@MPUS export mask, or sync it into the local database. */
 export default function CalendarExportScreen() {
-  const { locale, sessionMode } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
   const queryClient = useQueryClient();
   const [format, setFormat] = useState<CalendarExportFormat>(99);
   const [error, setError] = useState('');

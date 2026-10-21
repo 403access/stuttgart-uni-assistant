@@ -4,7 +4,7 @@ import { Linking, Text, View } from 'react-native';
 
 import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { campusName } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import { printerLinks, printerLocations, printerPrices, type PrinterPrice } from '@/src/vpn/printer';
@@ -36,7 +36,7 @@ function Step({ index, text }: { index: number; text: string }) {
 }
 
 export default function PrinterScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
 
   return (
     <Screen kicker="stuvus" title={tx(locale, 'drucker.title')} subtitle={tx(locale, 'drucker.subtitle')}>

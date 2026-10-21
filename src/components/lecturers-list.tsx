@@ -3,11 +3,11 @@ import { View } from 'react-native';
 
 import { InfoRow, Muted } from '@/src/components/ui';
 import { people, places } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { pick, tx } from '@/src/text';
 
 export function LecturersList() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   return (
     <View style={{ gap: 8 }}>
       <Muted>{tx(locale, 'lecturersList.erfundene')}</Muted>

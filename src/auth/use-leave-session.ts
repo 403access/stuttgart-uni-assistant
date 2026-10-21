@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 import { endUniversitySession } from '@/src/auth/oidc';
 import { clearLogin } from '@/src/auth/vault';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 
 /**
  * The full sign-out path used by the account and campus screens: end the IdP
@@ -10,7 +10,9 @@ import { useApp } from '@/src/state/AppState';
  * app session. Kept in one place so both entry points cannot drift.
  */
 export function useLeaveSession(): () => Promise<void> {
-  const { sessionMode, oidcSessionId, signOut } = useApp();
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const oidcSessionId = useAppSelector((state) => state.oidcSessionId);
+  const { signOut } = appActions;
   return useCallback(async () => {
     if (sessionMode === 'oidc') await endUniversitySession(oidcSessionId);
     await clearLogin();

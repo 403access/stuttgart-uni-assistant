@@ -4,12 +4,12 @@ import { Text } from 'react-native';
 import { Card, InfoRow, Screen } from '@/src/components/ui';
 import { modules, places } from '@/src/data';
 import { campusName, placeKind, sessionKind } from '@/src/labels';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { firstParam, pick, tx, weekdays } from '@/src/text';
 
 export default function RoomScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{ id: string }>();
   const place = places.find((item) => item.id === firstParam(params.id));
   if (!place) {

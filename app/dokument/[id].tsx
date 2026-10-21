@@ -8,12 +8,15 @@ import { asBullets, summarize } from '@/src/assistant/summarize';
 import { Button, Card, Screen } from '@/src/components/ui';
 import { documents } from '@/src/data';
 import { exportText } from '@/src/documents/io';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { firstParam, pick, tx } from '@/src/text';
 
 export default function DocumentScreen() {
-  const { locale, imports, downloadedIds, toggleShare, toggleDownload } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const imports = useAppSelector((state) => state.imports);
+  const downloadedIds = useAppSelector((state) => state.downloadedIds);
+  const { toggleShare, toggleDownload } = appActions;
   const id = firstParam(useLocalSearchParams<{ id: string }>().id);
   const bundled = documents.find((item) => item.id === id);
   const imported = imports.find((item) => item.id === id);

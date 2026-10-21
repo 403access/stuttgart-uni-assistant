@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 
 /**
@@ -15,7 +15,7 @@ import { themedStyles } from '@/src/theme';
  * avoids shipping a bitmap tile.
  */
 export function AmbientBackground() {
-  const { design } = useApp();
+  const design = useAppSelector((state) => state.design);
   if (design === 'clean') return null;
   return (
     <View

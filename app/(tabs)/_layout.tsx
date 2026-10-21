@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -33,7 +33,7 @@ function BarIcon({
 }
 
 export default function TabLayout() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const insets = useSafeAreaInsets();
   return (
     <Tabs

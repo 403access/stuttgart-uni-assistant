@@ -66,6 +66,7 @@ Read these in order. Each file states the decision for this project, the artifac
 | [engineering/nfc-card.md](engineering/nfc-card.md) | The read-only student ID card reader: readable values, DESFire limits, platform configuration, and the iOS entitlement flag |
 | [engineering/campus-logging.md](engineering/campus-logging.md) | Campus call log in app and server, portal error detail, stale-server detection |
 | [engineering/tanstack-query.md](engineering/tanstack-query.md) | Query client wiring, typed key factory, shared sync mutation, device-cache write-back |
+| [engineering/tanstack-store.md](engineering/tanstack-store.md) | App store shape, selector reads, stable actions, persistence, and the smaller mail/log/quiz stores |
 | [engineering/oidc-login.md](engineering/oidc-login.md) | Identity provider URLs, the authorization-code flow, and the `.env` client |
 | [engineering/ai-assistant.md](engineering/ai-assistant.md) | Local answers, fact sheet, Grok |
 | [engineering/assistant-tunnel.md](engineering/assistant-tunnel.md) | Reaching the assistant from a phone off the LAN: the two tunnels, the quick hostname, the `.env` write |

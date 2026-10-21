@@ -12,13 +12,15 @@ import {
 } from '@/src/auth/mail';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 /** Opened from the E-Mail item on the Campus tab. */
 export default function MailConnectionScreen() {
-  const { locale, setMailAccount, authToken, refreshUser } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const authToken = useAppSelector((state) => state.authToken);
+  const { setMailAccount, refreshUser } = appActions;
   const { status } = useMailSnapshot();
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);

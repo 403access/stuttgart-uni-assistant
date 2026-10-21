@@ -15,7 +15,7 @@ import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
 import { QuizProgressProvider } from '@/src/quiz/progress';
 import { QueryProvider } from '@/src/query/client';
-import { AppStateProvider, useApp } from '@/src/state/AppState';
+import { AppStateProvider, useAppSelector, appActions } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -48,7 +48,12 @@ export default function RootLayout() {
 }
 
 function Gate() {
-  const { ready, sessionAccount, authToken, locale, theme, signOut } = useApp();
+  const ready = useAppSelector((state) => state.ready);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
+  const authToken = useAppSelector((state) => state.authToken);
+  const locale = useAppSelector((state) => state.locale);
+  const theme = useAppSelector((state) => state.theme);
+  const { signOut } = appActions;
   const {
     ready: onboardingReady,
     completed: onboardingCompleted,

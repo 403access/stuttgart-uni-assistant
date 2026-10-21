@@ -30,7 +30,7 @@ import {
 import { curriculumDetail } from '@/src/labels';
 import { keys } from '@/src/query/keys';
 import { apiLogQuery, deviceTreesQuery, serverCallsQuery } from '@/src/query/queries';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { CurriculumNode } from '@/src/types';
@@ -45,7 +45,11 @@ const SEARCH_LIMIT = 200;
  * detail panels live in `src/components/` and are shared with the C@MPUS tab.
  */
 export default function StrukturenScreen() {
-  const { locale, sessionMode, campusStudies, activeStudyId, setCurriculum } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
+  const activeStudyId = useAppSelector((state) => state.activeStudyId);
+  const { setCurriculum } = appActions;
   const isWeb = Platform.OS === 'web';
   const log = useCampusLog();
   const queryClient = useQueryClient();

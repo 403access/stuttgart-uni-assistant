@@ -17,7 +17,7 @@ import {
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@/src/quiz/session';
 import type { QuestionProgress, QuizMode, QuizModule, QuizStudy, QuizTopic } from '@/src/quiz/types';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
@@ -39,7 +39,7 @@ function moduleCountLabel(count: number, locale: Locale): string {
 }
 
 export default function QuizScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const { ready, attempts, sessions, resetProgress } = useQuizProgress();
   const [studyFilter, setStudyFilter] = useState<string>(ALL_STUDIES);
 

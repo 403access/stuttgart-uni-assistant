@@ -104,7 +104,7 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 | `src/data/` | Demonstration curriculum, places, people, deadlines, documents |
 | `src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
 | `src/assistant/` | Local answers, fact sheet, optional Grok call |
-| `src/state/AppState.tsx` | Session, language, notes, and chat, stored on the device |
+| `src/state/AppState.tsx` | TanStack Store: session, language, curriculum selection, notes, and chat, stored on the device |
 | `src/onboarding/` | First-run completion and the biometric app-lock preference |
 | `src/auth/biometrics.ts` | Device biometric availability and the system prompt |
 | `src/auth/session.ts` | The server user session: token storage and the `/v1/auth/*` calls |

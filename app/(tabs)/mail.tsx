@@ -11,12 +11,12 @@ import { MailToolbar } from '@/src/mail/components/mail-toolbar';
 import { OptionRows } from '@/src/mail/components/option-rows';
 import { useMailInbox } from '@/src/mail/use-mail-inbox';
 import { useMailList } from '@/src/mail/use-mail-list';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
 export default function MailScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const inbox = useMailInbox();
   const list = useMailList({ messages: inbox.messages, folders: inbox.folders, folder: inbox.folder, locale });
 

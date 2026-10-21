@@ -6,7 +6,7 @@ import { WebView } from 'react-native-webview';
 import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage } from '@/src/auth/mail';
 import { MailBody } from '@/src/components/mailBody';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { MailBody as MailBodyData, MailMessage } from '@/src/types';
@@ -20,7 +20,7 @@ const WEBVIEW_HEIGHT = 480;
  * the WebView itself runs no scripts and lets no navigation through.
  */
 export default function MailMessageScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{ uid?: string | string[]; folder?: string | string[] }>();
   const uid = Number(Array.isArray(params.uid) ? params.uid[0] : params.uid);
   const folder = (Array.isArray(params.folder) ? params.folder[0] : params.folder) ?? 'INBOX';

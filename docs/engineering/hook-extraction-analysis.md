@@ -64,7 +64,7 @@ distance from the data layer.
 | `useApp` | `src/state/AppState.tsx` | 549 (provider) | Cohesive but too broad (see §8) |
 | `useOnboarding` | `src/onboarding/OnboardingState.tsx` | 254 | Good; shares the persisted-state pattern with `useApp` |
 | `useReducedMotion` | `src/hooks/use-reduced-motion.ts` | 28 | Good; the only "general" hook today |
-| `useCampusLog` | `src/auth/campus-log.ts` | — | Good `useSyncExternalStore` usage |
+| `useCampusLog` | `src/auth/campus-log.ts` | — | Backed by `campusLogStore` (TanStack Store) |
 | `useLoginFlow` | `src/auth/use-login-flow.ts` | 210 | Good domain hook; see note on declaration order |
 | `useCampusHeadlessLogin` | `src/auth/use-campus-headless-login.ts` | 297 | Complex but legitimately stateful; leave mostly as-is |
 | `useCampusBrowserLogin` | `src/auth/use-campus-browser-login.ts` | 87 | Good separation (state only, screen owns mutation) |
@@ -586,7 +586,7 @@ This is the highest-value domain. See §7 for the deep dives.
 
 | Proposal | Replaces | Notes |
 |----------|----------|-------|
-| `useMailSnapshot()` | `use-mail-inbox.ts:138-160`, `mail-verbindung.tsx:29-36` | Returns the live snapshot (`status`, `messages`, `folders`, `folder`) via `useSyncExternalStore`, matching `useCampusLog`. Both consumers currently hand-roll the subscribe. |
+| `useMailSnapshot()` | `use-mail-inbox.ts:138-160`, `mail-verbindung.tsx:29-36` | Returns the live snapshot (`status`, `messages`, `folders`, `folder`) from `mailStore`. Both consumers share the subscription. |
 | `useMailConnection()` | `mail-verbindung.tsx:24-74`, parts of `use-mail-inbox.ts:205-230` | Connect/disconnect/refresh flags. |
 | `useMailMessage(uid, folder)` | `mail-nachricht.tsx:28-67` | Fetch body, invalid-uid guard, HTML framing. |
 
@@ -795,7 +795,9 @@ sync.cancelledFor(studyId);
 
 ```ts
 export function useActiveStudy() {
-  const { sessionMode, campusStudies, activeStudyId } = useApp();
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
+  const activeStudyId = useAppSelector((state) => state.activeStudyId);
   const isCampus = sessionMode === 'campus' && campusStudies.length > 0;
   const study = isCampus ? activeStudy(campusStudies, activeStudyId) : null;
   return { study, studyId: study?.studyId ?? null, isCampus, campusStudies };
@@ -818,28 +820,26 @@ All five screens then share the same definition of "is a study selected".
 ### 7.3 `useMailSnapshot`
 
 ```ts
-export function useMailSnapshot(): MailSnapshot {
-  return useSyncExternalStore(subscribeMailSnapshot, getMailSnapshot, getMailSnapshot);
+export function useMailSnapshot() {
+  return useSelector(mailStore);
 }
 ```
 
-`getMailSnapshot()` already returns a stable object reference between writes
-(check `src/auth/mail.ts`), and `subscribeMailSnapshot` returns an unsubscribe
-function — so this is a direct `useSyncExternalStore` fit, exactly like
-`useCampusLog`. Then:
+`mailStore` in `src/auth/mail.ts` is a TanStack Store, so the snapshot has a
+stable object reference between writes and a subscription per consumer. Then:
 
-- `use-mail-inbox.ts:138-160` becomes "derive state from snapshot" instead of
-  manually copying fields.
-- `mail-verbindung.tsx:29-36` disappears entirely.
+- `use-mail-inbox.ts:138-160` derives from the snapshot instead of manually
+  copying fields.
+- `mail-verbindung.tsx:29-36` is replaced by the hook.
 
-**Caution:** `useMailInbox` currently applies `LayoutAnimation` only when the
-row *order* changes (`sameMessageOrder`). Keep that logic in `useMailInbox`; the
-snapshot hook should not animate.
+**Caution:** `useMailInbox` applies `LayoutAnimation` only when the row *order*
+changes (`sameMessageOrder`). Keep that logic in `useMailInbox`; the snapshot
+hook should not animate.
 
-**Status (implemented, partly migrated).** `src/mail/use-mail-snapshot.ts`
-exists and `mail-verbindung.tsx` consumes it. `use-mail-inbox.ts` keeps its own
-`messages`/`folder` state (optimistic folder switch + `LayoutAnimation`); the
-remaining step is to derive its `status` and `folders` from the snapshot too.
+**Status (implemented).** `src/mail/use-mail-snapshot.ts` reads `mailStore`.
+`mail-verbindung.tsx` consumes it; `use-mail-inbox.ts` keeps its own
+`messages`/`folder` mirrors for the optimistic folder switch and
+`LayoutAnimation`, and reads status/folders from the store.
 
 ---
 
@@ -848,32 +848,24 @@ remaining step is to derive its `status` and `folders` from the snapshot too.
 Not strictly hook extraction, but it limits the value of any hook work and is
 worth a decision:
 
-Status: the implementation is now split into `src/state/use-*.ts` modules and
-`AppStateProvider.tsx`; `AppState.tsx` only re-exports the provider and
-`useApp`. The single context value described below is unchanged.
+Status: resolved by the TanStack Store migration (see
+[tanstack-store.md](tanstack-store.md)). `appStore` lives outside React,
+screens subscribe to one slice with `useAppSelector`, and actions are stable
+functions on `appActions`. A locale change no longer re-renders the chat. The
+analysis below is kept as the rationale for that migration.
 
-`AppState.tsx` builds one context value (`:290-540`) containing **40+ fields and
-30+ actions**, recreated whenever `state`, `ready` or `authToken` changes
-(`:540`). Every `useApp()` consumer re-renders on any change — including
-`toggleDownload`, `addMessage`, `togglePlanned`, etc. Two consequences:
+The former context built one value containing **40+ fields and 30+ actions**,
+recreated whenever `state`, `ready` or `authToken` changed. Every `useApp()`
+consumer re-rendered on any change — including `toggleDownload`, `addMessage`,
+`togglePlanned`, etc. Two consequences:
 
-1. Adding more `useApp()`-based hooks (e.g. `useActiveStudy`) increases the
+1. Adding more `useApp()`-based hooks (e.g. `useActiveStudy`) increased the
    number of consumers, not the cost per consumer.
-2. The biggest win would be **splitting the context** into
-   `SessionContext` (user/token/session fields), `PreferencesContext`
-   (locale/theme/design), and `DataContext` (curriculum, downloads, imports,
-   reviews, transfers, messages, plannedIds) — or exposing selector hooks.
+2. The biggest win was splitting the state by subscription rather than by
+   provider: a store with selectors gives each screen only the fields it reads.
 
-Recommended sequence if this is pursued:
-
-- Keep `useApp()` as a compatibility facade that calls the three contexts.
-- Extract `useActiveStudy`, `useLeaveSession`, etc. first (they work either way).
-- Split providers only when a screen re-render profile shows up as a problem.
-
-Do **not** replace the context with a store library as part of a hook cleanup;
-that is a separate migration.
-
-`OnboardingState` has the same pattern but is small (9 values) and fine.
+`OnboardingState` has the same provider pattern but is small (9 values) and fine;
+it still reads the app store through selectors.
 
 ---
 
@@ -887,7 +879,7 @@ that is a separate migration.
 | `Platform.OS === 'web'` | A module constant (`const IS_WEB = Platform.OS === 'web'`), not a hook. It never changes at runtime. |
 | `tx(locale, key)` | Pure lookup. Wrapping it in a hook hides a cheap call. |
 | Single `useState` pairs (`const [query, setQuery]`, `const [open, setOpen]`) | Replacing 2 lines with a custom hook adds indirection. Only group them when they move together (`useDisclosure`, `useForm` with ≥3 fields). |
-| `useApp()` field-by-field hooks | Each `useContext` call has the same re-render cost; selectors need a provider split (§8). |
+| `useAppSelector` per field | The intended read path: one field per call keeps the subscription narrow. Do not build a new object inside a selector. |
 | `useCampusHeadlessLogin` | 297 lines of genuine state machine + WebView bridge. Refactoring it for symmetry would risk the sign-in path. |
 | `useVpn` | Already well-factored; only the *form* around it should move. |
 | `useMailInbox` split | Cohesive. Wait for a third consumer before splitting. |

@@ -2,13 +2,15 @@ import { Stack, router } from 'expo-router';
 
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents, modules, reviews as seedReviews } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 import { Text } from 'react-native';
 
 export default function PeersScreen() {
-  const { locale, reviews, imports } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const reviews = useAppSelector((state) => state.reviews);
+  const imports = useAppSelector((state) => state.imports);
   const all = [...reviews, ...seedReviews];
   const sharedNotes = [
     ...documents.filter((item) => item.source === 'peer').map((item) => ({ id: item.id, title: pick(item.title, locale), detail: item.author })),

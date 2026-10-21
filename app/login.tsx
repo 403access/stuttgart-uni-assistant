@@ -10,7 +10,7 @@ import { Field, LanguagePicker } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
 import { WebDeviceLogin } from '@/src/components/web-device-login';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -36,7 +36,8 @@ const HIGHLIGHTS = [
 
 function NativeLoginScreen() {
   const insets = useSafeAreaInsets();
-  const { locale, setLocale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const { setLocale } = appActions;
   const { status, campusStatus, harvestBusy, browser, headless, campusSignIn } = useLoginFlow();
   // Both status probes fall back to null when the assistant server is down.
   const serverDown = status === null && campusStatus === null;

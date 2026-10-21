@@ -1,5 +1,5 @@
 import { activeStudy } from '@/src/auth/campus';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import type { CampusStudy } from '@/src/types';
 
 export interface ActiveStudy {
@@ -16,7 +16,9 @@ export interface ActiveStudy {
  * that rule.
  */
 export function useActiveStudy(): ActiveStudy {
-  const { sessionMode, campusStudies, activeStudyId } = useApp();
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const campusStudies = useAppSelector((state) => state.campusStudies);
+  const activeStudyId = useAppSelector((state) => state.activeStudyId);
   const isCampus = sessionMode === 'campus' && campusStudies.length > 0;
   const study = isCampus ? activeStudy(campusStudies, activeStudyId) : null;
   return { study, studyId: study?.studyId ?? null, isCampus };

@@ -5,12 +5,15 @@ import { Text, TextInput } from 'react-native';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents } from '@/src/data';
 import { pickStudyFile } from '@/src/documents/io';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { pick, tx, uid } from '@/src/text';
 
 export default function DocumentsScreen() {
-  const { locale, downloadedIds, imports, syncPlatform, addImport, toggleDownload } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const downloadedIds = useAppSelector((state) => state.downloadedIds);
+  const imports = useAppSelector((state) => state.imports);
+  const { syncPlatform, addImport, toggleDownload } = appActions;
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [message, setMessage] = useState('');

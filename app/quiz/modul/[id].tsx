@@ -7,7 +7,7 @@ import { findQuizModuleById, studyForModule } from '@/src/quiz/content';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, topicStats } from '@/src/quiz/session';
 import type { QuizModule, QuizMode, QuizTopic } from '@/src/quiz/types';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { firstParam, pick, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
@@ -17,7 +17,7 @@ function startTopic(topic: QuizTopic, mode: QuizMode) {
 }
 
 export default function QuizModuleScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{ id: string }>();
   const { ready, attempts, activeSessions } = useQuizProgress();
   const module = findQuizModuleById(firstParam(params.id));

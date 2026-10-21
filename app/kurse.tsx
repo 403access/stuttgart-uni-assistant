@@ -13,7 +13,7 @@ import { showToast } from '@/src/components/toast';
 import { StudySelector } from '@/src/components/study-selector';
 import { keys } from '@/src/query/keys';
 import { coursesFetchedIdsQuery, coursesSyncQuery, deviceCoursesQuery, deviceNodesQuery, serverCoursesQuery } from '@/src/query/queries';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyle } from '@/src/theme';
 import { formatDay, formatTime, tx } from '@/src/text';
 
@@ -25,7 +25,8 @@ type CourseSort = 'title' | 'type' | 'time';
  * (Seminar, Vorlesung, … — whatever the portal returns), search, and sort.
  */
 export default function KurseScreen() {
-  const { locale, setCurriculum } = useApp();
+  const locale = useAppSelector((state) => state.locale);
+  const { setCurriculum } = appActions;
   const [failedIds, setFailedIds] = useState<number[]>([]);
   const [saveError, setSaveError] = useState('');
   const [query, setQuery] = useState('');

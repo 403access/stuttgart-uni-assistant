@@ -11,7 +11,7 @@ import { questionKindLabel } from '@/src/quiz/labels';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { topicStats } from '@/src/quiz/session';
 import type { QuizMode, QuizTopic } from '@/src/quiz/types';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { firstParam, formatTimestamp, pick, tx } from '@/src/text';
 import type { Locale } from '@/src/types';
@@ -21,7 +21,7 @@ function parseMode(value: string | undefined): QuizMode {
 }
 
 export default function QuizTopicOverviewScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{ topic: string; mode?: string }>();
   const { ready, attempts, sessions, activeSessions, clearActiveSession } = useQuizProgress();
   const topicId = firstParam(params.topic);

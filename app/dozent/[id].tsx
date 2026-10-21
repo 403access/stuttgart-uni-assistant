@@ -3,12 +3,12 @@ import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen } from '@/src/components/ui';
 import { modules, people, places } from '@/src/data';
-import { useApp } from '@/src/state/AppState';
+import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { firstParam, pick, tx } from '@/src/text';
 
 export default function PersonScreen() {
-  const { locale } = useApp();
+  const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{ id: string }>();
   const person = people.find((item) => item.id === firstParam(params.id));
   if (!person) {

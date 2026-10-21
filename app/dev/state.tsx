@@ -6,7 +6,7 @@ import { Platform, Text, View } from 'react-native';
 import { JsonTree } from '@/src/components/json-tree';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
-import { APP_STATE_STORAGE_KEY, useApp } from '@/src/state/AppState';
+import { APP_STATE_STORAGE_KEY, useAppState } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
@@ -16,7 +16,7 @@ import { tx } from '@/src/text';
  * absent, not by value.
  */
 export default function DevStateScreen() {
-  const { locale, ...app } = useApp();
+  const { locale, ...app } = useAppState();
   const [raw, setRaw] = useState<unknown>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');

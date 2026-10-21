@@ -28,7 +28,7 @@ Expo Router, file-based, typed routes. A group such as `(tabs)` does not appear 
 The root layout owns the session:
 
 1. `preventAutoHideAsync` keeps the splash visible.
-2. `AppStateProvider` loads Async Storage.
+2. `AppStateProvider` hydrates the TanStack Store from Async Storage.
 3. `Gate` reads `useSegments`. Signed out and not on `/login` replaces to `/login`. Signed in and on `/login` replaces to `/`. Otherwise the gate is settled.
 4. The stack stays mounted at opacity 0 until then, so `router.replace` has a navigator. The splash hides only after the route matches the session.
 
@@ -40,8 +40,8 @@ Stack headers are off. Each screen draws its own title with the shared `Screen` 
 
 | Layer | Responsibility |
 | --- | --- |
-| Screens in `app/` | Render, collect input, call `useApp` and the domain helpers |
-| `src/state` | Session, language, and everything the student types |
+| Screens in `app/` | Render, collect input, call `useAppSelector`/`appActions` and the domain helpers |
+| `src/state` | The TanStack Store: session, language, curriculum selection, and everything the student types ([tanstack-store.md](tanstack-store.md)) |
 | `src/auth` | The sign-in flows, the device vault, the server session token, and the pure user parser |
 | `src/data` | The fictional catalog: program, modules, people, places, deadlines, news, documents, reviews, exams, tutorials |
 | `src/domain/plan.ts` | Pure functions over that catalog |
@@ -58,13 +58,13 @@ Stack headers are off. Each screen draws its own title with the shared `Screen` 
 4. `askGrok` POSTs `{ locale, question, facts, history }` to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` when a tunnel is up, otherwise `EXPO_PUBLIC_ASSISTANT_URL` or `http://127.0.0.1:8787`, with a 40 second abort.
 5. A non-empty reply replaces that message and sets `engine: 'grok'`. Any failure leaves the campus bubble.
 
-The history sent upstream is the messages already in state plus the new user turn. `setState` is asynchronous, so the hook's `messages` array does not yet include the turn that was just added. The chat screen passes that turn explicitly.
+The history sent upstream is the messages already in state plus the new user turn. A store update reaches the hook's `messages` array only on the next render, so the chat screen passes that turn explicitly.
 
 Document summary and plain language follow the same pair: extractive text first (`summarize`, `asBullets`), Grok when the server returns text. Translation of a bundled document switches the other language immediately and does not wait on the network.
 
 ## Persistence
 
-One Async Storage key, `university-assistant/v1`. The shape is `PersistedState` in `src/types.ts`. Writes happen after the first successful load, so an empty initial state does not wipe a stored record. `sanitize` drops unexpected shapes on read. Chat is capped at 40 messages. Imports are capped at 40. Reset clears notes, reviews, transfers, downloads, sync stamps, planned modules, and chat, and keeps the language and the session.
+One Async Storage key, `university-assistant/v1`. The shape is `PersistedState` in `src/types.ts`; `src/state/app-store.ts` adds the runtime fields and strips them before writing. Writes happen after the first successful load, so an empty initial state does not wipe a stored record. `sanitize` drops unexpected shapes on read. Chat is capped at 40 messages. Imports are capped at 40. Reset clears notes, reviews, transfers, downloads, sync stamps, planned modules, and chat, and keeps the language and the session. See [tanstack-store.md](tanstack-store.md).
 
 The password never enters this object. The opt-in C@MPUS autologin credential is the only secret on the device: it lives beside the key in `expo-secure-store`, never in `PersistedState` and never in the assistant server — see [campus-browser-login.md](campus-browser-login.md). The `PersistedState` record carries a copy of the server user (`user`), but not the session token: that lives in `expo-secure-store` on native (or AsyncStorage on web) and is the only thing sent as a bearer header. See [accounts.md](accounts.md).
 
