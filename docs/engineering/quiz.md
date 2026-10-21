@@ -60,9 +60,15 @@ Registered modules:
 - `ling` — Einführung in die Linguistik, three topics from the first session
   (56 questions).
 - `phil` — Einführung in die Geschichte der Philosophie, three topics from the
-  first lecture on 19 October 2026 (93 questions). `QuizModule` also supports
-  optional `lecturer` and `email` fields; the tab shows
+  first lecture on 19 October 2026 (93 questions). The tab shows
   `Prof. Dr. Christian Martin · christian.martin@philo.uni-stuttgart.de`.
+- `prag` — Pragmatik I, four topics from the first session on 12 October 2026
+  (71 questions): context and utterance meaning, Grice’s maxims and
+  implicatures, speech acts, and organisation/exam. The tab shows
+  `Fabian Dirscherl · fabian.dirscherl@ling.uni-stuttgart.de`.
+
+`QuizModule` also supports optional `lecturer` and `email` fields, shown in the
+module header.
 
 ### Free text checking
 
