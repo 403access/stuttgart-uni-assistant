@@ -8,7 +8,8 @@ account across C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail.
 
 Status: implemented. The server side is `server/auth.mjs` and the `users`,
 `user_sessions`, and `user_platforms` tables in `server/db.mjs`. The client side
-is `src/auth/session.ts`, `src/auth/user.ts`, `AppState`, and `app/konto.tsx`.
+is `src/auth/session.ts`, `src/auth/user.ts`, the store in `src/state/`, and
+`app/konto.tsx`.
 
 ## Identity
 
@@ -57,7 +58,8 @@ links the proven platforms, and issues a token.
   Android Keystore) on native and in AsyncStorage on web, where no secure store
   exists. It is **not** in the `university-assistant/v1` AsyncStorage payload.
 
-On launch `AppState` reads the token and asks `/v1/auth/me`. A network failure
+On launch the store (`src/state/use-auth-session.ts`) reads the token and asks
+`/v1/auth/me`. A network failure
 keeps the cached user, so the app still opens offline with the last account
 shown.
 
@@ -66,8 +68,8 @@ The token is stored with the server **session id** (`session.id` from
 cannot authenticate a request; it names the session row next to the token.
 
 `SessionRefresh` (`src/auth/session-refresh.tsx`) repeats the check whenever the
-app becomes active. A 401 triggers one silent re-login before anything is
-dropped:
+app becomes active; the silent path lives in `src/state/use-session-resume.ts`.
+A 401 triggers one re-login before anything is dropped:
 
 - `demo` and `local` accounts are minted again from the stored mode and account.
 - C@MPUS re-submits the last portal harvest the server accepted (kept in the

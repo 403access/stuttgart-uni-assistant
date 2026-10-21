@@ -848,6 +848,10 @@ remaining step is to derive its `status` and `folders` from the snapshot too.
 Not strictly hook extraction, but it limits the value of any hook work and is
 worth a decision:
 
+Status: the implementation is now split into `src/state/use-*.ts` modules and
+`AppStateProvider.tsx`; `AppState.tsx` only re-exports the provider and
+`useApp`. The single context value described below is unchanged.
+
 `AppState.tsx` builds one context value (`:290-540`) containing **40+ fields and
 30+ actions**, recreated whenever `state`, `ready` or `authToken` changes
 (`:540`). Every `useApp()` consumer re-renders on any change — including

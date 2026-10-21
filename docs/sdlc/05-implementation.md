@@ -32,7 +32,7 @@ src/domain/plan.ts           totals, locks, suggestion, search
 src/assistant/answer.ts      deterministic answers
 src/assistant/context.ts     localized fact input
 src/assistant/remote.ts      optional call to the server
-src/state/AppState.tsx       persistence
+src/state/                   persistence, session, and actions
 src/documents/io.ts          picker and export
 src/i18n/de.ts               German copy, source of truth for the key set
 src/i18n/en.ts               English copy, typed against the German keys

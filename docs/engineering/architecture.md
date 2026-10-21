@@ -10,7 +10,7 @@ app/                         Expo Router screens
 src/data/                    bundled record (no React)
 src/domain/plan.ts           totals, locks, suggestion, search
 src/assistant/               local answers, fact sheet, Grok client
-src/state/AppState.tsx       Async Storage
+src/state/                   app store (persistence, session, actions)
 src/documents/io.ts          picker and export
 src/components/ui.tsx        shared visual pieces
 src/i18n/                    German/English catalogs and the `tx` lookup

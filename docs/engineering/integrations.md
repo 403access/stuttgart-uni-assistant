@@ -10,7 +10,7 @@ Every sign-in creates or refreshes one server-side user, keyed by the st-account
 
 ## What sync does today
 
-`syncPlatform` in `src/state/AppState.tsx` writes an ISO timestamp on `syncAt[platform]`. For ILIAS it also marks the bundled ILIAS document ids as downloaded. The handbook, grades, deadlines, and news do not change, because they already are the record.
+`syncPlatform` in `src/state/use-content-actions.ts` writes an ISO timestamp on `syncAt[platform]`. For ILIAS it also marks the bundled ILIAS document ids as downloaded. The handbook, grades, deadlines, and news do not change, because they already are the record.
 
 **UniMail is the one real personal-data connector besides C@MPUS.** The student enters the
 st-account and password in the app, the assistant server proofs the pair against the TIK
