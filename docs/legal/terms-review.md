@@ -230,7 +230,7 @@ What is missing:
 
 ### 6.1 The interface is allowed
 
-TIK publishes IMAP (`imap.uni-stuttgart.de:993`, SSL) as an interface for mail clients. Using IMAP for a read-only inbox is within the published service description. The app does not send mail or create drafts.
+TIK publishes IMAP (`imap.uni-stuttgart.de:993`, SSL) as an interface for mail clients. Using IMAP to read an inbox and set its read flag is within the published service description. The app does not send mail or create drafts.
 
 ### 6.2 The handling is the problem
 
@@ -556,7 +556,7 @@ This is not a project that ignores the issues. The repository already does sever
 - The university signet and Univers typeface are not embedded; the bundle id is not a `uni-stuttgart.de` id.
 - The SIAM path does not collect the password in the app.
 - The xAI key stays on the server; the client bundle does not contain it.
-- The mail interface is the published IMAP service, and the app is read-only.
+- The mail interface is the published IMAP service, and the app only writes the read flag.
 - Exam PDFs and lecture decks are not redistributed.
 - The privacy notice is detailed and names the main recipients.
 - The Tally forms do not ask for C@MPUS passwords or tokens.

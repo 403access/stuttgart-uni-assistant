@@ -281,6 +281,44 @@ export async function loadMailMessages(limit = 25, folder = 'INBOX'): Promise<Ma
   return messages;
 }
 
+/** Patch the read flag of one cached row in place; every screen subscribes to the store. */
+function publishSeen(folder: string, uid: number, seen: boolean) {
+  const snapshot = mailStore.state;
+  if (!snapshot.messages || snapshot.folder !== folder) return;
+  if (!snapshot.messages.some((row) => row.uid === uid && row.seen !== seen)) return;
+  publish({ messages: snapshot.messages.map((row) => (row.uid === uid ? { ...row, seen } : row)) });
+}
+
+/**
+ * Set or clear the IMAP `\Seen` flag of one message through the assistant server
+ * (`UID STORE ±FLAGS (\Seen)`). The cached row flips first so the list dot and the
+ * detail pill react immediately; a failed request restores the previous flag.
+ */
+export async function setMailSeen(folder: string, uid: number, seen: boolean): Promise<void> {
+  const cached = mailStore.state.folder === folder ? mailStore.state.messages?.find((row) => row.uid === uid) : undefined;
+  const previous = cached?.seen;
+  if (previous !== undefined) publishSeen(folder, uid, seen);
+  const url = endpoint('/v1/mail/seen');
+  console.info('[mail-seen] POST', url);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folder, uid, seen }),
+    });
+  } catch {
+    if (previous !== undefined) publishSeen(folder, uid, previous);
+    throw new Error('server_unreachable');
+  }
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => ({}))) as MailCredentialsFailure;
+    if (previous !== undefined) publishSeen(folder, uid, previous);
+    throw mailFailure(payload, 'mail_failed', response.status);
+  }
+  console.info('[mail-seen] status', response.status, seen ? 'read' : 'unread');
+}
+
 /**
  * Full body of one message, read through the assistant server (`BODY.PEEK`, so nothing is
  * marked read). The server never exposes raw active content: script blocks, event handler

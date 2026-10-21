@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage } from '@/src/auth/mail';
+import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage, setMailSeen } from '@/src/auth/mail';
 import { MailBody } from '@/src/components/mailBody';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
+import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -24,15 +25,48 @@ export default function MailMessageScreen() {
   const params = useLocalSearchParams<{ uid?: string | string[]; folder?: string | string[] }>();
   const uid = Number(Array.isArray(params.uid) ? params.uid[0] : params.uid);
   const folder = (Array.isArray(params.folder) ? params.folder[0] : params.folder) ?? 'INBOX';
-  /** Header rows come from the loaded list (mirror-driven): no separate IMAP roundtrip. */
-  const [message] = useState<MailMessage | null>(() => getMailSnapshot().messages?.find((row) => row.uid === uid) ?? null);
+  /**
+   * Header rows come from the loaded list (mirror-driven): no separate IMAP roundtrip.
+   * The snapshot wins so the read flag follows every publish; the captured row is the
+   * fallback while the list is being replaced (e.g. a folder refresh).
+   */
+  const [initial] = useState<MailMessage | null>(() => getMailSnapshot().messages?.find((row) => row.uid === uid) ?? null);
+  const snapshot = useMailSnapshot();
+  const live = snapshot.folder === folder ? snapshot.messages?.find((row) => row.uid === uid) : undefined;
+  const message = live ?? initial;
   const [body, setBody] = useState<MailBodyData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [seenBusy, setSeenBusy] = useState(false);
+  const [seenError, setSeenError] = useState('');
   const [showHtml, setShowHtml] = useState(false);
+  /** Opening the view marks the mail read exactly once; the button below can undo it. */
+  const markedOnOpen = useRef(false);
 
   /** Derived, not state: a malformed uid must not produce a setState-in-effect round. */
   const invalidUid = !Number.isInteger(uid) || uid < 1;
+
+  const toggleSeen = useCallback(async () => {
+    if (!message || seenBusy) return;
+    setSeenBusy(true);
+    setSeenError('');
+    try {
+      await setMailSeen(folder, uid, !message.seen);
+    } catch (caught) {
+      setSeenError(mailMessage(locale, caught instanceof Error ? caught.message : 'mail_failed', mailDetail(caught)));
+    } finally {
+      setSeenBusy(false);
+    }
+  }, [folder, locale, message, seenBusy, uid]);
+
+  useEffect(() => {
+    if (invalidUid || markedOnOpen.current || !message) return;
+    markedOnOpen.current = true;
+    if (message.seen) return;
+    setMailSeen(folder, uid, true).catch((caught) => {
+      setSeenError(mailMessage(locale, caught instanceof Error ? caught.message : 'mail_failed', mailDetail(caught)));
+    });
+  }, [folder, invalidUid, locale, message, uid]);
 
   useEffect(() => {
     let active = true;
@@ -80,6 +114,15 @@ export default function MailMessageScreen() {
         </Text>
         {message && !message.seen ? <Pill tone="wait" label={tx(locale, 'mailNachricht.neu')} /> : null}
       </Card>
+
+      {message && !invalidUid ? (
+        <Button
+          secondary
+          label={message.seen ? tx(locale, 'mailNachricht.ungelesen_markieren') : tx(locale, 'mailNachricht.gelesen_markieren')}
+          onPress={() => void toggleSeen()}
+        />
+      ) : null}
+      {seenError ? <Text style={styles.error}>{seenError}</Text> : null}
 
       {invalidUid && !error ? <Text style={styles.error}>{mailMessage(locale, 'bad_uid')}</Text> : null}
       {loading && !invalidUid ? <Text style={styles.hint}>{tx(locale, 'mailNachricht.nachricht_laedt')}</Text> : null}

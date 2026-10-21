@@ -1,6 +1,6 @@
 # University e-mail (UniMail)
 
-The **Nachrichten (Messages)** tab connects to your university mailbox through IMAP, the interface IZUS/TIK publishes for third-party mail programs. It is read-only by design in this build — reading, searching, and filing views. Replies, sending, and drafts stay in the university webmail.
+The **Nachrichten (Messages)** tab connects to your university mailbox through IMAP, the interface IZUS/TIK publishes for third-party mail programs. Reading, searching, filing views, and the read/unread flag are supported; replies, sending, and drafts stay in the university webmail.
 
 ## Connect
 
@@ -23,10 +23,10 @@ The sticky control bar keeps the mailbox, search, filter, and sort controls in o
 
 Connection settings live on the **Campus** tab under **E-Mail**: it opens the same connection screen with **Posteingang aktualisieren (refresh inbox)** and **Verbindung lösen (drop connection)**.
 
-Rows refresh quietly every 60 seconds while connected. Browsing with `BODY.PEEK` never marks a message read — the university webmail stays the place where read state and flags really change.
+Rows refresh quietly every 60 seconds while connected. Opening a message sets its read flag through IMAP, so the university webmail shows it as read too; the button in the read view can mark it unread again.
 
 ## Reading a message
 
-Tap a row to open the read view. The plain text shows by default. If the message is HTML, the sanitized markup is available but only rendered after you tap **HTML anzeigen**. That toggle is a security measure, not a limitation: the HTML view runs without JavaScript, refuses every navigation, and links out are never followed inside the app, so a mail link cannot open a tracking or phishing page in the reader. Quoted replies sit behind a **Zitat anzeigen** toggle.
+Tap a row to open the read view; opening it marks the message as read. A button below the header flips the flag: **Als ungelesen markieren (mark as unread)** once it is read, **Als gelesen markieren (mark as read)** while it is still unread. The plain text shows by default. If the message is HTML, the sanitized markup is available but only rendered after you tap **HTML anzeigen**. That toggle is a security measure, not a limitation: the HTML view runs without JavaScript, refuses every navigation, and links out are never followed inside the app, so a mail link cannot open a tracking or phishing page in the reader. Quoted replies sit behind a **Zitat anzeigen** toggle.
 
 Unauthenticated content is not fetched: remote images stay off, and only what the mail itself contains is shown.

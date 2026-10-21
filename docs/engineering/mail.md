@@ -38,7 +38,7 @@ Two surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
   refresh here is visible in the inbox the moment the user comes back.
 
 ```text
-Student → app (read-only list) → assistant server (process memory) → imap.uni-stuttgart.de:993
+Student → app (list + read flag) → assistant server (process memory) → imap.uni-stuttgart.de:993
 ```
 
 ## Flow
@@ -61,7 +61,8 @@ Student → app (read-only list) → assistant server (process memory) → imap.
    session: `LOGIN`, `SELECT` of the chosen folder (INBOX by default), then `FETCH` of the
    newest rows with
    `UID FLAGS INTERNALDATE BODY.PEEK[HEADER.FIELDS (DATE FROM TO SUBJECT)]` and a
-   `BODY.PEEK[TEXT]<0.1024>` excerpt. `BODY.PEEK` never marks messages read.
+   `BODY.PEEK[TEXT]<0.1024>` excerpt. `BODY.PEEK` keeps the list read from touching
+   any flag; read state changes only through the explicit `POST /v1/mail/seen` route.
 
    Tapping a row pushes **`app/mail-nachricht.tsx`**, which fetches the full body via
    `GET /v1/mail/body?folder=&uid=`. The server reads the message's `BODYSTRUCTURE`,
@@ -78,6 +79,13 @@ Student → app (read-only list) → assistant server (process memory) → imap.
    the sanitized markup is available but only rendered after the user taps
    "HTML anzeigen" — below that toggle sits a security note, and the WebView renders
    without JavaScript, without meta-refresh, and without any navigation.
+
+   Opening the view calls `POST /v1/mail/seen` once, and a button flips the same flag
+   back. The route runs one IMAP session (`SELECT`, `UID STORE <uid> ±FLAGS (\Seen)`);
+   `server/mail.mjs` publishes the new row state into the snapshot optimistically first
+   and restores it when the request fails, so the list dot, the "Neu" filter and the
+   detail pill stay in agreement. `BODY.PEEK` still keeps the body fetch from changing
+   the flag implicitly.
 4. **Drop** (`POST /v1/mail/logout`). Clears the memory on the server (credentials and
    the body cache); nothing was on
    the device anyway. Signing out also clears the local `mailAccount` reference.
@@ -91,10 +99,11 @@ inline `{n}` literals.
 
 ## Scope
 
-Read-only: subject, sender, date, read/unread state, and a text excerpt, browsable per
-folder. Replying,
-sending, and drafts remain in the webmail the university itself operates. There is no
-IMAP for ILIAS notifications beyond what the university already forwards to the mailbox.
+Read-mostly: subject, sender, date, read/unread state, and a text excerpt, browsable per
+folder. The read flag is the only mailbox mutation this build performs (`UID STORE`);
+replying, sending, and drafts remain in the webmail the university itself operates.
+There is no IMAP for ILIAS notifications beyond what the university already forwards to
+the mailbox.
 
 ## Security notes
 

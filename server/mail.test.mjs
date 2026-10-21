@@ -16,6 +16,7 @@ import {
   parseListLines,
   pickTextParts,
   publicMailStatus,
+  seenStoreCommand,
   stripMailHtml,
   textPreview,
 } from './mail.mjs';
@@ -168,6 +169,11 @@ test('normalizeMailAccount and mailAddressFor use the TIK long/short forms', () 
   assert.equal(normalizeMailAccount('AC987654'), 'ac987654');
   assert.equal(mailAddressFor('st123456'), 'st123456@stud.uni-stuttgart.de');
   assert.equal(mailAddressFor('ac987654'), 'ac987654@uni-stuttgart.de');
+});
+
+test('seenStoreCommand adds and removes the read flag', () => {
+  assert.equal(seenStoreCommand(9001, true), 'UID STORE 9001 +FLAGS (\\Seen)');
+  assert.equal(seenStoreCommand(9001, false), 'UID STORE 9001 -FLAGS (\\Seen)');
 });
 
 test('publicMailStatus starts unconfigured and never leaks secrets', () => {

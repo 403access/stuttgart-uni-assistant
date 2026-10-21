@@ -193,6 +193,31 @@ export function parseListLines(lines) {
   return [...byName.values()];
 }
 
+/** `UID STORE` line that adds or removes the `\Seen` flag, e.g. `UID STORE 42 +FLAGS (\Seen)`. */
+export function seenStoreCommand(uid, seen) {
+  return `UID STORE ${uid} ${seen ? '+FLAGS' : '-FLAGS'} (\\Seen)`;
+}
+
+/**
+ * Set or clear the read flag of one message. The flag lives on the IMAP server, so the
+ * change is visible in the university webmail too; `±FLAGS` is idempotent either way.
+ */
+export async function setMailSeen(folderRaw, uidRaw, seen) {
+  if (!secrets) throw mailFailure('mail_not_configured');
+  const folder = String(folderRaw ?? 'INBOX').trim().slice(0, 128) || 'INBOX';
+  const uid = Math.floor(Number(uidRaw));
+  if (!Number.isInteger(uid) || uid < 1 || uid > 999_999_999) throw mailFailure('bad_uid');
+  const read = Boolean(seen);
+  return withSession(secrets.username, secrets.password, async (session) => {
+    const select = await session.command(`SELECT ${imapQuoted(folder)}`);
+    if (select.status !== 'OK') throw mailFailure('imap_error', select.text);
+    const store = await session.command(seenStoreCommand(uid, read));
+    if (store.status !== 'OK') throw mailFailure('imap_error', store.text);
+    console.log(`[mail] seen uid=${uid} seen=${read} folder=${folder}`);
+    return { uid, seen: read };
+  });
+}
+
 /** Recent messages of one mailbox in IMAP sequence order (newest last). Read-only. */
 export async function loadMailMessages(limitRaw, folderRaw) {
   if (!secrets) throw mailFailure('mail_not_configured');

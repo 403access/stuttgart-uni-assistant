@@ -1,7 +1,7 @@
 /** UniMail routes. Credentials arrive here and stay in this process. */
 
 import { authenticateRequest, getUser, linkPlatform, unlinkPlatform } from '../auth.mjs';
-import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials } from '../mail.mjs';
+import { forgetMailCredentials, loadMailBody, loadMailFolders, loadMailMessages, publicMailStatus, saveMailCredentials, setMailSeen } from '../mail.mjs';
 import { readJsonBody, send } from '../http.mjs';
 import { logRequest } from '../request-log.mjs';
 
@@ -73,6 +73,23 @@ export async function handleMail(request, response, url) {
       const code = error.message || 'mail_failed';
       const status = code === 'mail_not_configured' ? 409 : code === 'mail_auth_failed' ? 401 : code === 'bad_uid' ? 400 : 500;
       console.log(`[mail #${reqId}] body failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      send(response, status, { error: code, detail: error.detail });
+    }
+    return true;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/mail/seen') {
+    const reqId = logRequest('POST /v1/mail/seen');
+    const parsed = await readJsonBody(request, response);
+    if (!parsed) return true;
+    try {
+      // Explicit flag write: opening a message marks it read, the button can undo that.
+      const result = await setMailSeen(parsed.body?.folder, parsed.body?.uid, parsed.body?.seen !== false);
+      console.log(`[mail #${reqId}] seen ok uid=${result.uid} seen=${result.seen}`);
+      send(response, 200, result);
+    } catch (error) {
+      const code = error.message || 'mail_failed';
+      const status = code === 'mail_not_configured' ? 409 : code === 'mail_auth_failed' ? 401 : code === 'bad_uid' ? 400 : 500;
+      console.log(`[mail #${reqId}] seen failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, status, { error: code, detail: error.detail });
     }
     return true;
