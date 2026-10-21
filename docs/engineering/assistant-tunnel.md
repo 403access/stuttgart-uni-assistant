@@ -24,6 +24,29 @@ The split is what keeps a stopped tunnel from poisoning a local run. Before it, 
 
 The LAN path stays the simpler one and does not need Cloudflare: with `npx expo start` (no `--tunnel`) the app reuses the Metro dev-server host on port 8787, so a phone on the same Wi-Fi reaches the assistant directly with the default `.env`. Setting `EXPO_PUBLIC_ASSISTANT_URL=http://<computer-lan-ip>:8787` is only needed for a non-default port or a server on another machine. The tunnel path is for a phone on mobile data, a different network, or a demonstration away from the office.
 
+## A hotspot can have no LAN address
+
+A hotspot from an IPv6-only carrier — 464XLAT, common on mobile data — gives the Mac a synthetic IPv4 instead of a LAN address. `ifconfig` shows what to look for:
+
+```
+en0: inet 192.0.0.2 netmask 0xffffffff
+     nat64 prefix 64:ff9b:: prefixlen 96
+     inet6 2a01:… clat46
+```
+
+`192.0.0.2/32` is the CLAT address macOS synthesises for itself; every device on that hotspot gets one of its own. It is not routable from the phone, so no QR code and no `EXPO_PUBLIC_ASSISTANT_URL` edit makes the LAN path work. Metro advertises it anyway, because it is the only non-loopback IPv4 on the machine.
+
+The simulator shares the Mac's network stack, so it does reach the address — and then iOS refuses it. The generated `Info.plist` has `NSAllowsArbitraryLoads` off with `NSAllowsLocalNetworking` on, and that exemption covers `.local` names and the private ranges (`10/8`, `172.16/12`, `192.168/16`), not `192.0.0.2`. The dev client reports *"The resource could not be loaded because the App Transport Security policy requires the use of a secure connection."*
+
+Two ways out, neither of which edits `app.json`:
+
+| Target | Command | Why it works |
+| --- | --- | --- |
+| Simulator | `npx expo start --localhost`, then press `i` | `http://localhost:8081` is loopback, which ATS always allows. `npx expo run:ios` has no `--localhost` flag, so start the bundler separately. With a loopback dev-server host the assistant falls back to `http://127.0.0.1:8787` (`src/assistant/endpoints.ts`, rule 5). |
+| Phone | the two-tunnel path above | Both URLs are HTTPS on public hostnames, so neither ATS nor the hotspot's NAT is in the way. |
+
+Turning ATS off is not the fix. `NSAllowsArbitraryLoads` would unblock the simulator only — the phone still has no route to `192.0.0.2` — and it would weaken the release build for a development-only problem. The plain LAN path comes back on its own when the hotspot hands out a real IPv4, for example `172.20.10.2`.
+
 ## Start order
 
 ```bash
