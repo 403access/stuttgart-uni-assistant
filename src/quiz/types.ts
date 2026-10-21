@@ -182,3 +182,22 @@ export interface QuizSessionRecord {
   total: number;
   at: string;
 }
+
+/**
+ * A round that was left before the last question. It is persisted so the topic
+ * overview can offer "continue" or "restart" instead of silently starting over.
+ */
+export interface ActiveQuizSession {
+  topicId: string;
+  mode: QuizMode;
+  questionIds: string[];
+  /** Current question, 0-based. */
+  index: number;
+  /** Draft answer of the current question, if any. */
+  value: QuizAnswer | undefined;
+  /** Whether the current question was already checked. */
+  checked: boolean | null;
+  results: { questionId: string; correct: boolean }[];
+  startedAt: string;
+  updatedAt: string;
+}

@@ -8,11 +8,13 @@ export function QuizButton({
   onPress,
   disabled = false,
   secondary = false,
+  danger = false,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
+  danger?: boolean;
 }) {
   return (
     <Pressable
@@ -23,11 +25,12 @@ export function QuizButton({
       style={({ pressed }) => [
         styles.button,
         secondary && styles.secondary,
+        danger && styles.danger,
         disabled && styles.disabled,
         pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text style={[styles.label, secondary && styles.secondaryLabel]}>{label}</Text>
+      <Text style={[styles.label, secondary && styles.secondaryLabel, danger && styles.dangerLabel]}>{label}</Text>
     </Pressable>
   );
 }
@@ -42,8 +45,10 @@ const styles = themedStyles((colors) => ({
     paddingHorizontal: 16,
   },
   secondary: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.line },
+  danger: { backgroundColor: colors.dangerSoft, borderWidth: 1, borderColor: colors.danger },
   disabled: { opacity: 0.4 },
   pressed: { opacity: 0.75 },
   label: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   secondaryLabel: { color: colors.blue },
+  dangerLabel: { color: colors.danger },
 }));

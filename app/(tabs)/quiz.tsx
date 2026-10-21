@@ -1,8 +1,9 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Alert, Platform, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Card, Meter, Screen, Section } from '@/src/components/ui';
+import { confirmQuizAction } from '@/src/quiz/confirm';
 import { mixedTopic, quizModules } from '@/src/quiz/content';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@/src/quiz/session';
@@ -110,24 +111,15 @@ export default function QuizScreen() {
 
       {overall.seen > 0 ? (
         <Pressable
-          onPress={() => {
-            const title = tx(locale, 'quiz.reset_title');
-            const text = tx(locale, 'quiz.reset_text');
-            if (Platform.OS === 'web') {
-              if (typeof globalThis.confirm === 'function' && globalThis.confirm(`${title}\n\n${text}`)) {
-                resetProgress();
-              }
-              return;
-            }
-            Alert.alert(title, text, [
-              { text: tx(locale, 'common.abbrechen'), style: 'cancel' },
-              {
-                text: tx(locale, 'common.zuruecksetzen'),
-                style: 'destructive',
-                onPress: resetProgress,
-              },
-            ]);
-          }}
+          onPress={() =>
+            confirmQuizAction({
+              title: tx(locale, 'quiz.reset_title'),
+              message: tx(locale, 'quiz.reset_text'),
+              cancelLabel: tx(locale, 'common.abbrechen'),
+              confirmLabel: tx(locale, 'common.zuruecksetzen'),
+              onConfirm: resetProgress,
+            })
+          }
           style={styles.reset}
         >
           <MaterialIcons name="delete-outline" size={16} color={colors.mute} />

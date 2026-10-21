@@ -36,6 +36,14 @@ export function formatTime(value: string): string {
   return match ? match[1] : value;
 }
 
+/** Full ISO timestamp → local `20. Okt 2026, 01:57`. */
+export function formatTimestamp(value: string, locale: Locale): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${formatDay(localDay(date), locale)}, ${time}`;
+}
+
 export function formatGrade(value: number, locale: Locale): string {
   const text = value.toFixed(1);
   return locale === 'de' ? text.replace('.', ',') : text;

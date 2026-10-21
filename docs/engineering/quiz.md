@@ -3,9 +3,9 @@
 The **Quiz** tab turns module content into practice questions. It is local-only:
 answers, streaks, and session history never leave the device.
 
-Status: implemented. The tab is `app/(tabs)/quiz.tsx`, a round is
-`app/quiz/[topic].tsx`, and the reusable question views live in
-`src/quiz/components/`.
+Status: implemented. The tab is `app/(tabs)/quiz.tsx`, the topic overview is
+`app/quiz/[topic]/index.tsx`, a round is `app/quiz/[topic]/run.tsx`, and the
+reusable question views live in `src/quiz/components/`.
 
 ## Question kinds
 
@@ -86,11 +86,34 @@ keywords: [
 
 Progress is stored separately from `AppState` under
 `university-assistant/quiz/v1` (`src/quiz/progress.tsx`). It keeps per-question
-attempts, correct counts, the last result, and the latest 60 sessions. Keeping it
-separate means an older persisted app state still loads without migration.
+attempts, correct counts, the last result, the latest 60 sessions, and one
+**active session per topic**. Keeping it separate means an older persisted app
+state still loads without migration.
 
-The provider is mounted in `app/_layout.tsx` so the tab and the round screen see
-the same record. The tab can reset it after an `Alert` confirmation.
+## Interrupted rounds
+
+The topic overview is the entry point. It shows the topic summary, per-question
+progress, the question types, and the mode picker. It also shows:
+
+- **Unterbrochene Sitzung** when `activeSessions[topicId]` exists: mode, current
+  question, answered count, correct/wrong so far, and the last edit time.
+  **Fortsetzen** opens the same question ids in their original order and restores
+  the draft answer, checked state, and results. **Neu starten** asks for
+  confirmation first: restarting at question 1 discards the current round score,
+  and a later wrong answer can lower the result.
+- **Letzte abgeschlossene Runde** from the session history: score, mode, and
+  local timestamp.
+
+Starting a new mode while a round is interrupted uses the same confirmation.
+The run screen saves `activeSessions[topicId]` after each check, self-assessment,
+and question change, and on unmount when the user already interacted with the
+round. Finishing a round records the session and deletes the active entry. Going
+back from the run returns to the overview, so the interrupted session is visible
+immediately; a later visit from the tab reads the same persisted record.
+
+The provider is mounted in `app/_layout.tsx` so the tab, the overview, and the
+round screen see the same record. The tab can reset everything after an `Alert`
+confirmation.
 
 ## Checks
 

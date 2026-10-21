@@ -1,11 +1,11 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen } from '@/src/components/ui';
-import { findQuizTopic, mixedTopic } from '@/src/quiz/content';
 import { initialAnswer } from '@/src/quiz/answer';
+import { findQuizQuestion, findQuizTopic, mixedTopic } from '@/src/quiz/content';
 import { QuestionFeedback } from '@/src/quiz/components/question-feedback';
 import { QuestionView } from '@/src/quiz/components/question-view';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
@@ -13,7 +13,13 @@ import { evaluateAnswer, isAnswerComplete } from '@/src/quiz/evaluate';
 import { difficultyLabel, questionKindLabel } from '@/src/quiz/labels';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { questionsForMode } from '@/src/quiz/session';
-import type { QuizAnswer, QuizMode, QuizQuestion, QuizTopic } from '@/src/quiz/types';
+import type {
+  ActiveQuizSession,
+  QuizAnswer,
+  QuizMode,
+  QuizQuestion,
+  QuizTopic,
+} from '@/src/quiz/types';
 import { useApp } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { firstParam, pick, tx } from '@/src/text';
@@ -23,13 +29,31 @@ function parseMode(value: string | undefined): QuizMode {
   return value === 'quick' || value === 'review' || value === 'mixed' ? value : 'all';
 }
 
-export default function QuizTopicScreen() {
+function resolvedQuestions(resume: ActiveQuizSession | null): QuizQuestion[] {
+  if (!resume) return [];
+  return resume.questionIds.flatMap((id) => {
+    const question = findQuizQuestion(id);
+    return question ? [question] : [];
+  });
+}
+
+/** Whether the user already put something into the current question. */
+function hasDraft(value: QuizAnswer | undefined): boolean {
+  if (value === undefined) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.some((entry) => String(entry).trim().length > 0);
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+  return true;
+}
+
+export default function QuizRunScreen() {
   const { locale } = useApp();
-  const params = useLocalSearchParams<{ topic: string; mode?: string }>();
-  const { ready } = useQuizProgress();
+  const params = useLocalSearchParams<{ topic: string; mode?: string; fresh?: string }>();
+  const { ready, activeSessions } = useQuizProgress();
   const topicId = firstParam(params.topic);
   const topic = findQuizTopic(topicId);
   const mode = topicId === mixedTopic.id ? 'mixed' : parseMode(firstParam(params.mode));
+  const fresh = firstParam(params.fresh) === '1';
 
   if (!ready) {
     return (
@@ -50,31 +74,115 @@ export default function QuizTopicScreen() {
     );
   }
 
+  const active = fresh ? undefined : activeSessions[topic.id];
+  const resume = active && resolvedQuestions(active).length > 0 ? active : null;
+
   return (
     <QuizRound
-      key={`${topic.id}-${mode}`}
+      // Only the route decides the key. Saving an active session must not
+      // remount the round (and finishing must not start a fresh one).
+      key={`${topic.id}-${mode}-${fresh ? 'fresh' : 'resume'}`}
       topic={topic}
       mode={mode}
+      resume={resume}
       locale={locale}
     />
   );
 }
 
-function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; locale: Locale }) {
-  const { attempts, recordAnswer, recordSession } = useQuizProgress();
-  // Snapshot at mount so recording an answer cannot reshuffle the round.
-  const [questions] = useState<QuizQuestion[]>(() => questionsForMode(topic, mode, attempts));
-  const [index, setIndex] = useState(0);
-  const [value, setValue] = useState<QuizAnswer | undefined>(() =>
-    questions[0] ? initialAnswer(questions[0]) : undefined,
+function QuizRound({
+  topic,
+  mode,
+  resume,
+  locale,
+}: {
+  topic: QuizTopic;
+  mode: QuizMode;
+  resume: ActiveQuizSession | null;
+  locale: Locale;
+}) {
+  const { attempts, recordAnswer, recordSession, saveActiveSession, clearActiveSession } = useQuizProgress();
+  const resumed = resolvedQuestions(resume);
+  const canResume = Boolean(resume && resumed.length > 0 && resume.index >= 0 && resume.index < resumed.length);
+
+  // Snapshot at mount so recording an answer cannot reshuffle the round. A
+  // resumed round reuses the exact question ids and order from the saved run.
+  const [questions] = useState<QuizQuestion[]>(() =>
+    canResume ? resumed : questionsForMode(topic, mode, attempts),
   );
-  const [checked, setChecked] = useState<boolean | null>(null);
-  const [results, setResults] = useState<{ questionId: string; correct: boolean }[]>([]);
-  const [startedAt, setStartedAt] = useState(() => Date.now());
+  const [activeMode] = useState<QuizMode>(canResume ? (resume?.mode ?? mode) : mode);
+  const [index, setIndex] = useState(() => (canResume ? (resume?.index ?? 0) : 0));
+  const [value, setValue] = useState<QuizAnswer | undefined>(() => {
+    if (canResume && resume) {
+      return resume.value ?? (questions[resume.index] ? initialAnswer(questions[resume.index]) : undefined);
+    }
+    return questions[0] ? initialAnswer(questions[0]) : undefined;
+  });
+  const [checked, setChecked] = useState<boolean | null>(() =>
+    canResume && resume?.checked !== null && resume?.value !== undefined ? (resume?.checked ?? null) : null,
+  );
+  const [results, setResults] = useState<{ questionId: string; correct: boolean }[]>(() =>
+    canResume && resume ? resume.results : [],
+  );
+  const [startedAt, setStartedAt] = useState(() =>
+    canResume && resume ? Date.parse(resume.startedAt) || Date.now() : Date.now(),
+  );
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
 
   const question = questions[index];
+  const finishedRef = useRef(false);
+  const saveableRef = useRef(false);
+  const snapshotRef = useRef<ActiveQuizSession>({
+    topicId: topic.id,
+    mode: activeMode,
+    questionIds: questions.map((entry) => entry.id),
+    index,
+    value,
+    checked,
+    results,
+    startedAt: new Date(startedAt).toISOString(),
+    updatedAt: new Date(startedAt).toISOString(),
+  });
+
+  const makeSession = (next: Partial<ActiveQuizSession> = {}): ActiveQuizSession => ({
+    topicId: topic.id,
+    mode: activeMode,
+    questionIds: questions.map((entry) => entry.id),
+    index,
+    value,
+    checked,
+    results,
+    startedAt: new Date(startedAt).toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...next,
+  });
+
+  // Keep a current snapshot for the unmount save. Explicit saves below cover
+  // checks, self-assessments and question changes; the cleanup only adds a
+  // draft when the user actually interacted with the round.
+  useEffect(() => {
+    const session = makeSession();
+    snapshotRef.current = session;
+    saveableRef.current =
+      session.results.length > 0 ||
+      session.index > 0 ||
+      session.checked !== null ||
+      (question?.kind !== 'ordering' && hasDraft(session.value));
+  });
+
+  useEffect(() => {
+    finishedRef.current = finished;
+  }, [finished]);
+
+  useEffect(
+    () => () => {
+      if (!finishedRef.current && saveableRef.current) {
+        saveActiveSession(snapshotRef.current);
+      }
+    },
+    [saveActiveSession],
+  );
 
   if (!questions.length) {
     return (
@@ -95,16 +203,18 @@ function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; 
       <QuizResult
         topic={topic}
         locale={locale}
-        mode={mode}
+        mode={activeMode}
         questions={questions}
         results={results}
         durationSeconds={durationSeconds ?? 1}
         onRestart={() => {
+          const nextValue = questions[0] ? initialAnswer(questions[0]) : undefined;
+          const now = Date.now();
           setIndex(0);
-          setValue(questions[0] ? initialAnswer(questions[0]) : undefined);
+          setValue(nextValue);
           setChecked(null);
           setResults([]);
-          setStartedAt(Date.now());
+          setStartedAt(now);
           setDurationSeconds(null);
           setFinished(false);
         }}
@@ -115,32 +225,40 @@ function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; 
   const submit = () => {
     if (checked !== null || !isAnswerComplete(question, value)) return;
     const correct = evaluateAnswer(question, value);
+    const nextResults = [...results, { questionId: question.id, correct }];
     setChecked(correct);
-    setResults((current) => [...current, { questionId: question.id, correct }]);
+    setResults(nextResults);
     recordAnswer(question.id, correct);
+    saveActiveSession(makeSession({ checked: correct, results: nextResults }));
   };
 
   const selfAssess = (correct: boolean) => {
     if (checked !== null || question.kind !== 'flashcard') return;
-    setValue(correct ? 'known' : 'unknown');
+    const nextValue = correct ? ('known' as const) : ('unknown' as const);
+    const nextResults = [...results, { questionId: question.id, correct }];
+    setValue(nextValue);
     setChecked(correct);
-    setResults((current) => [...current, { questionId: question.id, correct }]);
+    setResults(nextResults);
     recordAnswer(question.id, correct);
+    saveActiveSession(makeSession({ value: nextValue, checked: correct, results: nextResults }));
   };
 
   const advance = () => {
     if (checked === null) return;
     if (index + 1 >= questions.length) {
       const correctCount = results.filter((entry) => entry.correct).length;
-      recordSession({ topicId: topic.id, mode, correct: correctCount, total: questions.length });
+      recordSession({ topicId: topic.id, mode: activeMode, correct: correctCount, total: questions.length });
+      clearActiveSession(topic.id);
       setDurationSeconds(Math.max(1, Math.round((Date.now() - startedAt) / 1000)));
       setFinished(true);
       return;
     }
     const nextIndex = index + 1;
+    const nextValue = questions[nextIndex] ? initialAnswer(questions[nextIndex]) : undefined;
     setIndex(nextIndex);
-    setValue(questions[nextIndex] ? initialAnswer(questions[nextIndex]) : undefined);
+    setValue(nextValue);
     setChecked(null);
+    saveActiveSession(makeSession({ index: nextIndex, value: nextValue, checked: null }));
   };
 
   const canCheck = question.kind !== 'flashcard' && isAnswerComplete(question, value);
@@ -148,9 +266,7 @@ function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; 
     checked !== null ? (
       <View style={styles.footer}>
         <QuizButton
-          label={
-            index + 1 >= questions.length ? tx(locale, 'quiz.finish') : tx(locale, 'quiz.next')
-          }
+          label={index + 1 >= questions.length ? tx(locale, 'quiz.finish') : tx(locale, 'quiz.next')}
           onPress={advance}
         />
       </View>
@@ -164,7 +280,7 @@ function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; 
     <Screen
       kicker={`${tx(locale, 'quiz.question')} ${index + 1} / ${questions.length}`}
       title={pick(topic.title, locale)}
-      subtitle={tx(locale, `quiz.mode.${mode}`)}
+      subtitle={tx(locale, `quiz.mode.${activeMode}`)}
       footer={footer}>
       <Stack.Screen options={{ title: pick(topic.title, locale) }} />
       <Meter value={index + (checked !== null ? 1 : 0)} max={questions.length} />
@@ -172,9 +288,7 @@ function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; 
         <Pill label={questionKindLabel(question.kind, locale)} />
         <Pill
           label={difficultyLabel(question.difficulty ?? 2, locale)}
-          tone={
-            (question.difficulty ?? 2) === 1 ? 'ok' : (question.difficulty ?? 2) === 2 ? 'wait' : 'stop'
-          }
+          tone={(question.difficulty ?? 2) === 1 ? 'ok' : (question.difficulty ?? 2) === 2 ? 'wait' : 'stop'}
         />
       </View>
       <Text style={styles.prompt}>{pick(question.prompt, locale)}</Text>
@@ -193,9 +307,7 @@ function QuizRound({ topic, mode, locale }: { topic: QuizTopic; mode: QuizMode; 
         onChange={setValue}
         onSelfAssess={selfAssess}
       />
-      {checked !== null ? (
-        <QuestionFeedback question={question} locale={locale} correct={checked} />
-      ) : null}
+      {checked !== null ? <QuestionFeedback question={question} locale={locale} correct={checked} /> : null}
     </Screen>
   );
 }
