@@ -241,6 +241,10 @@ expectInvalid(
     ),
   'multiple choice cannot mark every option correct',
 );
+expectInvalid(
+  () => topic(draft(mixedQuestions), { allowedKinds: ['single'] }),
+  'a kind outside --kinds is rejected',
+);
 
 const serialized = serializeTopicFile(normalized, 'pragTest');
 expect(serialized.includes("import type { QuizTopic } from '@/src/quiz/types';"), 'serializer emits the type import');

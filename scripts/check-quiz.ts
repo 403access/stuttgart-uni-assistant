@@ -1,5 +1,6 @@
 import { initialAnswer } from '../src/quiz/answer';
 import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '../src/quiz/content';
+import { generatedTopics } from '../src/quiz/content/generated';
 import { evaluateAnswer, isAnswerComplete, matchesAccepted } from '../src/quiz/evaluate';
 import { questionKindLabel } from '../src/quiz/labels';
 import { questionsForMode, statsForQuestions } from '../src/quiz/session';
@@ -192,10 +193,19 @@ for (const kind of kinds) {
   expect(label !== `quiz.type.${kind}`, `question kind has a label: ${kind}`);
 }
 
+const topicIds = new Set<string>();
 for (const topic of quizTopics) {
+  expect(!topicIds.has(topic.id), `topic id is unique: ${topic.id}`);
+  topicIds.add(topic.id);
   expect(topic.questions.length >= 5, `topic has at least five questions: ${topic.id}`);
   expect(Boolean(topic.title.de && topic.title.en), `topic title is bilingual: ${topic.id}`);
   expect(Boolean(topic.summary.de && topic.summary.en), `topic summary is bilingual: ${topic.id}`);
+}
+
+for (const entry of generatedTopics) {
+  const module = quizModules.find((item) => item.id === entry.moduleId);
+  expect(Boolean(module), `generated topic targets a module: ${entry.topic.id} -> ${entry.moduleId}`);
+  expect(Boolean(module?.topics.includes(entry.topic)), `generated topic is attached: ${entry.topic.id}`);
 }
 
 expect(

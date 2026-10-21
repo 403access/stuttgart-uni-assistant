@@ -218,6 +218,8 @@ export interface NormalizeContext {
   /** CLI override, used for both languages. */
   meeting?: string;
   titleOverride?: string;
+  /** When set, the topic may only contain these kinds. */
+  allowedKinds?: string[];
 }
 
 export function normalizeTopic(draft: DraftTopic, context: NormalizeContext): QuizTopic {
@@ -225,6 +227,21 @@ export function normalizeTopic(draft: DraftTopic, context: NormalizeContext): Qu
   if (!Array.isArray(draft.questions)) fail('questions is missing');
   if (draft.questions.length < 5) {
     fail(`only ${draft.questions.length} questions were returned; at least five are required`);
+  }
+  if (context.allowedKinds?.length) {
+    const disallowed = [
+      ...new Set(
+        draft.questions
+          .map((question) => question.kind)
+          .filter((kind) => !context.allowedKinds?.includes(kind)),
+      ),
+    ];
+    if (disallowed.length) {
+      fail(
+        `the model used ${disallowed.map((kind) => `"${kind}"`).join(', ')}; ` +
+          `allowed: ${context.allowedKinds.join(', ')}`,
+      );
+    }
   }
 
   const title = context.titleOverride

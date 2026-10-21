@@ -70,6 +70,49 @@ Registered modules:
 `QuizModule` also supports optional `lecturer` and `email` fields, shown in the
 module header.
 
+### Generated topics from PDFs
+
+`scripts/quiz-from-pdf.ts` turns PDFs into topics that are attached to an
+existing module. It reads embedded PDF text, asks xAI for a structured topic,
+validates it, and writes TypeScript source:
+
+```bash
+bun run quiz:from-pdf --module prag ./sitzung-2.pdf
+bun run quiz:from-pdf --module phil ./pdfs/ --questions 12
+bun run quiz:from-pdf --module prag ./sitzung-2.pdf --dry-run
+```
+
+- `--module` is required. The topic appears at the end of that module's topic
+  list and in the mixed round.
+- `--questions` defaults to 10 (minimum 5, maximum 30).
+- `--kinds` defaults to `single,multiple,true-false,free-text,cloze,flashcard`.
+  `matching` and `ordering` are also available; `map` is not generated.
+- `--title` and `--meeting` override the generated metadata. `--source-lang`
+  tells the model whether the PDF is German or English; both languages are
+  always written.
+- `--dry-run` prints the normalized topic as JSON without touching the repo.
+- `--force` is required to replace a topic with the same id. IDs are derived
+  from the module and file name, so renaming a file creates a new topic.
+- `XAI_API_KEY` comes from `.env` or the environment. `QUIZ_MODEL` optionally
+  overrides the model.
+
+Each PDF becomes one topic in
+`src/quiz/content/generated/<module>-<file>.ts`, and the CLI rewrites
+`src/quiz/content/generated/index.ts`. `content/index.ts` attaches those topics
+to their modules, so generated and hand-authored content share progress,
+modes, search, and validation. The pipeline never overwrites hand-authored
+topics.
+
+Only embedded text is read. A scanned PDF has to be OCRed first. The extracted
+text is capped at 120,000 characters by default (`--max-chars`); the pipeline
+truncates the end and says so.
+
+Generated quizzes are still content: review the questions and explanations
+before committing them. Only process material you are allowed to use, and do
+not commit generated questions from copyrighted lecture material without
+permission. They are committed source, not runtime data, so the app keeps
+working offline.
+
 ### Free text checking
 
 `src/quiz/evaluate.ts` lower-cases, strips accents and punctuation, collapses
@@ -134,4 +177,6 @@ confirmation.
 
 `scripts/check-quiz.ts` verifies unique ids, answer shapes, bilingual copy,
 correct/incorrect evaluation, free-text tolerance, kind labels, and topic
-registration. It runs as part of `bun run check`.
+registration. `scripts/check-quiz-pipeline.ts` checks slugging, normalization,
+invalid drafts, source capping, the registry round-trip, and serializer
+escaping. Both run as part of `bun run check`.

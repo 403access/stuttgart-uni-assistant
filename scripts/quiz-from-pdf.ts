@@ -160,6 +160,7 @@ export function parseArgs(args: string[]): Options {
               `choose from ${GENERATABLE_KINDS.join(', ')}`,
           );
         }
+        if (kinds.length === 0) fail('--kinds needs at least one question kind');
         options.kinds = [...new Set(kinds)] as GeneratableKind[];
         break;
       }
@@ -205,7 +206,7 @@ export function parseArgs(args: string[]): Options {
 async function walk(directory: string, files: Set<string>): Promise<void> {
   const entries = await readdir(directory, { withFileTypes: true });
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) continue;
+    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) {
       await walk(path, files);
@@ -358,6 +359,7 @@ async function main(): Promise<void> {
             source: sourceLabel(fileName, extracted.pages),
             meeting: options.meeting,
             titleOverride: options.title,
+            allowedKinds: options.kinds,
           });
         } catch (error) {
           if (!(error instanceof InvalidDraftError) || attempt === 2) throw error;
