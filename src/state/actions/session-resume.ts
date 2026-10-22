@@ -49,8 +49,21 @@ async function relogin(): Promise<'ok' | 'failed' | 'unreachable'> {
  * Foreground renewal. `SessionRefresh` calls this on every resume: a live token
  * is adopted, a rejected one triggers the silent re-login, and an unreachable
  * server leaves the cached session alone.
+ *
+ * Resumes are broadcast to more than one listener (the global `SessionRefresh`
+ * and the ILIAS tab), so concurrent calls share one probe instead of racing the
+ * same token against the server twice.
  */
-export async function refreshOrReauthenticate(): Promise<boolean> {
+export function refreshOrReauthenticate(): Promise<boolean> {
+  inFlight ??= runRefresh().finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
+}
+
+let inFlight: Promise<boolean> | null = null;
+
+async function runRefresh(): Promise<boolean> {
   const { sessionAccount } = getAppState();
   const token = getActiveAuthToken() ?? (await readAuthToken());
   if (!token) {

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 
+import { getActiveAuthToken } from '@/src/auth/session';
 import { readLogin, storedLoginHint } from '@/src/auth/vault';
 import { showToast } from '@/src/components/toast';
+import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { iliasAccountFrom } from '@/src/ilias/account';
 import { connectIlias, disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
 import { iliasErrorMessage as describe } from '@/src/ilias/errors';
@@ -13,7 +16,7 @@ import { tx } from '@/src/text';
 export function useIlias() {
   const locale = useAppSelector((state) => state.locale);
   const authToken = useAppSelector((state) => state.authToken);
-  const { refreshUser } = appActions;
+  const { refreshUser, refreshOrReauthenticate } = appActions;
   const [status, setStatus] = useState<IliasStatus | null>(null);
   const [dashboard, setDashboard] = useState<IliasDashboard | null>(null);
   const [settledToken, setSettledToken] = useState<string | null>(null);
@@ -173,9 +176,57 @@ export function useIlias() {
   );
 
   /**
+   * The app session refresh runs on every resume; the ILIAS session follows it.
+   * The server keeps the PHPSESSID in memory only, so a restart while the app
+   * is backgrounded leaves the tab on a dead session. Awaiting the shared
+   * session probe first keeps an expired bearer from looking like an empty
+   * ILIAS session, then a live session is reloaded and a dropped one is
+   * re-established from the vault. Failures stay quiet; the next resume retries.
+   */
+  const revalidate = useCallback(async () => {
+    if (inFlight.current || busy) return;
+    if (!(await refreshOrReauthenticate())) return;
+    // A replaced token reruns the auth-token effect above, which fetches fresh.
+    if (getActiveAuthToken() !== authToken) return;
+    let next: IliasStatus;
+    try {
+      next = await fetchIliasStatus();
+    } catch {
+      return;
+    }
+    applyStatus(next);
+    if (!next.sessionActive) {
+      // A remembered account is the server's evidence that the session was
+      // dropped by a restart. A deliberate disconnect clears it, so the vault
+      // must not quietly undo that choice.
+      if (savedLogin && next.account) await connectSaved({ quiet: true });
+      return;
+    }
+    await load({ quiet: true });
+  }, [applyStatus, authToken, busy, connectSaved, load, refreshOrReauthenticate, savedLogin]);
+
+  useAppStateChange(
+    (state) => {
+      if (state === 'active' && authToken && settledToken === authToken) void revalidate();
+    },
+    Platform.OS !== 'web',
+  );
+
+  // React Native Web does not emit AppState changes for tab switches.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return undefined;
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && authToken && settledToken === authToken) void revalidate();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [authToken, revalidate, settledToken]);
+
+  /**
    * The server keeps ILIAS cookies in memory only, so a restart drops the
    * session. While the vault holds the C@MPUS credential, the tab reconnects
-   * once per app session instead of asking for the password again.
+   * on first view instead of asking for the password again; later resumes go
+   * through `revalidate` above.
    */
   const autoConnectedToken = useRef<string | null>(null);
   useEffect(() => {

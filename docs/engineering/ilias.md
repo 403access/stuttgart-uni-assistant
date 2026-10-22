@@ -92,6 +92,12 @@ The **ILIAS** tab shows a connection panel while the account has no live
 session. After connecting it renders counts and filterable rows for courses,
 groups, news, mail, and to-dos. Pull-to-refresh reads the dashboard again.
 
+The app session is revalidated on every resume (`SessionRefresh`); the ILIAS tab
+follows the same beat. It awaits the shared session probe, reloads a live
+dashboard, and — when the opt-in C@MPUS credential sits in the device vault —
+reconnects a session that a server restart dropped, without asking for the
+password again.
+
 A course or group row opens its content page in the app (`/ilias/<refId>`).
 Folders and categories in that list drill down into the same screen. A PDF row
 opens the reader at `/ilias/datei`: the app fetches the bytes through
