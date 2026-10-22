@@ -481,13 +481,99 @@ function renderIliasTab(container, detail) {
     fieldBox('To-Dos', number(counts.tasks)),
   );
 
+  const canRead = Boolean(ilias.canRead ?? ilias.active);
+  const contentHost = h('div', { className: 'detail-section', hidden: true });
+  const browsable = new Set(['crs', 'grp', 'fold', 'cat']);
+
+  const loadContent = async (entry, trail = []) => {
+    contentHost.hidden = false;
+    contentHost.replaceChildren(loading('ILIAS-Inhalte werden geladen …'));
+    try {
+      const params = new URLSearchParams({ refId: String(entry.refId), kind: String(entry.kind || 'crs') });
+      const data = await api('/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/content?' + params.toString());
+      renderContent(data, trail);
+    } catch (error) {
+      if (error.code === 'unauthorized') return;
+      contentHost.replaceChildren(emptyState('alert', 'Inhalte konnten nicht geladen werden', errorText(error),
+        h('button', { className: 'btn secondary', type: 'button', onClick: () => loadContent(entry, trail) }, icon('refresh'), 'Erneut versuchen'),
+      ));
+    }
+  };
+
+  const renderContent = (data, trail = []) => {
+    const items = Array.isArray(data.items) ? data.items : [];
+    const fileHref = (item) => '/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/file?refId=' + encodeURIComponent(item.refId);
+    const back = () => {
+      if (!trail.length) {
+        contentHost.hidden = true;
+        contentHost.replaceChildren();
+        return;
+      }
+      const parent = trail[trail.length - 1];
+      loadContent({ refId: parent.refId, kind: parent.kind }, trail.slice(0, -1));
+    };
+    const rows = items.length
+      ? items.map((item) => h('tr', null,
+          h('td', null,
+            h('strong', { text: item.title }),
+            item.description ? h('div', { className: 'hint', text: item.description }) : null,
+          ),
+          h('td', null, h('span', { className: 'chip', text: item.type || item.kind || '–' })),
+          h('td', null, [item.size, item.pages ? item.pages + ' Seiten' : '', item.date].filter(Boolean).join(' · ') || '–'),
+          h('td', { className: 'num' }, item.refId ?? '–'),
+          h('td', null, h('div', { className: 'row tight' },
+            item.kind === 'file' && item.refId && canRead
+              ? h('a', { className: 'btn secondary small', href: fileHref(item) }, icon('download'), 'Datei')
+              : null,
+            item.refId && browsable.has(item.kind) && canRead
+              ? h('button', { className: 'btn secondary small', type: 'button', onClick: () => loadContent({ refId: item.refId, kind: item.kind }, [...trail, data]) }, icon('grid'), 'Öffnen')
+              : null,
+            item.url && item.kind !== 'file' && !browsable.has(item.kind)
+              ? h('a', { className: 'btn secondary small', href: item.url, target: '_blank', rel: 'noreferrer' }, icon('external'), 'ILIAS')
+              : null,
+          )),
+        ))
+      : [h('tr', null, h('td', { colspan: '5' }, h('p', { className: 'hint', text: 'Diese Seite enthält keine sichtbaren Objekte.' })))];
+
+    contentHost.replaceChildren(
+      sectionHead(data.title || 'ILIAS-Inhalte', [data.description, data.fetchedAt ? 'gelesen ' + relative(data.fetchedAt) : ''].filter(Boolean).join(' · ')),
+      h('div', { className: 'row', style: { marginBottom: '10px' } },
+        h('button', { className: 'btn secondary small', type: 'button', onClick: back }, icon('chevron-left'), trail.length ? 'Zurück' : 'Schließen'),
+        h('a', {
+          className: 'btn secondary small',
+          href: 'https://ilias3.uni-stuttgart.de/go/' + encodeURIComponent(data.kind || 'crs') + '/' + encodeURIComponent(data.refId),
+          target: '_blank',
+          rel: 'noreferrer',
+        }, icon('external'), 'In ILIAS öffnen'),
+        h('span', { className: 'hint', text: items.length + ' Objekte' }),
+      ),
+      h('div', { className: 'table-wrap' },
+        h('table', { className: 'data', style: { minWidth: '880px' } },
+          h('caption', { className: 'sr-only' }, 'ILIAS-Inhalte'),
+          h('thead', null, h('tr', null,
+            h('th', null, 'Titel'), h('th', null, 'Typ'), h('th', null, 'Details'), h('th', { className: 'num' }, 'Ref-ID'), h('th', null, ''),
+          )),
+          h('tbody', null, ...rows),
+        ),
+      ),
+    );
+  };
+
   const membershipRows = (dashboard?.memberships || []).length
     ? dashboard.memberships.map((item) => h('tr', null,
         h('td', null, item.url ? h('a', { href: item.url, target: '_blank', rel: 'noreferrer', text: item.title }) : h('strong', { text: item.title }), h('div', { className: 'hint', text: item.description || item.group || '–' })),
         h('td', null, h('span', { className: 'chip', text: item.type || item.kind || '–' })),
         h('td', { className: 'num' }, item.refId ?? '–'),
+        h('td', null, item.refId && (item.kind === 'crs' || item.kind === 'grp')
+          ? h('button', {
+              className: 'btn secondary small',
+              type: 'button',
+              disabled: !canRead,
+              onClick: () => loadContent({ refId: item.refId, kind: item.kind }, []),
+            }, icon('grid'), 'Inhalte')
+          : h('span', { className: 'hint', text: '–' })),
       ))
-    : [h('tr', null, h('td', { colspan: '3' }, h('p', { className: 'hint', text: 'Kein Dashboard-Stand gespeichert.' })))];
+    : [h('tr', null, h('td', { colspan: '4' }, h('p', { className: 'hint', text: 'Kein Dashboard-Stand gespeichert.' })))];
 
   const newsList = (dashboard?.news || []).length
     ? h('div', { className: 'timeline' }, ...dashboard.news.map((item) => h('div', { className: 'timeline-item' },
@@ -529,15 +615,17 @@ function renderIliasTab(container, detail) {
     : emptyState('grid', 'Keine ILIAS-Verbindung', 'Dieses Konto hat sich noch nicht im ILIAS-Tab angemeldet.');
 
   container.append(
-    callout('ILIAS liefert kein JSON für Studierende. Der Server meldet sich einmal mit dem Standardformular an und liest danach die Dashboard-Blöcke. Gespeichert werden nur die Sitzung im Speicher und der zuletzt gelesene Stand.', '', 'shield'),
+    callout('ILIAS liefert kein JSON für Studierende. Der Server meldet sich einmal mit dem Standardformular an und liest danach Dashboard und Kursseiten. Gespeichert werden nur die Sitzung im Speicher und der zuletzt gelesene Dashboard-Stand; Kursinhalte werden live gelesen.', '', 'shield'),
     fields,
     action,
+    contentHost,
     h('div', { className: 'detail-section' },
-      sectionHead('Kurse und Gruppen', number(counts.memberships) + ' Mitgliedschaften'),
+      sectionHead('Kurse und Gruppen', number(counts.memberships) + ' Mitgliedschaften' + (canRead ? ' · Inhalte live lesbar' : ' · keine aktive Sitzung')),
+      ...(canRead ? [] : [h('p', { className: 'hint', text: 'Für Kursinhalte und Datei-Downloads ist eine aktive ILIAS-Sitzung nötig. Nach einem Server-Neustart meldet sich das Konto im ILIAS-Tab der App erneut an.' })]),
       h('div', { className: 'table-wrap' },
-        h('table', { className: 'data', style: { minWidth: '680px' } },
+        h('table', { className: 'data', style: { minWidth: '760px' } },
           h('caption', { className: 'sr-only' }, 'ILIAS-Mitgliedschaften'),
-          h('thead', null, h('tr', null, h('th', null, 'Titel'), h('th', null, 'Typ'), h('th', { className: 'num' }, 'Ref-ID'))),
+          h('thead', null, h('tr', null, h('th', null, 'Titel'), h('th', null, 'Typ'), h('th', { className: 'num' }, 'Ref-ID'), h('th', null, 'Inhalt'))),
           h('tbody', null, ...membershipRows),
         ),
       ),

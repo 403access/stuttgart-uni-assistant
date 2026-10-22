@@ -5,8 +5,17 @@
  */
 
 import { authenticateRequest, linkPlatform, requireAuth, touchPlatform } from '../auth.mjs';
-import { connectIlias, disconnectIlias, iliasError, iliasLoginName, publicIliasStatus, readIliasDashboard } from '../ilias.mjs';
-import { readJsonBody, send } from '../http.mjs';
+import {
+  connectIlias,
+  disconnectIlias,
+  iliasError,
+  iliasLoginName,
+  publicIliasStatus,
+  readIliasContent,
+  readIliasDashboard,
+  readIliasFile,
+} from '../ilias.mjs';
+import { attachmentDisposition, readJsonBody, send } from '../http.mjs';
 import { errorBody, logRequest } from '../request-log.mjs';
 
 function fail(response, error) {
@@ -68,6 +77,45 @@ export async function handleIlias(request, response, url) {
       console.log(`[ilias] disconnect user=${auth.user.id}`);
       send(response, 200, { ok: true, status: publicIliasStatus(auth.user.id) });
     } catch (error) {
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/ilias/content') {
+    const reqId = logRequest('GET /v1/ilias/content');
+    try {
+      const auth = requireAuth(request);
+      const refId = Number(url.searchParams.get('refId'));
+      const kind = url.searchParams.get('kind') || 'crs';
+      const content = await readIliasContent(auth.user.id, { refId, kind });
+      const user = touchPlatform(auth.user.id, 'ilias');
+      console.log(`[ilias #${reqId}] content ok ref=${refId} kind=${kind} items=${content.items.length} user=${auth.user.id}`);
+      send(response, 200, { ok: true, ...content, user });
+    } catch (error) {
+      console.log(`[ilias #${reqId}] content failed ${error?.message ?? 'ilias_failed'}`);
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/ilias/file') {
+    const reqId = logRequest('GET /v1/ilias/file');
+    try {
+      const auth = requireAuth(request);
+      const refId = Number(url.searchParams.get('refId'));
+      const file = await readIliasFile(auth.user.id, { refId });
+      const filename = attachmentDisposition(file.filename);
+      response.writeHead(200, {
+        'Content-Type': file.contentType,
+        'Content-Length': file.bytes.length,
+        'Cache-Control': 'private, max-age=300',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Expose-Headers': 'Content-Disposition',
+        ...(filename ? { 'Content-Disposition': filename } : {}),
+      });
+      response.end(file.bytes);
+      console.log(`[ilias #${reqId}] file ok ref=${refId} bytes=${file.bytes.length} user=${auth.user.id}`);
+    } catch (error) {
+      console.log(`[ilias #${reqId}] file failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);
     }
     return true;

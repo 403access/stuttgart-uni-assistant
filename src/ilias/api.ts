@@ -7,7 +7,7 @@
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders } from '@/src/auth/session';
 
-import type { IliasCounts, IliasDashboard, IliasItem, IliasStatus } from './types';
+import type { IliasContent, IliasContentItem, IliasCounts, IliasDashboard, IliasItem, IliasStatus } from './types';
 
 export class IliasError extends Error {
   detail: string;
@@ -92,6 +92,38 @@ export function asIliasStatus(value: unknown): IliasStatus {
   };
 }
 
+function asContentItem(value: unknown): IliasContentItem | null {
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Partial<IliasContentItem>;
+  if (typeof item.title !== 'string' && typeof item.url !== 'string') return null;
+  return {
+    id: typeof item.id === 'string' ? item.id : '',
+    kind: typeof item.kind === 'string' ? item.kind : 'item',
+    type: typeof item.type === 'string' ? item.type : '',
+    refId: typeof item.refId === 'number' ? item.refId : null,
+    title: typeof item.title === 'string' ? item.title : '(ohne Titel)',
+    description: typeof item.description === 'string' ? item.description : '',
+    url: typeof item.url === 'string' ? item.url : '',
+    properties: Array.isArray(item.properties) ? item.properties.map(asProperty) : [],
+    date: typeof item.date === 'string' ? item.date : '',
+    size: typeof item.size === 'string' ? item.size : '',
+    pages: typeof item.pages === 'string' ? item.pages : '',
+    downloadable: Boolean(item.downloadable),
+  };
+}
+
+export function asIliasContent(value: unknown): IliasContent {
+  const body = (value ?? {}) as Partial<IliasContent>;
+  return {
+    refId: typeof body.refId === 'number' ? body.refId : 0,
+    kind: typeof body.kind === 'string' ? body.kind : 'crs',
+    title: typeof body.title === 'string' ? body.title : '',
+    description: typeof body.description === 'string' ? body.description : '',
+    items: Array.isArray(body.items) ? body.items.flatMap((entry) => asContentItem(entry) ?? []) : [],
+    fetchedAt: typeof body.fetchedAt === 'string' ? body.fetchedAt : new Date().toISOString(),
+  };
+}
+
 export function asIliasDashboard(value: unknown): IliasDashboard {
   const body = (value ?? {}) as Partial<IliasDashboard>;
   return {
@@ -153,6 +185,53 @@ export async function connectIlias(input: {
 export async function loadIliasDashboard(): Promise<{ status: IliasStatus; dashboard: IliasDashboard }> {
   const payload = (await request('/v1/ilias/dashboard', { headers: { ...authHeaders() } })) as { status?: unknown } & Record<string, unknown>;
   return { status: asIliasStatus(payload.status), dashboard: asIliasDashboard(payload) };
+}
+
+/** Read one course, group, or folder page. The server keeps the ILIAS cookie. */
+export async function loadIliasContent(input: { refId: number; kind?: string }): Promise<IliasContent> {
+  const kind = input.kind?.trim() || 'crs';
+  const query = `refId=${encodeURIComponent(String(input.refId))}&kind=${encodeURIComponent(kind)}`;
+  const payload = await request(`/v1/ilias/content?${query}`, { headers: { ...authHeaders() } });
+  return asIliasContent(payload);
+}
+
+export interface IliasFile {
+  data: ArrayBuffer;
+  contentType: string;
+  filename: string;
+}
+
+function filenameFromDisposition(value: string): string {
+  const encoded = value.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim().replace(/^"|"$/g, ''));
+    } catch {
+      return encoded.trim().replace(/^"|"$/g, '');
+    }
+  }
+  return value.match(/filename\s*=\s*"([^"]*)"/i)?.[1] ?? value.match(/filename\s*=\s*([^;]+)/i)?.[1]?.trim() ?? '';
+}
+
+/** Fetch the bytes of a file through the assistant server. */
+export async function fetchIliasFile(refId: number): Promise<IliasFile> {
+  let response: Response;
+  try {
+    response = await fetch(endpoint(`/v1/ilias/file?refId=${encodeURIComponent(String(refId))}`), {
+      headers: { ...authHeaders() },
+    });
+  } catch {
+    throw new IliasError('server_unreachable');
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw failure(payload, 'ilias_failed', response.status);
+  }
+  return {
+    data: await response.arrayBuffer(),
+    contentType: response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream',
+    filename: filenameFromDisposition(response.headers.get('content-disposition') ?? ''),
+  };
 }
 
 export async function disconnectIlias(): Promise<IliasStatus> {

@@ -128,6 +128,12 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   assert.equal(detailBody.studies[0].name, 'Informatik');
   assert.equal(Array.isArray(detailBody.audit), true);
 
+  const iliasContent = await call(`/v1/admin/users/${userId}/ilias/content?refId=4590579&kind=crs`);
+  assert.equal(iliasContent.status, 409);
+  assert.equal((await iliasContent.json()).error, 'ilias_credentials_missing');
+  const iliasFile = await call(`/v1/admin/users/${userId}/ilias/file?refId=4665501`);
+  assert.equal(iliasFile.status, 409);
+
   const create = await call('/v1/admin/users', { method: 'POST', body: JSON.stringify({ account: 'st999999', name: 'Created Route User', mode: 'local' }) });
   assert.equal(create.status, 200);
   const createdBody = await create.json();

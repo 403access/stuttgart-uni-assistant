@@ -7,6 +7,7 @@
  * - `oidc`    — identity-provider status
  * - `catalog` — the assistant-server API list
  * - `news`    — operator-published app news
+ * - `ilias`   — ILIAS content pages read through the assistant server
  *
  * `device*` keys answer from the on-device store; `server*` keys from the
  * assistant server. Both live under `campus` so a sync can invalidate the
@@ -17,6 +18,7 @@ export const keys = {
   campus: () => ['app', 'campus'] as const,
   catalog: () => ['app', 'catalog'] as const,
   news: () => ['app', 'news'] as const,
+  iliasContent: (refId: number, kind: string) => ['app', 'ilias', 'content', kind, refId] as const,
 
   campusStatus: () => ['app', 'campus', 'status'] as const,
   campusStudies: () => ['app', 'campus', 'studies'] as const,

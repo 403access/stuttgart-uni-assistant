@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 
@@ -20,11 +21,12 @@ function itemMeta(item: IliasItem): string {
   return property ? `${property.name}: ${property.value}` : item.date || item.description;
 }
 
-function ItemRow({ item, onOpen }: { item: IliasItem; onOpen: (url: string) => void }) {
+function ItemRow({ item, onOpen }: { item: IliasItem; onOpen: (item: IliasItem) => void }) {
+  const inApp = Boolean(item.refId) && (item.kind === 'crs' || item.kind === 'grp');
   return (
     <Pressable
-      disabled={!item.url}
-      onPress={() => onOpen(item.url)}
+      disabled={!item.url && !inApp}
+      onPress={() => onOpen(item)}
       style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
       <View style={styles.itemTop}>
         <Text style={styles.itemTitle} numberOfLines={2}>
@@ -83,8 +85,17 @@ export function IliasDashboardView({
               ? dashboard.tasks
               : [...dashboard.memberships, ...dashboard.news, ...dashboard.mails, ...dashboard.tasks];
 
-  const open = (url: string) => {
-    if (url) Linking.openURL(url).catch(() => undefined);
+  const open = (item: IliasItem) => {
+    // Courses and groups have a readable content page; the app renders it
+    // instead of handing the user back to the browser.
+    if ((item.kind === 'crs' || item.kind === 'grp') && item.refId) {
+      router.push({
+        pathname: '/ilias/[refId]',
+        params: { refId: String(item.refId), kind: item.kind, title: item.title },
+      });
+      return;
+    }
+    if (item.url) Linking.openURL(item.url).catch(() => undefined);
   };
 
   return (

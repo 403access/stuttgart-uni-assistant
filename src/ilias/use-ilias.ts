@@ -4,18 +4,10 @@ import { readLogin, storedLoginHint } from '@/src/auth/vault';
 import { showToast } from '@/src/components/toast';
 import { iliasAccountFrom } from '@/src/ilias/account';
 import { connectIlias, disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
+import { iliasErrorMessage as describe } from '@/src/ilias/errors';
 import type { IliasDashboard, IliasStatus } from '@/src/ilias/types';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
-
-function describe(caught: unknown, locale: 'de' | 'en'): string {
-  const code = caught instanceof IliasError ? caught.message : caught instanceof Error ? caught.message : 'ilias_failed';
-  if (code === 'server_unreachable') return tx(locale, 'tabsIlias.server');
-  if (code === 'ilias_login_rejected' || code === 'ilias_rejected') return tx(locale, 'tabsIlias.abgelehnt');
-  if (code === 'ilias_session_expired' || code === 'ilias_credentials_missing') return tx(locale, 'tabsIlias.abgelaufen');
-  if (code === 'ilias_not_configured') return tx(locale, 'tabsIlias.nicht_konfiguriert');
-  return tx(locale, 'tabsIlias.fehler', [code]);
-}
 
 /** Owns status, dashboard rows, and the one-shot credential handoff. */
 export function useIlias() {

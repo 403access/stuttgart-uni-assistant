@@ -18,6 +18,16 @@ export const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 export const ILIAS_LOGIN_URL = `${ILIAS_BASE}/ilias.php?baseClass=ilstartupgui&cmd=post&fallbackCmd=doStandardAuthentication`;
 export const ILIAS_DASHBOARD_URL = `${ILIAS_BASE}/ilias.php?baseClass=ilDashboardGUI&cmd=jumpToSelectedItems`;
 export const ILIAS_CLIENT_ID = 'Uni_Stuttgart';
+
+/** Repository pages are reachable by object kind and ref id, e.g. `/go/crs/4590579`. */
+export function iliasRepositoryUrl(kind, refId) {
+  return `${ILIAS_BASE}/go/${kind}/${refId}`;
+}
+
+/** The file download command behind a course material row. */
+export function iliasFileUrl(refId) {
+  return `${ILIAS_BASE}/ilias.php?baseClass=ilrepositorygui&cmdClass=ilObjFileGUI&cmd=sendfile&ref_id=${refId}`;
+}
 export const ILIAS_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36';
 
 /** Per-user cookies. Memory only: a server restart asks the user to reconnect. */
@@ -328,6 +338,142 @@ export function parseIliasDashboard(html, fetchedAt = new Date().toISOString()) 
   };
 }
 
+/* ---------------------------------------------------------------- content -- */
+
+const CONTENT_TYPE_LABELS = {
+  crs: 'Kurs', grp: 'Gruppe', lm: 'Lernmodul', cat: 'Kategorie', file: 'Datei',
+  frm: 'Forum', exc: 'Übung', tst: 'Test', fold: 'Ordner', sess: 'Termin',
+  blog: 'Blog', wiki: 'Wiki', webr: 'Weblink', prtf: 'Portfolio',
+  mcst: 'Medien-Cast', glo: 'Glossar', svy: 'Umfrage', copa: 'Inhaltsseite',
+};
+
+const CONTENT_CLASS_KINDS = {
+  ilobjfilegui: 'file', ilobjfoldergui: 'fold', ilobjcoursegui: 'crs', ilobjgroupgui: 'grp',
+  ilobjlearningmodulegui: 'lm', ilobjforumgui: 'frm', ilobjexercisegui: 'exc', ilobjtestgui: 'tst',
+  ilobjsessiongui: 'sess', ilobjcategorygui: 'cat', ilobjbloggui: 'blog', ilobjwikigui: 'wiki',
+  ilobjweblinkgui: 'webr', ilobjportfoliogui: 'prtf', ilobjmediacastgui: 'mcst',
+  ilobjglossarygui: 'glo', ilobjsurveygui: 'svy', ilobjcontentpagegui: 'copa',
+};
+
+function contentKindFromClass(value) {
+  const text = String(value ?? '').toLowerCase();
+  return CONTENT_CLASS_KINDS[text] || text.replace(/^ilobj/, '').replace(/gui$/, '');
+}
+
+/** Kind and ref id from a repository link (`/go/crs/4590579`) or a command URL. */
+function locateContentObject(href) {
+  const text = String(href ?? '');
+  const go = text.match(/\/go\/([a-z0-9]+)\/(\d+)(?:[?#]|$)/i);
+  if (go) return { kind: go[1].toLowerCase(), refId: Number(go[2]) };
+  const refId = Number(text.match(/[?&]ref_id=(\d+)/i)?.[1] ?? 0) || null;
+  const cmdClass = text.match(/[?&]cmdClass=([^&]+)/i)?.[1] ?? '';
+  return { kind: cmdClass ? contentKindFromClass(cmdClass) : '', refId };
+}
+
+function itemProperties(segment) {
+  const values = [];
+  for (const match of String(segment).matchAll(
+    /<span[^>]*class\s*=\s*["'][^"']*\bil_ItemProperty\b[^"']*["'][^>]*>([\s\S]*?)<\/span>/gi,
+  )) {
+    const value = textOf(match[1]);
+    if (value) values.push(value);
+  }
+  return values;
+}
+
+function splitProperty(value) {
+  const match = String(value).match(/^([^:]{1,60}):\s+(.+)$/);
+  return match ? { name: match[1].trim(), value: match[2].trim() } : { name: '', value: String(value) };
+}
+
+function looksLikeDate(value) {
+  return (
+    /^(Heute|Gestern|Vorgestern)\b/i.test(value) ||
+    /^\d{1,2}\.\s*[A-Za-zÄÖÜäöüß]{3,}\.?\s*\d{4}/i.test(value) ||
+    /^\d{2}\.\d{2}\.\d{4}/.test(value)
+  );
+}
+
+function contentRow(segment, index) {
+  const titleHtml =
+    segment.match(/<h3[^>]*class\s*=\s*["'][^"']*\bil_ContainerItemTitle\b[^"']*["'][^>]*>([\s\S]*?)<\/h3>/i)?.[1] ??
+    segment.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i)?.[1] ??
+    '';
+  const anchor = titleHtml.match(/<a\b[^>]*>/i);
+  const href = anchor ? attributesOf(anchor[0]).href ?? '' : '';
+  const title = textOf(titleHtml);
+  if (!title && !href) return null;
+
+  const { kind, refId } = locateContentObject(href);
+  const alt = segment.match(/<img\b[^>]*class\s*=\s*["'][^"']*\bilListItemIcon\b[^"']*["'][^>]*>/i)?.[0] ?? '';
+  const iconAlt = alt ? attributesOf(alt).alt ?? '' : '';
+  const values = itemProperties(segment);
+  const extension = kind === 'file'
+    ? values.find((value) => /^(pdf|docx?|pptx?|xlsx?|odt|ods|odp|zip|txt|csv|rtf|mp4|mp3|wav|png|jpe?g|svg|gif)$/i.test(value)) ?? ''
+    : '';
+  const size = values.find((value) => /^[\d.,]+\s*(?:B|KB|MB|GB|TB)$/i.test(value)) ?? '';
+  const pages = values.map((value) => value.match(/Anzahl Seiten:\s*(\d+)/i)).find(Boolean)?.[1] ?? '';
+  const date = values.find(looksLikeDate) ?? '';
+
+  return {
+    id: refId ? `${kind || 'ref'}-${refId}` : `item-${index}`,
+    kind: kind || 'item',
+    type: extension || CONTENT_TYPE_LABELS[kind] || iconAlt || '',
+    refId,
+    title,
+    description: textOf(segment.match(/<div[^>]*class\s*=\s*["'][^"']*\bil_Description\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? ''),
+    url: href ? resolveUrl(ILIAS_BASE, href) : '',
+    properties: values.map(splitProperty),
+    date,
+    size,
+    pages,
+    downloadable: kind === 'file' && Boolean(refId),
+  };
+}
+
+/**
+ * Parse the object list of a course, group, folder, or category page. The page
+ * renders each material as an `ilObjListRow`; files link to `sendfile`, while
+ * folders and groups link through `/go/<kind>/<refId>`.
+ */
+export function parseIliasContent(html, { refId = null, kind = 'crs', fetchedAt = new Date().toISOString() } = {}) {
+  const source = String(html ?? '');
+  const headerHtml =
+    source.match(/<h1[^>]*class\s*=\s*["'][^"']*\bil-page-content-header\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1] ??
+    source.match(/<h1[^>]*class\s*=\s*["'][^"']*\bilHeader\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1] ??
+    '';
+  const title =
+    textOf(headerHtml) ||
+    textOf(source.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '');
+  const description = textOf(
+    source.match(/<div[^>]*class\s*=\s*["'][^"']*\bilHeaderDesc\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? '',
+  );
+
+  const start = source.search(/<div[^>]*id\s*=\s*["']ilContentContainer["']/i);
+  const body = start >= 0 ? source.slice(start) : source;
+  const markers = [...body.matchAll(/<li\b[^>]*class\s*=\s*["'][^"']*\bilObjListRow\b[^"']*["'][^>]*>/gi)];
+  const items = [];
+  const seen = new Set();
+  for (const [index, marker] of markers.entries()) {
+    const segment = body.slice(marker.index ?? 0, markers[index + 1]?.index ?? body.length);
+    const item = contentRow(segment, index);
+    if (!item) continue;
+    const key = item.refId ? `${item.kind}-${item.refId}` : `${item.title}-${item.url}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    items.push(item);
+  }
+
+  return {
+    refId: Number(refId) || null,
+    kind,
+    title,
+    description,
+    items,
+    fetchedAt,
+  };
+}
+
 /* ------------------------------------------------------------------ login -- */
 
 function loginHeaders(jar, referer) {
@@ -486,6 +632,121 @@ export async function fetchIliasDashboard({ cookie, fetchImpl = fetch, dashboard
   return parseIliasDashboard(html);
 }
 
+/** Fetch an authenticated HTML page, following redirects and detecting a lost session. */
+async function fetchIliasHtml({ cookie, url, fetchImpl = fetch, referer = ILIAS_DASHBOARD_URL, maxHops = 5 }) {
+  const value = normalizeIliasCookie(cookie);
+  if (!value) throw iliasError(409, 'ilias_credentials_missing');
+  let current = url;
+  for (let hop = 0; hop <= maxHops; hop += 1) {
+    let response;
+    try {
+      response = await fetchImpl(current, {
+        redirect: 'manual',
+        headers: { ...DASHBOARD_HEADERS, Referer: referer, Cookie: value },
+      });
+    } catch (error) {
+      throw iliasError(502, 'ilias_unreachable', String(error?.message ?? error));
+    }
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location') ?? '';
+      if (!location) throw iliasError(502, 'ilias_http_error', `HTTP ${response.status}`);
+      const next = resolveUrl(current, location);
+      if (looksLikeIliasLogin(next)) throw iliasError(401, 'ilias_session_expired');
+      current = next;
+      continue;
+    }
+    if (response.status === 401 || response.status === 403) throw iliasError(401, 'ilias_session_expired');
+    if (!response.ok) throw iliasError(502, 'ilias_http_error', `HTTP ${response.status}`);
+    const html = await response.text();
+    if (looksLikeIliasLogin(html)) throw iliasError(401, 'ilias_session_expired');
+    return { html, url: current };
+  }
+  throw iliasError(502, 'ilias_redirect_loop');
+}
+
+/** Read a course, group, folder, or category page for an existing `PHPSESSID`. */
+export async function fetchIliasContent({ cookie, refId, kind = 'crs', fetchImpl = fetch, contentUrl }) {
+  const id = Number(refId);
+  if (!Number.isInteger(id) || id <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+  const safeKind = /^[a-z]{2,8}$/i.test(String(kind)) ? String(kind).toLowerCase() : 'crs';
+  const url = contentUrl || iliasRepositoryUrl(safeKind, id);
+  const { html } = await fetchIliasHtml({ cookie, url, fetchImpl, referer: ILIAS_DASHBOARD_URL });
+  if (!/il-page-content-header|ilContentContainer|\bilHeader\b/i.test(html)) throw iliasError(502, 'ilias_content_missing');
+  return parseIliasContent(html, { refId: id, kind: safeKind });
+}
+
+function filenameFromDisposition(value) {
+  const text = String(value ?? '');
+  const encoded = text.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)?.[1];
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded.trim().replace(/^"|"$/g, ''));
+    } catch {
+      return encoded.trim().replace(/^"|"$/g, '');
+    }
+  }
+  return text.match(/filename\s*=\s*"([^"]*)"/i)?.[1] ?? text.match(/filename\s*=\s*([^;]+)/i)?.[1]?.trim() ?? '';
+}
+
+async function fileFromResponse(response, url, fetchImpl, headers) {
+  if (response.status === 401 || response.status === 403) throw iliasError(401, 'ilias_session_expired');
+  if (!response.ok) throw iliasError(502, 'ilias_http_error', `HTTP ${response.status}`);
+  const contentType = String(response.headers.get('content-type') ?? '').toLowerCase();
+  const disposition = response.headers.get('content-disposition') ?? '';
+
+  if (contentType.includes('text/html')) {
+    const html = await response.text();
+    if (looksLikeIliasLogin(html)) throw iliasError(401, 'ilias_session_expired');
+    // Some installations answer the plain command with the file screen first;
+    // follow its download link once instead of handing HTML to the app.
+    const link = html.match(/href\s*=\s*["']([^"']*cmd=sendfile[^"']*ref_id=\d+[^"']*)["']/i)?.[1];
+    if (!link) throw iliasError(502, 'ilias_file_missing');
+    let next;
+    try {
+      next = await fetchImpl(resolveUrl(url, decodeEntities(link)), { redirect: 'follow', headers });
+    } catch (error) {
+      throw iliasError(502, 'ilias_unreachable', String(error?.message ?? error));
+    }
+    if (next.status === 401 || next.status === 403) throw iliasError(401, 'ilias_session_expired');
+    if (!next.ok) throw iliasError(502, 'ilias_http_error', `HTTP ${next.status}`);
+    const nextType = String(next.headers.get('content-type') ?? '').toLowerCase();
+    if (nextType.includes('text/html')) throw iliasError(502, 'ilias_file_missing');
+    return {
+      bytes: Buffer.from(await next.arrayBuffer()),
+      contentType: nextType.split(';')[0] || 'application/octet-stream',
+      filename: filenameFromDisposition(next.headers.get('content-disposition') ?? ''),
+    };
+  }
+
+  return {
+    bytes: Buffer.from(await response.arrayBuffer()),
+    contentType: contentType.split(';')[0] || 'application/octet-stream',
+    filename: filenameFromDisposition(disposition),
+  };
+}
+
+/** Download a file of the repository for an existing `PHPSESSID`. */
+export async function fetchIliasFile({ cookie, refId, fetchImpl = fetch, fileUrl }) {
+  const id = Number(refId);
+  if (!Number.isInteger(id) || id <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+  const value = normalizeIliasCookie(cookie);
+  if (!value) throw iliasError(409, 'ilias_credentials_missing');
+  const url = fileUrl || iliasFileUrl(id);
+  const headers = {
+    ...DASHBOARD_HEADERS,
+    Accept: '*/*',
+    Referer: iliasRepositoryUrl('file', id),
+    Cookie: value,
+  };
+  let response;
+  try {
+    response = await fetchImpl(url, { redirect: 'follow', headers });
+  } catch (error) {
+    throw iliasError(502, 'ilias_unreachable', String(error?.message ?? error));
+  }
+  return fileFromResponse(response, url, fetchImpl, headers);
+}
+
 /* ------------------------------------------------------ session registry -- */
 
 export function setUserIliasSession(userId, session) {
@@ -588,6 +849,39 @@ export async function connectIlias(userId, input = {}, fetchImpl = fetch) {
   saveIliasSource(userId, 'browser', result.account);
   saveIliasSnapshot(userId, result.dashboard);
   return { dashboard: result.dashboard, source: 'browser' };
+}
+
+/** Read one repository page (course, group, folder) with the user's session. */
+export async function readIliasContent(userId, input = {}, fetchImpl = fetch) {
+  const session = resolveIliasSession(userId);
+  try {
+    return await fetchIliasContent({
+      cookie: session.cookie,
+      refId: input.refId,
+      kind: input.kind,
+      fetchImpl,
+      contentUrl: input.contentUrl,
+    });
+  } catch (error) {
+    if (error?.status === 401) clearUserIliasSession(userId);
+    throw error;
+  }
+}
+
+/** Download one file with the user's session. */
+export async function readIliasFile(userId, input = {}, fetchImpl = fetch) {
+  const session = resolveIliasSession(userId);
+  try {
+    return await fetchIliasFile({
+      cookie: session.cookie,
+      refId: input.refId,
+      fetchImpl,
+      fileUrl: input.fileUrl,
+    });
+  } catch (error) {
+    if (error?.status === 401) clearUserIliasSession(userId);
+    throw error;
+  }
 }
 
 /** Read the live dashboard and refresh the stored snapshot. */

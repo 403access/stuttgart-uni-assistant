@@ -60,6 +60,14 @@ export function sendHtml(response, html) {
   response.end(html);
 }
 
+/** RFC 6266 attachment header with an ASCII fallback and a UTF-8 filename. */
+export function attachmentDisposition(filename) {
+  const safe = String(filename ?? '').replace(/[\r\n"]/g, '_').trim();
+  if (!safe) return '';
+  const ascii = safe.replace(/[^\x20-\x7E]/g, '_');
+  return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(safe)}`;
+}
+
 /** Static dashboard modules. The HTML shell carries the CSP; assets are inert. */
 export function sendAsset(response, body, contentType) {
   response.writeHead(200, {

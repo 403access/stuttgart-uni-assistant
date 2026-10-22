@@ -2,7 +2,7 @@
 
 import { getUser } from '../auth.mjs';
 import { getDb, loadIliasSnapshot, loadIliasSource } from '../db.mjs';
-import { disconnectIlias, getUserIliasSession, listUserIliasSessions, publicIliasStatus } from '../ilias.mjs';
+import { disconnectIlias, getUserIliasSession, listUserIliasSessions, publicIliasStatus, readIliasContent, readIliasFile } from '../ilias.mjs';
 import { recordAdminAudit } from './audit.mjs';
 
 function countsOf(snapshot) {
@@ -32,6 +32,7 @@ export function adminUserIlias(userId) {
     account: source?.account ?? null,
     updatedAt: source?.updatedAt ?? null,
     active: Boolean(session),
+    canRead: Boolean(publicIliasStatus(userId).sessionActive),
     credentialAccount: session?.account ?? null,
     credentialSource: session?.source ?? null,
     envConfigured: publicIliasStatus().configured,
@@ -76,6 +77,7 @@ export function adminIlias() {
       iliasAccount: row.ilias_account ?? dashboard?.account ?? null,
       source,
       active: active.has(row.id),
+      canRead: publicIliasStatus(row.id).sessionActive,
       updatedAt: row.ilias_updated_at ?? null,
       fetchedAt: row.snapshot_fetched_at ?? null,
       counts,
@@ -90,6 +92,16 @@ export function adminIlias() {
     sources: [...sources.entries()].map(([source, count]) => ({ source, count })),
     users,
   };
+}
+
+/** Live-read one course, group, or folder page for an operator. */
+export function readAdminUserIliasContent(userId, input, fetchImpl = fetch) {
+  return readIliasContent(userId, input, fetchImpl);
+}
+
+/** Live-download one material file for an operator. */
+export function readAdminUserIliasFile(userId, input, fetchImpl = fetch) {
+  return readIliasFile(userId, input, fetchImpl);
 }
 
 /** Explicit operator action: forget the in-memory cookie and downgrade the link. */

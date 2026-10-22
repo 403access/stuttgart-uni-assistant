@@ -14,6 +14,8 @@ import {
   disconnectAdminCampus,
   disconnectAdminIlias,
   linkAdminPlatform,
+  readAdminUserIliasContent,
+  readAdminUserIliasFile,
   revokeAdminSession,
   revokeAdminSessions,
   startAdminSyncJob,
@@ -22,7 +24,7 @@ import {
   updateAdminUser,
 } from '../../admin/index.mjs';
 import { getUser } from '../../auth.mjs';
-import { readJsonBody, send } from '../../http.mjs';
+import { attachmentDisposition, readJsonBody, send } from '../../http.mjs';
 import { adminUserId, decode, fail, query } from './shared.mjs';
 
 export async function handleUser(request, response, url) {
@@ -136,6 +138,35 @@ export async function handleUser(request, response, url) {
   if (request.method === 'POST' && action === 'ilias/disconnect') {
     disconnectAdminIlias(userId);
     send(response, 200, adminUserDetail(userId));
+    return true;
+  }
+  if (request.method === 'GET' && action === 'ilias/content') {
+    try {
+      const content = await readAdminUserIliasContent(userId, {
+        refId: url.searchParams.get('refId'),
+        kind: url.searchParams.get('kind') || 'crs',
+      });
+      send(response, 200, content);
+    } catch (error) {
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && action === 'ilias/file') {
+    try {
+      const file = await readAdminUserIliasFile(userId, { refId: url.searchParams.get('refId') });
+      const disposition = attachmentDisposition(file.filename);
+      response.writeHead(200, {
+        'Content-Type': file.contentType,
+        'Content-Length': file.bytes.length,
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+        ...(disposition ? { 'Content-Disposition': disposition } : {}),
+      });
+      response.end(file.bytes);
+    } catch (error) {
+      fail(response, error);
+    }
     return true;
   }
   if (request.method === 'POST' && action === 'portal/clear') {

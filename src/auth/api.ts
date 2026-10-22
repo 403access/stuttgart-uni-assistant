@@ -26,6 +26,8 @@ const fallback: ApiOperation[] = [
   { id: 'campus-studies', method: 'GET', path: '/v1/campus/studies', replay: true },
   { id: 'ilias-config', method: 'GET', path: '/v1/ilias/config', replay: true },
   { id: 'ilias-dashboard', method: 'GET', path: '/v1/ilias/dashboard', replay: true },
+  { id: 'ilias-content', method: 'GET', path: '/v1/ilias/content', replay: false },
+  { id: 'ilias-file', method: 'GET', path: '/v1/ilias/file', replay: false },
   { id: 'assist', method: 'POST', path: '/v1/assist', replay: true },
   { id: 'oidc-start', method: 'POST', path: '/v1/oidc/start', replay: false },
   { id: 'oidc-exchange', method: 'POST', path: '/v1/oidc/exchange', replay: false },
