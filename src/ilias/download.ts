@@ -38,6 +38,29 @@ function safeFileName(input: string, fallbackExtension: string, contentType: str
   return `${base}.${extension}`;
 }
 
+export interface CachedIliasFile {
+  /** `file://` URI the native PDF reader can open. */
+  uri: string;
+  name: string;
+  contentType: string;
+}
+
+/**
+ * Write a course file into the app cache so it can be rendered in place. The
+ * name keeps the ref id, so two files with the same title do not overwrite
+ * each other.
+ */
+export async function cacheIliasFile(refId: number, title: string, extension = ''): Promise<CachedIliasFile> {
+  const file = await fetchIliasFile(refId);
+  const name = safeFileName(file.filename || title, extension, file.contentType);
+  const { File, Paths } = await import('expo-file-system');
+  const target = new File(Paths.cache, `ilias-${refId}-${name}`);
+  if (target.exists) target.delete();
+  target.create();
+  target.write(file.data);
+  return { uri: target.uri, name, contentType: file.contentType };
+}
+
 /**
  * Download a course file through the assistant server and hand it to the
  * platform: a browser download on web, the share sheet on iOS/Android.

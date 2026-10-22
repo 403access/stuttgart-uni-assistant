@@ -63,6 +63,8 @@ block yields an empty list instead of failing the page.
 | `POST /v1/ilias/session` | app | `{ account, password }`, `{ cookie }`, or `{ env: true }`; returns the dashboard |
 | `GET /v1/ilias/dashboard` | app | Reads the live dashboard, refreshes the snapshot |
 | `DELETE /v1/ilias/session` | app | Forgets the in-memory cookie and demotes the platform link |
+| `GET /v1/ilias/content` | app | `refId` and `kind` of one course, group, folder, or category page |
+| `GET /v1/ilias/file` | app | Streams one repository file with its ILIAS content type and filename |
 
 The password is only a request-body field. It is not written to the database,
 not logged, and not echoed. The `PHPSESSID` is never returned to the app; the
@@ -88,8 +90,19 @@ counts and the first rows; it never prints the password or the cookie.
 
 The **ILIAS** tab shows a connection panel while the account has no live
 session. After connecting it renders counts and filterable rows for courses,
-groups, news, mail, and to-dos. Tapping a row opens the corresponding ILIAS page
-in the browser. Pull-to-refresh reads the dashboard again.
+groups, news, mail, and to-dos. Pull-to-refresh reads the dashboard again.
+
+A course or group row opens its content page in the app (`/ilias/<refId>`).
+Folders and categories in that list drill down into the same screen. A PDF row
+opens the reader at `/ilias/datei`: the app fetches the bytes through
+`/v1/ilias/file`, writes them to the cache, and renders them with
+`react-native-pdf` (PDFKit on iOS, PdfRenderer on Android). The web build hands a
+blob URL to the browser's own PDF viewer in an iframe. Other file types keep the
+share sheet, and every file still has "Open in browser" and "Share" actions.
+
+`react-native-pdf` and `react-native-blob-util` carry native code, so the
+development build has to be rebuilt after a fresh install. The config plugins
+in `app.json` add the Android blob provider and the PDF packaging options.
 
 ## Admin
 
@@ -100,6 +113,9 @@ shows the stored dashboard and can disconnect the session. The overview adds an
 
 ## Limits
 
-The connector reads the dashboard only. It does not download course files,
-paginate the magazine, post to forums, or send mail. Those pages would need
-their own parsers and a separate permission decision.
+The connector reads the dashboard and the object lists of courses, groups,
+folders, and categories. It does not paginate the magazine, post to forums, or
+send mail. PDFs render in the app; other formats are downloaded or shared, not
+previewed. Files are cached for the current read and are not kept as an offline
+library. Those pages would need their own parsers and a separate permission
+decision.

@@ -8,6 +8,7 @@ import { showToast } from '@/src/components/toast';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
+import { isPdfItem } from '@/src/ilias/files';
 import { iliasContentQuery } from '@/src/ilias/queries';
 import type { IliasContentItem } from '@/src/ilias/types';
 import { useAppSelector } from '@/src/state/AppState';
@@ -64,6 +65,20 @@ export default function IliasContentScreen() {
   const open = async (item: IliasContentItem) => {
     setActionError('');
     if (item.kind === 'file' && item.refId) {
+      // PDFs open in the reader; other formats keep the share sheet.
+      if (isPdfItem(item)) {
+        router.push({
+          pathname: '/ilias/datei',
+          params: {
+            refId: String(item.refId),
+            title: item.title,
+            type: item.type,
+            size: item.size,
+            date: item.date,
+          },
+        });
+        return;
+      }
       setBusyId(item.id);
       try {
         const result = await saveIliasFile(item.refId, item.title, item.type);
