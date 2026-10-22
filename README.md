@@ -73,7 +73,7 @@ npm run ilias:login -- --user st206509 --password-stdin
 npm run ilias:login -- --cookie "$ILIAS_SESSION_COOKIE"
 ```
 
-The password is used for the single login POST and never stored; a successful run keeps only `PHPSESSID` in server memory. In the app, the **ILIAS** tab connects with the same account or an existing session cookie and shows courses, groups, news, the ILIAS mailbox, and to-dos. If the opt-in C@MPUS credential is in the device vault, the tab offers it directly; the login name is derived from the stored address. The operator dashboard has a matching **ILIAS** page and a per-account tab. `ILIAS_SESSION_COOKIE` and `ILIAS_ACCOUNT` in `.env` let the operator reuse one session without the app.
+The password is used for the single login POST and never stored; a successful run keeps only `PHPSESSID` in server memory. In the app, the **ILIAS** tab shows courses, groups, news, the ILIAS mailbox, and to-dos. A C@MPUS sign-in through the automated login also connects ILIAS in the background with the same password and the address before the `@` as the login name. If the opt-in C@MPUS credential is in the device vault, the tab reconnects with it once per app session, so a server restart (which drops the in-memory `PHPSESSID`) does not ask for the password again. The operator dashboard has a matching **ILIAS** page and a per-account tab. `ILIAS_SESSION_COOKIE` and `ILIAS_ACCOUNT` in `.env` let the operator reuse one session without the app.
 
 ## Checks
 

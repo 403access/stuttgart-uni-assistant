@@ -121,16 +121,26 @@ async function request(path: string, init: RequestInit = {}): Promise<unknown> {
   return payload;
 }
 
-export async function fetchIliasStatus(): Promise<IliasStatus> {
-  const payload = await request('/v1/ilias/config', { headers: { ...authHeaders() } });
+/** `token` overrides the in-memory bearer, e.g. right after a fresh sign-in. */
+function bearer(token?: string | null): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : authHeaders();
+}
+
+export async function fetchIliasStatus(token?: string | null): Promise<IliasStatus> {
+  const payload = await request('/v1/ilias/config', { headers: { ...bearer(token) } });
   // The config route returns the status object itself.
   return asIliasStatus(payload);
 }
 
-export async function connectIlias(input: { account?: string; password?: string; cookie?: string }): Promise<{ status: IliasStatus; dashboard: IliasDashboard }> {
+export async function connectIlias(input: {
+  account?: string;
+  password?: string;
+  cookie?: string;
+  token?: string | null;
+}): Promise<{ status: IliasStatus; dashboard: IliasDashboard }> {
   const payload = (await request('/v1/ilias/session', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...bearer(input.token) },
     body: JSON.stringify({
       account: input.account?.trim() ?? '',
       password: input.password ?? '',

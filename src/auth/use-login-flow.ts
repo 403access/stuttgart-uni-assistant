@@ -11,6 +11,8 @@ import { useCampusHeadlessLogin } from '@/src/auth/use-campus-headless-login';
 import { saveCampusHarvest } from '@/src/auth/vault';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
+import { iliasAccountFrom } from '@/src/ilias/account';
+import { connectIlias, fetchIliasStatus } from '@/src/ilias/api';
 import { keys } from '@/src/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
@@ -109,10 +111,14 @@ export function useLoginFlow() {
       // when the gate swaps in the tabs.
       signInCampus(profile);
       ticketRef.current = null;
-      // The st-account and password work for UniMail too; connect it so the
-      // Messages tab is ready. The mutation above is not held up by this.
+      // The st-account and password work for UniMail and ILIAS too; connect
+      // both so the Messages and ILIAS tabs are ready. The mutation above is
+      // not held up by either.
       const credentials = loginCredentials.current;
-      if (credentials) void connectMail(credentials, profile.auth?.token ?? null);
+      if (credentials) {
+        void connectMail(credentials, profile.auth?.token ?? null);
+        void connectIliasAccount(credentials, profile.auth?.token ?? null);
+      }
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -193,6 +199,29 @@ export function useLoginFlow() {
         title: tx(locale, 'loginMail.fehlgeschlagen'),
         message: mailMessage(locale, code, mailDetail(caught)),
       });
+    }
+  }
+
+  /**
+   * Reuse the C@MPUS credential for ILIAS: the same university password, with
+   * the login name being the address before the `@` (`st206509@stud.uni-stuttgart.de`
+   * → `st206509`). The assistant server performs the form login once and keeps
+   * only the resulting PHPSESSID, so the ILIAS tab opens already connected.
+   * Best effort — the sign-in neither waits for it nor fails with it.
+   */
+  async function connectIliasAccount(credentials: { account: string; password: string }, token: string | null) {
+    const account = iliasAccountFrom(credentials.account);
+    if (!account) return;
+    try {
+      const current = await fetchIliasStatus(token);
+      if (current?.sessionActive && sameAccount(current.account, account)) {
+        void refreshUser();
+        return;
+      }
+      await connectIlias({ account, password: credentials.password, token });
+      void refreshUser();
+    } catch {
+      // A failed auto-login leaves the manual connect panel in place.
     }
   }
 

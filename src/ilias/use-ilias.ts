@@ -106,11 +106,13 @@ export function useIlias() {
   }, [applyStatus, authToken, locale]);
 
   const connect = useCallback(
-    async (input: { account?: string; password?: string; cookie?: string }) => {
+    async (input: { account?: string; password?: string; cookie?: string }, options: { quiet?: boolean } = {}) => {
       if (busy) return;
       setBusy(true);
-      setError('');
-      setNote('');
+      if (!options.quiet) {
+        setError('');
+        setNote('');
+      }
       try {
         const result = await connectIlias({
           ...input,
@@ -119,12 +121,14 @@ export function useIlias() {
         applyStatus(result.status);
         setDashboard(result.dashboard);
         void refreshUser();
-        showToast({
-          tone: 'success',
-          title: tx(locale, 'tabsIlias.verbunden'),
-          message: result.dashboard.name || result.dashboard.account || tx(locale, 'tabsIlias.ilias'),
-        });
-        setNote(tx(locale, 'tabsIlias.geladen', [String(result.dashboard.counts.memberships)]));
+        if (!options.quiet) {
+          showToast({
+            tone: 'success',
+            title: tx(locale, 'tabsIlias.verbunden'),
+            message: result.dashboard.name || result.dashboard.account || tx(locale, 'tabsIlias.ilias'),
+          });
+          setNote(tx(locale, 'tabsIlias.geladen', [String(result.dashboard.counts.memberships)]));
+        }
       } catch (caught) {
         setError(describe(caught, locale));
       } finally {
@@ -154,20 +158,41 @@ export function useIlias() {
   /**
    * Reuse the opt-in C@MPUS device vault: same university password, ILIAS
    * login name from the address before the @. The vault read may raise the
-   * biometric prompt the user chose when saving it.
+   * biometric prompt the user chose when saving it. A quiet attempt is the
+   * automatic one, so a cancelled prompt or an empty vault stays silent.
    */
-  const connectSaved = useCallback(async () => {
-    if (!savedLogin || busy) return;
-    setError('');
-    setNote('');
-    const stored = await readLogin(tx(locale, 'tabsIlias.entsperren'), savedLogin.biometrics);
-    if (!stored) {
-      setSavedLogin(null);
-      setError(tx(locale, 'tabsIlias.gespeicherte'));
-      return;
-    }
-    await connect({ account: iliasAccountFrom(stored.account), password: stored.password });
-  }, [busy, connect, locale, savedLogin]);
+  const connectSaved = useCallback(
+    async (options: { quiet?: boolean } = {}) => {
+      if (!savedLogin || busy) return;
+      if (!options.quiet) {
+        setError('');
+        setNote('');
+      }
+      const stored = await readLogin(tx(locale, 'tabsIlias.entsperren'), savedLogin.biometrics);
+      if (!stored) {
+        if (options.quiet) return;
+        setSavedLogin(null);
+        setError(tx(locale, 'tabsIlias.gespeicherte'));
+        return;
+      }
+      await connect({ account: iliasAccountFrom(stored.account), password: stored.password }, options);
+    },
+    [busy, connect, locale, savedLogin],
+  );
+
+  /**
+   * The server keeps ILIAS cookies in memory only, so a restart drops the
+   * session. While the vault holds the C@MPUS credential, the tab reconnects
+   * once per app session instead of asking for the password again.
+   */
+  const autoConnectedToken = useRef<string | null>(null);
+  useEffect(() => {
+    if (!authToken || settledToken !== authToken) return;
+    if (status?.sessionActive || dashboard || !savedLogin) return;
+    if (autoConnectedToken.current === authToken) return;
+    autoConnectedToken.current = authToken;
+    void connectSaved({ quiet: true });
+  }, [authToken, connectSaved, dashboard, savedLogin, settledToken, status?.sessionActive]);
 
   const refresh = useCallback(async () => {
     await load({});
