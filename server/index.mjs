@@ -39,10 +39,18 @@ const server = createServer(async (request, response) => {
     send(response, 204, {});
     return;
   }
-  for (const handle of handlers) {
-    if (await handle(request, response, url)) return;
+  try {
+    for (const handle of handlers) {
+      if (await handle(request, response, url)) return;
+    }
+    send(response, 404, { error: 'not_found' });
+  } catch (error) {
+    // A route that throws without answering used to leave the browser waiting
+    // forever (e.g. the admin dashboard spinner). Always close the request.
+    console.error(`[http] ${request.method} ${url.pathname} failed: ${error?.message ?? error}`);
+    if (response.headersSent) response.end();
+    else send(response, 500, { error: 'internal_error' });
   }
-  send(response, 404, { error: 'not_found' });
 });
 
 startCampusTokenRefresh();
