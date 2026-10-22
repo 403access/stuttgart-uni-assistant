@@ -1,15 +1,22 @@
 /**
- * ILIAS routes: connect with a password or an existing PHPSESSID, read the
- * dashboard, and disconnect. The cookie stays in server memory; only the
- * parsed content is stored.
+ * ILIAS routes: connect with a password or an existing PHPSESSID, ingest the
+ * pages the app harvested, serve the cache, and disconnect. The server keeps
+ * the cookie in memory and hands it to the authenticated client, which does
+ * the page reads; the server stores the parsed rows and the raw HTML.
  */
 
 import { authenticateRequest, linkPlatform, requireAuth, touchPlatform } from '../auth.mjs';
 import {
+  ILIAS_PAGE_MAX_BYTES,
+  cachedIliasContent,
+  cachedIliasDashboard,
+  clearUserIliasSession,
   connectIlias,
   disconnectIlias,
+  iliasCookieFor,
   iliasError,
   iliasLoginName,
+  ingestIliasPage,
   publicIliasStatus,
   readIliasContent,
   readIliasDashboard,
@@ -27,6 +34,17 @@ export async function handleIlias(request, response, url) {
   if (request.method === 'GET' && url.pathname === '/v1/ilias/config') {
     const auth = authenticateRequest(request);
     send(response, 200, publicIliasStatus(auth?.user?.id));
+    return true;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/ilias/session') {
+    // The app seeds this cookie into its own WebView and does the page reads
+    // there. The server keeps no copy in the response body beyond this call.
+    try {
+      const auth = requireAuth(request);
+      send(response, 200, { ok: true, cookies: iliasCookieFor(auth.user.id) });
+    } catch (error) {
+      fail(response, error);
+    }
     return true;
   }
   if (request.method === 'POST' && url.pathname === '/v1/ilias/session') {
@@ -62,11 +80,29 @@ export async function handleIlias(request, response, url) {
       send(response, 200, {
         ok: true,
         ...result.dashboard,
+        cached: false,
+        stale: false,
+        // The client does the page reads; hand it the session it just created.
+        cookies: iliasCookieFor(auth.user.id),
         status: publicIliasStatus(auth.user.id),
         user,
       });
     } catch (error) {
       logService('ilias', 'warn', `#${reqId} connect failed ${error?.message ?? 'ilias_failed'}`);
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/ilias/session/expired') {
+    // The app harvested a login page: the cookie the server handed out is dead.
+    // Drop only the in-memory session, so the source marker still lets the app
+    // reconnect from the vault.
+    try {
+      const auth = requireAuth(request);
+      clearUserIliasSession(auth.user.id);
+      logService('ilias', 'info', `session expired user=${auth.user.id}`, { userId: auth.user.id });
+      send(response, 200, { ok: true, status: publicIliasStatus(auth.user.id) });
+    } catch (error) {
       fail(response, error);
     }
     return true;
@@ -88,12 +124,47 @@ export async function handleIlias(request, response, url) {
       const auth = requireAuth(request);
       const refId = Number(url.searchParams.get('refId'));
       const kind = url.searchParams.get('kind') || 'crs';
-      const content = await readIliasContent(auth.user.id, { refId, kind });
+      // Normal path: serve the page the app harvested earlier. `live=1` is the
+      // browser fallback, which has no injectable WebView to read the page.
+      const live = url.searchParams.get('live') === '1';
+      const result = live
+        ? { content: await readIliasContent(auth.user.id, { refId, kind }), cached: false, stale: false }
+        : cachedIliasContent(auth.user.id, { refId, kind });
+      const content = result.content;
       const user = touchPlatform(auth.user.id, 'ilias');
-      logService('ilias', 'info', `#${reqId} content ok ref=${refId} kind=${kind} items=${content.items.length} user=${auth.user.id}`, { userId: auth.user.id });
-      send(response, 200, { ok: true, ...content, user });
+      logService('ilias', 'info', `#${reqId} content ${live ? 'live' : 'cache'} ref=${refId} kind=${kind} items=${content.items.length} stale=${result.stale} user=${auth.user.id}`, { userId: auth.user.id });
+      send(response, 200, { ok: true, ...content, cached: result.cached, stale: Boolean(result.stale), user });
     } catch (error) {
       logService('ilias', 'warn', `#${reqId} content failed ${error?.message ?? 'ilias_failed'}`);
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'POST' && url.pathname === '/v1/ilias/ingest') {
+    const reqId = logRequest('POST /v1/ilias/ingest');
+    // HTML plus its JSON escaping; the page cap is checked again in the parser.
+    const parsed = await readJsonBody(request, response, ILIAS_PAGE_MAX_BYTES + 500_000);
+    if (!parsed) return true;
+    try {
+      const auth = requireAuth(request);
+      const result = ingestIliasPage(auth.user.id, parsed.body ?? {});
+      const user = touchPlatform(auth.user.id, 'ilias');
+      if (result.page === 'dashboard') {
+        logService('ilias', 'info', `#${reqId} ingest dashboard memberships=${result.dashboard.counts.memberships} user=${auth.user.id}`, { userId: auth.user.id });
+        send(response, 200, {
+          ok: true,
+          ...result.dashboard,
+          cached: false,
+          stale: false,
+          status: publicIliasStatus(auth.user.id),
+          user,
+        });
+      } else {
+        logService('ilias', 'info', `#${reqId} ingest content ref=${result.content.refId} items=${result.content.items.length} user=${auth.user.id}`, { userId: auth.user.id });
+        send(response, 200, { ok: true, ...result.content, cached: false, stale: false, user });
+      }
+    } catch (error) {
+      logService('ilias', 'warn', `#${reqId} ingest failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);
     }
     return true;
@@ -125,12 +196,18 @@ export async function handleIlias(request, response, url) {
     const reqId = logRequest('GET /v1/ilias/dashboard');
     try {
       const auth = requireAuth(request);
-      const result = await readIliasDashboard(auth.user.id);
+      // Stored snapshot by default; the client keeps it fresh from its WebView.
+      // `live=1` exists for the web build, which cannot inject page scripts.
+      const live = url.searchParams.get('live') === '1';
+      const result = live ? await readIliasDashboard(auth.user.id) : cachedIliasDashboard(auth.user.id);
+      const dashboard = result.dashboard;
       const user = touchPlatform(auth.user.id, 'ilias');
-      logService('ilias', 'info', `#${reqId} dashboard ok memberships=${result.dashboard.counts.memberships} user=${auth.user.id}`, { userId: auth.user.id });
+      logService('ilias', 'info', `#${reqId} dashboard ${live ? 'live' : 'cache'} memberships=${dashboard.counts.memberships} stale=${Boolean(result.stale)} user=${auth.user.id}`, { userId: auth.user.id });
       send(response, 200, {
         ok: true,
-        ...result.dashboard,
+        ...dashboard,
+        cached: result.cached ?? false,
+        stale: Boolean(result.stale),
         status: publicIliasStatus(auth.user.id),
         user,
       });

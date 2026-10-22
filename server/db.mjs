@@ -229,6 +229,29 @@ export function getDb() {
       payload TEXT NOT NULL DEFAULT '{}',
       fetched_at TEXT
     );
+    /* Parsed course/group/folder pages. The client reads them in its WebView
+       and posts the HTML; the server parses and keeps the rows. */
+    CREATE TABLE IF NOT EXISTS user_ilias_content (
+      user_id TEXT NOT NULL,
+      ref_id INTEGER NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'crs',
+      payload TEXT NOT NULL DEFAULT '{}',
+      fetched_at TEXT,
+      PRIMARY KEY (user_id, ref_id, kind)
+    );
+    CREATE INDEX IF NOT EXISTS user_ilias_content_user ON user_ilias_content(user_id, fetched_at DESC);
+    /* The HTML the client harvested, kept so a parser fix can replay a page
+       without asking the device to fetch it again. Pruned per account. */
+    CREATE TABLE IF NOT EXISTS user_ilias_pages (
+      user_id TEXT NOT NULL,
+      page_key TEXT NOT NULL,
+      kind TEXT NOT NULL DEFAULT '',
+      ref_id INTEGER,
+      url TEXT NOT NULL DEFAULT '',
+      html TEXT NOT NULL DEFAULT '',
+      fetched_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, page_key)
+    );
     /* News published from the admin dashboard. Only rows with published = 1
        are served to the app; date is the editorial day, not the write time. */
     CREATE TABLE IF NOT EXISTS news_items (
@@ -826,9 +849,15 @@ export function clearIliasSource(userId) {
   getDb().prepare('DELETE FROM user_ilias WHERE user_id = ?').run(scope(userId));
 }
 
+/** Keep the client's read time, so the cache can report staleness without a write-time skew. */
+function iliasFetchedAt(value) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text && !Number.isNaN(Date.parse(text)) ? text : new Date().toISOString();
+}
+
 export function saveIliasSnapshot(userId, snapshot) {
   const owner = scope(userId);
-  const fetchedAt = new Date().toISOString();
+  const fetchedAt = iliasFetchedAt(snapshot?.fetchedAt);
   getDb()
     .prepare('INSERT INTO user_ilias_snapshot (user_id, payload, fetched_at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET payload = excluded.payload, fetched_at = excluded.fetched_at')
     .run(owner, JSON.stringify(snapshot ?? {}), fetchedAt);
@@ -848,4 +877,81 @@ export function loadIliasSnapshot(userId) {
 
 export function clearIliasSnapshot(userId) {
   getDb().prepare('DELETE FROM user_ilias_snapshot WHERE user_id = ?').run(scope(userId));
+}
+
+/** One parsed repository page, keyed by object ref id and kind. */
+export function saveIliasContent(userId, content) {
+  const owner = scope(userId);
+  const refId = Number(content?.refId);
+  if (!Number.isInteger(refId) || refId <= 0) return;
+  const kind = String(content?.kind ?? 'crs').slice(0, 16) || 'crs';
+  const fetchedAt = iliasFetchedAt(content?.fetchedAt);
+  getDb()
+    .prepare('INSERT INTO user_ilias_content (user_id, ref_id, kind, payload, fetched_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, ref_id, kind) DO UPDATE SET payload = excluded.payload, fetched_at = excluded.fetched_at')
+    .run(owner, refId, kind, JSON.stringify(content ?? {}), fetchedAt);
+  // A device can browse thousands of pages; keep the newest slice per account.
+  getDb()
+    .prepare('DELETE FROM user_ilias_content WHERE user_id = ? AND rowid NOT IN (SELECT rowid FROM user_ilias_content WHERE user_id = ? ORDER BY fetched_at DESC LIMIT 500)')
+    .run(owner, owner);
+}
+
+export function loadIliasContent(userId, refId, kind = 'crs') {
+  const owner = scope(userId);
+  const id = Number(refId);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const row = getDb()
+    .prepare('SELECT payload, fetched_at FROM user_ilias_content WHERE user_id = ? AND ref_id = ? AND kind = ?')
+    .get(owner, id, String(kind ?? 'crs').slice(0, 16) || 'crs');
+  if (!row) return null;
+  try {
+    const parsed = JSON.parse(row.payload);
+    return parsed && typeof parsed === 'object' ? { content: parsed, fetchedAt: row.fetched_at ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearIliasContent(userId) {
+  getDb().prepare('DELETE FROM user_ilias_content WHERE user_id = ?').run(scope(userId));
+}
+
+/** Raw harvested HTML, so a parser change does not need another client fetch. */
+export function saveIliasPage(userId, page) {
+  const owner = scope(userId);
+  const key = String(page?.key ?? '').slice(0, 120);
+  if (!key) return;
+  getDb()
+    .prepare('INSERT INTO user_ilias_pages (user_id, page_key, kind, ref_id, url, html, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, page_key) DO UPDATE SET kind = excluded.kind, ref_id = excluded.ref_id, url = excluded.url, html = excluded.html, fetched_at = excluded.fetched_at')
+    .run(
+      owner,
+      key,
+      String(page?.kind ?? '').slice(0, 16),
+      Number.isInteger(Number(page?.refId)) && Number(page.refId) > 0 ? Number(page.refId) : null,
+      String(page?.url ?? '').slice(0, 500),
+      String(page?.html ?? ''),
+      iliasFetchedAt(page?.fetchedAt),
+    );
+  getDb()
+    .prepare('DELETE FROM user_ilias_pages WHERE user_id = ? AND rowid NOT IN (SELECT rowid FROM user_ilias_pages WHERE user_id = ? ORDER BY fetched_at DESC LIMIT 500)')
+    .run(owner, owner);
+}
+
+export function loadIliasPage(userId, key) {
+  const owner = scope(userId);
+  const row = getDb()
+    .prepare('SELECT page_key, kind, ref_id, url, html, fetched_at FROM user_ilias_pages WHERE user_id = ? AND page_key = ?')
+    .get(owner, String(key ?? '').slice(0, 120));
+  if (!row) return null;
+  return {
+    key: row.page_key,
+    kind: row.kind ?? '',
+    refId: typeof row.ref_id === 'number' ? row.ref_id : null,
+    url: row.url ?? '',
+    html: row.html ?? '',
+    fetchedAt: row.fetched_at ?? null,
+  };
+}
+
+export function clearIliasPages(userId) {
+  getDb().prepare('DELETE FROM user_ilias_pages WHERE user_id = ?').run(scope(userId));
 }

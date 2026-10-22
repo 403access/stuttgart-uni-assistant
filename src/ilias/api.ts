@@ -1,11 +1,25 @@
 /**
- * ILIAS over the assistant server. The app never talks to ILIAS directly and
- * never sees the PHPSESSID: the server logs in, stores the cookie in memory,
- * and returns the parsed dashboard.
+ * ILIAS through the assistant server plus the app's hidden WebView.
+ *
+ * The server signs in once, parses and caches harvested pages, and serves the
+ * cache. The dashboard and course pages themselves are read by the WebView with
+ * the session cookie the login handed over; this module decides when the cache
+ * is fresh enough and posts a freshly harvested page back to the server.
  */
 
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders } from '@/src/auth/session';
+import {
+  clearIliasCookies,
+  ensureIliasCookies,
+  fetchIliasPage,
+  ILIAS_DASHBOARD_URL,
+  iliasHeadlessReady,
+  iliasRepositoryUrl,
+  looksLikeIliasLoginHtml,
+  seedIliasCookies,
+  type IliasPageResult,
+} from '@/src/ilias/headless';
 
 import type { IliasContent, IliasContentItem, IliasCounts, IliasDashboard, IliasItem, IliasStatus } from './types';
 
@@ -178,21 +192,157 @@ export async function connectIlias(input: {
       password: input.password ?? '',
       cookie: input.cookie?.trim() ?? '',
     }),
-  })) as { status?: unknown } & Record<string, unknown>;
+  })) as { status?: unknown; cookies?: unknown } & Record<string, unknown>;
+  // The page reads happen in the app now, so the login hands the session to
+  // the WebView cookie store once. The server keeps its copy in memory too.
+  if (typeof payload.cookies === 'string') await seedIliasCookies(payload.cookies);
   return { status: asIliasStatus(payload.status), dashboard: asIliasDashboard(payload) };
 }
 
-export async function loadIliasDashboard(): Promise<{ status: IliasStatus; dashboard: IliasDashboard }> {
-  const payload = (await request('/v1/ilias/dashboard', { headers: { ...authHeaders() } })) as { status?: unknown } & Record<string, unknown>;
-  return { status: asIliasStatus(payload.status), dashboard: asIliasDashboard(payload) };
+export interface IliasDashboardResult {
+  status: IliasStatus;
+  dashboard: IliasDashboard;
+  cached: boolean;
+  stale: boolean;
 }
 
-/** Read one course, group, or folder page. The server keeps the ILIAS cookie. */
-export async function loadIliasContent(input: { refId: number; kind?: string }): Promise<IliasContent> {
+function dashboardResult(payload: Record<string, unknown>): IliasDashboardResult {
+  return {
+    status: asIliasStatus(payload.status),
+    dashboard: asIliasDashboard(payload),
+    cached: Boolean(payload.cached),
+    stale: Boolean(payload.stale),
+  };
+}
+
+function cacheMiss(caught: unknown): boolean {
+  return caught instanceof IliasError && caught.message === 'ilias_cache_miss';
+}
+
+function sessionExpired(caught: unknown): boolean {
+  return caught instanceof IliasError && caught.message === 'ilias_session_expired';
+}
+
+/**
+ * Read a page in the app's hidden WebView. Returns null on the web build, which
+ * has no injectable page and uses the server's live fallback instead.
+ *
+ * A page that renders the login form means the WebView cookie is missing or
+ * dead. Re-seed from the server session and retry once before asking the user
+ * to reconnect.
+ */
+async function markIliasSessionExpired(): Promise<void> {
+  // Tell the server its in-memory cookie is dead, so the next status probe
+  // reports an inactive session and the vault can reconnect.
+  await request('/v1/ilias/session/expired', { method: 'POST', headers: { ...authHeaders() } }).catch(() => undefined);
+}
+
+function transportExpired(caught: unknown): boolean {
+  const code = caught instanceof Error ? caught.message : '';
+  return code === 'ilias_http_401' || code === 'ilias_http_403';
+}
+
+async function fetchPageWithSession(url: string): Promise<IliasPageResult | null> {
+  if (!iliasHeadlessReady()) return null;
+  await ensureIliasCookies();
+  let page: IliasPageResult;
+  try {
+    page = await fetchIliasPage(url);
+    if (looksLikeIliasLoginHtml(page.html) && (await ensureIliasCookies({ refresh: true }))) {
+      page = await fetchIliasPage(url);
+    }
+  } catch (caught) {
+    if (transportExpired(caught)) {
+      await markIliasSessionExpired();
+      throw new IliasError('ilias_session_expired');
+    }
+    throw caught;
+  }
+  if (looksLikeIliasLoginHtml(page.html)) await markIliasSessionExpired();
+  return page;
+}
+
+async function ingestPage(body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  return (await request('/v1/ilias/ingest', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify(body),
+  })) as Record<string, unknown>;
+}
+
+/**
+ * The stored dashboard, refreshed from the app's WebView when it is missing or
+ * older than the server TTL. The server never fetches for a normal app read.
+ */
+export async function loadIliasDashboard(options: { refresh?: boolean } = {}): Promise<IliasDashboardResult> {
+  let cached: IliasDashboardResult | null = null;
+  try {
+    cached = dashboardResult((await request('/v1/ilias/dashboard', { headers: { ...authHeaders() } })) as Record<string, unknown>);
+  } catch (caught) {
+    if (!cacheMiss(caught)) throw caught;
+  }
+  if (cached && !options.refresh && !cached.stale) return cached;
+
+  try {
+    const page = await fetchPageWithSession(ILIAS_DASHBOARD_URL);
+    if (page) {
+      if (looksLikeIliasLoginHtml(page.html)) throw new IliasError('ilias_session_expired');
+      return dashboardResult(await ingestPage({ page: 'dashboard', html: page.html, url: page.url }));
+    }
+  } catch (caught) {
+    // A stale copy still beats an empty tab; a dead session has to surface.
+    if (cached && !sessionExpired(caught)) return cached;
+    throw caught;
+  }
+
+  try {
+    return dashboardResult((await request('/v1/ilias/dashboard?live=1', { headers: { ...authHeaders() } })) as Record<string, unknown>);
+  } catch (caught) {
+    if (cached) return cached;
+    throw caught;
+  }
+}
+
+/**
+ * One course, group, or folder page. Served from the server cache while fresh;
+ * otherwise the app fetches the page in its WebView and posts the HTML back.
+ */
+export async function loadIliasContent(input: { refId: number; kind?: string; refresh?: boolean }): Promise<IliasContent> {
   const kind = input.kind?.trim() || 'crs';
   const query = `refId=${encodeURIComponent(String(input.refId))}&kind=${encodeURIComponent(kind)}`;
-  const payload = await request(`/v1/ilias/content?${query}`, { headers: { ...authHeaders() } });
-  return asIliasContent(payload);
+  let cached: IliasContent | null = null;
+  try {
+    const payload = (await request(`/v1/ilias/content?${query}`, { headers: { ...authHeaders() } })) as Record<string, unknown>;
+    cached = asIliasContent(payload);
+    if (!input.refresh && !payload.stale) return cached;
+  } catch (caught) {
+    if (!cacheMiss(caught)) throw caught;
+  }
+
+  try {
+    const page = await fetchPageWithSession(iliasRepositoryUrl(kind, input.refId));
+    if (page) {
+      if (looksLikeIliasLoginHtml(page.html)) throw new IliasError('ilias_session_expired');
+      const payload = await ingestPage({
+        page: 'content',
+        refId: input.refId,
+        kind,
+        html: page.html,
+        url: page.url,
+      });
+      return asIliasContent(payload);
+    }
+  } catch (caught) {
+    if (cached && !sessionExpired(caught)) return cached;
+    throw caught;
+  }
+
+  try {
+    return asIliasContent(await request(`/v1/ilias/content?${query}&live=1`, { headers: { ...authHeaders() } }));
+  } catch (caught) {
+    if (cached) return cached;
+    throw caught;
+  }
 }
 
 export interface IliasFile {
@@ -236,5 +386,6 @@ export async function fetchIliasFile(refId: number): Promise<IliasFile> {
 
 export async function disconnectIlias(): Promise<IliasStatus> {
   const payload = (await request('/v1/ilias/session', { method: 'DELETE', headers: { ...authHeaders() } })) as { status?: unknown };
+  await clearIliasCookies();
   return asIliasStatus(payload.status);
 }

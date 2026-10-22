@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
@@ -9,7 +9,7 @@ import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui'
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
 import { isPdfItem } from '@/src/ilias/files';
-import { iliasContentQuery } from '@/src/ilias/queries';
+import { iliasContentQuery, refreshIliasContent } from '@/src/ilias/queries';
 import type { IliasContentItem } from '@/src/ilias/types';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
@@ -56,6 +56,7 @@ export default function IliasContentScreen() {
   const kind = firstParam(params.kind) || 'crs';
   const initialTitle = firstParam(params.title);
   const validRef = Number.isInteger(refId) && refId > 0;
+  const queryClient = useQueryClient();
   const query = useQuery(iliasContentQuery(refId, kind, { enabled: validRef }));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -119,7 +120,7 @@ export default function IliasContentScreen() {
             refreshing={query.isFetching && !query.isLoading}
             onRefresh={() => {
               setActionError('');
-              void query.refetch();
+              void refreshIliasContent(queryClient, refId, kind).catch(() => undefined);
             }}
             tintColor={colors.blue}
             colors={[colors.blue]}

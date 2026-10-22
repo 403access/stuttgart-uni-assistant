@@ -12,6 +12,7 @@ import { clearLogin } from '@/src/auth/vault';
 import { AppLock } from '@/src/components/app-lock';
 import { ToastHost } from '@/src/components/toast';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
+import { IliasHeadlessProvider } from '@/src/ilias/ilias-headless-provider';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
 import { QuizProgressProvider } from '@/src/quiz/progress';
 import { QueryProvider } from '@/src/query/client';
@@ -32,17 +33,19 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <AppStateProvider>
-      <SessionRefresh />
-      <OnboardingProvider>
-        <QueryProvider>
-          <KeyboardProvider>
-            <QuizProgressProvider>
-              <Gate />
-            </QuizProgressProvider>
-            <ToastHost />
-          </KeyboardProvider>
-        </QueryProvider>
-      </OnboardingProvider>
+      <IliasHeadlessProvider>
+        <SessionRefresh />
+        <OnboardingProvider>
+          <QueryProvider>
+            <KeyboardProvider>
+              <QuizProgressProvider>
+                <Gate />
+              </QuizProgressProvider>
+              <ToastHost />
+            </KeyboardProvider>
+          </QueryProvider>
+        </OnboardingProvider>
+      </IliasHeadlessProvider>
     </AppStateProvider>
   );
 }

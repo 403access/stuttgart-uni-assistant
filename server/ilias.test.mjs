@@ -13,10 +13,13 @@ process.env.CAMPUS_DB_PATH = ':memory:';
 const { resetDbForTests, loadIliasSnapshot, loadIliasSource, saveIliasSnapshot, saveIliasSource } = await import('./db.mjs');
 const {
   CookieJar,
+  cachedIliasContent,
+  cachedIliasDashboard,
   fetchIliasContent,
   fetchIliasDashboard,
   fetchIliasFile,
   iliasLoginName,
+  ingestIliasPage,
   loginIlias,
   looksLikeIliasLogin,
   mask,
@@ -29,6 +32,7 @@ const {
   clearUserIliasSession,
   disconnectIlias,
 } = await import('./ilias.mjs');
+const { handleIlias } = await import('./routes/ilias.mjs');
 
 const LOGIN_FORM = `<!doctype html><html><body>
   <div class="alert alert-danger" style="display:none">hidden</div>
@@ -460,6 +464,135 @@ test('the admin layer browses course content and downloads files for an active s
     const list = admin.adminIlias();
     assert.equal(list.users.find((entry) => entry.id === created.user.id).canRead, true);
     assert.equal(JSON.stringify(content).includes('session-abc'), false);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('client-harvested pages are stored and served without a server-side ILIAS read', async () => {
+  resetDbForTests();
+  const auth = await import('./auth.mjs');
+  const created = auth.createUserSession({ account: 'st112233', name: 'Cache User', mode: 'local' });
+  setUserIliasSession(created.user.id, { cookie: 'session-abc', account: 'st112233', source: 'browser' });
+
+  // A dashboard harvested by the app is parsed and kept.
+  const ingested = ingestIliasPage(created.user.id, {
+    page: 'dashboard',
+    html: DASHBOARD,
+    url: 'https://ilias3.uni-stuttgart.de/ilias.php?baseClass=ilDashboardGUI',
+    fetchedAt: new Date().toISOString(),
+  });
+  assert.equal(ingested.page, 'dashboard');
+  assert.equal(ingested.dashboard.counts.courses, 2);
+
+  const cached = cachedIliasDashboard(created.user.id);
+  assert.equal(cached.cached, true);
+  assert.equal(cached.stale, false);
+  assert.equal(cached.dashboard.counts.memberships, 3);
+  assert.equal(JSON.stringify(cached).includes('session-abc'), false);
+
+  // A page that was never harvested is a miss, not a live read.
+  assert.throws(
+    () => cachedIliasContent(created.user.id, { refId: 4590579, kind: 'crs' }),
+    (error) => error.status === 404 && error.message === 'ilias_cache_miss',
+  );
+
+  const content = ingestIliasPage(created.user.id, {
+    page: 'content',
+    refId: 4590579,
+    kind: 'crs',
+    html: CONTENT_PAGE,
+    url: 'https://ilias3.uni-stuttgart.de/go/crs/4590579',
+    fetchedAt: new Date().toISOString(),
+  });
+  assert.equal(content.page, 'content');
+  assert.equal(content.content.items.length, 3);
+  const storedContent = cachedIliasContent(created.user.id, { refId: 4590579, kind: 'crs' });
+  assert.equal(storedContent.content.title, 'Einführung in die formale Logik');
+  assert.equal(storedContent.stale, false);
+
+  ingestIliasPage(created.user.id, {
+    page: 'content',
+    refId: 4643172,
+    kind: 'grp',
+    html: CONTENT_PAGE,
+    fetchedAt: '2020-01-01T00:00:00.000Z',
+  });
+  assert.equal(cachedIliasContent(created.user.id, { refId: 4643172, kind: 'grp' }).stale, true);
+
+  // A login page means the WebView session is gone and must not be cached.
+  assert.throws(
+    () => ingestIliasPage(created.user.id, { page: 'dashboard', html: LOGIN_FORM }),
+    (error) => error.status === 401 && error.message === 'ilias_session_expired',
+  );
+});
+
+test('the HTTP layer ingests, caches, and hands back the WebView cookie', async () => {
+  resetDbForTests();
+  const auth = await import('./auth.mjs');
+  const created = auth.createUserSession({ account: 'st445577', name: 'Route Cache', mode: 'local' });
+  setUserIliasSession(created.user.id, { cookie: 'session-abc', account: 'st445577', source: 'browser' });
+  saveIliasSource(created.user.id, 'browser', 'st445577');
+  const headers = { Authorization: `Bearer ${created.token}`, 'Content-Type': 'application/json' };
+
+  const server = createServer(async (request, response) => {
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+    if (!(await handleIlias(request, response, url))) {
+      response.writeHead(404, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({ error: 'not_found' }));
+    }
+  });
+  const base = await new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${server.address().port}`)));
+  try {
+    const session = await fetch(`${base}/v1/ilias/session`, { headers });
+    assert.equal(session.status, 200);
+    assert.equal((await session.json()).cookies, 'ilClientId=Uni_Stuttgart; PHPSESSID=session-abc');
+
+    const before = await fetch(`${base}/v1/ilias/dashboard`, { headers });
+    assert.equal(before.status, 404);
+    assert.equal((await before.json()).error, 'ilias_cache_miss');
+
+    const post = await fetch(`${base}/v1/ilias/ingest`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ page: 'dashboard', html: DASHBOARD, url: 'https://ilias3.uni-stuttgart.de/' }),
+    });
+    assert.equal(post.status, 200);
+    const posted = await post.json();
+    assert.equal(posted.counts.courses, 2);
+    assert.equal(posted.cached, false);
+
+    const dashboard = await fetch(`${base}/v1/ilias/dashboard`, { headers });
+    assert.equal(dashboard.status, 200);
+    const body = await dashboard.json();
+    assert.equal(body.counts.memberships, 3);
+    assert.equal(body.cached, true);
+    assert.equal(body.stale, false);
+    assert.equal(JSON.stringify(body).includes('session-abc'), false);
+
+    const contentIngest = await fetch(`${base}/v1/ilias/ingest`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ page: 'content', refId: 4590579, kind: 'crs', html: CONTENT_PAGE }),
+    });
+    assert.equal(contentIngest.status, 200);
+    assert.equal((await contentIngest.json()).items.length, 3);
+
+    const content = await fetch(`${base}/v1/ilias/content?refId=4590579&kind=crs`, { headers });
+    assert.equal(content.status, 200);
+    const contentBody = await content.json();
+    assert.equal(contentBody.items.length, 3);
+    assert.equal(contentBody.cached, true);
+    assert.equal(contentBody.stale, false);
+
+    // A harvested login page tells the app to report the dead session; the
+    // stored rows stay readable and the source marker survives for reconnect.
+    const expired = await fetch(`${base}/v1/ilias/session/expired`, { method: 'POST', headers });
+    assert.equal(expired.status, 200);
+    const expiredBody = await expired.json();
+    assert.equal(expiredBody.status.sessionActive, false);
+    assert.equal(expiredBody.status.account, 'st445577');
+    assert.equal((await fetch(`${base}/v1/ilias/dashboard`, { headers })).status, 200);
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }

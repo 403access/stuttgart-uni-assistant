@@ -54,7 +54,7 @@ export function useIlias() {
         if (!options.pull) setNote('');
       }
       try {
-        const result = await loadIliasDashboard();
+        const result = await loadIliasDashboard({ refresh: Boolean(options.pull) });
         applyStatus(result.status);
         setDashboard(result.dashboard);
       } catch (caught) {
@@ -238,7 +238,7 @@ export function useIlias() {
   }, [authToken, connectSaved, dashboard, savedLogin, settledToken, status?.sessionActive]);
 
   const refresh = useCallback(async () => {
-    await load({});
+    await load({ pull: true });
   }, [load]);
 
   const pullToRefresh = useCallback(async () => {

@@ -4,15 +4,26 @@
  *
  * The portal has no public JSON API for students. The login is a normal form
  * post (`ilstartupgui` → `doStandardAuthentication`) that answers with a
- * redirect and the `PHPSESSID` cookie; every read afterwards is an authenticated
- * HTML page. This module owns that flow so the terminal probe, the assistant
- * server, and the tests all exercise the same code.
+ * redirect and the `PHPSESSID` cookie. After that, the app's hidden WebView
+ * reads the authenticated HTML pages and posts them back; this module parses
+ * and caches them. This module also owns the terminal probe, so the probe, the
+ * app, and the tests exercise the same parsers.
  *
- * Credentials are never logged, stored, or returned. A successful login hands
- * back only the cookie plus the parsed dashboard.
+ * Credentials are never logged or stored. The login hands the cookie to the
+ * authenticated app (which does the page reads) plus the parsed dashboard.
  */
 
-import { clearIliasSource, getDb, loadIliasSource, saveIliasSnapshot, saveIliasSource } from './db.mjs';
+import {
+  clearIliasSource,
+  getDb,
+  loadIliasContent,
+  loadIliasSource,
+  loadIliasSnapshot,
+  saveIliasContent,
+  saveIliasPage,
+  saveIliasSnapshot,
+  saveIliasSource,
+} from './db.mjs';
 
 export const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 export const ILIAS_LOGIN_URL = `${ILIAS_BASE}/ilias.php?baseClass=ilstartupgui&cmd=post&fallbackCmd=doStandardAuthentication`;
@@ -745,6 +756,94 @@ export async function fetchIliasFile({ cookie, refId, fetchImpl = fetch, fileUrl
     throw iliasError(502, 'ilias_unreachable', String(error?.message ?? error));
   }
   return fileFromResponse(response, url, fetchImpl, headers);
+}
+
+/* ------------------------------------------------------------- cache -- */
+
+/**
+ * Page reads are harvested by the app's hidden WebView and posted here. The
+ * server only parses and stores them; it never walks ILIAS on behalf of a
+ * signed-in user. A cached page is served until this TTL has passed, then the
+ * client refreshes it.
+ */
+export const ILIAS_CACHE_TTL_MS = 15 * 60 * 1000;
+export const ILIAS_PAGE_MAX_BYTES = 4_000_000;
+
+function cacheIso(value) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text && !Number.isNaN(Date.parse(text)) ? text : new Date().toISOString();
+}
+
+function cacheMeta(fetchedAt, ttl = ILIAS_CACHE_TTL_MS) {
+  const read = Date.parse(fetchedAt ?? '');
+  const stale = !Number.isFinite(read) || Date.now() - read > ttl;
+  return { fetchedAt: fetchedAt ?? null, cached: true, stale };
+}
+
+function safeContentKind(value) {
+  return /^[a-z]{2,8}$/i.test(String(value ?? '')) ? String(value).toLowerCase() : 'crs';
+}
+
+/**
+ * Store a page the client fetched. Dashboard HTML refreshes the snapshot, and
+ * content HTML refreshes the parsed rows for that object. The raw HTML is kept
+ * as well, so a parser change can replay it without another device fetch.
+ */
+export function ingestIliasPage(userId, input = {}) {
+  if (input.page !== 'dashboard' && input.page !== 'content') throw iliasError(400, 'ilias_page_invalid');
+  const html = String(input.html ?? '');
+  if (!html) throw iliasError(400, 'ilias_page_missing');
+  if (html.length > ILIAS_PAGE_MAX_BYTES) throw iliasError(413, 'ilias_page_too_large');
+  if (looksLikeIliasLogin(html)) {
+    // Same evidence as a live read: the cookie the server handed out is dead.
+    clearUserIliasSession(userId);
+    throw iliasError(401, 'ilias_session_expired');
+  }
+  const fetchedAt = cacheIso(input.fetchedAt);
+  const url = String(input.url ?? '').slice(0, 500);
+
+  if (input.page === 'content') {
+    const refId = Number(input.refId);
+    if (!Number.isInteger(refId) || refId <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+    const kind = safeContentKind(input.kind);
+    const content = parseIliasContent(html, { refId, kind, fetchedAt });
+    saveIliasContent(userId, content);
+    saveIliasPage(userId, { key: `content-${kind}-${refId}`, kind, refId, url, html, fetchedAt });
+    return { page: 'content', content, ...cacheMeta(fetchedAt) };
+  }
+
+  const dashboard = parseIliasDashboard(html, fetchedAt);
+  saveIliasSnapshot(userId, dashboard);
+  saveIliasPage(userId, { key: 'dashboard', kind: 'dashboard', refId: null, url, html, fetchedAt });
+  return { page: 'dashboard', dashboard, ...cacheMeta(fetchedAt) };
+}
+
+/** The stored dashboard; no ILIAS request. Throws 404 when nothing was harvested yet. */
+export function cachedIliasDashboard(userId, ttl = ILIAS_CACHE_TTL_MS) {
+  const stored = loadIliasSnapshot(userId);
+  if (!stored) throw iliasError(404, 'ilias_cache_miss');
+  return {
+    dashboard: stored.dashboard,
+    ...cacheMeta(stored.fetchedAt ?? stored.dashboard?.fetchedAt, ttl),
+  };
+}
+
+/** The stored content page; no ILIAS request. Throws 404 when it was never harvested. */
+export function cachedIliasContent(userId, input = {}, ttl = ILIAS_CACHE_TTL_MS) {
+  const refId = Number(input.refId);
+  if (!Number.isInteger(refId) || refId <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+  const kind = safeContentKind(input.kind);
+  const stored = loadIliasContent(userId, refId, kind);
+  if (!stored) throw iliasError(404, 'ilias_cache_miss');
+  return {
+    content: stored.content,
+    ...cacheMeta(stored.fetchedAt ?? stored.content?.fetchedAt, ttl),
+  };
+}
+
+/** The session cookie the app seeds into its WebView before harvesting pages. */
+export function iliasCookieFor(userId) {
+  return resolveIliasSession(userId).cookie;
 }
 
 /* ------------------------------------------------------ session registry -- */

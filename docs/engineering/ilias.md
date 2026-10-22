@@ -1,8 +1,10 @@
 # ILIAS connector
 
 ILIAS at Universität Stuttgart (`https://ilias3.uni-stuttgart.de`) has no
-student JSON API. The app therefore reads the same pages a browser renders,
-through the assistant server.
+student JSON API. The app therefore reads the same HTML pages a browser
+renders. The page reads run in a hidden WebView on the device; the assistant
+server parses and caches what the app harvested, so server load does not grow
+with the number of active users.
 
 ## Login
 
@@ -29,14 +31,42 @@ A successful login answers `302` with a `PHPSESSID` cookie and redirects to:
 https://ilias3.uni-stuttgart.de/ilias.php?baseClass=ilDashboardGUI&cmd=jumpToSelectedItems
 ```
 
-The cookie, not the password, is what the server keeps. It lives in a
-per-account `Map` in `server/ilias.mjs` and disappears on restart. Only the last
-parsed dashboard is stored in SQLite (`user_ilias_snapshot`), together with the
-source marker in `user_ilias`.
+The password is used once, in that login request. The resulting `PHPSESSID` is
+kept in a per-account `Map` in `server/ilias.mjs` (it disappears on restart),
+and the login response also hands it to the authenticated app. The app seeds
+the cookie into its own WebView cookie store (`CookieManager`, WebKit store on
+iOS) and performs every later page read there. The server no longer fetches the
+dashboard or course pages for a normal app read.
 
-An expired session is detected when the dashboard request returns a page with
-`name="login_form"`; that maps to `401 ilias_session_expired` and the app asks
-to reconnect.
+An expired session is detected when a harvested page contains
+`name="login_form"`. The client first re-seeds the WebView from
+`GET /v1/ilias/session` and retries once; if it is still a login page, the read
+maps to `401 ilias_session_expired` and the app asks to reconnect.
+
+## Cache
+
+Every page the app reads is posted to `POST /v1/ilias/ingest` as HTML. The
+server parses it, stores the parsed rows, and keeps the raw HTML so a parser
+change can replay a page without asking the device to fetch it again.
+
+| Table | Content |
+| --- | --- |
+| `user_ilias_snapshot` | Last parsed dashboard per account |
+| `user_ilias_content` | Parsed course/group/folder pages, keyed by account, ref id, kind |
+| `user_ilias_pages` | Raw harvested HTML, keyed by account and page |
+| `user_ilias` | Source marker and account name |
+
+Cached reads are served for 15 minutes (`ILIAS_CACHE_TTL_MS`). A response
+carries `cached` and `stale`; the app refreshes a stale or missing page in its
+WebView and ingests the result before rendering it. Content rows are pruned to
+the newest 500 pages per account, raw pages likewise.
+
+The cache is per account, not global: course visibility is authorization-
+sensitive, so one student's page is never served to another.
+
+The web build has no injectable WebView. It keeps using the server-side live
+read (`?live=1` on the dashboard and content routes) as a fallback; mobile
+builds never take that path.
 
 ## Dashboard blocks
 
@@ -60,15 +90,20 @@ block yields an empty list instead of failing the page.
 | Route | Auth | Behavior |
 | --- | --- | --- |
 | `GET /v1/ilias/config` | optional | Does this server have an `.env` session, and is this account connected? |
-| `POST /v1/ilias/session` | app | `{ account, password }`, `{ cookie }`, or `{ env: true }`; returns the dashboard |
-| `GET /v1/ilias/dashboard` | app | Reads the live dashboard, refreshes the snapshot |
-| `DELETE /v1/ilias/session` | app | Forgets the in-memory cookie and demotes the platform link |
-| `GET /v1/ilias/content` | app | `refId` and `kind` of one course, group, folder, or category page |
+| `GET /v1/ilias/session` | app | Hands the current `PHPSESSID` back so the app can seed its WebView |
+| `POST /v1/ilias/session` | app | `{ account, password }`, `{ cookie }`, or `{ env: true }`; signs in once and returns the dashboard plus the cookie |
+| `POST /v1/ilias/ingest` | app | `{ page: 'dashboard' \| 'content', html, url, refId?, kind?, fetchedAt? }`; parses and stores a harvested page |
+| `GET /v1/ilias/dashboard` | app | Serves the stored dashboard (`cached`, `stale`); `?live=1` is the web fallback |
+| `GET /v1/ilias/content` | app | Serves one stored course/group/folder page; `?live=1` is the web fallback |
+| `POST /v1/ilias/session/expired` | app | The WebView saw a login page: drops only the in-memory cookie so the vault can reconnect |
+| `DELETE /v1/ilias/session` | app | Forgets the in-memory cookie, clears the WebView cookie, demotes the platform link |
 | `GET /v1/ilias/file` | app | Streams one repository file with its ILIAS content type and filename |
 
 The password is only a request-body field. It is not written to the database,
-not logged, and not echoed. The `PHPSESSID` is never returned to the app; the
-app sees parsed rows and a `status` object.
+not logged, and not echoed. The `PHPSESSID` is returned only to the
+authenticated app that just signed in, or on the authenticated `GET
+/v1/ilias/session` call, because the device now owns the page reads. The
+cookie is never written to logs or to the database.
 
 The operator can set `ILIAS_SESSION_COOKIE` and `ILIAS_ACCOUNT` in `.env` and
 then connect with `{ "env": true }`. That cookie is only used for an account
@@ -90,10 +125,16 @@ counts and the first rows; it never prints the password or the cookie.
 
 The **ILIAS** tab shows a connection panel while the account has no live
 session. After connecting it renders counts and filterable rows for courses,
-groups, news, mail, and to-dos. Pull-to-refresh reads the dashboard again.
+groups, news, mail, and to-dos. Pull-to-refresh re-reads the dashboard.
+
+Page reads share one hidden WebView (`IliasHeadlessProvider`, mounted at the
+app root). The provider registers a `fetch` bridge; `src/ilias/api.ts` asks the
+server for the cache first, and on a miss or stale entry injects a same-origin
+`fetch` into the hidden page, posts the HTML to `/v1/ilias/ingest`, and renders
+the parsed response. Requests are serialized through one queue.
 
 The app session is revalidated on every resume (`SessionRefresh`); the ILIAS tab
-follows the same beat. It awaits the shared session probe, reloads a live
+follows the same beat. It awaits the shared session probe, reloads the cached
 dashboard, and — when the opt-in C@MPUS credential sits in the device vault —
 reconnects a session that a server restart dropped, without asking for the
 password again.
@@ -119,9 +160,11 @@ shows the stored dashboard and can disconnect the session. The overview adds an
 
 ## Limits
 
-The connector reads the dashboard and the object lists of courses, groups,
-folders, and categories. It does not paginate the magazine, post to forums, or
-send mail. PDFs render in the app; other formats are downloaded or shared, not
-previewed. Files are cached for the current read and are not kept as an offline
+The app reads the dashboard and the object lists of courses, groups, folders,
+and categories; the server only parses and stores those pages. It does not
+paginate the magazine, post to forums, or send mail. PDFs render in the app;
+other formats are downloaded or shared, not previewed. File bytes still stream
+through `GET /v1/ilias/file` on the server (they are not harvested by the
+WebView), and are cached only for the current read, not kept as an offline
 library. Those pages would need their own parsers and a separate permission
 decision.

@@ -175,11 +175,19 @@ test('deleting a user removes the account, sessions, links, and portal rows', ()
   db.saveCampusSource(alice.user.id, 'browser', 'st111111');
   db.saveStructure(alice.user.id, 10, 1, [{ id: 1, designation: 'R', elementType: 'ROOT', name: 'Informatik', parentId: null, completed: false, inProgress: false }], [1], false);
   db.logPortalCall({ userId: alice.user.id, op: 'structure' });
+  db.saveIliasSource(alice.user.id, 'browser', 'st111111');
+  db.saveIliasSnapshot(alice.user.id, { counts: { courses: 1 }, fetchedAt: '2026-10-20T20:00:00.000Z' });
+  db.saveIliasContent(alice.user.id, { refId: 4590579, kind: 'crs', title: 'Logik', items: [], fetchedAt: '2026-10-20T20:00:00.000Z' });
+  db.saveIliasPage(alice.user.id, { key: 'dashboard', html: '<html></html>' });
   assert.equal(admin.deleteAdminUser(alice.user.id), true);
   assert.equal(auth.getUser(alice.user.id), null);
   assert.equal(admin.adminUserDetail(alice.user.id), null);
   assert.equal(auth.authenticateToken(alice.token), null);
   assert.equal(db.loadStructure(alice.user.id, 10).nodes.length, 0);
+  assert.equal(db.loadIliasSnapshot(alice.user.id), null);
+  assert.equal(db.loadIliasSource(alice.user.id), null);
+  assert.equal(db.loadIliasContent(alice.user.id, 4590579, 'crs'), null);
+  assert.equal(db.loadIliasPage(alice.user.id, 'dashboard'), null);
   assert.equal(admin.deleteAdminUser('legacy'), false);
 });
 
