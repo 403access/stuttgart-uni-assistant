@@ -1,11 +1,18 @@
 /** Request logging and the error body shared by the portal and mail routes. */
 
+import { logService } from './service-log.mjs';
+
 let requestSeq = 0;
+
+function serviceFor(route) {
+  if (route.includes('/v1/ilias')) return 'ilias';
+  if (route.includes('/v1/mail')) return 'mail';
+  return 'campus';
+}
 
 export function logRequest(route, extra) {
   const id = ++requestSeq;
-  const stamp = new Date().toISOString();
-  console.log(`[campus #${id} ${stamp}] ${route}${extra ? ` ${extra}` : ''}`);
+  logService(serviceFor(route), 'info', `#${id} ${route}${extra ? ` ${extra}` : ''}`, { requestId: id });
   return id;
 }
 

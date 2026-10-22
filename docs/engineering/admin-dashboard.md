@@ -53,6 +53,7 @@ that survives reloads and can be shared between operators:
 | `#/users/<id>/calls` | Portal call log with failure filter and pagination |
 | `#/users/<id>/audit` | Operator actions for this account |
 | `#/audit` | Cross-account audit log with search, action filter, and pagination |
+| `#/logs` | Persisted service diagnostics from C@MPUS, ILIAS, UniMail, SIAM/OIDC, sync, auth, admin, and the assistant, with search, service/level filters, and optional auto-refresh |
 | `#/system` | Runtime, configuration, database counts, sync jobs, maintenance |
 
 The layout is responsive, keeps a light and a dark theme (stored in
@@ -149,6 +150,18 @@ size, table counts, every configuration flag, the in-memory sync jobs (with
 progress and cancel), and the UniMail disconnect action. The mail login is
 process-wide, so that action disconnects every user's mail view.
 
+**Logs:** every service writes through one logger (`server/service-log.mjs`),
+which mirrors the line to stdout and stores it in SQLite. The page shows the
+newest 100 lines per page with the time, service, level (`info`, `warn`,
+`error`, `debug`), message, optional JSON detail, and a link to the account when
+the line carries a user id. Search matches the message, detail, service, level,
+and user id; the service and level selects filter independently. Auto-refresh
+polls every five seconds and stops when the view changes. **Leeren** deletes the
+matching lines after a confirmation and records a `logs.clear` audit entry.
+The store keeps the newest 5,000 rows and drops rows older than 30 days, so a
+long-running server does not grow without bound. Credentials never reach a log
+line: the auth, campus, ILIAS, and mail code logs outcomes and counts only.
+
 ## Routes
 
 All routes below except `login`/`logout` require the admin cookie.
@@ -191,6 +204,8 @@ All routes below except `login`/`logout` require the admin cookie.
 | `POST /v1/admin/users/<id>/portal/calls/clear` | Deletes the user's portal call log. |
 | `POST /v1/admin/users/<id>/sync` | Starts a full study sync for the account while it has a live portal credential. Optional `{ studyId, includeCourses }`. |
 | `GET /v1/admin/audit?query=&action=&userId=&limit=&offset=` | Audit log with action facets. |
+| `GET /v1/admin/logs?query=&service=&level=&limit=&offset=` | Service diagnostics, newest first, with service and level facets. |
+| `DELETE /v1/admin/logs?service=&level=` | Deletes the matching service logs and records a `logs.clear` audit entry. |
 | `GET /v1/admin/system` | Runtime, configuration, database, sync jobs, and stats. |
 | `GET /v1/admin/sync-jobs` | In-memory sync jobs, newest first. |
 | `DELETE /v1/admin/sync-jobs/<id>` | Cancels a sync job. |
@@ -215,18 +230,21 @@ screen cannot replay them.
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
 | `server/admin/sync.mjs` | Manual sync start/cancel. |
 | `server/admin/system.mjs` | Runtime, configuration, database, and mail status. |
+| `server/admin/logs.mjs` | Service log list, filters, and audited clear. |
 | `server/admin/util.mjs` | Shared validation and pagination helpers. |
+| `server/service-log.mjs` | The single logger: stdout plus the bounded `service_logs` table. |
 | `server/news.mjs` | Published news read model and admin input validation. |
 | `server/routes/news.mjs` | Public `/v1/news` routes. |
 | `server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
-| `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, and system routes. |
+| `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, logs, and system routes. |
 | `server/dashboard/index.html` | The page shell. |
 | `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `server/dashboard/pages/*.mjs` | Overview, news, users, user detail, ILIAS, audit, and system views. |
+| `server/dashboard/pages/*.mjs` | Overview, news, users, user detail, ILIAS, audit, logs, and system views. |
 | `server/dashboard/assets/styles.css` | The dashboard styles. |
-| `server/db.mjs` | Schema, including the `admin_audit` table. |
+| `server/db.mjs` | Schema, including the `admin_audit` and `service_logs` tables. |
 | `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
 | `server/admin.test.mjs` | Token matching, stats, filters, detail, editors, audit, system status, destructive actions. |
+| `server/service-log.test.mjs` | Service log persistence, filters, facets, clearing, and the audited admin clear. |
 | `server/admin-route.test.mjs` | Endpoint-level cookie gate, login, readers, mutations, audit, and deletion over a throwaway HTTP listener. |
 | `server/news.test.mjs` | News CRUD, draft visibility, public filtering, ordering, and validation. |
 

@@ -8,6 +8,7 @@ import { icon, paintIcons } from './icons.mjs';
 import { renderAuditPage } from '../pages/audit.mjs';
 import { renderDevicesPage } from '../pages/devices.mjs';
 import { renderIliasPage } from '../pages/ilias.mjs';
+import { renderLogsPage, stopLogsAutoRefresh } from '../pages/logs.mjs';
 import { renderNewsPage, submitNewsForm } from '../pages/news.mjs';
 import { renderOverview } from '../pages/overview.mjs';
 import { renderSystemPage } from '../pages/system.mjs';
@@ -20,6 +21,7 @@ import { emptyState, toast } from './ui.mjs';
 
 async function renderRoute() {
   const route = parseHash();
+  if (route.name !== 'logs') stopLogsAutoRefresh();
   if (route.name === 'overview' && state.route?.name && state.route.name !== 'overview') state.overview = null;
   state.route = route;
   setActiveNav(route.name);
@@ -34,6 +36,7 @@ async function renderRoute() {
     else if (route.name === 'ilias') await renderIliasPage();
     else if (route.name === 'devices') await renderDevicesPage(route);
     else if (route.name === 'audit') await renderAuditPage(route);
+    else if (route.name === 'logs') await renderLogsPage(route);
     else if (route.name === 'system') await renderSystemPage();
     else await renderOverview();
   } catch (error) {
@@ -106,11 +109,13 @@ function wireEvents() {
   }
   $('logout').addEventListener('click', async () => {
     await fetch('/v1/admin/logout', { method: 'POST' }).catch(() => undefined);
+    stopLogsAutoRefresh();
     state.user = { id: null, detail: null, tab: 'overview', cache: {}, data: null, calendar: null, calls: null, platformEdit: null };
     state.users = { query: '', mode: '', platform: '', credential: '', activity: '', data: '', sort: 'recent', limit: 25, offset: 0, list: [], total: 0, seq: 0, selected: new Set() };
     state.devices = { query: '', state: '', limit: 50, offset: 0, list: [], total: 0, stats: null, seq: 0 };
     state.news = { query: '', state: '', limit: 50, offset: 0, list: [], total: 0 };
     state.ilias = null;
+    state.logs = { query: '', service: '', level: '', offset: 0, limit: 100, list: [], total: 0, services: [], levels: [], auto: false };
     showLogin();
   });
   $('menu-button').addEventListener('click', () => {

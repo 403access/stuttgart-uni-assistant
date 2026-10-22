@@ -3,6 +3,7 @@
 import { randomBytes } from 'node:crypto';
 
 import { getCoursesSync, isExpanded, loadCampusSource, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveCampusSource, saveExportedEvents, saveStudiesSnapshot, saveStructure } from './db.mjs';
+import { logService } from './service-log.mjs';
 
 /** Refreshed bearer token for the legacy single-user path. Memory only. */
 let runtimeBearerToken = null;
@@ -269,7 +270,7 @@ export async function refreshCredential(credential, fetchImpl = fetch) {
     });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
-    console.log(`[campus] refresh request failed ${reason}`);
+    logService('campus', 'warn', `refresh request failed ${reason}`);
     throw httpError(502, 'campus_failed', `refresh request failed: ${String(reason).slice(0, 200)}`);
   }
   const payload = await response.json().catch(() => ({}));
@@ -289,7 +290,7 @@ export async function refreshCredential(credential, fetchImpl = fetch) {
 export async function refreshCampusToken(fetchImpl = fetch) {
   const refreshed = await refreshCredential({ bearer: campusBearerToken(), cookie: campusSessionCookie(), source: 'env' }, fetchImpl);
   runtimeBearerToken = refreshed.bearer;
-  console.log('[campus] bearer token refreshed (memory only — persist with npm run campus:token)');
+  logService('campus', 'info', 'bearer token refreshed (memory only — persist with npm run campus:token)');
   return true;
 }
 
@@ -299,7 +300,7 @@ export async function refreshUserCampusCredential(userId, fetchImpl = fetch) {
   const credential = resolveCampusCredential(userId);
   const refreshed = await refreshCredential(credential, fetchImpl);
   setUserCampusCredential(userId, refreshed);
-  console.log(`[campus] user ${userId} bearer token refreshed`);
+  logService('campus', 'info', `user ${userId} bearer token refreshed`, { userId });
   return refreshed;
 }
 
@@ -324,7 +325,7 @@ export async function proactiveCampusRefresh(fetchImpl = fetch) {
   try {
     return await refreshCampusToken(fetchImpl);
   } catch (error) {
-    console.log(`[campus] proactive refresh failed ${error instanceof Error ? error.message : error}`);
+    logService('campus', 'warn', `proactive refresh failed ${error instanceof Error ? error.message : error}`);
     return false;
   } finally {
     proactiveInFlight = false;
@@ -338,7 +339,7 @@ export async function proactiveUserCampusRefresh(fetchImpl = fetch) {
     try {
       await refreshUserCampusCredential(userId, fetchImpl);
     } catch (error) {
-      console.log(`[campus] proactive refresh for ${userId} failed ${error instanceof Error ? error.message : error}`);
+      logService('campus', 'warn', `proactive refresh for ${userId} failed ${error instanceof Error ? error.message : error}`, { userId });
     }
   }
   return entries.length;
@@ -352,7 +353,7 @@ export async function proactiveUserCampusRefresh(fetchImpl = fetch) {
 export function startCampusTokenRefresh(fetchImpl = fetch) {
   if (proactiveTimer) return;
   const minutes = proactiveRefreshMinutes();
-  console.log(`[campus] proactive token refresh every ${minutes} min (needs a session cookie)`);
+  logService('campus', 'info', `proactive token refresh every ${minutes} min (needs a session cookie)`);
   const tick = () => {
     proactiveCampusRefresh(fetchImpl);
     proactiveUserCampusRefresh(fetchImpl);
@@ -582,7 +583,7 @@ async function readCampus(credential, userId, url, label, op, fetchImpl, context
     response = await fetchImpl(url, { headers, signal });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
-    console.log(`[campus] ${label} request failed ${reason} ${Date.now() - started}ms`);
+    logService('campus', 'warn', `${label} request failed ${reason} ${Date.now() - started}ms`, { userId });
     const detail = `request failed: ${String(reason).slice(0, 200)}`;
     // A user-cancelled call is not a portal failure; keep it out of the history.
     if (!context.signal?.aborted) {
@@ -595,22 +596,22 @@ async function readCampus(credential, userId, url, label, op, fetchImpl, context
   if (!response.ok) {
     const message = portalMessage(payload);
     const detail = `upstream ${response.status}${message ? `: ${message}` : ''}`;
-    console.log(`[campus] ${label} user=${userId ?? '-'} status=${response.status} message=${message || '-'} ${elapsed}ms`);
+    logService('campus', 'warn', `${label} user=${userId ?? '-'} status=${response.status} message=${message || '-'} ${elapsed}ms`, { userId });
     logPortalCall({ userId, op, studyId: context.studyId, elementId: context.elementId, ok: false, httpStatus: response.status, message: detail, elapsedMs: elapsed });
     // Expired bearer, valid session: renew once through the refresh endpoint and retry the same call.
     const authFailed = message.includes('invalid_token') || response.status === 401;
     if (authFailed && !context.refreshed && normalCredential(credential).cookie) {
-      console.log(`[campus] ${label} token rejected, trying refresh`);
+      logService('campus', 'info', `${label} token rejected, trying refresh`, { userId });
       try {
         const refreshed = await refreshCredential(credential, fetchImpl);
         // Keep the caller's credential current too: a pre-login ticket hands
         // this object to the login route after the read.
         credential.bearer = refreshed.bearer;
         if (userId) setUserCampusCredential(userId, refreshed);
-        console.log(`[campus] ${label} retrying after refresh`);
+        logService('campus', 'info', `${label} retrying after refresh`, { userId });
         return readCampus(credential, userId, url, label, op, fetchImpl, { ...context, refreshed: true });
       } catch (refreshError) {
-        console.log(`[campus] ${label} refresh failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
+        logService('campus', 'warn', `${label} refresh failed ${refreshError instanceof Error ? refreshError.message : refreshError}`, { userId });
       }
     }
     if (message.includes('missing_session_cookie')) throw httpError(401, 'missing_session_cookie', detail);
@@ -618,7 +619,7 @@ async function readCampus(credential, userId, url, label, op, fetchImpl, context
     if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
     throw httpError(502, 'campus_failed', detail);
   }
-  console.log(`[campus] ${label} user=${userId ?? '-'} status=${response.status} ${elapsed}ms`);
+  logService('campus', 'info', `${label} user=${userId ?? '-'} status=${response.status} ${elapsed}ms`, { userId });
   logPortalCall({ userId, op, studyId: context.studyId, elementId: context.elementId, ok: true, httpStatus: response.status, elapsedMs: elapsed });
   return payload;
 }
@@ -679,7 +680,7 @@ function storedStructure(userId, studyId, elementId) {
     if (!isExpanded(userId, studyId, elementId)) return null;
     const known = loadStructure(userId, studyId);
     if (!known.nodes.length) return null;
-    console.log(`[campus] structure study=${studyId} element=${elementId} served from server store for ${userId ?? '-'}`);
+    logService('campus', 'info', `structure study=${studyId} element=${elementId} served from server store for ${userId ?? '-'}`, { userId });
     return { studyId, elementId, nodes: known.nodes, cached: true };
   } catch {
     return null;
@@ -714,7 +715,7 @@ function storedCourses(userId, studyId, elementId) {
     const fetched = loadCoursesFetchedIds(userId, studyId);
     if (!fetched.includes(elementId)) return null;
     const courses = loadCourses(userId, studyId, elementId);
-    console.log(`[campus] courses study=${studyId} element=${elementId} served from server store for ${userId ?? '-'}`);
+    logService('campus', 'info', `courses study=${studyId} element=${elementId} served from server store for ${userId ?? '-'}`, { userId });
     return { studyId, elementId, courses, cached: true };
   } catch {
     return null;
@@ -840,7 +841,7 @@ export async function loadCampusStudiesForCredential(credential, userId, fetchIm
       snapshot = null;
     }
     if (!snapshot) throw error;
-    console.log(`[campus] studies served from server store for ${userId}`);
+    logService('campus', 'info', `studies served from server store for ${userId}`, { userId });
     return { studies: snapshot.studies, activeStudyId: pickActiveStudyId(snapshot.studies, null), cached: true };
   }
 }
@@ -945,20 +946,20 @@ export async function exportCampusCalendar({ dateFrom, dateTo, format = 99, char
     });
   } catch (caught) {
     const reason = caught instanceof Error ? caught.message : 'network';
-    console.log(`[campus] calendar export request failed ${reason}`);
+    logService('campus', 'warn', `calendar export request failed ${reason}`);
     throw httpError(502, 'campus_failed', `export request failed: ${String(reason).slice(0, 200)}`);
   }
   if (!response.ok) {
     const text = await response.text().catch(() => '');
     const detail = `export upstream ${response.status}${text ? `: ${text.slice(0, 200)}` : ''}`;
-    console.log(`[campus] calendar export failed ${detail}`);
+    logService('campus', 'warn', `calendar export failed ${detail}`);
     if (response.status === 401) throw httpError(401, 'campus_unauthorized', detail);
     throw httpError(502, 'campus_failed', detail);
   }
   const buffer = Buffer.from(await response.arrayBuffer());
   const contentType = response.headers?.get?.('content-type') ?? 'application/octet-stream';
   const filename = exportFilename(response.headers?.get?.('content-disposition'), outputFormat);
-  console.log(`[campus] calendar export ok ${filename} ${buffer.length} bytes`);
+  logService('campus', 'info', `calendar export ok ${filename} ${buffer.length} bytes`);
   return { filename, contentType, bytes: buffer.length, base64: buffer.toString('base64') };
 }
 
@@ -1028,7 +1029,7 @@ export async function syncExportedCalendar({ dateFrom, dateTo } = {}, fetchImpl 
   const text = Buffer.from(downloaded.base64, 'base64').toString('utf-8');
   const events = parseIcsEvents(text);
   const { imported, skipped } = saveExportedEvents(userId, events);
-  console.log(`[campus] calendar sync ok ${downloaded.filename}: ${imported} new, ${skipped} duplicates`);
+  logService('campus', 'info', `calendar sync ok ${downloaded.filename}: ${imported} new, ${skipped} duplicates`, { userId });
   // The sync is also the onboarding's first read: return the parsed events so
   // the overview does not depend on a second round-trip or the store read.
   return { filename: downloaded.filename, imported, skipped, total: events.length, events };
@@ -1103,11 +1104,11 @@ export async function validateBrowserCredentials(harvest, fetchImpl = fetch) {
         try {
           credential = await refreshCredential(credential, fetchImpl);
         } catch (refreshError) {
-          console.log(`[campus] credentials refresh from session failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
+          logService('campus', 'warn', `credentials refresh from session failed ${refreshError instanceof Error ? refreshError.message : refreshError}`);
         }
       }
       const { studies } = await loadCampusStudiesForCredential(credential, null, fetchImpl);
-      console.log(`[campus] browser credentials ok studies=${studies.length} session=${Boolean(attempt.session)}`);
+      logService('campus', 'info', `browser credentials ok studies=${studies.length} session=${Boolean(attempt.session)}`);
       return {
         ok: true,
         studies: studies.length,
@@ -1117,9 +1118,7 @@ export async function validateBrowserCredentials(harvest, fetchImpl = fetch) {
       };
     } catch (error) {
       lastError = error;
-      console.log(
-        `[campus] credentials attempt session=${Boolean(attempt.session)} bearer=${Boolean(attempt.bearer)} failed ${error.message}${error.detail ? ` ${error.detail}` : ''}`,
-      );
+      logService('campus', 'warn', `credentials attempt session=${Boolean(attempt.session)} bearer=${Boolean(attempt.bearer)} failed ${error.message}${error.detail ? ` ${error.detail}` : ''}`);
     }
   }
   throw lastError ?? httpError(401, 'campus_unauthorized');

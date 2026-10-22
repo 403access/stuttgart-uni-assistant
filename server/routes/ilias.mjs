@@ -17,6 +17,7 @@ import {
 } from '../ilias.mjs';
 import { attachmentDisposition, readJsonBody, send } from '../http.mjs';
 import { errorBody, logRequest } from '../request-log.mjs';
+import { logService } from '../service-log.mjs';
 
 function fail(response, error) {
   send(response, Number(error?.status) || 500, errorBody(error));
@@ -57,7 +58,7 @@ export async function handleIlias(request, response, url) {
         source: result.source,
       });
       const user = touchPlatform(auth.user.id, 'ilias');
-      console.log(`[ilias #${reqId}] connect ok memberships=${result.dashboard.counts.memberships} source=${result.source} user=${auth.user.id}`);
+      logService('ilias', 'info', `#${reqId} connect ok memberships=${result.dashboard.counts.memberships} source=${result.source} user=${auth.user.id}`, { userId: auth.user.id });
       send(response, 200, {
         ok: true,
         ...result.dashboard,
@@ -65,7 +66,7 @@ export async function handleIlias(request, response, url) {
         user,
       });
     } catch (error) {
-      console.log(`[ilias #${reqId}] connect failed ${error?.message ?? 'ilias_failed'}`);
+      logService('ilias', 'warn', `#${reqId} connect failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);
     }
     return true;
@@ -74,7 +75,7 @@ export async function handleIlias(request, response, url) {
     try {
       const auth = requireAuth(request);
       disconnectIlias(auth.user.id);
-      console.log(`[ilias] disconnect user=${auth.user.id}`);
+      logService('ilias', 'info', `disconnect user=${auth.user.id}`, { userId: auth.user.id });
       send(response, 200, { ok: true, status: publicIliasStatus(auth.user.id) });
     } catch (error) {
       fail(response, error);
@@ -89,10 +90,10 @@ export async function handleIlias(request, response, url) {
       const kind = url.searchParams.get('kind') || 'crs';
       const content = await readIliasContent(auth.user.id, { refId, kind });
       const user = touchPlatform(auth.user.id, 'ilias');
-      console.log(`[ilias #${reqId}] content ok ref=${refId} kind=${kind} items=${content.items.length} user=${auth.user.id}`);
+      logService('ilias', 'info', `#${reqId} content ok ref=${refId} kind=${kind} items=${content.items.length} user=${auth.user.id}`, { userId: auth.user.id });
       send(response, 200, { ok: true, ...content, user });
     } catch (error) {
-      console.log(`[ilias #${reqId}] content failed ${error?.message ?? 'ilias_failed'}`);
+      logService('ilias', 'warn', `#${reqId} content failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);
     }
     return true;
@@ -113,9 +114,9 @@ export async function handleIlias(request, response, url) {
         ...(filename ? { 'Content-Disposition': filename } : {}),
       });
       response.end(file.bytes);
-      console.log(`[ilias #${reqId}] file ok ref=${refId} bytes=${file.bytes.length} user=${auth.user.id}`);
+      logService('ilias', 'info', `#${reqId} file ok ref=${refId} bytes=${file.bytes.length} user=${auth.user.id}`, { userId: auth.user.id });
     } catch (error) {
-      console.log(`[ilias #${reqId}] file failed ${error?.message ?? 'ilias_failed'}`);
+      logService('ilias', 'warn', `#${reqId} file failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);
     }
     return true;
@@ -126,7 +127,7 @@ export async function handleIlias(request, response, url) {
       const auth = requireAuth(request);
       const result = await readIliasDashboard(auth.user.id);
       const user = touchPlatform(auth.user.id, 'ilias');
-      console.log(`[ilias #${reqId}] dashboard ok memberships=${result.dashboard.counts.memberships} user=${auth.user.id}`);
+      logService('ilias', 'info', `#${reqId} dashboard ok memberships=${result.dashboard.counts.memberships} user=${auth.user.id}`, { userId: auth.user.id });
       send(response, 200, {
         ok: true,
         ...result.dashboard,
@@ -134,7 +135,7 @@ export async function handleIlias(request, response, url) {
         user,
       });
     } catch (error) {
-      console.log(`[ilias #${reqId}] dashboard failed ${error?.message ?? 'ilias_failed'}`);
+      logService('ilias', 'warn', `#${reqId} dashboard failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);
     }
     return true;

@@ -73,7 +73,8 @@ export function databaseCounts() {
         (SELECT COUNT(*) FROM user_exported_events) AS events,
         (SELECT COUNT(*) FROM user_portal_calls) AS calls,
         (SELECT COUNT(*) FROM news_items) AS news,
-        (SELECT COUNT(*) FROM admin_audit) AS audit`,
+        (SELECT COUNT(*) FROM admin_audit) AS audit,
+        (SELECT COUNT(*) FROM service_logs) AS logs`,
     )
     .get();
   return {
@@ -90,6 +91,7 @@ export function databaseCounts() {
     calls: row?.calls ?? 0,
     news: row?.news ?? 0,
     audit: row?.audit ?? 0,
+    logs: row?.logs ?? 0,
   };
 }
 

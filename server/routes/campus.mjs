@@ -9,11 +9,12 @@ import { authenticateRequest, campusPlatformLinks, createUserSession, getUser, r
 import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadExportedEvents, loadStructure, readPortalCalls, saveCampusSource } from '../db.mjs';
 import { readJsonBody, send } from '../http.mjs';
 import { errorBody, logRequest, previewBody } from '../request-log.mjs';
+import { logService } from '../service-log.mjs';
 import { cancelSyncJobForUser, getSyncJobForUser, startSyncJob } from '../sync.mjs';
 
 function logFailure(reqId, action, error) {
   const code = error.message || 'campus_failed';
-  console.log(`[campus #${reqId}] ${action} failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+  logService('campus', 'warn', `#${reqId} ${action} failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
 }
 
 export async function handleCampus(request, response, url) {
@@ -23,7 +24,7 @@ export async function handleCampus(request, response, url) {
     return true;
   }
   if (request.method === 'POST' && url.pathname === '/v1/campus/credentials') {
-    console.log('[campus] POST /v1/campus/credentials');
+    logService('campus', 'info', 'POST /v1/campus/credentials');
     const parsed = await readJsonBody(request, response);
     if (!parsed) return true;
     const body = parsed.body;
@@ -35,16 +36,16 @@ export async function handleCampus(request, response, url) {
         // A signed-in user reconnecting C@MPUS: keep the credential under that account.
         setUserCampusCredential(auth.user.id, result.credential);
         saveCampusSource(auth.user.id, 'browser', auth.user.account);
-        console.log(`[campus] credentials ok studies=${result.studies} user=${auth.user.id}`);
+        logService('campus', 'info', `credentials ok studies=${result.studies} user=${auth.user.id}`, { userId: auth.user.id });
         send(response, 200, { ok: true, studies: result.studies, activeStudyId: result.activeStudyId, user: getUser(auth.user.id) });
         return true;
       }
       // Pre-login: hand the validated credential to /v1/campus/login by ticket.
-      console.log(`[campus] credentials ok studies=${result.studies} ticket issued`);
+      logService('campus', 'info', `credentials ok studies=${result.studies} ticket issued`);
       send(response, 200, { ok: true, studies: result.studies, activeStudyId: result.activeStudyId, ticket: result.ticket });
     } catch (error) {
       const code = error.message || 'campus_failed';
-      console.log(`[campus] credentials failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      logService('campus', 'warn', `credentials failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
       send(response, Number(error.status) || 500, errorBody(error));
     }
     return true;
@@ -71,7 +72,7 @@ export async function handleCampus(request, response, url) {
       setUserCampusCredential(session.user.id, { ...credential, account: profileData.account });
       saveCampusSource(session.user.id, credential.source, profileData.account);
       storeCampusLogin(session.user.id, profileData);
-      console.log(`[campus #${reqId}] login ok name=${profileData.name} account=${profileData.account} nodes=${profileData.nodes.length} studies=${profileData.studies?.length ?? 0} user=${session.user.id}`);
+      logService('campus', 'info', `#${reqId} login ok name=${profileData.name} account=${profileData.account} nodes=${profileData.nodes.length} studies=${profileData.studies?.length ?? 0} user=${session.user.id}`, { userId: session.user.id });
       send(response, 200, { ...profileData, user: session.user, token: session.token, sessionId: session.sessionId, expiresAt: session.expiresAt });
     } catch (error) {
       logFailure(reqId, 'login', error);
@@ -87,7 +88,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const result = await loadCurriculumStructure(body?.elementId, body?.studyId, fetch, undefined, auth.user.id);
-      console.log(`[campus #${reqId}] structure ok study=${result.studyId} element=${result.elementId} nodes=${result.nodes.length}`);
+      logService('campus', 'info', `#${reqId} structure ok study=${result.studyId} element=${result.elementId} nodes=${result.nodes.length}`, { userId: auth.user.id });
       send(response, 200, result);
     } catch (error) {
       logFailure(reqId, 'structure', error);
@@ -103,7 +104,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const result = await loadCurriculumCourses(body?.studyId, body?.elementId, fetch, undefined, auth.user.id);
-      console.log(`[campus #${reqId}] courses ok study=${result.studyId} element=${result.elementId} count=${result.courses.length}`);
+      logService('campus', 'info', `#${reqId} courses ok study=${result.studyId} element=${result.elementId} count=${result.courses.length}`, { userId: auth.user.id });
       send(response, 200, result);
     } catch (error) {
       logFailure(reqId, 'courses', error);
@@ -119,7 +120,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const result = await loadCourseGroups(body?.courseId, fetch, undefined, auth.user.id);
-      console.log(`[campus #${reqId}] course groups ok course=${result.courseId} groups=${result.groups.length}`);
+      logService('campus', 'info', `#${reqId} course groups ok course=${result.courseId} groups=${result.groups.length}`, { userId: auth.user.id });
       send(response, 200, result);
     } catch (error) {
       logFailure(reqId, 'course groups', error);
@@ -135,7 +136,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const job = await startSyncJob({ userId: auth.user.id, studyId: body?.studyId, elementId: body?.elementId, includeCourses: body?.includeCourses });
-      console.log(`[campus #${reqId}] sync started job=${job.jobId} study=${job.studyId}`);
+      logService('campus', 'info', `#${reqId} sync started job=${job.jobId} study=${job.studyId}`, { userId: auth.user.id });
       send(response, 200, job);
     } catch (error) {
       logFailure(reqId, 'sync', error);
@@ -212,7 +213,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const result = await exportCampusCalendar(body, undefined, auth.user.id);
-      console.log(`[campus #${reqId}] calendar export ok ${result.filename} ${result.bytes} bytes`);
+      logService('campus', 'info', `#${reqId} calendar export ok ${result.filename} ${result.bytes} bytes`, { userId: auth.user.id });
       send(response, 200, result);
     } catch (error) {
       logFailure(reqId, 'calendar export', error);
@@ -228,7 +229,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const result = await syncExportedCalendar(body, undefined, auth.user.id);
-      console.log(`[campus #${reqId}] calendar sync ok ${result.imported} new, ${result.skipped} duplicates`);
+      logService('campus', 'info', `#${reqId} calendar sync ok ${result.imported} new, ${result.skipped} duplicates`, { userId: auth.user.id });
       send(response, 200, result);
     } catch (error) {
       logFailure(reqId, 'calendar sync', error);
@@ -270,7 +271,7 @@ export async function handleCampus(request, response, url) {
     try {
       const auth = requireAuth(request);
       const result = await loadCampusStudies(undefined, auth.user.id);
-      console.log(`[campus #${reqId}] studies ok count=${result.studies.length}`);
+      logService('campus', 'info', `#${reqId} studies ok count=${result.studies.length}`, { userId: auth.user.id });
       send(response, 200, result);
     } catch (error) {
       logFailure(reqId, 'studies', error);

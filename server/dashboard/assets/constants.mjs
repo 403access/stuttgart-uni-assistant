@@ -4,6 +4,21 @@ export const MODES = { campus: 'C@MPUS', oidc: 'SIAM', demo: 'Demo', local: 'Lok
 export const PLATFORMS = ['campus', 'ilias', 'sdg', 'siam', 'mail'];
 export const PLATFORM_NAMES = { campus: 'C@MPUS', ilias: 'ILIAS', sdg: 'SDG Campus', siam: 'SIAM', mail: 'UniMail' };
 export const PLATFORM_ICONS = { campus: 'globe', ilias: 'grid', sdg: 'list', siam: 'key', mail: 'mail' };
+export const SERVICE_NAMES = {
+  assistant: 'Assistent',
+  campus: 'C@MPUS',
+  ilias: 'ILIAS',
+  mail: 'UniMail',
+  oidc: 'SIAM / OIDC',
+  sync: 'Synchronisation',
+  auth: 'Anmeldung',
+  admin: 'Verwaltung',
+  http: 'HTTP',
+  server: 'Server',
+};
+export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
+export const LOG_LEVEL_NAMES = { debug: 'Debug', info: 'Info', warn: 'Warnung', error: 'Fehler' };
+export const LOG_LEVEL_TONES = { debug: '', info: 'blue', warn: 'warn', error: 'danger' };
 export const PAGE_SIZES = [25, 50, 100, 200];
 export const SORTS = [
   ['recent', 'Zuletzt aktiv'],
@@ -35,9 +50,10 @@ export const AUDIT_LABELS = {
   'sync.start': 'Synchronisation gestartet',
   'sync.cancel': 'Synchronisation abgebrochen',
   'mail.disconnect': 'UniMail getrennt',
+  'logs.clear': 'Logs gelöscht',
   'news.create': 'Meldung angelegt',
   'news.update': 'Meldung geändert',
   'news.delete': 'Meldung gelöscht',
 };
-export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect', 'news.delete']);
+export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect', 'news.delete', 'logs.clear']);
 

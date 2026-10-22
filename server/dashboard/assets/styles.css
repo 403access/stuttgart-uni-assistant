@@ -459,3 +459,8 @@
 .stack-field { display: grid; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
 .stack-field.compact { gap: 5px; font-size: 11.5px; }
 .modal-wide { width: min(640px, calc(100vw - 28px)); }
+      .log-table td { vertical-align: top; }
+      .log-message-cell { max-width: 560px; }
+      .log-message { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+      .log-detail-cell { max-width: 300px; }
+      .log-detail { margin-top: 3px; font-size: 11px; line-height: 1.4; color: var(--muted); white-space: pre-wrap; word-break: break-word; }

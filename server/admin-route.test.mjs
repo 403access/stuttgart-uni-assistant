@@ -115,6 +115,18 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   assert.equal(stats.portalNodes, 2);
   assert.equal(stats.portalCourses, 1);
 
+  db.writeServiceLog({ service: 'ilias', level: 'warn', message: 'route log probe' });
+  const logs = await call('/v1/admin/logs?service=ilias&level=warn&query=probe');
+  assert.equal(logs.status, 200);
+  const logsBody = await logs.json();
+  assert.equal(logsBody.total, 1);
+  assert.equal(logsBody.entries[0].service, 'ilias');
+  assert.equal(logsBody.entries[0].message, 'route log probe');
+  const clearedLogs = await call('/v1/admin/logs?service=ilias&level=warn', { method: 'DELETE' });
+  assert.equal(clearedLogs.status, 200);
+  assert.equal((await clearedLogs.json()).removed, 1);
+  assert.equal((await (await call('/v1/admin/logs?service=ilias')).json()).total, 0);
+
   const list = await call('/v1/admin/users?query=st123&sort=name&limit=5');
   const listBody = await list.json();
   assert.equal(listBody.total, 1);

@@ -19,6 +19,7 @@ import {
 } from '../auth.mjs';
 import { clearUserCampusCredential } from '../campus.mjs';
 import { readJsonBody, send } from '../http.mjs';
+import { logService } from '../service-log.mjs';
 
 export async function handleAuth(request, response, url) {
   if (request.method === 'POST' && url.pathname === '/v1/auth/session') {
@@ -40,7 +41,7 @@ export async function handleAuth(request, response, url) {
         email: typeof body.email === 'string' ? body.email : null,
         mode,
       });
-      console.log(`[auth] session created mode=${mode} account=${session.user.account}`);
+      logService('auth', 'info', `session created mode=${mode} account=${session.user.account}`, { userId: session.user.id });
       send(response, 200, session);
     } catch (error) {
       send(response, Number(error.status) || 400, { error: error.message || 'auth_failed', detail: error.detail });

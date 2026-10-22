@@ -3,6 +3,9 @@
 import { DatabaseSync } from 'node:sqlite';
 
 const MAX_PORTAL_CALLS = 2000;
+const MAX_SERVICE_LOGS = 5000;
+const SERVICE_LOG_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+let serviceLogWrites = 0;
 
 /** Rows written before accounts existed or by tests without a user id. */
 export const LEGACY_USER = 'legacy';
@@ -257,6 +260,21 @@ export function getDb() {
     CREATE INDEX IF NOT EXISTS admin_audit_created ON admin_audit(id DESC);
     CREATE INDEX IF NOT EXISTS admin_audit_user ON admin_audit(user_id, id DESC);
     CREATE INDEX IF NOT EXISTS admin_audit_action ON admin_audit(action, id DESC);
+    /* Diagnostic log lines from every server service. Bounded by the logger:
+       the newest MAX_SERVICE_LOGS rows survive and older rows are pruned after
+       SERVICE_LOG_RETENTION_MS. No foreign key: a line outlives its account. */
+    CREATE TABLE IF NOT EXISTS service_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      service TEXT NOT NULL,
+      level TEXT NOT NULL DEFAULT 'info',
+      message TEXT NOT NULL DEFAULT '',
+      user_id TEXT,
+      detail TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS service_logs_created ON service_logs(id DESC);
+    CREATE INDEX IF NOT EXISTS service_logs_service ON service_logs(service, id DESC);
+    CREATE INDEX IF NOT EXISTS service_logs_level ON service_logs(level, id DESC);
 
     /* Tables from the single-user store. Left in place so an old database is not
        rewritten; the application no longer reads or writes them. */
@@ -617,6 +635,119 @@ export function readPortalCalls(userId, limit = 500) {
     elapsedMs: row.elapsed_ms,
     createdAt: row.created_at,
   }));
+}
+
+function serializeServiceDetail(detail) {
+  if (detail === null || detail === undefined) return '';
+  if (typeof detail === 'string') return detail.slice(0, 4000);
+  try {
+    return JSON.stringify(detail).slice(0, 4000);
+  } catch {
+    return '';
+  }
+}
+
+function parseServiceDetail(value) {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function pruneServiceLogs(db) {
+  const cutoff = new Date(Date.now() - SERVICE_LOG_RETENTION_MS).toISOString();
+  db.prepare('DELETE FROM service_logs WHERE created_at < ?').run(cutoff);
+  db.prepare('DELETE FROM service_logs WHERE id <= (SELECT id FROM service_logs ORDER BY id DESC LIMIT 1 OFFSET ?)').run(MAX_SERVICE_LOGS);
+}
+
+/** Persist one service log line. Never throws; diagnostics must not break the call. */
+export function writeServiceLog({ service, level = 'info', message, userId = null, detail = null } = {}) {
+  try {
+    const name = String(service ?? 'server').slice(0, 40) || 'server';
+    const severity = level === 'warn' || level === 'error' || level === 'debug' ? level : 'info';
+    const text = String(message ?? '').slice(0, 2000);
+    const owner = typeof userId === 'string' && userId ? userId.slice(0, 120) : null;
+    const db = getDb();
+    db.prepare('INSERT INTO service_logs (service, level, message, user_id, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+      name,
+      severity,
+      text,
+      owner,
+      serializeServiceDetail(detail),
+      new Date().toISOString(),
+    );
+    serviceLogWrites += 1;
+    if (serviceLogWrites === 1 || serviceLogWrites >= 200) pruneServiceLogs(db);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Newest first, with independent service/level facets for the filter selects. */
+export function readServiceLogs({ query = '', service = '', level = '', limit = 100, offset = 0 } = {}) {
+  const db = getDb();
+  const capped = Math.max(1, Math.min(200, Number(limit) || 100));
+  const skip = Math.max(0, Math.trunc(Number(offset) || 0));
+  const where = [];
+  const params = [];
+  const text = String(query ?? '').trim();
+  if (text) {
+    where.push('(message LIKE ? OR detail LIKE ? OR service LIKE ? OR level LIKE ? OR user_id LIKE ?)');
+    const needle = `%${text}%`;
+    params.push(needle, needle, needle, needle, needle);
+  }
+  if (typeof service === 'string' && service.trim()) {
+    where.push('service = ?');
+    params.push(service.trim());
+  }
+  if (typeof level === 'string' && level.trim()) {
+    where.push('level = ?');
+    params.push(level.trim());
+  }
+  const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const total = db.prepare(`SELECT COUNT(*) AS n FROM service_logs ${clause}`).get(...params)?.n ?? 0;
+  const entries = db
+    .prepare(`SELECT id, service, level, message, user_id, detail, created_at FROM service_logs ${clause} ORDER BY id DESC LIMIT ? OFFSET ?`)
+    .all(...params, capped, skip)
+    .map((row) => ({
+      id: row.id,
+      service: row.service,
+      level: row.level,
+      message: row.message,
+      userId: row.user_id ?? null,
+      detail: parseServiceDetail(row.detail),
+      createdAt: row.created_at,
+    }));
+  const services = db.prepare('SELECT service, COUNT(*) AS n FROM service_logs GROUP BY service ORDER BY service').all().map((row) => ({
+    service: row.service,
+    count: row.n,
+  }));
+  const levels = db.prepare('SELECT level, COUNT(*) AS n FROM service_logs GROUP BY level').all().map((row) => ({
+    level: row.level,
+    count: row.n,
+  }));
+  return { entries, total, limit: capped, offset: skip, services, levels };
+}
+
+/** Delete all lines matching the optional filters and return the row count. */
+export function clearServiceLogs({ service = '', level = '' } = {}) {
+  const db = getDb();
+  const where = [];
+  const params = [];
+  if (typeof service === 'string' && service.trim()) {
+    where.push('service = ?');
+    params.push(service.trim());
+  }
+  if (typeof level === 'string' && level.trim()) {
+    where.push('level = ?');
+    params.push(level.trim());
+  }
+  const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const result = db.prepare(`DELETE FROM service_logs ${clause}`).run(...params);
+  return Number(result.changes ?? 0);
 }
 
 export function saveExportedEvents(userId, events) {

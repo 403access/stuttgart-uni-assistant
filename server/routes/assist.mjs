@@ -8,6 +8,7 @@
 import { t } from '../i18n/index.mjs';
 import { ASSISTANT_MODEL } from '../config.mjs';
 import { readJsonBody, send } from '../http.mjs';
+import { logService } from '../service-log.mjs';
 
 function outputText(payload) {
   if (typeof payload.output_text === 'string' && payload.output_text.trim()) return payload.output_text.trim();
@@ -24,6 +25,7 @@ function outputText(payload) {
 export async function handleAssist(request, response, url) {
   if (request.method !== 'POST' || url.pathname !== '/v1/assist') return false;
   if (!process.env.XAI_API_KEY) {
+    logService('assistant', 'warn', 'request rejected: XAI_API_KEY is not configured');
     send(response, 503, { error: 'missing_key' });
     return true;
   }
@@ -37,6 +39,7 @@ export async function handleAssist(request, response, url) {
   const facts = String(body.facts ?? '').slice(0, 24000);
   const history = Array.isArray(body.history) ? body.history.slice(-6) : [];
   if (!question) {
+    logService('assistant', 'warn', 'request rejected: empty question');
     send(response, 400, { error: 'empty_question' });
     return true;
   }
@@ -63,16 +66,20 @@ export async function handleAssist(request, response, url) {
     });
     const payload = await upstream.json().catch(() => ({}));
     if (!upstream.ok) {
+      logService('assistant', 'warn', `upstream ${upstream.status} model=${ASSISTANT_MODEL}`);
       send(response, 502, { error: 'upstream', status: upstream.status });
       return true;
     }
     const text = outputText(payload);
     if (!text) {
+      logService('assistant', 'warn', `upstream ${upstream.status} returned no text model=${ASSISTANT_MODEL}`);
       send(response, 502, { error: 'empty_upstream' });
       return true;
     }
+    logService('assistant', 'info', `answer ok model=${ASSISTANT_MODEL} locale=${locale} chars=${text.length}`);
     send(response, 200, { text, model: ASSISTANT_MODEL });
-  } catch {
+  } catch (error) {
+    logService('assistant', 'error', `upstream request failed ${error instanceof Error ? error.message : error}`);
     send(response, 502, { error: 'upstream_failed' });
   }
   return true;

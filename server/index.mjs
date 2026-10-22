@@ -22,6 +22,18 @@ import { handleIlias } from './routes/ilias.mjs';
 import { handleMail } from './routes/mail.mjs';
 import { handleNews } from './routes/news.mjs';
 import { handleOidc } from './routes/oidc.mjs';
+import { logService } from './service-log.mjs';
+
+function serviceForPath(pathname) {
+  if (pathname.startsWith('/admin') || pathname.startsWith('/v1/admin')) return 'admin';
+  if (pathname.startsWith('/v1/campus')) return 'campus';
+  if (pathname.startsWith('/v1/ilias')) return 'ilias';
+  if (pathname.startsWith('/v1/mail')) return 'mail';
+  if (pathname.startsWith('/v1/oidc')) return 'oidc';
+  if (pathname.startsWith('/v1/auth')) return 'auth';
+  if (pathname.startsWith('/v1/assist')) return 'assistant';
+  return 'http';
+}
 
 loadEnv(new URL('../.env', import.meta.url));
 warnIfPasswordPresent();
@@ -47,7 +59,7 @@ const server = createServer(async (request, response) => {
   } catch (error) {
     // A route that throws without answering used to leave the browser waiting
     // forever (e.g. the admin dashboard spinner). Always close the request.
-    console.error(`[http] ${request.method} ${url.pathname} failed: ${error?.message ?? error}`);
+    logService(serviceForPath(url.pathname), 'error', `${request.method} ${url.pathname} failed: ${error?.message ?? error}`);
     if (response.headersSent) response.end();
     else send(response, 500, { error: 'internal_error' });
   }
@@ -56,5 +68,5 @@ const server = createServer(async (request, response) => {
 startCampusTokenRefresh();
 
 server.listen(port, '0.0.0.0', () => {
-  console.log(`assistant server on http://127.0.0.1:${port}`);
+  logService('server', 'info', `assistant server on http://127.0.0.1:${port}`);
 });

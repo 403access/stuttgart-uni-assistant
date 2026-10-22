@@ -2,6 +2,7 @@
 
 import { loadCampusStudies, loadCurriculumCourses, loadCurriculumStructure } from './campus.mjs';
 import { getCoursesSync, loadCourses, loadCoursesFetchedIds, loadStructure, saveCourses, saveStructure } from './db.mjs';
+import { logService } from './service-log.mjs';
 
 const jobs = new Map();
 let jobSeq = 0;
@@ -90,7 +91,7 @@ async function fetchWithRetry(job, label, fn) {
       // An aborted call belongs to a cancel, not to the failure list.
       if (job.cancelled || error instanceof Error && error.name === 'AbortError') return { cancelled: true };
       const code = error instanceof Error ? error.message : 'campus_failed';
-      console.log(`[campus] sync #${job.id} ${label} attempt ${attempt} failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`);
+      logService('sync', 'warn', `#${job.id} ${label} attempt ${attempt} failed ${code}${error.detail ? ` detail=${error.detail}` : ''}`, { userId: job.userId });
       if (attempt < 3 && !job.cancelled) {
         job.retries += 1;
         await sleep(750 * attempt);
@@ -155,13 +156,13 @@ export async function startSyncJob({ userId = null, studyId, elementId, includeC
     job.state = 'failed';
     job.finishedAt = new Date().toISOString();
     job.error = error instanceof Error ? error.message : 'campus_failed';
-    console.log(`[campus] sync #${job.id} failed ${job.error}`);
+    logService('sync', 'error', `#${job.id} failed ${job.error}`, { userId: job.userId });
   });
   return snapshot(job);
 }
 
 async function runJob(job, fetchImpl) {
-  console.log(`[campus] sync #${job.id} started study=${job.studyId} root=${job.rootElementId} courses=${job.includeCourses}`);
+  logService('sync', 'info', `#${job.id} started study=${job.studyId} root=${job.rootElementId} courses=${job.includeCourses}`, { userId: job.userId });
   // Seed from the store so a later job resumes instead of starting over.
   const known = loadStructure(job.userId, job.studyId);
   const visited = new Set([...known.expandedIds, job.rootElementId]);
@@ -217,5 +218,5 @@ async function runJob(job, fetchImpl) {
       saveCourses(job.userId, job.studyId, loadCourses(job.userId, job.studyId), loadCoursesFetchedIds(job.userId, job.studyId), true);
     }
   }
-  console.log(`[campus] sync #${job.id} ${job.state} fetched=${job.fetched} nodes=${job.nodeCount} failed=${job.failedIds.length}`);
+  logService('sync', job.state === 'done' ? 'info' : 'warn', `#${job.id} ${job.state} fetched=${job.fetched} nodes=${job.nodeCount} failed=${job.failedIds.length}`, { userId: job.userId });
 }

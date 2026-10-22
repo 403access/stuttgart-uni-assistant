@@ -5,6 +5,7 @@
 
 import { mailFailure, state } from './config.mjs';
 import { withSession } from './session.mjs';
+import { logService } from '../service-log.mjs';
 
 /** RFC 3501 modified UTF-7 → Unicode: `Gel&APY-schte` → `Gelöschte`; plain names pass through untouched. */
 export function decodeModifiedUtf7(value) {
@@ -113,7 +114,7 @@ export async function loadMailFolders() {
       if (b.name.toUpperCase() === 'INBOX') return 1;
       return a.name.localeCompare(b.name, 'de');
     });
-    console.log(`[mail] folders ok count=${inboxFirst.length}`);
+    logService('mail', 'info', `folders ok count=${inboxFirst.length}`);
     return inboxFirst;
   });
 }

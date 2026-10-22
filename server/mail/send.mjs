@@ -9,6 +9,7 @@ import { sendSmtpMail } from '../smtp.mjs';
 import { mailAddressFor } from './accounts.mjs';
 import { folderName, imapQuoted, mailFailure, mailUid, state } from './config.mjs';
 import { withSession } from './session.mjs';
+import { logService } from '../service-log.mjs';
 
 /** `UID STORE` line that adds or removes the `\Seen` flag, e.g. `UID STORE 42 +FLAGS (\Seen)`. */
 export function seenStoreCommand(uid, seen) {
@@ -29,7 +30,7 @@ export async function setMailSeen(folderRaw, uidRaw, seen) {
     if (select.status !== 'OK') throw mailFailure('imap_error', select.text);
     const store = await session.command(seenStoreCommand(uid, read));
     if (store.status !== 'OK') throw mailFailure('imap_error', store.text);
-    console.log(`[mail] seen uid=${uid} seen=${read} folder=${folder}`);
+    logService('mail', 'info', `seen uid=${uid} seen=${read} folder=${folder}`);
     return { uid, seen: read };
   });
 }
@@ -84,7 +85,7 @@ export async function sendMail(input) {
     try {
       saved = await appendToSent(input.sentFolder, built.raw);
     } catch (error) {
-      console.log(`[mail] sent copy failed ${error.message}${error.detail ? ` detail=${error.detail}` : ''}`);
+      logService('mail', 'warn', `sent copy failed ${error.message}${error.detail ? ` detail=${error.detail}` : ''}`);
     }
   }
   return {

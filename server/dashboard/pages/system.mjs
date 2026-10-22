@@ -100,6 +100,7 @@ function renderSystem(data) {
             fieldBox('Aufrufe', number(db.counts.calls)),
             fieldBox('News', number(db.counts.news)),
             fieldBox('Audit', number(db.counts.audit)),
+            fieldBox('Logs', number(db.counts.logs)),
           ),
         ),
       ),

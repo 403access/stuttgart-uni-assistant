@@ -14,6 +14,7 @@ export {
 } from './ilias.mjs';
 export { createAdminNews, deleteAdminNews, getAdminNews, listAdminNews, updateAdminNews } from './news.mjs';
 export { adminUserCalls, adminUserCourses, adminUserEvents, adminUserNodes, adminUserStudies } from './explorers.mjs';
+export { clearAdminLogs, listAdminLogs } from './logs.mjs';
 export {
   clearAdminCalls,
   clearAdminEvents,

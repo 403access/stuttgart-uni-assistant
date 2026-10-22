@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 
+import { logService } from './service-log.mjs';
+
 /** Public URLs of the University of Stuttgart login. No secrets. */
 export const references = {
   campus: 'https://campus.uni-stuttgart.de/',
@@ -40,7 +42,7 @@ const ignoredPasswordKeys = ['OIDC_PASSWORD', 'PASSWORD', 'CAMPUS_PASSWORD', 'SI
 export function warnIfPasswordPresent() {
   const found = ignoredPasswordKeys.filter((key) => process.env[key]);
   if (!found.length) return;
-  console.warn(
+  logService('oidc', 'warn',
     `Ignoring ${found.join(', ')}. The university password is typed only at ${references.authorize} and is never read from the environment.`,
   );
 }
