@@ -47,7 +47,7 @@ that survives reloads and can be shared between operators:
 | `#/users/<id>/devices` | Web browsers approved by this account through the QR flow |
 | `#/users/<id>/platforms` | C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail links |
 | `#/users/<id>/campus` | C@MPUS credential source, per-study data, calendar/call maintenance |
-| `#/users/<id>/ilias` | ILIAS session state, parsed dashboard, and disconnect |
+| `#/users/<id>/ilias` | ILIAS session state, parsed dashboard, live content browser, members tab, and disconnect |
 | `#/users/<id>/data` | Curriculum nodes and courses per study, with search, state filter, and pagination |
 | `#/users/<id>/calendar` | Imported ICS events with search and pagination |
 | `#/users/<id>/calls` | Portal call log with failure filter and pagination |
@@ -90,8 +90,11 @@ its web session immediately.
 parsed counts for courses, groups, news, mails, unread mail, and to-dos, and
 the time of the last read. Opening a row shows the stored dashboard: course and
 group titles with their ILIAS links, the newest news, the ILIAS mailbox, and
-to-dos. **Trennen** forgets the cookie and demotes the platform link; the
-stored snapshot stays readable. The cookie and password are never shown.
+to-dos. From a course or group, **Inhalte** browses the live object list and
+its PDF/download rows; the same view loads the object's members tab beneath
+the table, with each member's role, tutor marker, and profile link. **Trennen**
+forgets the cookie and demotes the platform link; the stored snapshot stays
+readable. The cookie and password are never shown.
 
 **User list:** search by account, name, email, or matriculation; filter by
 sign-in mode, linked platform, C@MPUS source (`env` / browser / active in
@@ -180,6 +183,9 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/news?limit=` | Public published news for the app, newest editorial date first. No cookie. |
 | `GET /v1/news/<id>` | One published item, or `404`. No cookie. |
 | `GET /v1/admin/ilias` | ILIAS connections, active sessions, and aggregated course/news/mail counts. |
+| `GET /v1/admin/users/<id>/ilias/content?refId=&kind=` | Live-read one course, group, or folder page for the account. |
+| `GET /v1/admin/users/<id>/ilias/members?refId=&kind=&url=` | Live-read the members tab; `url` is the members link from the content page. |
+| `GET /v1/admin/users/<id>/ilias/file?refId=` | Stream one repository file with the account's ILIAS session. |
 | `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers, newest pairing first. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
 | `GET /v1/admin/users?query=&mode=&platform=&credential=&activity=&data=&sort=&limit=&offset=` | Paginated user list with stored-data counts and platform chips. |
@@ -224,7 +230,7 @@ screen cannot replay them.
 | `server/admin/overview.mjs` | Cross-account counts and statistics. |
 | `server/admin/users.mjs` | Account list and detail reads. |
 | `server/admin/devices.mjs` | QR-linked browser list, stats, and revoke. |
-| `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, and disconnect. |
+| `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content and member reads, file download, and disconnect. |
 | `server/admin/news.mjs` | News list, create, update, publish, and delete. |
 | `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |

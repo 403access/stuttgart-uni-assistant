@@ -15,9 +15,11 @@ const {
   CookieJar,
   cachedIliasContent,
   cachedIliasDashboard,
+  cachedIliasMembers,
   fetchIliasContent,
   fetchIliasDashboard,
   fetchIliasFile,
+  fetchIliasMembers,
   iliasLoginName,
   ingestIliasPage,
   loginIlias,
@@ -26,6 +28,7 @@ const {
   normalizeIliasCookie,
   parseIliasContent,
   parseIliasDashboard,
+  parseIliasMembers,
   parseIliasLoginForm,
   publicIliasStatus,
   setUserIliasSession,
@@ -97,6 +100,9 @@ const DASHBOARD = `<!doctype html><html><head><title>Dashboard: ILIAS für Lehre
 
 const CONTENT_PAGE = `<!doctype html><html><head><title>ILIAS</title></head><body>
   <nav><a href="https://ilias3.uni-stuttgart.de/go/crs/4590579">Einführung in die formale Logik</a></nav>
+  <ul id="ilTab">
+    <li><a href="ilias.php?baseClass=ilrepositorygui&amp;cmdNode=xi:md:9s:14x&amp;cmdClass=ilusersgallerygui&amp;cmd=view&amp;ref_id=4590579">Mitglieder</a></li>
+  </ul>
   <div id="mainspacekeeper">
     <h1 class="il-page-content-header media-heading ilHeader ">Einführung in die formale Logik</h1>
     <div class="ilHeaderDesc">Vorlesung im Wintersemester</div>
@@ -151,6 +157,46 @@ const CONTENT_PAGE = `<!doctype html><html><head><title>ILIAS</title></head><bod
       </div>
     </div>
   </div>
+</body></html>`;
+
+const MEMBERS_PAGE = `<!doctype html><html><head><title>Mitglieder: Tutorium 1</title></head><body>
+  <h1 class="il-page-content-header media-heading ilHeader ">Tutorium 1</h1>
+  <div class="il-deck"><div class="row row-eq-height">
+    <div class="col-xs-6"><div class="il-card thumbnail">
+      <div class="il-card-image-container">
+        <a href="ilias.php?baseClass=ilrepositorygui&amp;cmdClass=ilPublicUserProfileGUI&amp;ref_id=4642950&amp;user=5855743">
+          <img src="avatar.png" class="img-standard" alt="Öffnen Lea Heim" />
+        </a>
+      </div>
+      <div class="caption card-title">
+        <a href="ilias.php?baseClass=ilrepositorygui&amp;cmdClass=ilPublicUserProfileGUI&amp;ref_id=4642950&amp;user=5855743">Lea Heim</a>
+      </div>
+      <div class="caption"><dl>
+        <dt>Anmeldename</dt>
+        <dd>LeaHeim</dd>
+        <dt>Zuständigkeit</dt>
+        <dd>Kontaktperson</dd>
+      </dl></div>
+    </div></div>
+    <div class="col-xs-6"><div class="il-card thumbnail">
+      <div class="il-card-image-container"><img src="avatar.png" class="img-standard" alt="" /></div>
+      <div class="caption card-title">Nicht freigegeben</div>
+      <div class="caption"><dl>
+        <dt>Anmeldename</dt>
+        <dd>VivianEichholz</dd>
+      </dl></div>
+    </div></div>
+    <div class="col-xs-6"><div class="il-card thumbnail">
+      <div class="il-card-image-container"><img src="avatar.png" class="img-standard" alt="" /></div>
+      <div class="caption card-title">
+        <a href="ilias.php?baseClass=ilrepositorygui&amp;cmdClass=ilPublicUserProfileGUI&amp;ref_id=4642950&amp;user=4437291">Eros Steiner</a>
+      </div>
+      <div class="caption"><dl>
+        <dt>Anmeldename</dt>
+        <dd>ErosSteiner</dd>
+      </dl></div>
+    </div></div>
+  </div></div>
 </body></html>`;
 
 function page(action = 'http://127.0.0.1/login', extra = '') {
@@ -266,6 +312,63 @@ test('course content rows become materials, folders, and groups', () => {
   assert.equal(group.type, 'Gruppe');
   assert.equal(group.description, 'Raum: M11.71');
   assert.equal(group.downloadable, false);
+
+  assert.match(content.membersUrl, /cmdClass=ilusersgallerygui/);
+  assert.match(content.membersUrl, /ref_id=4590579/);
+});
+
+test('members tabs list the tutor first and keep hidden names readable', () => {
+  const members = parseIliasMembers(MEMBERS_PAGE, { refId: 4642950, kind: 'grp', fetchedAt: '2026-10-22T09:00:00.000Z' });
+  assert.equal(members.refId, 4642950);
+  assert.equal(members.kind, 'grp');
+  assert.equal(members.title, 'Tutorium 1');
+  assert.equal(members.members.length, 3);
+
+  const [tutor, hidden, named] = members.members;
+  assert.equal(tutor.name, 'Lea Heim');
+  assert.equal(tutor.username, 'LeaHeim');
+  assert.equal(tutor.role, 'Kontaktperson');
+  assert.equal(tutor.roleKind, 'tutor');
+  assert.match(tutor.profileUrl, /ilPublicUserProfileGUI/);
+
+  // "Nicht freigegeben" still names the member through the login.
+  assert.equal(hidden.name, 'Vivian Eichholz');
+  assert.equal(hidden.username, 'VivianEichholz');
+  assert.equal(hidden.roleKind, 'participant');
+  assert.equal(hidden.hidden, true);
+
+  assert.equal(named.name, 'Eros Steiner');
+  assert.equal(named.roleKind, 'participant');
+});
+
+test('members read the members tab with the session cookie', async () => {
+  const requested = [];
+  const fetchImpl = async (url) => {
+    requested.push(String(url));
+    return { status: 200, ok: true, headers: { get: () => null }, text: async () => MEMBERS_PAGE };
+  };
+  const members = await fetchIliasMembers({
+    cookie: 'session-abc',
+    refId: 4642950,
+    kind: 'grp',
+    membersUrl: 'https://ilias3.uni-stuttgart.de/ilias.php?baseClass=ilrepositorygui&cmdClass=ilusersgallerygui&cmd=view&ref_id=4642950',
+    fetchImpl,
+  });
+  assert.equal(members.members.length, 3);
+  assert.equal(members.members[0].roleKind, 'tutor');
+  assert.match(requested[0], /ilusersgallerygui/);
+
+  await assert.rejects(
+    () =>
+      fetchIliasMembers({
+        cookie: 'session-abc',
+        refId: 4642950,
+        kind: 'grp',
+        membersUrl: 'https://example.com/members',
+        fetchImpl,
+      }),
+    (error) => error.status === 400 && error.message === 'ilias_url_invalid',
+  );
 });
 
 test('content reads use the session cookie and report an expired session', async () => {
@@ -469,6 +572,29 @@ test('the admin layer browses course content and downloads files for an active s
   }
 });
 
+test('the admin layer lists course and group members for an active session', async () => {
+  resetDbForTests();
+  const auth = await import('./auth.mjs');
+  const admin = await import('./admin/index.mjs');
+  const created = auth.createUserSession({ account: 'st445566', name: 'ILIAS Members Admin', mode: 'local' });
+  setUserIliasSession(created.user.id, { cookie: 'session-abc', account: 'st445566', source: 'browser' });
+
+  const fetchImpl = async () => ({ status: 200, ok: true, headers: { get: () => null }, text: async () => MEMBERS_PAGE });
+  const members = await admin.readAdminUserIliasMembers(
+    created.user.id,
+    {
+      refId: 4642950,
+      kind: 'grp',
+      membersUrl: 'https://ilias3.uni-stuttgart.de/ilias.php?baseClass=ilrepositorygui&cmdClass=ilusersgallerygui&cmd=view&ref_id=4642950',
+    },
+    fetchImpl,
+  );
+  assert.equal(members.members.length, 3);
+  assert.equal(members.members[0].roleKind, 'tutor');
+  assert.equal(members.members[1].hidden, true);
+  assert.equal(JSON.stringify(members).includes('session-abc'), false);
+});
+
 test('client-harvested pages are stored and served without a server-side ILIAS read', async () => {
   resetDbForTests();
   const auth = await import('./auth.mjs');
@@ -509,7 +635,25 @@ test('client-harvested pages are stored and served without a server-side ILIAS r
   assert.equal(content.content.items.length, 3);
   const storedContent = cachedIliasContent(created.user.id, { refId: 4590579, kind: 'crs' });
   assert.equal(storedContent.content.title, 'Einführung in die formale Logik');
+  assert.equal(storedContent.content.membersUrl, content.content.membersUrl);
   assert.equal(storedContent.stale, false);
+
+  assert.throws(
+    () => cachedIliasMembers(created.user.id, { refId: 4590579, kind: 'crs' }),
+    (error) => error.status === 404 && error.message === 'ilias_cache_miss',
+  );
+  const members = ingestIliasPage(created.user.id, {
+    page: 'members',
+    refId: 4590579,
+    kind: 'crs',
+    html: MEMBERS_PAGE,
+    url: 'https://ilias3.uni-stuttgart.de/ilias.php?baseClass=ilrepositorygui&ref_id=4590579',
+    fetchedAt: new Date().toISOString(),
+  });
+  assert.equal(members.page, 'members');
+  assert.equal(members.members.members.length, 3);
+  assert.equal(members.members.members[0].roleKind, 'tutor');
+  assert.equal(cachedIliasMembers(created.user.id, { refId: 4590579, kind: 'crs' }).members.members.length, 3);
 
   ingestIliasPage(created.user.id, {
     page: 'content',
@@ -584,6 +728,22 @@ test('the HTTP layer ingests, caches, and hands back the WebView cookie', async 
     assert.equal(contentBody.items.length, 3);
     assert.equal(contentBody.cached, true);
     assert.equal(contentBody.stale, false);
+    assert.match(contentBody.membersUrl, /ilusersgallerygui/);
+
+    const membersIngest = await fetch(`${base}/v1/ilias/ingest`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ page: 'members', refId: 4590579, kind: 'crs', html: MEMBERS_PAGE }),
+    });
+    assert.equal(membersIngest.status, 200);
+    assert.equal((await membersIngest.json()).members.length, 3);
+
+    const members = await fetch(`${base}/v1/ilias/members?refId=4590579&kind=crs`, { headers });
+    assert.equal(members.status, 200);
+    const membersBody = await members.json();
+    assert.equal(membersBody.members.length, 3);
+    assert.equal(membersBody.members[0].roleKind, 'tutor');
+    assert.equal(membersBody.cached, true);
 
     // A harvested login page tells the app to report the dead session; the
     // stored rows stay readable and the source marker survives for reconnect.

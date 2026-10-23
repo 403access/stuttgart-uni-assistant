@@ -53,6 +53,7 @@ change can replay a page without asking the device to fetch it again.
 | --- | --- |
 | `user_ilias_snapshot` | Last parsed dashboard per account |
 | `user_ilias_content` | Parsed course/group/folder pages, keyed by account, ref id, kind |
+| `user_ilias_members` | Parsed members tabs for courses and groups, keyed by account, ref id, kind |
 | `user_ilias_pages` | Raw harvested HTML, keyed by account and page |
 | `user_ilias` | Source marker and account name |
 
@@ -85,6 +86,26 @@ reference/news/mail id, group heading, description, and property pairs such as
 `Datum` or `Lernfortschritt`. The parser is deliberately tolerant: a missing
 block yields an empty list instead of failing the page.
 
+## Members
+
+Courses and groups link to a members tab (`ilUsersGalleryGUI`). That link
+carries an object-specific `cmdNode`, which no other page reveals, so
+`parseIliasContent()` returns it as `membersUrl` and the app reads exactly that
+URL. The members page is parsed by `parseIliasMembers()`:
+
+- Each member is an `il-card thumbnail`; the display name sits in `card-title`
+  and the login name in the `Anmeldename` definition list.
+- A `Zuständigkeit` value marks the group's contact person. That row is
+  returned as the tutor and sorted to the top.
+- ILIAS renders `Nicht freigegeben` when a user has not published a profile.
+  The login name is then the only identifier, so the parser spaces its camel
+  case (`AnaMariaTonu` becomes “Ana Maria Tonu”) and still lists the member.
+- Course galleries expose no roles at all. A course therefore lists every
+  member without a tutor/participant badge instead of guessing.
+
+Members are cached like content and pruned to the newest 500 tabs per account.
+Pull-to-refresh on the app screen re-reads both the material and member pages.
+
 ## Server routes
 
 | Route | Auth | Behavior |
@@ -92,9 +113,10 @@ block yields an empty list instead of failing the page.
 | `GET /v1/ilias/config` | optional | Does this server have an `.env` session, and is this account connected? |
 | `GET /v1/ilias/session` | app | Hands the current `PHPSESSID` back so the app can seed its WebView |
 | `POST /v1/ilias/session` | app | `{ account, password }`, `{ cookie }`, or `{ env: true }`; signs in once and returns the dashboard plus the cookie |
-| `POST /v1/ilias/ingest` | app | `{ page: 'dashboard' \| 'content', html, url, refId?, kind?, fetchedAt? }`; parses and stores a harvested page |
+| `POST /v1/ilias/ingest` | app | `{ page: 'dashboard' \| 'content' \| 'members', html, url, refId?, kind?, fetchedAt? }`; parses and stores a harvested page |
 | `GET /v1/ilias/dashboard` | app | Serves the stored dashboard (`cached`, `stale`); `?live=1` is the web fallback |
 | `GET /v1/ilias/content` | app | Serves one stored course/group/folder page; `?live=1` is the web fallback |
+| `GET /v1/ilias/members` | app | Serves one stored members tab; with `?live=1` the app passes the members link from the content page as `?url=` |
 | `POST /v1/ilias/session/expired` | app | The WebView saw a login page: drops only the in-memory cookie so the vault can reconnect |
 | `DELETE /v1/ilias/session` | app | Forgets the in-memory cookie, clears the WebView cookie, demotes the platform link |
 | `GET /v1/ilias/file` | app | Streams one repository file with its ILIAS content type and filename |
@@ -140,12 +162,14 @@ reconnects a session that a server restart dropped, without asking for the
 password again.
 
 A course or group row opens its content page in the app (`/ilias/<refId>`).
-Folders and categories in that list drill down into the same screen. A PDF row
-opens the reader at `/ilias/datei`: the app fetches the bytes through
-`/v1/ilias/file`, writes them to the cache, and renders them with
-`react-native-pdf` (PDFKit on iOS, PdfRenderer on Android). The web build hands a
-blob URL to the browser's own PDF viewer in an iframe. Other file types keep the
-share sheet, and every file still has "Open in browser" and "Share" actions.
+Folders and categories in that list drill down into the same screen. When the
+object has a members tab, the screen lists its tutor and members below the
+materials, with the member count in the section heading. A PDF row opens the
+reader at `/ilias/datei`: the app fetches the bytes through `/v1/ilias/file`,
+writes them to the cache, and renders them with `react-native-pdf` (PDFKit on
+iOS, PdfRenderer on Android). The web build hands a blob URL to the browser's
+own PDF viewer in an iframe. Other file types keep the share sheet, and every
+file still has "Open in browser" and "Share" actions.
 
 `react-native-pdf` and `react-native-blob-util` carry native code, so the
 development build has to be rebuilt after a fresh install. The config plugins
@@ -155,16 +179,18 @@ in `app.json` add the Android blob provider and the PDF packaging options.
 
 `#/ilias` lists every account with a stored snapshot or live session, the
 source, session state, parsed counts, and the last read. `#/users/<id>/ilias`
-shows the stored dashboard and can disconnect the session. The overview adds an
-`ILIAS` health chip and a live-session KPI.
+shows the stored dashboard, browses the live content page of a course or group,
+and lists that object's members tab; it can also disconnect the session. The
+overview adds an `ILIAS` health chip and a live-session KPI.
 
 ## Limits
 
-The app reads the dashboard and the object lists of courses, groups, folders,
-and categories; the server only parses and stores those pages. It does not
-paginate the magazine, post to forums, or send mail. PDFs render in the app;
-other formats are downloaded or shared, not previewed. File bytes still stream
-through `GET /v1/ilias/file` on the server (they are not harvested by the
-WebView), and are cached only for the current read, not kept as an offline
-library. Those pages would need their own parsers and a separate permission
-decision.
+The app reads the dashboard, the object lists of courses, groups, folders, and
+categories, and the members tabs of courses and groups; the server only parses
+and stores those pages. Course member galleries do not expose roles, so only
+group contact persons are marked as tutors. It does not paginate the magazine,
+post to forums, or send mail. PDFs render in the app; other formats are
+downloaded or shared, not previewed. File bytes still stream through
+`GET /v1/ilias/file` on the server (they are not harvested by the WebView), and
+are cached only for the current read, not kept as an offline library. Those
+pages would need their own parsers and a separate permission decision.

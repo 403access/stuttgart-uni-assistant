@@ -9,11 +9,12 @@ import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui'
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
 import { isPdfItem } from '@/src/ilias/files';
-import { iliasContentQuery, refreshIliasContent } from '@/src/ilias/queries';
-import type { IliasContentItem } from '@/src/ilias/types';
+import { iliasContentQuery, iliasMembersQuery, refreshIliasPage } from '@/src/ilias/queries';
+import type { IliasContentItem, IliasMember } from '@/src/ilias/types';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { firstParam, tx } from '@/src/text';
+import type { Locale } from '@/src/types';
 
 const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 /** Object kinds whose page the same list parser understands. */
@@ -48,6 +49,39 @@ function ContentRow({
   );
 }
 
+function MemberRow({
+  member,
+  locale,
+  last,
+  showRoles,
+}: {
+  member: IliasMember;
+  locale: Locale;
+  last: boolean;
+  showRoles: boolean;
+}) {
+  return (
+    <View style={[styles.memberRow, !last && styles.memberDivider]}>
+      <View style={styles.memberText}>
+        <Text style={styles.memberName} numberOfLines={1}>
+          {member.name}
+        </Text>
+        {member.username && !member.hidden && member.username !== member.name ? (
+          <Text style={styles.memberMeta} numberOfLines={1}>
+            {member.username}
+          </Text>
+        ) : null}
+      </View>
+      {showRoles ? (
+        <Pill
+          label={tx(locale, member.roleKind === 'tutor' ? 'tabsIlias.tutor' : 'tabsIlias.teilnehmer')}
+          tone={member.roleKind === 'tutor' ? 'blue' : 'neutral'}
+        />
+      ) : null}
+    </View>
+  );
+}
+
 /** One course, group, or folder read headlessly through the assistant server. */
 export default function IliasContentScreen() {
   const locale = useAppSelector((state) => state.locale);
@@ -61,6 +95,12 @@ export default function IliasContentScreen() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const content = query.data;
+  const membersUrl = content?.membersUrl ?? '';
+  const membersQuery = useQuery(iliasMembersQuery(refId, kind, membersUrl));
+  const members = membersQuery.data?.members ?? [];
+  // ILIAS only names a role in group galleries; course galleries list names
+  // without telling members apart, so a "Teilnehmer" pill would be a guess.
+  const showMemberRoles = members.some((member) => member.roleKind === 'tutor');
   const title = content?.title || initialTitle || 'ILIAS';
 
   const open = async (item: IliasContentItem) => {
@@ -120,7 +160,7 @@ export default function IliasContentScreen() {
             refreshing={query.isFetching && !query.isLoading}
             onRefresh={() => {
               setActionError('');
-              void refreshIliasContent(queryClient, refId, kind).catch(() => undefined);
+              void refreshIliasPage(queryClient, refId, kind).catch(() => undefined);
             }}
             tintColor={colors.blue}
             colors={[colors.blue]}
@@ -173,6 +213,28 @@ export default function IliasContentScreen() {
             label={tx(locale, 'tabsIlias.im_browser')}
             onPress={() => WebBrowser.openBrowserAsync(`${ILIAS_BASE}/go/${kind}/${refId}`).catch(() => undefined)}
           />
+          {members.length > 0 ? (
+            <>
+              <Section title={`${tx(locale, 'tabsIlias.mitglieder')} · ${members.length}`} />
+              <Card>
+                <View>
+                  {members.map((member, index) => (
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      locale={locale}
+                      last={index === members.length - 1}
+                      showRoles={showMemberRoles}
+                    />
+                  ))}
+                </View>
+              </Card>
+            </>
+          ) : membersUrl && membersQuery.isLoading ? (
+            <Text style={styles.hint}>{tx(locale, 'tabsIlias.mitglieder_laden')}</Text>
+          ) : membersUrl && membersQuery.isError ? (
+            <Text style={styles.hint}>{tx(locale, 'tabsIlias.mitglieder_fehler')}</Text>
+          ) : null}
         </>
       ) : null}
 
@@ -187,6 +249,11 @@ const styles = themedStyles((colors) => ({
   rowTitle: { flex: 1, color: colors.anthracite, fontSize: 15, fontWeight: '600', lineHeight: 20 },
   rowText: { color: colors.inkSoft, fontSize: 13, lineHeight: 18 },
   rowMeta: { color: colors.mute, fontSize: 12 },
+  memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  memberDivider: { borderBottomWidth: 1, borderBottomColor: colors.line },
+  memberText: { flex: 1, gap: 2 },
+  memberName: { color: colors.anthracite, fontSize: 15, fontWeight: '600' },
+  memberMeta: { color: colors.mute, fontSize: 12 },
   hint: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
 }));

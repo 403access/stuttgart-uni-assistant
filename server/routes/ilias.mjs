@@ -10,6 +10,7 @@ import {
   ILIAS_PAGE_MAX_BYTES,
   cachedIliasContent,
   cachedIliasDashboard,
+  cachedIliasMembers,
   clearUserIliasSession,
   connectIlias,
   disconnectIlias,
@@ -21,6 +22,7 @@ import {
   readIliasContent,
   readIliasDashboard,
   readIliasFile,
+  readIliasMembers,
 } from '../ilias.mjs';
 import { attachmentDisposition, readJsonBody, send } from '../http.mjs';
 import { errorBody, logRequest } from '../request-log.mjs';
@@ -140,6 +142,29 @@ export async function handleIlias(request, response, url) {
     }
     return true;
   }
+  if (request.method === 'GET' && url.pathname === '/v1/ilias/members') {
+    const reqId = logRequest('GET /v1/ilias/members');
+    try {
+      const auth = requireAuth(request);
+      const refId = Number(url.searchParams.get('refId'));
+      const kind = url.searchParams.get('kind') || 'crs';
+      const membersUrl = url.searchParams.get('url') || '';
+      // Browser fallback: the client passes the members link it read from the
+      // content page, because the object-specific `cmdNode` is not derivable.
+      const live = url.searchParams.get('live') === '1';
+      const result = live
+        ? { members: await readIliasMembers(auth.user.id, { refId, kind, membersUrl }), cached: false, stale: false }
+        : cachedIliasMembers(auth.user.id, { refId, kind });
+      const members = result.members;
+      const user = touchPlatform(auth.user.id, 'ilias');
+      logService('ilias', 'info', `#${reqId} members ${live ? 'live' : 'cache'} ref=${refId} kind=${kind} members=${members.members.length} stale=${result.stale} user=${auth.user.id}`, { userId: auth.user.id });
+      send(response, 200, { ok: true, ...members, cached: result.cached, stale: Boolean(result.stale), user });
+    } catch (error) {
+      logService('ilias', 'warn', `#${reqId} members failed ${error?.message ?? 'ilias_failed'}`);
+      fail(response, error);
+    }
+    return true;
+  }
   if (request.method === 'POST' && url.pathname === '/v1/ilias/ingest') {
     const reqId = logRequest('POST /v1/ilias/ingest');
     // HTML plus its JSON escaping; the page cap is checked again in the parser.
@@ -159,9 +184,12 @@ export async function handleIlias(request, response, url) {
           status: publicIliasStatus(auth.user.id),
           user,
         });
-      } else {
+      } else if (result.page === 'content') {
         logService('ilias', 'info', `#${reqId} ingest content ref=${result.content.refId} items=${result.content.items.length} user=${auth.user.id}`, { userId: auth.user.id });
         send(response, 200, { ok: true, ...result.content, cached: false, stale: false, user });
+      } else {
+        logService('ilias', 'info', `#${reqId} ingest members ref=${result.members.refId} members=${result.members.members.length} user=${auth.user.id}`, { userId: auth.user.id });
+        send(response, 200, { ok: true, ...result.members, cached: false, stale: false, user });
       }
     } catch (error) {
       logService('ilias', 'warn', `#${reqId} ingest failed ${error?.message ?? 'ilias_failed'}`);

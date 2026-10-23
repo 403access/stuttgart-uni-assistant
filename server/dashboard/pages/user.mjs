@@ -500,6 +500,49 @@ function renderIliasTab(container, detail) {
     }
   };
 
+  const loadMembers = async (data, host) => {
+    if (!host?.isConnected) return;
+    host.replaceChildren(loading('ILIAS-Mitglieder werden geladen …'));
+    try {
+      const params = new URLSearchParams({ refId: String(data.refId), kind: String(data.kind || 'crs') });
+      if (data.membersUrl) params.set('url', data.membersUrl);
+      const result = await api('/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/members?' + params.toString());
+      if (!host.isConnected) return;
+      const members = Array.isArray(result.members) ? result.members : [];
+      const rows = members.length
+        ? members.map((member) => h('tr', null,
+            h('td', null,
+              h('strong', { text: member.name || member.username || '–' }),
+              member.username && member.username !== member.name ? h('div', { className: 'hint', text: member.username }) : null,
+            ),
+            h('td', null, member.role ? h('span', { className: 'chip', text: member.role }) : '–'),
+            h('td', null, member.roleKind === 'tutor' ? h('span', { className: 'chip', text: 'Tutor' }) : '–'),
+            h('td', null, member.profileUrl
+              ? h('a', { className: 'btn secondary small', href: member.profileUrl, target: '_blank', rel: 'noreferrer' }, icon('external'), 'Profil')
+              : '–'),
+          ))
+        : [h('tr', null, h('td', { colspan: '4' }, h('p', { className: 'hint', text: 'Keine Mitglieder sichtbar.' })))];
+      host.replaceChildren(
+        sectionHead('Mitglieder · ' + members.length, [result.title, result.fetchedAt ? 'gelesen ' + relative(result.fetchedAt) : ''].filter(Boolean).join(' · ')),
+        h('div', { className: 'table-wrap' },
+          h('table', { className: 'data', style: { minWidth: '720px' } },
+            h('caption', { className: 'sr-only' }, 'ILIAS-Mitglieder'),
+            h('thead', null, h('tr', null,
+              h('th', null, 'Name'), h('th', null, 'Rolle'), h('th', null, 'Art'), h('th', null, ''),
+            )),
+            h('tbody', null, ...rows),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (error.code === 'unauthorized' || !host.isConnected) return;
+      host.replaceChildren(
+        sectionHead('Mitglieder', ''),
+        h('p', { className: 'hint', text: 'Mitglieder konnten nicht geladen werden: ' + errorText(error) }),
+      );
+    }
+  };
+
   const renderContent = (data, trail = []) => {
     const items = Array.isArray(data.items) ? data.items : [];
     const fileHref = (item) => '/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/file?refId=' + encodeURIComponent(item.refId);
@@ -535,6 +578,7 @@ function renderIliasTab(container, detail) {
         ))
       : [h('tr', null, h('td', { colspan: '5' }, h('p', { className: 'hint', text: 'Diese Seite enthält keine sichtbaren Objekte.' })))];
 
+    const membersHost = data.membersUrl && canRead ? h('div', { className: 'detail-section' }) : null;
     contentHost.replaceChildren(
       sectionHead(data.title || 'ILIAS-Inhalte', [data.description, data.fetchedAt ? 'gelesen ' + relative(data.fetchedAt) : ''].filter(Boolean).join(' · ')),
       h('div', { className: 'row', style: { marginBottom: '10px' } },
@@ -556,7 +600,9 @@ function renderIliasTab(container, detail) {
           h('tbody', null, ...rows),
         ),
       ),
+      ...(membersHost ? [membersHost] : []),
     );
+    if (membersHost) void loadMembers(data, membersHost);
   };
 
   const membershipRows = (dashboard?.memberships || []).length

@@ -41,7 +41,31 @@ export interface IliasContent {
   kind: string;
   title: string;
   description: string;
+  /** Members tab of a course or group; empty for folders and files. */
+  membersUrl: string;
   items: IliasContentItem[];
+  fetchedAt: string;
+}
+
+/** One member of a course or group, from the ILIAS members tab. */
+export interface IliasMember {
+  id: string;
+  /** Display name, or the login name when ILIAS hides the profile name. */
+  name: string;
+  username: string;
+  /** Raw ILIAS role label, e.g. "Kontaktperson". */
+  role: string;
+  roleKind: 'tutor' | 'participant';
+  /** True when only the login name is public. */
+  hidden: boolean;
+  profileUrl: string;
+}
+
+export interface IliasMembers {
+  refId: number;
+  kind: string;
+  title: string;
+  members: IliasMember[];
   fetchedAt: string;
 }
 

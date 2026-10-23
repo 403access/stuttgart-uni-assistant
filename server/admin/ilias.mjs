@@ -2,7 +2,7 @@
 
 import { getUser } from '../auth.mjs';
 import { getDb, loadIliasSnapshot, loadIliasSource } from '../db.mjs';
-import { disconnectIlias, getUserIliasSession, listUserIliasSessions, publicIliasStatus, readIliasContent, readIliasFile } from '../ilias.mjs';
+import { disconnectIlias, getUserIliasSession, listUserIliasSessions, publicIliasStatus, readIliasContent, readIliasFile, readIliasMembers } from '../ilias.mjs';
 import { recordAdminAudit } from './audit.mjs';
 
 function countsOf(snapshot) {
@@ -97,6 +97,11 @@ export function adminIlias() {
 /** Live-read one course, group, or folder page for an operator. */
 export function readAdminUserIliasContent(userId, input, fetchImpl = fetch) {
   return readIliasContent(userId, input, fetchImpl);
+}
+
+/** Live-read the members tab of one course or group for an operator. */
+export function readAdminUserIliasMembers(userId, input, fetchImpl = fetch) {
+  return readIliasMembers(userId, input, fetchImpl);
 }
 
 /** Live-download one material file for an operator. */

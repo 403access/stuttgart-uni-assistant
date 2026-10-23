@@ -16,6 +16,7 @@ import {
   linkAdminPlatform,
   readAdminUserIliasContent,
   readAdminUserIliasFile,
+  readAdminUserIliasMembers,
   revokeAdminSession,
   revokeAdminSessions,
   startAdminSyncJob,
@@ -147,6 +148,19 @@ export async function handleUser(request, response, url) {
         kind: url.searchParams.get('kind') || 'crs',
       });
       send(response, 200, content);
+    } catch (error) {
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && action === 'ilias/members') {
+    try {
+      const members = await readAdminUserIliasMembers(userId, {
+        refId: url.searchParams.get('refId'),
+        kind: url.searchParams.get('kind') || 'crs',
+        membersUrl: url.searchParams.get('url') || '',
+      });
+      send(response, 200, members);
     } catch (error) {
       fail(response, error);
     }

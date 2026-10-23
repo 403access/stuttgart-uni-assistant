@@ -240,6 +240,17 @@ export function getDb() {
       PRIMARY KEY (user_id, ref_id, kind)
     );
     CREATE INDEX IF NOT EXISTS user_ilias_content_user ON user_ilias_content(user_id, fetched_at DESC);
+    /* Parsed members tabs (course/group participants). Kept apart from the
+       content rows because both pages share the same ref id and kind. */
+    CREATE TABLE IF NOT EXISTS user_ilias_members (
+      user_id TEXT NOT NULL,
+      ref_id INTEGER NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'crs',
+      payload TEXT NOT NULL DEFAULT '{}',
+      fetched_at TEXT,
+      PRIMARY KEY (user_id, ref_id, kind)
+    );
+    CREATE INDEX IF NOT EXISTS user_ilias_members_user ON user_ilias_members(user_id, fetched_at DESC);
     /* The HTML the client harvested, kept so a parser fix can replay a page
        without asking the device to fetch it again. Pruned per account. */
     CREATE TABLE IF NOT EXISTS user_ilias_pages (
@@ -913,6 +924,37 @@ export function loadIliasContent(userId, refId, kind = 'crs') {
 
 export function clearIliasContent(userId) {
   getDb().prepare('DELETE FROM user_ilias_content WHERE user_id = ?').run(scope(userId));
+}
+
+/** The parsed members tab for one course or group. */
+export function saveIliasMembers(userId, members) {
+  const owner = scope(userId);
+  const refId = Number(members?.refId);
+  if (!Number.isInteger(refId) || refId <= 0) return;
+  const kind = String(members?.kind ?? 'crs').slice(0, 16) || 'crs';
+  const fetchedAt = iliasFetchedAt(members?.fetchedAt);
+  getDb()
+    .prepare('INSERT INTO user_ilias_members (user_id, ref_id, kind, payload, fetched_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id, ref_id, kind) DO UPDATE SET payload = excluded.payload, fetched_at = excluded.fetched_at')
+    .run(owner, refId, kind, JSON.stringify(members ?? {}), fetchedAt);
+  getDb()
+    .prepare('DELETE FROM user_ilias_members WHERE user_id = ? AND rowid NOT IN (SELECT rowid FROM user_ilias_members WHERE user_id = ? ORDER BY fetched_at DESC LIMIT 500)')
+    .run(owner, owner);
+}
+
+export function loadIliasMembers(userId, refId, kind = 'crs') {
+  const owner = scope(userId);
+  const id = Number(refId);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const row = getDb()
+    .prepare('SELECT payload, fetched_at FROM user_ilias_members WHERE user_id = ? AND ref_id = ? AND kind = ?')
+    .get(owner, id, String(kind ?? 'crs').slice(0, 16) || 'crs');
+  if (!row) return null;
+  try {
+    const parsed = JSON.parse(row.payload);
+    return parsed && typeof parsed === 'object' ? { members: parsed, fetchedAt: row.fetched_at ?? null } : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Raw harvested HTML, so a parser change does not need another client fetch. */

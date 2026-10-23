@@ -21,7 +21,16 @@ import {
   type IliasPageResult,
 } from '@/src/ilias/headless';
 
-import type { IliasContent, IliasContentItem, IliasCounts, IliasDashboard, IliasItem, IliasStatus } from './types';
+import type {
+  IliasContent,
+  IliasContentItem,
+  IliasCounts,
+  IliasDashboard,
+  IliasItem,
+  IliasMember,
+  IliasMembers,
+  IliasStatus,
+} from './types';
 
 export class IliasError extends Error {
   detail: string;
@@ -133,7 +142,35 @@ export function asIliasContent(value: unknown): IliasContent {
     kind: typeof body.kind === 'string' ? body.kind : 'crs',
     title: typeof body.title === 'string' ? body.title : '',
     description: typeof body.description === 'string' ? body.description : '',
+    membersUrl: typeof body.membersUrl === 'string' ? body.membersUrl : '',
     items: Array.isArray(body.items) ? body.items.flatMap((entry) => asContentItem(entry) ?? []) : [],
+    fetchedAt: typeof body.fetchedAt === 'string' ? body.fetchedAt : new Date().toISOString(),
+  };
+}
+
+function asMember(value: unknown): IliasMember | null {
+  if (!value || typeof value !== 'object') return null;
+  const member = value as Partial<IliasMember>;
+  const name = typeof member.name === 'string' ? member.name : '';
+  if (!name) return null;
+  return {
+    id: typeof member.id === 'string' && member.id ? member.id : `member-${name}`,
+    name,
+    username: typeof member.username === 'string' ? member.username : '',
+    role: typeof member.role === 'string' ? member.role : '',
+    roleKind: member.roleKind === 'tutor' ? 'tutor' : 'participant',
+    hidden: Boolean(member.hidden),
+    profileUrl: typeof member.profileUrl === 'string' ? member.profileUrl : '',
+  };
+}
+
+export function asIliasMembers(value: unknown): IliasMembers {
+  const body = (value ?? {}) as Partial<IliasMembers>;
+  return {
+    refId: typeof body.refId === 'number' ? body.refId : 0,
+    kind: typeof body.kind === 'string' ? body.kind : 'crs',
+    title: typeof body.title === 'string' ? body.title : '',
+    members: Array.isArray(body.members) ? body.members.flatMap((entry) => asMember(entry) ?? []) : [],
     fetchedAt: typeof body.fetchedAt === 'string' ? body.fetchedAt : new Date().toISOString(),
   };
 }
@@ -339,6 +376,60 @@ export async function loadIliasContent(input: { refId: number; kind?: string; re
 
   try {
     return asIliasContent(await request(`/v1/ilias/content?${query}&live=1`, { headers: { ...authHeaders() } }));
+  } catch (caught) {
+    if (cached) return cached;
+    throw caught;
+  }
+}
+
+/**
+ * The members tab of a course or group. Same cache/fetch flow as the content
+ * page: the stored rows first, then the app's WebView harvest, then the
+ * server's browser fallback for the web build.
+ */
+export async function loadIliasMembers(input: {
+  refId: number;
+  kind?: string;
+  membersUrl?: string;
+  refresh?: boolean;
+}): Promise<IliasMembers> {
+  const kind = input.kind?.trim() || 'crs';
+  const membersUrl = input.membersUrl?.trim() || '';
+  const base = `refId=${encodeURIComponent(String(input.refId))}&kind=${encodeURIComponent(kind)}`;
+  const live = `${base}${membersUrl ? `&url=${encodeURIComponent(membersUrl)}` : ''}`;
+  let cached: IliasMembers | null = null;
+  try {
+    const payload = (await request(`/v1/ilias/members?${base}`, { headers: { ...authHeaders() } })) as Record<string, unknown>;
+    cached = asIliasMembers(payload);
+    if (!input.refresh && !payload.stale) return cached;
+  } catch (caught) {
+    if (!cacheMiss(caught)) throw caught;
+  }
+
+  try {
+    // Without the object-specific members link there is no page to inject; the
+    // server fallback discovers it from the content page.
+    if (iliasHeadlessReady() && membersUrl) {
+      const page = await fetchPageWithSession(membersUrl);
+      if (page) {
+        if (looksLikeIliasLoginHtml(page.html)) throw new IliasError('ilias_session_expired');
+        const payload = await ingestPage({
+          page: 'members',
+          refId: input.refId,
+          kind,
+          html: page.html,
+          url: page.url,
+        });
+        return asIliasMembers(payload);
+      }
+    }
+  } catch (caught) {
+    if (cached && !sessionExpired(caught)) return cached;
+    throw caught;
+  }
+
+  try {
+    return asIliasMembers(await request(`/v1/ilias/members?${live}&live=1`, { headers: { ...authHeaders() } }));
   } catch (caught) {
     if (cached) return cached;
     throw caught;

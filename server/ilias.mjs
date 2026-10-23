@@ -17,9 +17,12 @@ import {
   clearIliasSource,
   getDb,
   loadIliasContent,
+  loadIliasMembers,
+  loadIliasPage,
   loadIliasSource,
   loadIliasSnapshot,
   saveIliasContent,
+  saveIliasMembers,
   saveIliasPage,
   saveIliasSnapshot,
   saveIliasSource,
@@ -442,6 +445,15 @@ function contentRow(segment, index) {
   };
 }
 
+/** The members tab, a user gallery, is the same GUI for courses and groups. */
+export function iliasMembersUrlFromHtml(html) {
+  for (const match of String(html ?? '').matchAll(/<a\b[^>]*>/gi)) {
+    const href = attributesOf(match[0]).href ?? '';
+    if (/\bcmdClass\s*=\s*["']?ilusersgallerygui\b/i.test(href)) return resolveUrl(ILIAS_BASE, href);
+  }
+  return '';
+}
+
 /**
  * Parse the object list of a course, group, folder, or category page. The page
  * renders each material as an `ilObjListRow`; files link to `sendfile`, while
@@ -480,7 +492,103 @@ export function parseIliasContent(html, { refId = null, kind = 'crs', fetchedAt 
     kind,
     title,
     description,
+    membersUrl: iliasMembersUrlFromHtml(source),
     items,
+    fetchedAt,
+  };
+}
+
+/* ---------------------------------------------------------------- members -- */
+
+const MEMBER_CARD = /<div[^>]*class\s*=\s*["'][^"']*\bil-card\b[^"']*\bthumbnail\b[^"']*["'][^>]*>/gi;
+const MEMBER_HIDDEN_NAME = /^(?:nicht freigegeben|not released|not available)$/i;
+const MEMBER_TUTOR_ROLE = /(kontaktperson|tutor|lehrende|dozent|administrator|owner|besitzer|teacher)/i;
+
+/** The name ILIAS renders when a user opted out of a public profile. */
+function memberProperty(segment, pattern) {
+  for (const match of String(segment).matchAll(/<dt[^>]*>([\s\S]*?)<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/gi)) {
+    if (pattern.test(textOf(match[1]))) return textOf(match[2]);
+  }
+  return '';
+}
+
+/**
+ * ILIAS login names concatenate first and last names ("VivianEichholz"). When
+ * the profile name is hidden, the login is all the page gives us, so space the
+ * camel-case parts for readability.
+ */
+function memberNameFromLogin(value) {
+  return String(value ?? '')
+    .replace(/([\p{Ll}\d])(\p{Lu})/gu, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function memberCard(segment, index) {
+  const titleHtml = segment.match(/<div[^>]*class\s*=\s*["'][^"']*\bcard-title\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? '';
+  const title = textOf(titleHtml);
+  const username = memberProperty(segment, /^(anmeldename|benutzername|login|login name)$/i);
+  const role = memberProperty(segment, /^(zuständigkeit|zustaendigkeit|rolle|funktion|role|function)$/i);
+  let profileHref = titleHtml.match(/<a\b[^>]*href\s*=\s*["']([^"']+)["']/i)?.[1] ?? '';
+  if (!profileHref) {
+    for (const match of segment.matchAll(/<a\b[^>]*>/gi)) {
+      const href = attributesOf(match[0]).href ?? '';
+      if (/\bcmdClass\s*=\s*["']?ilpublicuserprofilegui\b/i.test(href)) {
+        profileHref = href;
+        break;
+      }
+    }
+  }
+  const hidden = MEMBER_HIDDEN_NAME.test(title) || !title;
+  const name = hidden ? memberNameFromLogin(username) || title : title;
+  if (!name) return null;
+
+  return {
+    id: `member-${username || name || index}`,
+    name,
+    username,
+    role,
+    roleKind: MEMBER_TUTOR_ROLE.test(role) ? 'tutor' : 'participant',
+    hidden: hidden && Boolean(username),
+    profileUrl: profileHref ? resolveUrl(ILIAS_BASE, profileHref) : '',
+  };
+}
+
+/**
+ * Parse the members tab (`ilUsersGalleryGUI`). Each member is an `il-card
+ * thumbnail` with the display name in `card-title`, the login in the
+ * `Anmeldename` definition list, and a `Zuständigkeit` value for the tutor or
+ * contact person. Users without a public profile show "Nicht freigegeben", so
+ * the login name becomes the visible row.
+ */
+export function parseIliasMembers(html, { refId = null, kind = 'crs', fetchedAt = new Date().toISOString() } = {}) {
+  const source = String(html ?? '');
+  const headerHtml =
+    source.match(/<h1[^>]*class\s*=\s*["'][^"']*\bil-page-content-header\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1] ??
+    source.match(/<h1[^>]*class\s*=\s*["'][^"']*\bilHeader\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1] ??
+    '';
+  const title = textOf(headerHtml) || textOf(source.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '');
+
+  const markers = [...source.matchAll(MEMBER_CARD)];
+  const members = [];
+  const seen = new Set();
+  for (const [index, marker] of markers.entries()) {
+    const segment = source.slice(marker.index ?? 0, markers[index + 1]?.index ?? source.length);
+    const member = memberCard(segment, index);
+    if (!member) continue;
+    const key = member.username || member.name;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    members.push(member);
+  }
+  // The tutor belongs at the top; everybody else keeps the portal order.
+  members.sort((left, right) => Number(right.roleKind === 'tutor') - Number(left.roleKind === 'tutor'));
+
+  return {
+    refId: Number(refId) || null,
+    kind,
+    title,
+    members,
     fetchedAt,
   };
 }
@@ -686,6 +794,27 @@ export async function fetchIliasContent({ cookie, refId, kind = 'crs', fetchImpl
   return parseIliasContent(html, { refId: id, kind: safeKind });
 }
 
+/**
+ * Read the members tab for a course or group. The members GUI needs the
+ * object-specific `cmdNode`, which only the object page carries, so without a
+ * known `membersUrl` the content page is read once to discover it.
+ */
+export async function fetchIliasMembers({ cookie, refId, kind = 'crs', fetchImpl = fetch, membersUrl }) {
+  const id = Number(refId);
+  if (!Number.isInteger(id) || id <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+  const safeKind = /^[a-z]{2,8}$/i.test(String(kind)) ? String(kind).toLowerCase() : 'crs';
+  let url = String(membersUrl ?? '').trim();
+  if (url && !isIliasUrl(url)) throw iliasError(400, 'ilias_url_invalid');
+  if (!url) {
+    const content = await fetchIliasHtml({ cookie, url: iliasRepositoryUrl(safeKind, id), fetchImpl, referer: ILIAS_DASHBOARD_URL });
+    url = iliasMembersUrlFromHtml(content.html);
+    if (!url) throw iliasError(404, 'ilias_members_missing');
+  }
+  const { html } = await fetchIliasHtml({ cookie, url, fetchImpl, referer: iliasRepositoryUrl(safeKind, id) });
+  if (!/\bil-card\b/i.test(html)) throw iliasError(502, 'ilias_members_missing');
+  return parseIliasMembers(html, { refId: id, kind: safeKind });
+}
+
 function filenameFromDisposition(value) {
   const text = String(value ?? '');
   const encoded = text.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)?.[1];
@@ -784,13 +913,24 @@ function safeContentKind(value) {
   return /^[a-z]{2,8}$/i.test(String(value ?? '')) ? String(value).toLowerCase() : 'crs';
 }
 
+/** The client may hand back a members link; never send the cookie anywhere else. */
+function isIliasUrl(value) {
+  try {
+    return new URL(String(value)).host === new URL(ILIAS_BASE).host;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Store a page the client fetched. Dashboard HTML refreshes the snapshot, and
  * content HTML refreshes the parsed rows for that object. The raw HTML is kept
  * as well, so a parser change can replay it without another device fetch.
  */
 export function ingestIliasPage(userId, input = {}) {
-  if (input.page !== 'dashboard' && input.page !== 'content') throw iliasError(400, 'ilias_page_invalid');
+  if (input.page !== 'dashboard' && input.page !== 'content' && input.page !== 'members') {
+    throw iliasError(400, 'ilias_page_invalid');
+  }
   const html = String(input.html ?? '');
   if (!html) throw iliasError(400, 'ilias_page_missing');
   if (html.length > ILIAS_PAGE_MAX_BYTES) throw iliasError(413, 'ilias_page_too_large');
@@ -810,6 +950,16 @@ export function ingestIliasPage(userId, input = {}) {
     saveIliasContent(userId, content);
     saveIliasPage(userId, { key: `content-${kind}-${refId}`, kind, refId, url, html, fetchedAt });
     return { page: 'content', content, ...cacheMeta(fetchedAt) };
+  }
+
+  if (input.page === 'members') {
+    const refId = Number(input.refId);
+    if (!Number.isInteger(refId) || refId <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+    const kind = safeContentKind(input.kind);
+    const members = parseIliasMembers(html, { refId, kind, fetchedAt });
+    saveIliasMembers(userId, members);
+    saveIliasPage(userId, { key: `members-${kind}-${refId}`, kind, refId, url, html, fetchedAt });
+    return { page: 'members', members, ...cacheMeta(fetchedAt) };
   }
 
   const dashboard = parseIliasDashboard(html, fetchedAt);
@@ -835,9 +985,29 @@ export function cachedIliasContent(userId, input = {}, ttl = ILIAS_CACHE_TTL_MS)
   const kind = safeContentKind(input.kind);
   const stored = loadIliasContent(userId, refId, kind);
   if (!stored) throw iliasError(404, 'ilias_cache_miss');
+  const content = stored.content;
+  // Pages harvested before the members tab was parsed still have their raw
+  // HTML; read the link from there instead of asking the device for a refetch.
+  if (!content.membersUrl) {
+    const page = loadIliasPage(userId, `content-${kind}-${refId}`);
+    if (page?.html) content.membersUrl = iliasMembersUrlFromHtml(page.html);
+  }
   return {
-    content: stored.content,
+    content,
     ...cacheMeta(stored.fetchedAt ?? stored.content?.fetchedAt, ttl),
+  };
+}
+
+/** The stored members tab; no ILIAS request. Throws 404 when it was never harvested. */
+export function cachedIliasMembers(userId, input = {}, ttl = ILIAS_CACHE_TTL_MS) {
+  const refId = Number(input.refId);
+  if (!Number.isInteger(refId) || refId <= 0) throw iliasError(400, 'ilias_ref_id_invalid');
+  const kind = safeContentKind(input.kind);
+  const stored = loadIliasMembers(userId, refId, kind);
+  if (!stored) throw iliasError(404, 'ilias_cache_miss');
+  return {
+    members: stored.members,
+    ...cacheMeta(stored.fetchedAt ?? stored.members?.fetchedAt, ttl),
   };
 }
 
@@ -948,6 +1118,23 @@ export async function connectIlias(userId, input = {}, fetchImpl = fetch) {
   saveIliasSource(userId, 'browser', result.account);
   saveIliasSnapshot(userId, result.dashboard);
   return { dashboard: result.dashboard, source: 'browser' };
+}
+
+/** Read the members tab (course or group) with the user's session. */
+export async function readIliasMembers(userId, input = {}, fetchImpl = fetch) {
+  const session = resolveIliasSession(userId);
+  try {
+    return await fetchIliasMembers({
+      cookie: session.cookie,
+      refId: input.refId,
+      kind: input.kind,
+      fetchImpl,
+      membersUrl: input.membersUrl,
+    });
+  } catch (error) {
+    if (error?.status === 401) clearUserIliasSession(userId);
+    throw error;
+  }
 }
 
 /** Read one repository page (course, group, folder) with the user's session. */
