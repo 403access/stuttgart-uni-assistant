@@ -66,6 +66,10 @@ Registered modules:
   (71 questions): context and utterance meaning, Grice’s maxims and
   implicatures, speech acts, and organisation/exam. The tab shows
   `Fabian Dirscherl · fabian.dirscherl@ling.uni-stuttgart.de`.
+- `syntax` — Syntax I, two topics from the introductory session on 15 October
+  2026 (61 questions): syntax as a cognitive science with the adequacy levels,
+  then word classes, constituent tests, phrases, and complements/adjuncts. The
+  tab shows `Fabian Bross · fabian.bross@ling.uni-stuttgart.de`.
 
 `QuizModule` also supports optional `lecturer` and `email` fields, shown in the
 module header.

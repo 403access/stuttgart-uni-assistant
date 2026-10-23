@@ -7,6 +7,7 @@ import { sprachfamilien } from './linguistik/sprachfamilien';
 import { spracheDialekt } from './linguistik/sprache-dialekt';
 import { philosophieModule } from './philosophie';
 import { pragmatikModule } from './pragmatik';
+import { syntaxModule } from './syntax';
 
 /**
  * The degree programs the quiz content belongs to. They are kept next to the
@@ -57,6 +58,7 @@ export const quizModules: QuizModule[] = [
   },
   philosophieModule,
   pragmatikModule,
+  syntaxModule,
 ].map(attachGenerated);
 
 const allQuestions = quizModules.flatMap((module) =>
