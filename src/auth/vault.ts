@@ -14,7 +14,12 @@ import type { BrowserHarvest } from '@/src/auth/campus-harvest';
  * Backing store is `expo-secure-store`: the iOS keychain (hardware-backed where
  * the device has a Secure Enclave) and Android `SharedPreferences` encrypted
  * with the Android Keystore. With biometrics enabled the entry additionally
- * requires user authentication to read.
+ * requires user authentication to read (iOS stores it with `biometryCurrentSet`
+ * and Android with `setUserAuthenticationRequired`). Without biometrics the
+ * entry is still OS-encrypted, bound to this device and deleted when the device
+ * passcode is removed, but it is deliberately *not* gated by the Secure Enclave's
+ * user-presence check — that is the acceptable fallback for "remember login",
+ * never plaintext in AsyncStorage.
  */
 
 const KEY = 'campus.autologin.v1';
@@ -78,6 +83,9 @@ export async function biometricUnlockAvailable(): Promise<boolean> {
 
 function optionsFor(module: SecureStoreModule, biometrics: boolean, prompt: string) {
   if (!biometrics) {
+    // No biometric gate: a normal keychain/Keystore entry protected by the
+    // device passcode. Still encrypted at rest and this-device-only, so the
+    // fallback is weaker than Face ID but far better than AsyncStorage.
     return { keychainAccessible: module.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY };
   }
   return {

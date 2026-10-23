@@ -58,7 +58,7 @@ Sign-out lives on the account screen (**Campus → Konto**) and in this list. It
 | Onboarding completion and biometric app-lock preference | AsyncStorage key `university-assistant/onboarding.v2`. Device-level, not account-level; no biometric data is stored and nothing is sent to the server. |
 | C@MPUS curriculum and course caches | An on-device SQLite database (AsyncStorage on web), one entry per study |
 | University e-mail password | Server process memory only. Not on the device, not in `.env`, not logged. |
-| The university password for C@MPUS sign-in | The device vault, only if `Auf diesem Gerät speichern` was enabled: iOS keychain / Android Keystore, optionally behind biometrics, deleted on sign-out. Never sent to the assistant server. |
+| The university password for C@MPUS sign-in | The device vault, only if `Anmeldung merken` was enabled: iOS keychain / Android Keystore, biometric-gated while the app lock is on, otherwise protected by the device passcode without the biometric gate. Deleted on sign-out. Never sent to the assistant server. |
 | Grok answers | The request lives only for its duration; nothing is persisted server-side |
 
 The reset and the demonstration notice exist so that a reviewer can check these claims on the phone itself. The engineering side of this list is documented in [security-and-privacy](../engineering/security-and-privacy.md).

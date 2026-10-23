@@ -13,6 +13,7 @@ import { buildHarvest, type BrowserHarvest } from '@/src/auth/campus-harvest';
 import { isLoginFailureStep, phaseForStep, type CampusLoginPhase } from '@/src/auth/campus-progress';
 import { formatDump, hostOf, parseHarvestMessage } from '@/src/auth/login-messages';
 import { biometricUnlockAvailable, clearLogin, readLogin, saveLogin, storedLoginHint } from '@/src/auth/vault';
+import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
@@ -51,12 +52,24 @@ export function useCampusHeadlessLogin({
   const [dump, setDump] = useState('');
   const [attempt, setAttempt] = useState(0);
 
+  // The App Lock preference is the source of truth for "biometrics are on": the
+  // stored credential is then gated by the same Face ID / fingerprint check.
+  // Without it the checkbox is an explicit opt-in and the vault uses its
+  // device-passcode-only fallback (no biometric/Secure Enclave gate).
+  const { biometricsEnabled } = useOnboarding();
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(false);
   const [biometrics, setBiometrics] = useState(false);
   const [biometricsReady, setBiometricsReady] = useState(false);
   const [savedLogin, setSavedLogin] = useState<SavedLogin | null>(null);
+
+  // The legacy screen still exposes its own biometric chip; both that and the
+  // App Lock preference protect the vault entry. `rememberLogin` is what the
+  // checkbox renders: remembered either by choice or because biometrics already
+  // protect the entry.
+  const biometricGate = biometricsEnabled || (biometrics && biometricsReady);
+  const rememberLogin = remember || biometricGate;
 
   const webview = useRef<WebView | null>(null);
   const nativeCookies = useRef<NativeCookies>(NO_NATIVE_COOKIES);
@@ -238,7 +251,7 @@ export function useCampusHeadlessLogin({
       setError(tx(locale, 'useCampusHeadlessLogin.bitte'));
       return;
     }
-    return run(trimmed, password, { save: remember, biometrics: biometrics && biometricsReady });
+    return run(trimmed, password, { save: rememberLogin, biometrics: biometricGate });
   }
 
   /** Unlock the vault and run with the stored credential. Never re-saves it. */
@@ -285,6 +298,8 @@ export function useCampusHeadlessLogin({
     forgetStoredLogin,
     savedLogin,
     biometricsReady,
+    biometricGate,
+    rememberLogin,
     account,
     setAccount,
     password,

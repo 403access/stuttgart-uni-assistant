@@ -170,9 +170,11 @@ signedIn && onboardingCompleted && biometricsEnabled && biometricsAvailable
   device passcode; the lock screen always offers sign-out.
 
 The app lock is a UI gate. It does not encrypt AsyncStorage. The separate
-C@MPUS autologin vault still uses `expo-secure-store` with its own optional
-biometric gate ([vault.ts](../../src/auth/vault.ts)); enabling the app lock does
-not move data into the vault.
+C@MPUS autologin vault still uses `expo-secure-store` ([vault.ts](../../src/auth/vault.ts)).
+The login screen's `Anmeldung merken` follows this preference for new entries:
+with the app lock on, the credential is stored with a biometric gate; without it,
+the vault uses a device-passcode-protected entry without the biometric gate.
+Enabling the lock does not rewrite an already stored entry.
 
 ## Security screen
 

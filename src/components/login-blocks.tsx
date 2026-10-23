@@ -1,3 +1,4 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
 
@@ -54,6 +55,44 @@ export function Chip({ label, on = false, onPress }: { label: string; on?: boole
   );
 }
 
+/**
+ * A labelled checkbox with an optional explanation below. Used for the
+ * "remember sign-in" opt-in where the security consequence needs one line of
+ * context (biometric gate vs. device-passcode-only vault).
+ */
+export function Checkbox({
+  label,
+  hint,
+  checked,
+  disabled = false,
+  onPress,
+}: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked, disabled }}
+      accessibilityLabel={label}
+      accessibilityHint={hint}
+      style={({ pressed }) => [styles.checkRow, disabled && styles.checkRowDisabled, pressed && !disabled && styles.pressed]}>
+      <View style={[styles.checkBox, checked && styles.checkBoxOn]}>
+        {checked ? <MaterialIcons name="check" size={16} color="#FFFFFF" /> : null}
+      </View>
+      <View style={styles.checkCopy}>
+        <Text style={styles.checkLabel}>{label}</Text>
+        {hint ? <Text style={styles.checkHint}>{hint}</Text> : null}
+      </View>
+    </Pressable>
+  );
+}
+
 export function LanguagePicker({ locale, setLocale }: { locale: Locale; setLocale: (locale: Locale) => void }) {
   return (
     <View style={styles.row}>
@@ -85,4 +124,21 @@ const styles = themedStyles((colors) => ({
   chipOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   chipText: { color: colors.anthracite, fontWeight: '700', fontSize: 13 },
   chipTextOn: { color: '#FFFFFF' },
+  pressed: { opacity: 0.72 },
+  checkRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 2 },
+  checkRowDisabled: { opacity: 0.72 },
+  checkBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkBoxOn: { backgroundColor: colors.brand, borderColor: colors.brand },
+  checkCopy: { flex: 1, gap: 2 },
+  checkLabel: { color: colors.anthracite, fontSize: 14, fontWeight: '700', lineHeight: 20 },
+  checkHint: { color: colors.inkSoft, fontSize: 12, lineHeight: 17 },
 }));

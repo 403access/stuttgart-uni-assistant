@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLoginFlow } from '@/src/auth/use-login-flow';
 import { CampusBrowserModal } from '@/src/components/campus-browser-modal';
 import { CampusHeadlessModal } from '@/src/components/campus-headless-modal';
-import { Field, LanguagePicker } from '@/src/components/login-blocks';
+import { Field, Checkbox, LanguagePicker } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
 import { WebDeviceLogin } from '@/src/components/web-device-login';
@@ -106,6 +106,13 @@ function NativeLoginScreen() {
               secureTextEntry
               textContentType="password"
               placeholder={tx(locale, 'common.passwort_st')}
+            />
+            <Checkbox
+              label={tx(locale, 'login.merken')}
+              hint={tx(locale, headless.biometricGate ? 'login.merken_biometrie' : 'login.merken_hinweis')}
+              checked={headless.rememberLogin}
+              disabled={headless.biometricGate}
+              onPress={() => headless.setRemember((value) => !value)}
             />
             <Button
               label={

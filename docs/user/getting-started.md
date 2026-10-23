@@ -29,12 +29,14 @@ npm run assistant
 The screen that greets you once the splash screen lifts offers the automated
 **Mit C@MPUS anmelden** path and nothing else: you type the account id and the
 password, a hidden browser fills the official C@MPUS form, and the app adopts
-the session. With **Mit Biometrie schützen** the credential kept in the device
-vault (iOS keychain / Android Keystore) is unlocked with biometrics; it is
-deleted when you sign out. The same st-account and password are also used to
-connect UniMail on the assistant server, so your Messages tab is ready without a
-second entry. A loading indicator names the phase while the profile and
-curriculum load.
+the session. **Anmeldung merken** keeps the credential in the device vault (iOS
+keychain / Android Keystore). With the biometric App Lock on, the box is checked
+automatically and the entry is unlocked with Face ID or your fingerprint;
+without biometrics it is still encrypted and protected by the device passcode,
+just without the biometric gate. It is deleted when you sign out. The same
+st-account and password are also used to connect UniMail on the assistant server,
+so your Messages tab is ready without a second entry. A loading indicator names
+the phase while the profile and curriculum load.
 
 The C@MPUS portal session is kept for your account on the assistant server, not
 for the whole server. Another student signing in on the same server gets a
