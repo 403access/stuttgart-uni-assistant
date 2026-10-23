@@ -96,3 +96,46 @@ Known portal failures are the same codes as the structure read: `missing_session
 No curriculum nodes, no grades, no ECTS totals, no timetable. The curriculum tree is the structure call in [campus-curriculum.md](campus-curriculum.md). This call only names the studies and the root node each one starts from.
 
 Paging was not in the observed response. It is one student's study list, not the university's catalog.
+
+## Studies outside the enrollment
+
+The chooser above is enrollment-scoped: its resource is `student/myStudies/chooser`. C@MPUS also exposes study and curriculum master data outside `myStudies`, and the portal's own Angular bundle uses it for catalogue-style filters. The service names were read from the production bundle on 23 October 2026; no server route or app call uses them yet.
+
+| Request | Resource | Observed use in the portal |
+| --- | --- | --- |
+| `GET` | `slc.lib.sm/allStudies` | Populates the study filter on the exam page |
+| `GET` | `slc.lib.sm/study/{id}` | One study's master data |
+| `GET` | `slc.cm.cs.student/curricula/{studyId}` | All available curriculum versions of a study |
+| `GET` | `slc.cm.cs.student/curricula/own/{studyId}` | Only the curriculum versions the student is enrolled in |
+| `GET` | `slc.cm.curriculumfilter` | Curriculum filter used by the course and exam views |
+
+All of them use the same origin, bearer token, and `PSESSIONID` as the chooser:
+
+```http
+GET /cusonline/ee/rest/slc.lib.sm/allStudies?$ctx=design=ca;lang=de&$filter=
+Host: campus.uni-stuttgart.de
+Authorization: Bearer <access_token>
+Cookie: PSESSIONID=<portal_session>
+Accept: application/json
+```
+
+The portal also threads hypermedia links named `allValidCurriculumVersions` and `studiedCurriculumVersions` through the curriculum-version filter. That distinction is the useful part: the portal models “valid for this study” separately from “studied by this student”, so the data needed to describe a non-enrolled study exists on the read side.
+
+### What was verified
+
+- `slc.lib.sm/allStudies` is not public. Anonymous calls and calls with an expired session return `401` with `coErrorDto.message` `Bearer realm="oauth2", error="invalid_token"`.
+- A C@MPUS session renews through `POST /cusonline/ee/rest/auth/token/refresh` with only the `PSESSIONID` cookie. The portal frontend expects `201` and reads a token from the answer. The stored session from 22 October 2026 answered `204` on 23 October 2026, which means the portal session had expired; the server's `refreshCredential()` maps that to `refresh_failed`.
+- Because no valid session was available, the payload of `allStudies`, `study/{id}`, and `curricula/{studyId}` has not been observed yet. Their existence and authorization behavior are confirmed; their DTOs are not.
+
+### What is still unknown
+
+The app's existing structure call is `student/myStudies/{studyId}/myCurriculumElements/{elementId}/structure`, which is enrollment-scoped ([campus-curriculum.md](campus-curriculum.md)). It is not established whether C@MPUS serves the full curriculum tree for a study the student is not enrolled in, or only the study and curriculum-version metadata plus the course catalogue. A live read after a fresh C@MPUS sign-in has to answer that before the app promises a full study browser.
+
+Recommended next test, once a session is live:
+
+1. Read `slc.lib.sm/allStudies` and count the entries.
+2. Pick a study that is not in `myStudies/chooser`.
+3. Read `slc.cm.cs.student/curricula/{studyId}` and follow the `allValidCurriculumVersions` link.
+4. Attempt the structure read against that study and record whether it returns the tree, a permission error, or an empty body.
+
+Until that test lands, the app should treat “catalogue study” and “enrolled study” as different types. `CampusStudy` remains the enrolled shape; a catalogue entry would carry at least the study id, name, degree, and curriculum-version ids, but not an `activeStudyId` or a root `elementId`.
