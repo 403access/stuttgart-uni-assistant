@@ -7,6 +7,7 @@ import { showToast } from '@/src/components/toast';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { iliasAccountFrom } from '@/src/ilias/account';
 import { connectIlias, disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
+import { ensureIliasSession } from '@/src/ilias/auto-connect';
 import { iliasErrorMessage as describe } from '@/src/ilias/errors';
 import type { IliasDashboard, IliasStatus } from '@/src/ilias/types';
 import { useAppSelector, appActions } from '@/src/state/AppState';
@@ -16,6 +17,8 @@ import { tx } from '@/src/text';
 export function useIlias() {
   const locale = useAppSelector((state) => state.locale);
   const authToken = useAppSelector((state) => state.authToken);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
+  const sessionEmail = useAppSelector((state) => state.sessionEmail);
   const { refreshUser, refreshOrReauthenticate } = appActions;
   const [status, setStatus] = useState<IliasStatus | null>(null);
   const [dashboard, setDashboard] = useState<IliasDashboard | null>(null);
@@ -159,6 +162,9 @@ export function useIlias() {
   const connectSaved = useCallback(
     async (options: { quiet?: boolean } = {}) => {
       if (!savedLogin || busy) return;
+      // A background reconnect never raises the biometric prompt. The user can
+      // still unlock the vault explicitly with the saved-login button.
+      if (options.quiet && savedLogin.biometrics) return;
       if (!options.quiet) {
         setError('');
         setNote('');
@@ -199,11 +205,13 @@ export function useIlias() {
       // A remembered account is the server's evidence that the session was
       // dropped by a restart. A deliberate disconnect clears it, so the vault
       // must not quietly undo that choice.
-      if (savedLogin && next.account) await connectSaved({ quiet: true });
+      if (!next.account) return;
+      const restored = await ensureIliasSession({ token: authToken, account: sessionEmail || sessionAccount });
+      if (restored.connected) await load({ quiet: true });
       return;
     }
     await load({ quiet: true });
-  }, [applyStatus, authToken, busy, connectSaved, load, refreshOrReauthenticate, savedLogin]);
+  }, [applyStatus, authToken, busy, load, refreshOrReauthenticate, sessionAccount, sessionEmail]);
 
   useAppStateChange(
     (state) => {
@@ -231,11 +239,17 @@ export function useIlias() {
   const autoConnectedToken = useRef<string | null>(null);
   useEffect(() => {
     if (!authToken || settledToken !== authToken) return;
-    if (status?.sessionActive || dashboard || !savedLogin) return;
+    if (status?.sessionActive || dashboard) return;
     if (autoConnectedToken.current === authToken) return;
     autoConnectedToken.current = authToken;
-    void connectSaved({ quiet: true });
-  }, [authToken, connectSaved, dashboard, savedLogin, settledToken, status?.sessionActive]);
+    void (async () => {
+      const restored = await ensureIliasSession({
+        token: authToken,
+        account: sessionEmail || sessionAccount,
+      });
+      if (restored.connected) await load({ quiet: true });
+    })();
+  }, [authToken, dashboard, load, sessionAccount, sessionEmail, settledToken, status?.sessionActive]);
 
   const refresh = useCallback(async () => {
     await load({ pull: true });

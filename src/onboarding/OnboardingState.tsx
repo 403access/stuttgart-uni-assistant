@@ -139,7 +139,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       const remote = await fetchServerPreferences(authToken);
       if (!active) return;
       const current = preferencesRef.current;
-      if (remote?.onboardingCompletedAt && !current.completedAt) {
+      // A locally scheduled reset (dev "force onboarding") must win over the
+      // account-wide record until the flow is completed again; otherwise the
+      // server value re-completes onboarding the moment the user signs back in.
+      if (remote?.onboardingCompletedAt && !current.completedAt && !current.forceOnboarding) {
         await persist({ ...current, completedAt: remote.onboardingCompletedAt, forceOnboarding: false });
       } else if (Platform.OS === 'web' && !current.completedAt) {
         // A web session can only be approved by a phone that has already been
@@ -261,8 +264,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const completeOnboarding = useCallback(async () => {
-    if (preferencesRef.current.completedAt) return;
-    await persist({ ...preferencesRef.current, completedAt: new Date().toISOString(), forceOnboarding: false });
+    const current = preferencesRef.current;
+    // A forced run must be able to finish even if a stale completion survived;
+    // an ordinary completion is already done and needs no second timestamp.
+    if (current.completedAt && !current.forceOnboarding) return;
+    await persist({ ...current, completedAt: new Date().toISOString(), forceOnboarding: false });
   }, [persist]);
 
   const enableBiometrics = useCallback(

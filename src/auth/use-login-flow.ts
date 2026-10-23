@@ -11,8 +11,7 @@ import { useCampusHeadlessLogin } from '@/src/auth/use-campus-headless-login';
 import { saveCampusHarvest } from '@/src/auth/vault';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
-import { iliasAccountFrom } from '@/src/ilias/account';
-import { connectIlias, fetchIliasStatus } from '@/src/ilias/api';
+import { ensureIliasSession } from '@/src/ilias/auto-connect';
 import { keys } from '@/src/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
@@ -113,12 +112,12 @@ export function useLoginFlow() {
       ticketRef.current = null;
       // The st-account and password work for UniMail and ILIAS too; connect
       // both so the Messages and ILIAS tabs are ready. The mutation above is
-      // not held up by either.
+      // not held up by either. The visible-browser path has no password here,
+      // so ILIAS falls back to the opt-in device vault.
       const credentials = loginCredentials.current;
-      if (credentials) {
-        void connectMail(credentials, profile.auth?.token ?? null);
-        void connectIliasAccount(credentials, profile.auth?.token ?? null);
-      }
+      const token = profile.auth?.token ?? null;
+      if (credentials) void connectMail(credentials, token);
+      void connectIliasAccount(credentials, token, profile.account);
     },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'campus_failed';
@@ -145,7 +144,17 @@ export function useLoginFlow() {
     mutationKey: ['siam-sign-in'],
     mutationFn: signInWithUniversity,
     onMutate: () => setError(''),
-    onSuccess: (profile) => signInOidc(profile),
+    onSuccess: (profile) => {
+      signInOidc(profile);
+      // OIDC does not hand the app a C@MPUS password. The opt-in vault can
+      // still reconnect ILIAS in the background when it belongs to this account.
+      void ensureIliasSession({
+        token: profile.auth?.token ?? null,
+        account: profile.email || profile.account,
+      }).then((result) => {
+        if (result.connected) void refreshUser();
+      });
+    },
     onError: (caught) => {
       const code = caught instanceof Error ? caught.message : 'oidc_failed';
       setError(messageFor(locale, code, status));
@@ -206,23 +215,22 @@ export function useLoginFlow() {
    * Reuse the C@MPUS credential for ILIAS: the same university password, with
    * the login name being the address before the `@` (`st206509@stud.uni-stuttgart.de`
    * → `st206509`). The assistant server performs the form login once and keeps
-   * only the resulting PHPSESSID, so the ILIAS tab opens already connected.
+   * only the resulting PHPSESSID, so the ILIAS tab and the onboarding preview
+   * open already connected. When the visible browser produced the session there
+   * is no password in memory; `ensureIliasSession` then uses the device vault.
    * Best effort — the sign-in neither waits for it nor fails with it.
    */
-  async function connectIliasAccount(credentials: { account: string; password: string }, token: string | null) {
-    const account = iliasAccountFrom(credentials.account);
-    if (!account) return;
-    try {
-      const current = await fetchIliasStatus(token);
-      if (current?.sessionActive && sameAccount(current.account, account)) {
-        void refreshUser();
-        return;
-      }
-      await connectIlias({ account, password: credentials.password, token });
-      void refreshUser();
-    } catch {
-      // A failed auto-login leaves the manual connect panel in place.
-    }
+  async function connectIliasAccount(
+    credentials: { account: string; password: string } | null,
+    token: string | null,
+    account: string,
+  ) {
+    const result = await ensureIliasSession({
+      token,
+      account: credentials?.account ?? account,
+      credentials: credentials ?? undefined,
+    });
+    if (result.connected) void refreshUser();
   }
 
   const busy = campusSignIn.isPending || siamSignIn.isPending;

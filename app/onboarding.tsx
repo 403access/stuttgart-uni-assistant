@@ -1,15 +1,16 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { useCallback, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { isBiometricCancel } from '@/src/auth/biometric-messages';
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { ChoiceCard } from '@/src/components/choice-card';
-import { Button, Mark } from '@/src/components/ui';
+import { Button, Mark, Pill } from '@/src/components/ui';
 import { showToast } from '@/src/components/toast';
+import type { IliasTutorial, IliasTutorialFile } from '@/src/ilias/tutorials';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';
 import { useAppSelector, appActions } from '@/src/state/AppState';
@@ -17,14 +18,14 @@ import { colors, themedStyles } from '@/src/theme';
 import { formatTime, localDay, monthShort, tx } from '@/src/text';
 import type { CampusCalendarEvent, DesignMode, MailMessage, ThemeMode } from '@/src/types';
 
-type Step = 'biometrics' | 'appearance' | 'calendar' | 'mail' | 'timetable';
+type Step = 'biometrics' | 'appearance' | 'calendar' | 'mail' | 'timetable' | 'tutorials';
 type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
 /** Caption plus one list row; used to fit the fixed-height import pages. */
 const LIST_CAPTION_HEIGHT = 24;
 const LIST_ROW_HEIGHT = 66;
 
-const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable'] as const;
+const STEP_ORDER = ['biometrics', 'appearance', 'calendar', 'mail', 'timetable', 'tutorials'] as const;
 
 /**
  * First-run flow after a successful sign-in. Biometrics comes first, then the
@@ -114,11 +115,18 @@ export default function OnboardingScreen() {
           onBack={() => setStep('calendar')}
           onContinue={() => setStep('timetable')}
         />
-      ) : (
+      ) : step === 'timetable' ? (
         <TimetableImportPage
           locale={locale}
           timetable={imports.timetable}
           onBack={() => setStep('mail')}
+          onContinue={() => setStep('tutorials')}
+        />
+      ) : (
+        <TutorialImportPage
+          locale={locale}
+          tutorials={imports.tutorials}
+          onBack={() => setStep('timetable')}
           onContinue={() => void finish()}
         />
       )}
@@ -624,6 +632,204 @@ function TimetableImportPage({
   );
 }
 
+function TutorialImportPage({
+  locale,
+  tutorials,
+  onBack,
+  onContinue,
+}: {
+  locale: 'de' | 'en';
+  tutorials: ReturnType<typeof useOnboardingImport>['tutorials'];
+  onBack: () => void;
+  onContinue: () => void;
+}) {
+  const insets = useSafeAreaInsets();
+  const loading = !tutorials.ready;
+  const files = useMemo(
+    () => tutorials.tutorials.reduce((total, tutorial) => total + tutorial.files.length, 0),
+    [tutorials.tutorials],
+  );
+  const connected = tutorials.status?.sessionActive ?? false;
+
+  return (
+    <View
+      style={[
+        styles.sheet,
+        styles.sheetFixed,
+        { paddingBottom: Math.max(insets.bottom, 20) },
+      ]}>
+      <StepIntro
+        icon="groups"
+        title={loading ? tx(locale, 'onboarding.tutorien_laedt') : tx(locale, 'onboarding.tutorien_titel')}
+        lead={loading ? tx(locale, 'onboarding.tutorien_laedt_text') : tx(locale, 'onboarding.tutorien_text')}
+      />
+
+      {loading ? (
+        <>
+          <LoadingCard
+            title={tx(locale, 'onboarding.tutorien_laedt')}
+            text={tx(locale, 'onboarding.tutorien_laedt_text')}
+          />
+          <View style={styles.spacer} />
+        </>
+      ) : tutorials.tutorials.length > 0 ? (
+        <>
+          <StatRow
+            first={tutorials.tutorials.length}
+            firstLabel={tx(locale, 'onboarding.tutorien_anzahl')}
+            second={files}
+            secondLabel={tx(locale, 'onboarding.tutorien_dateien')}
+          />
+          <ScrollView
+            style={styles.flexListArea}
+            contentContainerStyle={styles.tutorialList}
+            showsVerticalScrollIndicator={false}>
+            {tutorials.tutorials.map((tutorial) => (
+              <TutorialCard key={tutorial.id} tutorial={tutorial} locale={locale} />
+            ))}
+          </ScrollView>
+        </>
+      ) : (
+        <>
+          <EmptyCard
+            icon={connected ? 'school' : 'link-off'}
+            text={tx(
+              locale,
+              connected ? 'onboarding.tutorien_keine' : 'onboarding.tutorien_nicht_verbunden',
+            )}
+          />
+          <View style={styles.spacer} />
+        </>
+      )}
+
+      {tutorials.error && !loading ? (
+        <ErrorBox text={tx(locale, 'onboarding.tutorien_fehler', [tutorials.error])} />
+      ) : null}
+
+      {!loading && !connected && !tutorials.error ? (
+        <Button
+          secondary
+          label={tx(locale, 'onboarding.tutorien_erneut')}
+          onPress={tutorials.retry}
+        />
+      ) : null}
+
+      <StepActions
+        loading={loading}
+        error={tutorials.error}
+        continueLabel={tx(locale, 'onboarding.tutorien_weiter')}
+        retryLabel={tx(locale, 'onboarding.tutorien_erneut')}
+        backLabel={tx(locale, 'onboarding.zurueck')}
+        onContinue={onContinue}
+        onRetry={tutorials.retry}
+        onBack={onBack}
+      />
+    </View>
+  );
+}
+
+function TutorialCard({ tutorial, locale }: { tutorial: IliasTutorial; locale: 'de' | 'en' }) {
+  const open = () => {
+    if (!tutorial.refId) return;
+    router.push({
+      pathname: '/ilias/[refId]',
+      params: { refId: String(tutorial.refId), kind: tutorial.kind, title: tutorial.title },
+    });
+  };
+  const openFile = (file: IliasTutorialFile) => {
+    if (!file.refId) return;
+    router.push({
+      pathname: '/ilias/datei',
+      params: {
+        refId: String(file.refId),
+        title: file.title,
+        type: file.type,
+        size: file.size,
+        date: file.date,
+      },
+    });
+  };
+  const properties = tutorial.properties
+    .map((entry) => [entry.name, entry.value].filter(Boolean).join(': '))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  return (
+    <View style={styles.tutorialCard}>
+      <Pressable
+        onPress={open}
+        accessibilityRole="button"
+        accessibilityLabel={tutorial.title}
+        style={({ pressed }) => [styles.tutorialHead, pressed && styles.pressed]}>
+        <View style={styles.tutorialHeading}>
+          <Text style={styles.tutorialTitle} numberOfLines={2}>
+            {tutorial.title}
+          </Text>
+          {tutorial.type ? <Pill label={tutorial.type} tone="neutral" /> : null}
+        </View>
+        <MaterialIcons name="chevron-right" size={18} color={colors.mute} />
+      </Pressable>
+
+      {tutorial.course ? <Text style={styles.tutorialCourse}>{tutorial.course}</Text> : null}
+
+      <View style={styles.tutorialMeta}>
+        <MaterialIcons name="person-outline" size={14} color={colors.blue} />
+        <Text style={styles.tutorialMetaText} numberOfLines={1}>
+          {tutorial.teacher || tx(locale, 'onboarding.tutorien_ohne_lehrer')}
+        </Text>
+      </View>
+      {tutorial.schedule ? (
+        <View style={styles.tutorialMeta}>
+          <MaterialIcons name="schedule" size={14} color={colors.blue} />
+          <Text style={styles.tutorialMetaText} numberOfLines={2}>
+            {tutorial.schedule}
+          </Text>
+        </View>
+      ) : null}
+      {tutorial.room ? (
+        <View style={styles.tutorialMeta}>
+          <MaterialIcons name="place" size={14} color={colors.blue} />
+          <Text style={styles.tutorialMetaText} numberOfLines={1}>
+            {tutorial.room}
+          </Text>
+        </View>
+      ) : null}
+      {properties.length ? (
+        <Text style={styles.tutorialProperties} numberOfLines={2}>
+          {properties.join(' · ')}
+        </Text>
+      ) : null}
+
+      <View style={styles.tutorialFiles}>
+        <Text style={styles.sectionCaption}>{tx(locale, 'onboarding.tutorien_dateien')}</Text>
+        {tutorial.files.length ? (
+          tutorial.files.map((file) => (
+            <Pressable
+              key={file.id}
+              onPress={() => openFile(file)}
+              accessibilityRole="button"
+              accessibilityLabel={file.title}
+              style={({ pressed }) => [styles.fileRow, pressed && styles.pressed]}>
+              <MaterialIcons name="description" size={16} color={colors.blue} />
+              <View style={styles.fileCopy}>
+                <Text style={styles.fileTitle} numberOfLines={2}>
+                  {file.title}
+                </Text>
+                <Text style={styles.fileMeta} numberOfLines={1}>
+                  {[file.type?.toUpperCase(), file.size, file.date].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={16} color={colors.mute} />
+            </Pressable>
+          ))
+        ) : (
+          <Text style={styles.tutorialEmpty}>{tx(locale, 'onboarding.tutorien_ohne_dateien')}</Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
 function StepIntro({ icon, title, lead }: { icon: IconName; title: string; lead: string }) {
   return (
     <>
@@ -974,6 +1180,40 @@ const styles = themedStyles((colors) => ({
   statLabel: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, textAlign: 'center' },
   statDivider: { width: 1, backgroundColor: colors.line, marginHorizontal: 12 },
   upcoming: { gap: 8 },
+  tutorialList: { gap: 10, paddingBottom: 4 },
+  tutorialCard: {
+    backgroundColor: colors.mist,
+    borderRadius: 16,
+    padding: 12,
+    gap: 6,
+  },
+  tutorialHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  tutorialHeading: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  tutorialTitle: { flex: 1, color: colors.anthracite, fontSize: 15, fontWeight: '700', lineHeight: 20 },
+  tutorialCourse: {
+    color: colors.blue,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  tutorialMeta: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  tutorialMetaText: { flex: 1, color: colors.inkSoft, fontSize: 12, lineHeight: 17 },
+  tutorialProperties: { color: colors.mute, fontSize: 11, lineHeight: 16 },
+  tutorialFiles: { gap: 5, marginTop: 2 },
+  tutorialEmpty: { color: colors.mute, fontSize: 12, lineHeight: 17 },
+  fileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.paper,
+    borderRadius: 10,
+    padding: 8,
+  },
+  fileCopy: { flex: 1, gap: 1 },
+  fileTitle: { color: colors.anthracite, fontSize: 13, fontWeight: '600', lineHeight: 18 },
+  fileMeta: { color: colors.mute, fontSize: 11 },
+  pressed: { opacity: 0.72 },
   sectionCaption: {
     color: colors.mute,
     fontSize: 11,

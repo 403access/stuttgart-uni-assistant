@@ -11,6 +11,11 @@ import {
   saveCourses,
   saveFullStructure,
 } from '@/src/campus/db';
+import { ensureIliasSession } from '@/src/ilias/auto-connect';
+import { loadIliasContent, loadIliasDashboard } from '@/src/ilias/api';
+import { iliasContentErrorMessage } from '@/src/ilias/errors';
+import { tutorialFromContent, tutorialItems, type IliasTutorial } from '@/src/ilias/tutorials';
+import type { IliasStatus } from '@/src/ilias/types';
 import { decodeBase64Utf8, parseIcsEvents } from '@/src/onboarding/ics';
 import { keys } from '@/src/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
@@ -52,6 +57,16 @@ export interface TimetableImportState {
   /** Portal calls already answered and courses seen by the running sync. */
   progress: { fetched: number; courseCount: number };
   /** Non-fatal failure summary; cached entries stay visible. */
+  error: string;
+}
+
+export interface TutorialImportState {
+  /** The ILIAS read finished, successfully or not. */
+  ready: boolean;
+  busy: boolean;
+  status: IliasStatus | null;
+  tutorials: IliasTutorial[];
+  /** Non-fatal failure summary; a tutorial without its files may still render. */
   error: string;
 }
 
@@ -478,15 +493,149 @@ export function useTimetableImport() {
   return { ...state, retry };
 }
 
+/** The onboarding preview shows a handful of tutorials, not the whole account. */
+const TUTORIAL_LIMIT = 6;
+/** How long the preview waits for the background sign-in connect to land. */
+const TUTORIAL_WAIT_MS = 6000;
+const TUTORIAL_POLL_MS = 1200;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
- * All three first-run imports start together when the onboarding screen
- * mounts, so each page has the best chance of showing its overview without a
- * loader. The screens only control which result is visible.
+ * Tutorials of the signed-in account. The onboarding screen opens right after
+ * sign-in, while the credential handoff in `useLoginFlow` may still be talking
+ * to ILIAS, so the first read waits for that connect to finish. The dashboard
+ * supplies the groups (title, tutor, schedule); each tutorial page supplies the
+ * files. A single unavailable page leaves that tutorial in the list without
+ * files instead of failing the whole preview.
+ */
+export function useIliasTutorials() {
+  const sessionMode = useAppSelector((state) => state.sessionMode);
+  const authToken = useAppSelector((state) => state.authToken);
+  const sessionAccount = useAppSelector((state) => state.sessionAccount);
+  const sessionEmail = useAppSelector((state) => state.sessionEmail);
+  const locale = useAppSelector((state) => state.locale);
+  const queryClient = useQueryClient();
+  const [state, setState] = useState<TutorialImportState>({
+    ready: false,
+    busy: true,
+    status: null,
+    tutorials: [],
+    error: '',
+  });
+  const session = useRef({ sessionMode, authToken, sessionAccount, sessionEmail, locale });
+  const started = useRef(false);
+  const mounted = useRef(true);
+  const runId = useRef(0);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    session.current = { sessionMode, authToken, sessionAccount, sessionEmail, locale };
+  }, [authToken, locale, sessionAccount, sessionEmail, sessionMode]);
+
+  const run = useCallback(async () => {
+    const id = ++runId.current;
+    const current = () => runId.current === id;
+    const publish = (update: Partial<TutorialImportState>) => {
+      if (mounted.current && current()) setState((previous) => ({ ...previous, ...update }));
+    };
+    const { sessionMode: mode, authToken: token, sessionAccount: account, sessionEmail: email, locale: language } = session.current;
+    // Demonstration and local accounts have no university identity behind them.
+    const supported = mode === 'campus' || mode === 'oidc';
+    publish({ busy: supported, error: '' });
+    if (!supported) {
+      publish({ ready: true, busy: false, status: null, tutorials: [] });
+      return;
+    }
+
+    let ensured = await ensureIliasSession({ token, account: email || account });
+    const deadline = Date.now() + TUTORIAL_WAIT_MS;
+    while (!ensured.connected && Date.now() < deadline && current()) {
+      await sleep(TUTORIAL_POLL_MS);
+      if (!current()) return;
+      ensured = await ensureIliasSession({ token, account: email || account });
+    }
+    if (!current()) return;
+    if (!ensured.connected) {
+      publish({ ready: true, busy: false, status: ensured.status, tutorials: [] });
+      return;
+    }
+
+    try {
+      const loaded = ensured.dashboard && ensured.status
+        ? { status: ensured.status, dashboard: ensured.dashboard }
+        : await loadIliasDashboard();
+      if (!current()) return;
+      const items = tutorialItems(loaded.dashboard).slice(0, TUTORIAL_LIMIT);
+      const contents = await Promise.allSettled(
+        items.map((item) => loadIliasContent({ refId: item.refId ?? 0, kind: item.kind })),
+      );
+      if (!current()) return;
+      let contentError = '';
+      const tutorials = items.map((item, index) => {
+        const content = contents[index];
+        if (content.status === 'rejected') {
+          contentError ||= iliasContentErrorMessage(content.reason, language);
+          return tutorialFromContent(item, null);
+        }
+        if (item.refId) queryClient.setQueryData(keys.iliasContent(item.refId, item.kind), content.value);
+        return tutorialFromContent(item, content.value);
+      });
+      publish({
+        ready: true,
+        busy: false,
+        status: loaded.status,
+        tutorials,
+        error: contentError,
+      });
+    } catch (caught) {
+      publish({
+        ready: true,
+        busy: false,
+        status: ensured.status,
+        tutorials: [],
+        error: iliasContentErrorMessage(caught, language),
+      });
+    }
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void run();
+  }, [run]);
+
+  const retry = useCallback(() => {
+    setState((previous) => ({
+      ...previous,
+      ready: previous.ready && previous.tutorials.length > 0,
+      busy: true,
+      error: '',
+    }));
+    void run();
+  }, [run]);
+
+  return { ...state, retry };
+}
+
+/**
+ * All four first-run imports start together when the onboarding screen mounts,
+ * so each page has the best chance of showing its overview without a loader.
+ * The screens only control which result is visible.
  */
 export function useOnboardingImport() {
   return {
     calendar: useCalendarImport(),
     mail: useMailImport(),
     timetable: useTimetableImport(),
+    tutorials: useIliasTutorials(),
   };
 }

@@ -12,6 +12,7 @@ import { clearLogin } from '@/src/auth/vault';
 import { AppLock } from '@/src/components/app-lock';
 import { ToastHost } from '@/src/components/toast';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
+import { IliasAutoConnect } from '@/src/ilias/ilias-auto-connect';
 import { IliasHeadlessProvider } from '@/src/ilias/ilias-headless-provider';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
 import { QuizProgressProvider } from '@/src/quiz/progress';
@@ -35,6 +36,7 @@ export default function RootLayout() {
     <AppStateProvider>
       <IliasHeadlessProvider>
         <SessionRefresh />
+        <IliasAutoConnect />
         <OnboardingProvider>
           <QueryProvider>
             <KeyboardProvider>
@@ -73,7 +75,7 @@ function Gate() {
   // The web build can only sign in through a phone that already completed the
   // first-run flow, so it never shows onboarding again.
   const isWeb = Platform.OS === 'web';
-  const needsOnboarding = Boolean(sessionAccount) && onboardingReady && !onboardingCompleted && !isWeb;
+  const needsOnboarding = Boolean(sessionAccount) && onboardingReady && (!onboardingCompleted || forceOnboarding) && !isWeb;
   // Settled once the route matches the session and, while signed in, the
   // onboarding decision has been made. The effects below only perform redirects.
   const settled =
@@ -109,12 +111,13 @@ function Gate() {
       if (onLogin || onOnboarding) router.replace('/');
       return;
     }
-    if (onboardingCompleted) {
-      if (onLogin || onOnboarding) router.replace('/');
-      return;
-    }
+    // A forced run wins over a stale completion, so it is checked first.
     if (needsOnboarding) {
       if (!onOnboarding) router.replace('/onboarding');
+      return;
+    }
+    if (onboardingCompleted) {
+      if (onLogin || onOnboarding) router.replace('/');
       return;
     }
     if (onLogin) router.replace('/');
