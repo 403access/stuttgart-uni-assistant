@@ -99,15 +99,16 @@ Paging was not in the observed response. It is one student's study list, not the
 
 ## Studies outside the enrollment
 
-The chooser above is enrollment-scoped: its resource is `student/myStudies/chooser`. C@MPUS also exposes study and curriculum master data outside `myStudies`, and the portal's own Angular bundle uses it for catalogue-style filters. The service names were read from the production bundle on 23 October 2026; no server route or app call uses them yet.
+The chooser above is enrollment-scoped: its resource is `student/myStudies/chooser`. The portal bundle also references catalogue-side services, so on 23 October 2026 the same live student session was used to test them. The result is a firm **no** for another study's master data and curriculum, and a **yes** for the course catalogue.
 
-| Request | Resource | Observed use in the portal |
+| Request | Resource | Observed on 23 October 2026 |
 | --- | --- | --- |
-| `GET` | `slc.lib.sm/allStudies` | Populates the study filter on the exam page |
-| `GET` | `slc.lib.sm/study/{id}` | One study's master data |
-| `GET` | `slc.cm.cs.student/curricula/{studyId}` | All available curriculum versions of a study |
-| `GET` | `slc.cm.cs.student/curricula/own/{studyId}` | Only the curriculum versions the student is enrolled in |
-| `GET` | `slc.cm.curriculumfilter` | Curriculum filter used by the course and exam views |
+| `GET` | `slc.lib.sm/allStudies` | `200`; returns only the two studies that are already in `myStudies/chooser` (`339484` Linguistik, `339485` Philosophie). It is not the university catalogue. |
+| `GET` | `slc.lib.sm/study/{id}` | `403` with `not allowed to see information about study with id 339486` (and `339480`). The service is `StudyServiceImpl.getStudyForStudentByStudyId`. |
+| `GET` | `slc.cm.cs.student/curricula/{studyId}` | `200` with an empty collection for the observed study and curriculum-version ids (`1151`, `554`). |
+| `GET` | `slc.cm.cs.student/curricula/own/{studyId}` | `200` with the same empty collection. |
+| `GET` | `slc.cm.curriculumversion/curriculumVersionGroupings` | `200` with two groupings — the student's own studies. |
+| `GET` | `slc.cm.curriculumfilter` | `404` at the bare path; the portal calls it with sub-resources. |
 
 All of them use the same origin, bearer token, and `PSESSIONID` as the chooser:
 
@@ -119,23 +120,17 @@ Cookie: PSESSIONID=<portal_session>
 Accept: application/json
 ```
 
-The portal also threads hypermedia links named `allValidCurriculumVersions` and `studiedCurriculumVersions` through the curriculum-version filter. That distinction is the useful part: the portal models “valid for this study” separately from “studied by this student”, so the data needed to describe a non-enrolled study exists on the read side.
+### What this means
 
-### What was verified
+- A student session cannot read another study's master data. The portal answers `403`, not `404`, so the study exists but is outside the student's authorization.
+- `allStudies` means “all of my studies”, not “all studies at the university”.
+- The hypermedia links `allValidCurriculumVersions` and `studiedCurriculumVersions` are real, but both are scoped to the student's own curricula.
+- The app's existing structure call is `student/myStudies/{studyId}/myCurriculumElements/{elementId}/structure`, which is enrollment-scoped ([campus-curriculum.md](campus-curriculum.md)). Do not build a full study browser on the student API.
+- Course-level data is different: the full course catalogue is readable with the same session and contains courses outside the student's studies. See [campus-courses.md](campus-courses.md).
 
-- `slc.lib.sm/allStudies` is not public. Anonymous calls and calls with an expired session return `401` with `coErrorDto.message` `Bearer realm="oauth2", error="invalid_token"`.
-- A C@MPUS session renews through `POST /cusonline/ee/rest/auth/token/refresh` with only the `PSESSIONID` cookie. The portal frontend expects `201` and reads a token from the answer. The stored session from 22 October 2026 answered `204` on 23 October 2026, which means the portal session had expired; the server's `refreshCredential()` maps that to `refresh_failed`.
-- Because no valid session was available, the payload of `allStudies`, `study/{id}`, and `curricula/{studyId}` has not been observed yet. Their existence and authorization behavior are confirmed; their DTOs are not.
+### What remains unverified
 
-### What is still unknown
+- Whether an applicant, staff, or public catalogue session reaches a different study endpoint. The student session cannot see one.
+- The exact path segment expected by `slc.cm.cs.student/curricula/{id}`. The empty collection for `1151` and `554` suggests it is a curriculum-version or course id, not a study id.
 
-The app's existing structure call is `student/myStudies/{studyId}/myCurriculumElements/{elementId}/structure`, which is enrollment-scoped ([campus-curriculum.md](campus-curriculum.md)). It is not established whether C@MPUS serves the full curriculum tree for a study the student is not enrolled in, or only the study and curriculum-version metadata plus the course catalogue. A live read after a fresh C@MPUS sign-in has to answer that before the app promises a full study browser.
-
-Recommended next test, once a session is live:
-
-1. Read `slc.lib.sm/allStudies` and count the entries.
-2. Pick a study that is not in `myStudies/chooser`.
-3. Read `slc.cm.cs.student/curricula/{studyId}` and follow the `allValidCurriculumVersions` link.
-4. Attempt the structure read against that study and record whether it returns the tree, a permission error, or an empty body.
-
-Until that test lands, the app should treat “catalogue study” and “enrolled study” as different types. `CampusStudy` remains the enrolled shape; a catalogue entry would carry at least the study id, name, degree, and curriculum-version ids, but not an `activeStudyId` or a root `elementId`.
+The earlier plan to treat “catalogue study” and “enrolled study” as separate app types is therefore unnecessary: the enrolled `CampusStudy` shape stays the only study shape the student API will return.

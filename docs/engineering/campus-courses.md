@@ -85,6 +85,39 @@ The mapped `CampusCourse` keeps `id`, `courseNumber`, the German `title`, `cours
 
 `server/catalog.mjs` lists it as `campus-courses`, so the Schnittstelle screen can replay it with an element id and the selected study. An element with no courses returns an empty list — a valid answer, not an error. Portal failures use the same codes and the same `detail` propagation as the structure read, documented in [campus-logging.md](campus-logging.md).
 
+## Full course catalogue
+
+The curriculum-element call above is enrollment-scoped. C@MPUS also exposes the semester's whole course catalogue to the same student session:
+
+```http
+GET /cusonline/ee/rest/slc.tm.cp/student/courses?$ctx=design=ca;lang=de
+Host: campus.uni-stuttgart.de
+Authorization: Bearer <access_token>
+Cookie: PSESSIONID=<portal_session>
+Accept: application/json
+```
+
+The read on 23 October 2026 returned:
+
+| Field | Observed |
+| --- | --- |
+| `courses` | The first 20 entries |
+| `totalCount` | `3546` for WiSe 2026/27 |
+| `links` | Related filters (`myCourses`, `course-categories`, `courseInstructionLanguages`, `course-tags`, `courseFilterResources`) and bookmark create/delete links |
+
+Each `courses` entry carries `id`, `courseNumber`, `courseTitle`, `courseTypeDto`, `semesterDto`, `lectureships`, `registrationAvailable`, `registrationInfo`, and `courseNormConfigs`. The catalogue is not limited to the student's studies: the first page alone contains courses from other faculties, for example `457764` `IHFG-Kolloquium`, `457777` `Datenbanksysteme`, and `457781` `Englisch: English for Space Engineering (C1)`.
+
+Course-level detail and groups are readable for those rows too:
+
+| Request | Observed |
+| --- | --- |
+| `GET /slc.tm.cp/student/courses/{id}?$ctx=design=ca;lang=de` | `200`; `cpCourseDetailDto.cpCourseDto` with the same fields plus `sameCourseDtos` |
+| `GET /slc.tm.cp/student/courseGroups/firstGroups/{id}` | `200`; `courseGroupDtos` and `totalCount` |
+
+This is metadata, not curriculum structure. Another study's master data and curriculum still answer `403`; the catalogue is the usable “not enrolled” read. See the authorization results in [campus-studies.md](campus-studies.md).
+
+No server route and no app screen calls the catalogue yet. It also returns 20 rows per page, so a caller that wants the whole semester has to page through `totalCount` (or use the returned filter links).
+
 ## App usage
 
 - The C@MPUS tab (`app/(tabs)/campus-info.tsx`) shows a `Kurse` toggle under every structure node. It reads the course cache first (instant, offline) and only then the network with write-through. Switching studies reloads the tree, so the toggles always query the selected study.
