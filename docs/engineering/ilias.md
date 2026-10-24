@@ -6,6 +6,30 @@ renders. The page reads run in a hidden WebView on the device; the assistant
 server parses and caches what the app harvested, so server load does not grow
 with the number of active users.
 
+## Code layout
+
+`server/ilias.mjs` is the stable public barrel. The implementation is split by
+concern in `server/ilias/`:
+
+| File | Responsibility |
+| --- | --- |
+| `constants.mjs` | Base URLs, client id, user agent, headers, cache TTL and page cap |
+| `errors.mjs` | `iliasError(status, code, detail)` |
+| `cookies.mjs` | `CookieJar`, `Set-Cookie` parsing, cookie normalization |
+| `util.mjs` | URL resolution, login-name normalization, masking, URL safety and kind helpers |
+| `markup.mjs` | Entity decoding, visible text, tag attributes, login-page detection |
+| `login.mjs` | Standard-form parsing, rejection text, identity, form login |
+| `dashboard.mjs` | Dashboard block parser |
+| `content.mjs` | Course/group/folder material parser and members-tab link |
+| `members.mjs` | Members-tab parser |
+| `profile.mjs` | Public-profile parser |
+| `reads.mjs` | Live page, profile, image, and file reads with a cookie |
+| `cache.mjs` | Ingest, parsed-row cache, freshness metadata |
+| `session.mjs` | Per-user cookie registry, connect/disconnect, session-backed reads |
+
+Routes, the admin console, the terminal probe, and tests keep importing
+`server/ilias.mjs`, so the split is internal.
+
 ## Login
 
 The standard form lives at:
