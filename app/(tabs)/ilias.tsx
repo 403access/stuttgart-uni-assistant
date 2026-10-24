@@ -1,29 +1,21 @@
-import { useState } from 'react';
-import { RefreshControl, Text } from 'react-native';
+import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
 
 import { Screen } from '@/src/components/ui';
-import { iliasAccountFrom } from '@/src/ilias/account';
-import { IliasConnectionPanel } from '@/src/ilias/components/ilias-connection-panel';
 import { IliasDashboardView } from '@/src/ilias/components/ilias-dashboard';
 import { useIlias } from '@/src/ilias/use-ilias';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
+/**
+ * ILIAS is connected automatically from the signed-in C@MPUS session, so this
+ * tab never offers a manual login. Until the dashboard is there it only shows
+ * a loading state, including while the background session is being restored.
+ */
 export default function IliasScreen() {
   const locale = useAppSelector((state) => state.locale);
-  const sessionAccount = useAppSelector((state) => state.sessionAccount);
-  const sessionEmail = useAppSelector((state) => state.sessionEmail);
   const ilias = useIlias();
-  const [account, setAccount] = useState(() => iliasAccountFrom(sessionEmail || sessionAccount));
-  const [password, setPassword] = useState('');
-  const [cookie, setCookie] = useState('');
-  const connected = ilias.status?.sessionActive && ilias.dashboard;
-
-  const submit = () => {
-    if (cookie.trim()) ilias.connect({ cookie });
-    else ilias.connect({ account, password });
-  };
+  const connected = Boolean(ilias.status?.sessionActive && ilias.dashboard);
 
   return (
     <Screen
@@ -42,9 +34,7 @@ export default function IliasScreen() {
           />
         ) : undefined
       }>
-      {ilias.loading && !ilias.status ? (
-        <Text style={styles.loading}>{tx(locale, 'tabsIlias.laedt')}</Text>
-      ) : connected && ilias.dashboard ? (
+      {connected && ilias.dashboard ? (
         <IliasDashboardView
           dashboard={ilias.dashboard}
           locale={locale}
@@ -53,30 +43,18 @@ export default function IliasScreen() {
           onDisconnect={ilias.disconnect}
         />
       ) : (
-        <IliasConnectionPanel
-          status={ilias.status}
-          sessionAccount={sessionAccount}
-          account={account}
-          password={password}
-          cookie={cookie}
-          busy={ilias.busy}
-          note={ilias.note}
-          error={ilias.error}
-          locale={locale}
-          savedLogin={ilias.savedLogin}
-          onAccountChange={setAccount}
-          onPasswordChange={setPassword}
-          onCookieChange={setCookie}
-          onUseSaved={ilias.connectSaved}
-          onConnect={submit}
-        />
+        <View style={styles.loading}>
+          <ActivityIndicator color={colors.blue} />
+          <Text style={styles.loadingLabel}>{tx(locale, 'tabsIlias.laedt')}</Text>
+        </View>
       )}
-      {connected && ilias.error ? <Text style={styles.error}>{ilias.error}</Text> : null}
+      {ilias.error ? <Text style={styles.error}>{ilias.error}</Text> : null}
     </Screen>
   );
 }
 
 const styles = themedStyles((colors) => ({
-  loading: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
+  loading: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 40 },
+  loadingLabel: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
 }));
