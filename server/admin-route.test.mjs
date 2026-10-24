@@ -261,6 +261,13 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   assert.equal(deviceBody.devices[0].client.type, 'unknown');
   const deviceDetail = await call(`/v1/admin/users/${userId}`);
   assert.equal((await deviceDetail.json()).devices.length, 1);
+  const linkedDevice = await call(`/v1/admin/devices/${pairing.id}`);
+  assert.equal(linkedDevice.status, 200);
+  const linkedBody = await linkedDevice.json();
+  assert.equal(linkedBody.id, pairing.id);
+  assert.equal(linkedBody.account, 'st123456');
+  assert.equal(linkedBody.userAgent, 'Route/1.0');
+  assert.equal((await call('/v1/admin/devices/dev_missing')).status, 404);
   const revokeDevice = await call(`/v1/admin/devices/${pairing.id}`, { method: 'DELETE' });
   assert.equal(revokeDevice.status, 200);
   assert.equal((await revokeDevice.json()).ok, true);

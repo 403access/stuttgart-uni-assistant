@@ -41,6 +41,7 @@ that survives reloads and can be shared between operators:
 | `#/news` | Operator-managed app news with drafts, publishing, editing, and deletion |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
 | `#/devices` | QR-linked web browsers with form factor, OS, browser, account, state, timestamps, and revoke |
+| `#/devices/<id>` | One browser pairing: client details, account, session, timestamps, user agent, and revoke |
 | `#/ilias` | ILIAS connections, session state, and parsed course/news/mail counts |
 | `#/users/<id>/overview` | Profile, status, per-study summary, audit preview, delete zone |
 | `#/users/<id>/sessions` | App sessions with state, timestamps, copy and revoke |
@@ -85,7 +86,8 @@ system and version, browser and version, rendering engine, and device model,
 the account that approved it, the pairing and approval timestamps, and the
 session minted when the browser redeemed the code. A browser whose QR code
 expires without approval is shown as expired; revoking a linked device ends
-its web session immediately.
+its web session immediately. Opening a row shows the pairing's full client
+details, timestamps, account, session, and raw user agent.
 
 **ILIAS:** one row per account that has connected, with whether the
 `PHPSESSID` is still in server memory, the source (browser or `.env`), the
@@ -199,6 +201,7 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/admin/users/<id>/ilias/image?url=` | Stream a profile image with the account's ILIAS session. |
 | `GET /v1/admin/users/<id>/ilias/file?refId=` | Stream one repository file with the account's ILIAS session. |
 | `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers with parsed client details, newest pairing first. |
+| `GET /v1/admin/devices/<deviceId>` | One browser pairing with parsed client details, account, session, and timestamps. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
 | `GET /v1/admin/users?query=&mode=&platform=&credential=&activity=&data=&sort=&limit=&offset=` | Paginated user list with stored-data counts and platform chips. |
 | `POST /v1/admin/users` | Pre-provisions an account (`account`, `name`, `email`, `matriculation`, `subject`, `mode`) without a session. |
@@ -242,7 +245,7 @@ screen cannot replay them.
 | `server/admin/audit.mjs` | Audit writes, filters, and facets. |
 | `server/admin/overview.mjs` | Cross-account counts and statistics. |
 | `server/admin/users.mjs` | Account list and detail reads. |
-| `server/admin/devices.mjs` | QR-linked browser list, parsed client details, stats, and revoke. |
+| `server/admin/devices.mjs` | QR-linked browser list, detail read, parsed client details, stats, and revoke. |
 | `server/admin/user-agent.mjs` | User-Agent parsing for form factor, OS, browser, model, and engine. |
 | `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content, member, profile and image reads, file download, and disconnect. |
 | `server/admin/news.mjs` | News list, create, update, publish, and delete. |
@@ -260,7 +263,7 @@ screen cannot replay them.
 | `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, logs, and system routes. |
 | `server/dashboard/index.html` | The page shell. |
 | `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `server/dashboard/pages/*.mjs` | Overview, news, users, user detail, ILIAS, audit, logs, and system views. |
+| `server/dashboard/pages/*.mjs` | Overview, news, users, user detail, device detail, ILIAS, audit, logs, and system views. |
 | `server/dashboard/assets/styles.css` | The dashboard styles. |
 | `server/db.mjs` | Schema, including the `admin_audit` and `service_logs` tables. |
 | `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |

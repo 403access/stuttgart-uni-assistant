@@ -6,6 +6,7 @@ import { $, h } from './dom.mjs';
 import { number } from './format.mjs';
 import { icon, paintIcons } from './icons.mjs';
 import { renderAuditPage } from '../pages/audit.mjs';
+import { renderDevicePage } from '../pages/device.mjs';
 import { renderDevicesPage } from '../pages/devices.mjs';
 import { renderIliasPage } from '../pages/ilias.mjs';
 import { renderLogsPage, stopLogsAutoRefresh } from '../pages/logs.mjs';
@@ -35,6 +36,7 @@ async function renderRoute() {
     else if (route.name === 'user') await renderUserPage(route.id, route.tab);
     else if (route.name === 'ilias') await renderIliasPage();
     else if (route.name === 'devices') await renderDevicesPage(route);
+    else if (route.name === 'device') await renderDevicePage(route.id);
     else if (route.name === 'audit') await renderAuditPage(route);
     else if (route.name === 'logs') await renderLogsPage(route);
     else if (route.name === 'system') await renderSystemPage();

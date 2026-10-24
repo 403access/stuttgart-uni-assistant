@@ -3,11 +3,12 @@
 import { api, errorText } from '../assets/api.mjs';
 import { setPage } from '../assets/auth-ui.mjs';
 import { PAGE_SIZES } from '../assets/constants.mjs';
+import { deviceClientCell, deviceStateBadge, deviceTypeBadge } from '../assets/device-ui.mjs';
 import { $, h } from '../assets/dom.mjs';
 import { date, number, relative } from '../assets/format.mjs';
 import { icon } from '../assets/icons.mjs';
 import { state } from '../assets/runtime.mjs';
-import { badge, callout, confirmAction, emptyState, skeletonRows, toast } from '../assets/ui.mjs';
+import { callout, confirmAction, emptyState, skeletonRows, toast } from '../assets/ui.mjs';
 
 const STATES = [
   ['', 'Alle Status'],
@@ -18,40 +19,6 @@ const STATES = [
   ['expired', 'Abgelaufen'],
   ['revoked', 'Widerrufen'],
 ];
-
-const STATE_LABELS = {
-  pending: ['wartet auf Scan', 'warn'],
-  approved: ['genehmigt', 'blue'],
-  active: ['aktiv', 'ok'],
-  linked: ['verknüpft', 'ok'],
-  expired: ['abgelaufen', ''],
-  revoked: ['widerrufen', 'danger'],
-};
-
-const TYPE_LABELS = {
-  desktop: ['Desktop', ''],
-  mobile: ['Mobil', 'blue'],
-  tablet: ['Tablet', 'info'],
-  bot: ['Bot', 'warn'],
-  unknown: ['Unbekannt', ''],
-};
-
-function stateBadge(deviceState) {
-  const [label, tone] = STATE_LABELS[deviceState] || [deviceState, ''];
-  return badge(label, tone);
-}
-
-function typeBadge(client) {
-  const [label, tone] = TYPE_LABELS[client?.type] || TYPE_LABELS.unknown;
-  return badge(label, tone);
-}
-
-function clientCell(main, detail) {
-  return h('div', { className: 'who-text' },
-    h('strong', { text: main || 'Unbekannt', style: { fontSize: '12.5px' } }),
-    detail ? h('span', { text: detail }) : null,
-  );
-}
 
 export async function renderDevicesPage(route) {
   setPage('Geräte', 'Web-Browser, die per QR-Code von der App freigegeben wurden');
@@ -204,27 +171,27 @@ function renderDeviceRows(data) {
     const client = device.client || {};
     const browser = client.browser || '';
     const userCell = device.account
-      ? h('a', { className: 'who-text', href: '#/users/' + encodeURIComponent(device.userId) + '/devices', style: { color: 'inherit', textDecoration: 'none' } },
+      ? h('a', { className: 'who-text', href: '#/users/' + encodeURIComponent(device.userId) + '/devices', style: { color: 'inherit', textDecoration: 'none' }, onClick: (event) => event.stopPropagation() },
           h('strong', { text: device.userName || device.account }),
           h('span', { text: device.account }),
         )
       : h('span', { className: 'hint', text: 'noch nicht genehmigt' });
     const canRevoke = device.state !== 'revoked';
-    tbody.append(h('tr', null,
-      h('td', null, h('div', { className: 'who-text' },
+    tbody.append(h('tr', { style: { cursor: 'pointer' }, onClick: () => { location.hash = '#/devices/' + encodeURIComponent(device.id); } },
+      h('td', null, h('a', { className: 'who-text', href: '#/devices/' + encodeURIComponent(device.id), style: { color: 'inherit', textDecoration: 'none' } },
         h('strong', { text: device.name + (browser && !device.name.includes(browser) ? ' · ' + browser : '') }),
         h('span', { text: device.userAgent || device.id }),
       )),
-      h('td', null, typeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
-      h('td', null, clientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
-      h('td', null, clientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
+      h('td', null, deviceTypeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
+      h('td', null, deviceClientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
+      h('td', null, deviceClientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
       h('td', null, userCell),
-      h('td', null, stateBadge(device.state)),
+      h('td', null, deviceStateBadge(device.state)),
       h('td', null, h('div', { className: 'who-text' }, h('strong', { text: relative(device.createdAt), style: { fontSize: '12.5px' } }), h('span', { text: date(device.createdAt) }))),
       h('td', null, device.approvedAt ? date(device.approvedAt) : h('span', { className: 'muted', text: '–' })),
       h('td', null, device.session?.lastSeenAt ? date(device.session.lastSeenAt) : device.lastSeenAt ? date(device.lastSeenAt) : h('span', { className: 'muted', text: '–' })),
       h('td', null, device.session ? h('div', { className: 'who-text' }, h('strong', { className: 'mono', text: device.session.id, style: { fontSize: '11px' } }), h('span', { text: device.session.expiresAt ? 'bis ' + date(device.session.expiresAt) : '' })) : h('span', { className: 'muted', text: 'keine' })),
-      h('td', null, canRevoke ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: () => revokeDevice(device) }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
+      h('td', null, canRevoke ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: (event) => { event.stopPropagation(); revokeDevice(device); } }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
     ));
   }
   const prev = $('devices-prev');

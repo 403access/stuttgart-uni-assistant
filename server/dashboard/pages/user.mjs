@@ -3,6 +3,7 @@
 import { api, errorText } from '../assets/api.mjs';
 import { setPage } from '../assets/auth-ui.mjs';
 import { AUDIT_LABELS, DANGEROUS_ACTIONS, MODES, PLATFORM_ICONS, PLATFORMS } from '../assets/constants.mjs';
+import { deviceClientCell, deviceStateBadge, deviceTypeBadge } from '../assets/device-ui.mjs';
 import { $, h } from '../assets/dom.mjs';
 import { date, dateOnly, detailText, duration, icsDate, modeName, number, platformName, relative } from '../assets/format.mjs';
 import { icon } from '../assets/icons.mjs';
@@ -283,39 +284,6 @@ function renderSessionsTab(container, detail) {
   );
 }
 
-function deviceBadge(state) {
-  const map = {
-    pending: ['wartet auf Scan', 'warn'],
-    approved: ['genehmigt', 'blue'],
-    active: ['aktiv', 'ok'],
-    linked: ['verknüpft', 'ok'],
-    expired: ['abgelaufen', ''],
-    revoked: ['widerrufen', 'danger'],
-  };
-  const [label, tone] = map[state] || [state, ''];
-  return badge(label, tone);
-}
-
-const DEVICE_TYPE_LABELS = {
-  desktop: ['Desktop', ''],
-  mobile: ['Mobil', 'blue'],
-  tablet: ['Tablet', 'info'],
-  bot: ['Bot', 'warn'],
-  unknown: ['Unbekannt', ''],
-};
-
-function deviceTypeBadge(client) {
-  const [label, tone] = DEVICE_TYPE_LABELS[client?.type] || DEVICE_TYPE_LABELS.unknown;
-  return badge(label, tone);
-}
-
-function deviceClientCell(main, detail) {
-  return h('div', { className: 'who-text' },
-    h('strong', { text: main || 'Unbekannt', style: { fontSize: '12.5px' } }),
-    detail ? h('span', { text: detail }) : null,
-  );
-}
-
 function renderDevicesTab(container, detail) {
   const user = detail.user;
   const devices = detail.devices || [];
@@ -323,16 +291,19 @@ function renderDevicesTab(container, detail) {
   const rows = devices.length
     ? devices.map((device) => {
         const client = device.client || {};
-        return h('tr', null,
-          h('td', null, h('strong', { text: device.name }), h('div', { className: 'hint', text: device.userAgent || device.id })),
+        return h('tr', { style: { cursor: 'pointer' }, onClick: () => { location.hash = '#/devices/' + encodeURIComponent(device.id); } },
+          h('td', null, h('a', { href: '#/devices/' + encodeURIComponent(device.id), style: { color: 'inherit', textDecoration: 'none' } },
+            h('strong', { text: device.name }),
+            h('div', { className: 'hint', text: device.userAgent || device.id }),
+          )),
           h('td', null, deviceTypeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
           h('td', null, deviceClientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
           h('td', null, deviceClientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
-          h('td', null, deviceBadge(device.state)),
+          h('td', null, deviceStateBadge(device.state)),
           h('td', null, date(device.createdAt)),
           h('td', null, device.approvedAt ? date(device.approvedAt) : h('span', { className: 'muted', text: '–' })),
           h('td', null, device.session ? h('div', { className: 'who-text' }, h('strong', { className: 'mono', text: device.session.id, style: { fontSize: '11px' } }), h('span', { text: device.session.expiresAt ? 'bis ' + date(device.session.expiresAt) : '' })) : h('span', { className: 'muted', text: 'keine' })),
-          h('td', null, device.state !== 'revoked' ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: () => revokeUserDevice(user.id, device) }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
+          h('td', null, device.state !== 'revoked' ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: (event) => { event.stopPropagation(); revokeUserDevice(user.id, device); } }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
         );
       })
     : [h('tr', null, h('td', { colspan: '9' }, emptyState('smartphone', 'Keine Web-Geräte', 'Dieses Konto hat noch keinen Browser per QR-Code freigegeben.')))];

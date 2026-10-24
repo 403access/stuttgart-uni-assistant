@@ -20,6 +20,7 @@ export function setPage(title, subtitle) {
 
 export function navFor(name) {
   if (name === 'user') return 'users';
+  if (name === 'device') return 'devices';
   return name;
 }
 

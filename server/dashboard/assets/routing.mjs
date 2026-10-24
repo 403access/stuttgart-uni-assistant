@@ -15,6 +15,9 @@ export function parseHash() {
     return { name: 'user', id: decodeURIComponent(segments[1]), tab: segments[2] || 'overview', params };
   }
   if (segments[0] === 'users') return { name: 'users', params };
+  if (segments[0] === 'devices' && segments[1]) {
+    return { name: 'device', id: decodeURIComponent(segments[1]), params };
+  }
   if (segments[0] === 'devices') return { name: 'devices', params };
   if (segments[0] === 'news') return { name: 'news', params };
   if (segments[0] === 'ilias') return { name: 'ilias', params };

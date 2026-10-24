@@ -95,6 +95,13 @@ export function adminDeviceStats() {
   };
 }
 
+/** One browser link by id, or null when it does not exist. */
+export function getAdminDevice(deviceId) {
+  if (typeof deviceId !== 'string' || !/^dev_[A-Za-z0-9_-]{4,100}$/.test(deviceId)) return null;
+  const row = getDb().prepare(`${BASE_QUERY} WHERE d.id = ?`).get(deviceId);
+  return row ? deviceRow(row) : null;
+}
+
 /** Revoke a browser link, its minted session, and keep an audit row. */
 export function revokeAdminDevice(deviceId) {
   if (typeof deviceId !== 'string' || !/^dev_[A-Za-z0-9_-]{4,100}$/.test(deviceId)) return null;

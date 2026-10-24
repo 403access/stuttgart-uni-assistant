@@ -193,6 +193,9 @@ test('device links are listed, counted, attached to sessions, and revocable', ()
   assert.equal(listed.devices[0].account, 'st111111');
   assert.equal(listed.devices[0].client.browser, 'Chrome');
   assert.equal(listed.devices[0].client.type, 'desktop');
+  assert.equal(admin.getAdminDevice(link.id).name, 'Chrome · macOS');
+  assert.equal(admin.getAdminDevice('dev_missing'), null);
+  assert.equal(admin.getAdminDevice('../etc/passwd'), null);
   assert.equal(admin.listAdminDevices({ state: 'revoked' }).total, 0);
   assert.equal(admin.listAdminDevices({ query: 'chrome' }).total, 1);
   assert.equal(admin.listAdminDevices({ query: 'desktop' }).total, 1);

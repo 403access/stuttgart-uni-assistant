@@ -1,7 +1,16 @@
 /** Operator routes for browser device links. */
 
-import { listAdminDevices, revokeAdminDevice } from '../../admin/index.mjs';
+import { getAdminDevice, listAdminDevices, revokeAdminDevice } from '../../admin/index.mjs';
 import { send } from '../../http.mjs';
+
+function deviceIdFrom(match, response) {
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    send(response, 400, { error: 'bad_device_id' });
+    return null;
+  }
+}
 
 export function handleDevices(request, response, url) {
   if (url.pathname === '/v1/admin/devices' && request.method === 'GET') {
@@ -14,12 +23,16 @@ export function handleDevices(request, response, url) {
     return true;
   }
   const match = url.pathname.match(/^\/v1\/admin\/devices\/([^/]+)$/);
-  if (match && request.method === 'DELETE') {
-    let deviceId = match[1];
-    try {
-      deviceId = decodeURIComponent(deviceId);
-    } catch {
-      send(response, 400, { error: 'bad_device_id' });
+  if (match && (request.method === 'GET' || request.method === 'DELETE')) {
+    const deviceId = deviceIdFrom(match, response);
+    if (!deviceId) return true;
+    if (request.method === 'GET') {
+      const device = getAdminDevice(deviceId);
+      if (!device) {
+        send(response, 404, { error: 'unknown_device' });
+        return true;
+      }
+      send(response, 200, device);
       return true;
     }
     const result = revokeAdminDevice(deviceId);

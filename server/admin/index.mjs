@@ -4,7 +4,7 @@
  */
 
 export { listAdminAudit, recordAdminAudit } from './audit.mjs';
-export { adminDeviceStats, listAdminDevices, revokeAdminDevice } from './devices.mjs';
+export { adminDeviceStats, getAdminDevice, listAdminDevices, revokeAdminDevice } from './devices.mjs';
 export { adminEnvironment, hostInfo } from './environment.mjs';
 export {
   adminIlias,
