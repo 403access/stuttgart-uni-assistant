@@ -223,6 +223,24 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   const systemBody = await system.json();
   assert.equal(systemBody.database.counts.users, 2);
   assert.equal(Array.isArray(systemBody.syncJobs), true);
+  assert.equal(typeof systemBody.host.platform, 'string');
+  const maskedToken = systemBody.environment.variables.find((item) => item.key === 'DASHBOARD_TOKEN');
+  assert.equal(maskedToken.set, true);
+  assert.equal(maskedToken.secret, true);
+  assert.equal(maskedToken.value, null);
+  assert.equal(maskedToken.length, 'route-token'.length);
+
+  const maskedEnv = await call('/v1/admin/environment');
+  assert.equal(maskedEnv.status, 200);
+  assert.equal((await maskedEnv.json()).variables.find((item) => item.key === 'DASHBOARD_TOKEN').value, null);
+
+  const revealedEnv = await call('/v1/admin/environment?reveal=1');
+  assert.equal(revealedEnv.status, 200);
+  const revealedBody = await revealedEnv.json();
+  assert.equal(revealedBody.variables.find((item) => item.key === 'DASHBOARD_TOKEN').value, 'route-token');
+  const revealAudit = await (await call('/v1/admin/audit?query=environment.reveal')).json();
+  assert.equal(revealAudit.entries.length, 1);
+  assert.equal(revealAudit.entries[0].action, 'environment.reveal');
 
   const jobs = await call('/v1/admin/sync-jobs');
   assert.equal(jobs.status, 200);

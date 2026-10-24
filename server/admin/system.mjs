@@ -11,6 +11,7 @@ import { forgetMailCredentials, publicMailStatus } from '../mail.mjs';
 import { publicOidcStatus } from '../oidc.mjs';
 import { listSyncJobs } from '../sync.mjs';
 import { recordAdminAudit } from './audit.mjs';
+import { adminEnvironment, hostInfo } from './environment.mjs';
 import { adminStats, databaseCounts } from './overview.mjs';
 import { adminConfigured } from './session.mjs';
 
@@ -54,6 +55,8 @@ export function adminSystem() {
       mail: publicMailStatus(),
       assistant: { model: ASSISTANT_MODEL, configured: Boolean(process.env.XAI_API_KEY) },
     },
+    host: hostInfo(),
+    environment: adminEnvironment(),
     database: {
       path: dbPath(),
       sizeBytes: fileSize(dbPath()),

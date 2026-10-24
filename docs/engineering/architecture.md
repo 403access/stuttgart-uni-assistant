@@ -97,7 +97,7 @@ The curriculum, course, and API-call caches live outside that key in `campus-cac
 | `GET /admin` | The operator dashboard HTML. Safe without a cookie; it renders login/setup. |
 | `POST /v1/admin/login` | Compares `DASHBOARD_TOKEN`, sets the `HttpOnly` admin cookie. `503` when unconfigured. |
 | `POST /v1/admin/logout` | Clears the admin cookie. |
-| `GET/POST/DELETE /v1/admin/*` | Cross-user stats, list, detail, per-study curriculum/course/event/call explorers, edits, session revoke, platform link/touch/unlink, C@MPUS disconnect, portal/calendar/call clears, audit, system status, sync cancellation, mail disconnect, delete. Admin cookie required and every mutation audited. |
+| `GET/POST/DELETE /v1/admin/*` | Cross-user stats, list, detail, per-study curriculum/course/event/call explorers, edits, session revoke, platform link/touch/unlink, C@MPUS disconnect, portal/calendar/call clears, audit, system status, environment inventory, sync cancellation, mail disconnect, delete. Admin cookie required; mutations and plaintext environment reveals are audited. |
 | `POST /v1/assist` | 503 `missing_key` when `XAI_API_KEY` is absent. Otherwise forwards to `https://api.x.ai/v1/responses` with `store: false` and a 50 second timeout. |
 
 ## Server store

@@ -54,7 +54,7 @@ that survives reloads and can be shared between operators:
 | `#/users/<id>/audit` | Operator actions for this account |
 | `#/audit` | Cross-account audit log with search, action filter, and pagination |
 | `#/logs` | Persisted service diagnostics from C@MPUS, ILIAS, UniMail, SIAM/OIDC, sync, auth, admin, and the assistant, with search, service/level filters, and optional auto-refresh |
-| `#/system` | Runtime, configuration, database counts, sync jobs, maintenance |
+| `#/system` | Runtime, host, environment variables, configuration, database counts, sync jobs, maintenance |
 
 The layout is responsive, keeps a light and a dark theme (stored in
 `localStorage`), and supports `/` to focus the account search. Destructive
@@ -145,15 +145,21 @@ accounts, with spreadsheet-safe escaping.
 **Audit:** every operator action writes one row to `admin_audit` — login/logout,
 account creation, profile edits, deletion, session revokes, platform
 link/unlink/touch, C@MPUS disconnect, study/portal/calendar/call clears, sync
-start/cancel, and mail disconnect. Rows keep the account name they had at the
+start/cancel, mail disconnect, log clears, and plaintext environment reveals. Rows keep the account name they had at the
 time and survive a deleted account. The log supports free-text search, an action facet filter, a
 per-account filter, and pagination. Details are compact JSON (changed field
 names, platform, study id, counts) and never contain credentials.
 
-**System:** Node version, pid, start time, uptime, RSS/heap, database path and
-size, table counts, every configuration flag, the in-memory sync jobs (with
-progress and cancel), and the UniMail disconnect action. The mail login is
-process-wide, so that action disconnects every user's mail view.
+**System:** Node version, pid, start time, uptime, RSS/heap, host name,
+platform, kernel, working directory, Node path, timezone, locale, CPU count,
+memory, load average, V8/OpenSSL/SQLite versions, database path and size, table
+counts, every configuration flag, the `.env` file metadata, every project
+environment variable (with `.env`/process source and set/empty state), the
+in-memory sync jobs (with progress and cancel), and the UniMail disconnect
+action. Secret values (tokens, keys, cookies, passwords) render as dots until
+the operator confirms **Geheimnisse anzeigen**; that read is recorded as
+`environment.reveal` in the audit log. Reloading the page hides them again. The
+mail login is process-wide, so that action disconnects every user's mail view.
 
 **Logs:** every service writes through one logger (`server/service-log.mjs`),
 which mirrors the line to stdout and stores it in SQLite. The page shows the
@@ -216,7 +222,8 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/admin/audit?query=&action=&userId=&limit=&offset=` | Audit log with action facets. |
 | `GET /v1/admin/logs?query=&service=&level=&limit=&offset=` | Service diagnostics, newest first, with service and level facets. |
 | `DELETE /v1/admin/logs?service=&level=` | Deletes the matching service logs and records a `logs.clear` audit entry. |
-| `GET /v1/admin/system` | Runtime, configuration, database, sync jobs, and stats. |
+| `GET /v1/admin/system` | Runtime, host, masked environment variables, configuration, database, sync jobs, and stats. |
+| `GET /v1/admin/environment?reveal=1` | Masked project environment variables; `reveal=1` returns plaintext secrets after an audited `environment.reveal` entry. |
 | `GET /v1/admin/sync-jobs` | In-memory sync jobs, newest first. |
 | `DELETE /v1/admin/sync-jobs/<id>` | Cancels a sync job. |
 | `POST /v1/admin/system/mail/logout` | Forgets the process-wide UniMail credentials. |
@@ -240,6 +247,7 @@ screen cannot replay them.
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
 | `server/admin/sync.mjs` | Manual sync start/cancel. |
 | `server/admin/system.mjs` | Runtime, configuration, database, and mail status. |
+| `server/admin/environment.mjs` | Project environment variables, `.env` metadata, and host details with masked secrets. |
 | `server/admin/logs.mjs` | Service log list, filters, and audited clear. |
 | `server/admin/util.mjs` | Shared validation and pagination helpers. |
 | `server/service-log.mjs` | The single logger: stdout plus the bounded `service_logs` table. |

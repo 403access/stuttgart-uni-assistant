@@ -51,6 +51,7 @@ export const AUDIT_LABELS = {
   'sync.cancel': 'Synchronisation abgebrochen',
   'mail.disconnect': 'UniMail getrennt',
   'logs.clear': 'Logs gelöscht',
+  'environment.reveal': 'Umgebung offengelegt',
   'news.create': 'Meldung angelegt',
   'news.update': 'Meldung geändert',
   'news.delete': 'Meldung gelöscht',

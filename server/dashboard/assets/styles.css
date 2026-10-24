@@ -460,6 +460,10 @@
 .stack-field.compact { gap: 5px; font-size: 11.5px; }
 .modal-wide { width: min(640px, calc(100vw - 28px)); }
       .log-table td { vertical-align: top; }
+      .env-table td { vertical-align: top; }
+      .env-table td.env-value-cell { max-width: 620px; }
+      .env-value { display: inline-block; font-size: 11.5px; line-height: 1.45; overflow-wrap: anywhere; }
+      .env-secret { letter-spacing: 0.16em; color: var(--muted); }
       .log-message-cell { max-width: 560px; }
       .log-message { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
       .log-detail-cell { max-width: 300px; }

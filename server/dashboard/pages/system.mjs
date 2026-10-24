@@ -6,11 +6,12 @@ import { $, h } from '../assets/dom.mjs';
 import { bytes, date, number, relative, uptime } from '../assets/format.mjs';
 import { icon } from '../assets/icons.mjs';
 import { state } from '../assets/runtime.mjs';
-import { badge, confirmAction, emptyState, fieldBox, loading, sectionHead, sessionBadge, toast } from '../assets/ui.mjs';
+import { badge, callout, confirmAction, copyButton, emptyState, fieldBox, loading, sectionHead, sessionBadge, toast } from '../assets/ui.mjs';
 
 export async function renderSystemPage() {
-  setPage('System', 'Konfiguration, Datenbank, Synchronisation und Wartung');
+  setPage('System', 'Umgebung, Konfiguration, Datenbank und Wartung');
   const view = $('view');
+  state.environmentReveal = null;
   view.replaceChildren(loading('Systemzustand wird geladen …'));
   const data = await api('/v1/admin/system');
   state.system = data;
@@ -27,6 +28,96 @@ function configRow(label, ok, detail) {
   );
 }
 
+function envSourceBadge(source) {
+  if (source === 'env') return badge('.env', 'info');
+  if (source === 'process') return badge('Prozess', 'blue');
+  return badge('nicht gesetzt', '');
+}
+
+function envValueCell(variable, revealed) {
+  if (!variable.set) return h('span', { className: 'hint', text: 'nicht gesetzt' });
+  if (variable.secret && !revealed) {
+    return h('span', { className: 'row tight' },
+      h('span', { className: 'env-secret mono', text: '••••••••', 'aria-label': 'Geheimer Wert ausgeblendet' }),
+      h('span', { className: 'hint', text: number(variable.length) + ' Zeichen' }),
+    );
+  }
+  return h('span', { className: 'row tight' },
+    h('span', { className: 'env-value mono', text: variable.value || '(leer)' }),
+    copyButton(variable.value, variable.key),
+  );
+}
+
+function environmentSection(environment, revealed) {
+  const envFile = environment.envFile || {};
+  const totals = environment.totals || {};
+  const variables = environment.variables || [];
+  const actions = [
+    h('button', { className: 'btn secondary small', type: 'button', onClick: () => renderSystemPage() }, icon('refresh'), 'Neu laden'),
+    revealed
+      ? h('button', { className: 'btn secondary small', type: 'button', onClick: () => hideEnvironment() }, icon('eye-off'), 'Geheimnisse verbergen')
+      : h('button', { className: 'btn secondary small', type: 'button', onClick: () => revealEnvironment() }, icon('eye'), 'Geheimnisse anzeigen'),
+  ];
+  const rows = variables.length
+    ? variables.map((variable) => h('tr', null,
+        h('td', null, h('div', { className: 'row tight' },
+          h('code', { className: 'mono', text: variable.key }),
+          variable.secret ? badge('geheim', 'purple') : null,
+        )),
+        h('td', { className: 'env-value-cell' }, envValueCell(variable, revealed)),
+        h('td', null, envSourceBadge(variable.source)),
+        h('td', null, variable.set ? badge('gesetzt', 'ok') : badge('leer', 'warn')),
+      ))
+    : [h('tr', null, h('td', { colspan: '4' }, emptyState('key', 'Keine Variablen', 'Weder .env.example noch die Prozessumgebung liefern Variablen.')))];
+
+  return h('section', { className: 'card section-card' },
+    sectionHead('Umgebung', 'Variablen aus .env und der Prozessumgebung', actions),
+    h('div', { className: 'field-grid' },
+      fieldBox('.env-Datei', h('span', { className: 'mono tiny', text: envFile.path || '–' })),
+      fieldBox('Vorhanden', envFile.exists ? 'ja' : 'nein'),
+      fieldBox('Geändert', envFile.modifiedAt ? date(envFile.modifiedAt) : '–'),
+      fieldBox('Größe', envFile.exists ? bytes(envFile.sizeBytes) : '–'),
+      fieldBox('Variablen', number(totals.total) + ' · ' + number(totals.set) + ' gesetzt · ' + number(totals.secrets) + ' geheim'),
+    ),
+    callout('Die .env-Datei wird beim Serverstart in die Prozessumgebung geladen; systemd- oder Shell-Werte haben Vorrang. Geheime Werte bleiben ausgeblendet, bis du sie ausdrücklich anzeigst.', '', 'info'),
+    h('div', { className: 'table-wrap' },
+      h('table', { className: 'data env-table', style: { minWidth: '860px' } },
+        h('caption', { className: 'sr-only' }, 'Umgebungsvariablen'),
+        h('thead', null, h('tr', null,
+          h('th', null, 'Variable'),
+          h('th', null, 'Wert'),
+          h('th', null, 'Quelle'),
+          h('th', null, 'Status'),
+        )),
+        h('tbody', null, ...rows),
+      ),
+    ),
+  );
+}
+
+async function revealEnvironment() {
+  const ok = await confirmAction({
+    title: 'Geheime Werte anzeigen?',
+    message: 'Tokens, Schlüssel und Cookies werden im Klartext angezeigt. Der Zugriff wird im Audit-Protokoll vermerkt. Beim Neuladen der Seite werden sie wieder ausgeblendet.',
+    confirmLabel: 'Anzeigen',
+    tone: 'warn',
+  });
+  if (!ok) return;
+  try {
+    state.environmentReveal = await api('/v1/admin/environment?reveal=1');
+    if (state.system) renderSystem(state.system);
+    toast('Geheime Werte sind sichtbar. Beim Neuladen werden sie wieder ausgeblendet.', 'info');
+  } catch (error) {
+    if (error.code !== 'unauthorized') toast(errorText(error), 'error');
+  }
+}
+
+function hideEnvironment() {
+  state.environmentReveal = null;
+  if (state.system) renderSystem(state.system);
+  toast('Geheime Werte wieder ausgeblendet.', 'info');
+}
+
 function renderSystem(data) {
   const view = $('view');
   const runtime = data.runtime;
@@ -37,6 +128,10 @@ function renderSystem(data) {
   const oidc = config.oidc || {};
   const mail = config.mail || {};
   const jobs = data.syncJobs || [];
+  const host = data.host || {};
+  const environment = data.environment || { variables: [], envFile: {}, totals: {} };
+  const revealed = state.environmentReveal;
+  const environmentWithValues = revealed || environment;
 
   const jobsCard = jobs.length
     ? h('div', { className: 'table-wrap' }, h('table', { className: 'data', style: { minWidth: '760px' } },
@@ -56,7 +151,7 @@ function renderSystem(data) {
 
   view.replaceChildren(
     h('div', { className: 'page-intro' },
-      h('div', null, h('div', { className: 'eyebrow' }, 'Betrieb'), h('h2', { text: 'Systemzustand' }), h('p', { text: 'Laufzeit, Konfiguration und Datenbank auf einen Blick.' })),
+      h('div', null, h('div', { className: 'eyebrow' }, 'Betrieb'), h('h2', { text: 'Systemzustand' }), h('p', { text: 'Laufzeit, Umgebung, Konfiguration und Datenbank auf einen Blick.' })),
       h('div', { className: 'row' },
         h('button', { className: 'btn secondary', type: 'button', onClick: () => renderSystemPage() }, icon('refresh'), 'Neu laden'),
         h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivität'),
@@ -110,7 +205,7 @@ function renderSystem(data) {
           jobsCard,
         ),
         h('section', { className: 'card section-card' },
-          sectionHead('Laufzeit', 'Prozess und Umgebung'),
+          sectionHead('Laufzeit', 'Prozess, Host und Laufzeitumgebung'),
           h('div', { className: 'field-grid' },
             fieldBox('Node.js', runtime.node),
             fieldBox('PID', String(runtime.pid)),
@@ -118,10 +213,24 @@ function renderSystem(data) {
             fieldBox('Uptime', uptime(runtime.uptimeSeconds)),
             fieldBox('RSS', bytes(runtime.memory.rss)),
             fieldBox('Heap', bytes(runtime.memory.heapUsed) + ' / ' + bytes(runtime.memory.heapTotal)),
+            fieldBox('Hostname', host.hostname || '–'),
+            fieldBox('Plattform', host.platform ? host.platform + ' · ' + host.arch : '–'),
+            fieldBox('Kernel', host.release || '–'),
+            fieldBox('Arbeitsverzeichnis', h('span', { className: 'mono tiny', text: host.cwd || '–' })),
+            fieldBox('Node-Pfad', h('span', { className: 'mono tiny', text: host.execPath || '–' })),
+            fieldBox('Zeitzone', host.timezone || '–'),
+            fieldBox('Locale', host.locale || '–'),
+            fieldBox('CPUs', host.cpus ? String(host.cpus) : '–'),
+            fieldBox('Arbeitsspeicher', host.totalMemory ? bytes(host.totalMemory) + ' gesamt · ' + bytes(host.freeMemory) + ' frei' : '–'),
+            fieldBox('Load', host.loadAverage?.length ? host.loadAverage.join(' · ') : '–'),
+            fieldBox('V8', host.versions?.v8 || '–'),
+            fieldBox('OpenSSL', host.versions?.openssl || '–'),
+            fieldBox('SQLite', host.versions?.sqlite || '–'),
           ),
         ),
       ),
     ),
+    environmentSection(environmentWithValues, Boolean(revealed)),
   );
 }
 

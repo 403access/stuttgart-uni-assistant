@@ -16,6 +16,7 @@ export const state = {
   audit: { query: '', action: '', userId: '', limit: 50, offset: 0, list: [], total: 0, actions: [], seq: 0 },
   logs: { query: '', service: '', level: '', offset: 0, limit: 100, list: [], total: 0, services: [], levels: [], auto: false },
   system: null,
+  environmentReveal: null,
   lastUsersHash: '#/users',
   searchTimer: null,
   usersSeq: 0,
