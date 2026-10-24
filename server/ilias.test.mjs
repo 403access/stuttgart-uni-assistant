@@ -920,3 +920,52 @@ test('the HTTP layer ingests, caches, and hands back the WebView cookie', async 
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('the HTTP layer renders a PPTX in a self-contained viewer page', async () => {
+  resetDbForTests();
+  const auth = await import('./auth.mjs');
+  const created = auth.createUserSession({ account: 'st778899', name: 'Viewer Route', mode: 'local' });
+  setUserIliasSession(created.user.id, { cookie: 'session-abc', account: 'st778899', source: 'browser' });
+  const headers = { Authorization: `Bearer ${created.token}` };
+  const pptxType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  const bytes = Buffer.from('fake-pptx-bytes');
+
+  const server = createServer(async (request, response) => {
+    const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+    if (!(await handleIlias(request, response, url))) {
+      response.writeHead(404, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({ error: 'not_found' }));
+    }
+  });
+  const base = await new Promise((resolve) => server.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${server.address().port}`)));
+  const realFetch = globalThis.fetch;
+  let file = { contentType: pptxType, filename: 'folien.pptx' };
+  globalThis.fetch = async () =>
+    new Response(bytes, {
+      status: 200,
+      headers: {
+        'content-type': file.contentType,
+        'content-disposition': `attachment; filename="${file.filename}"`,
+      },
+    });
+  try {
+    // A PDF sent to the presentation viewer is refused instead of mis-rendered.
+    file = { contentType: 'application/pdf', filename: 'skript.pdf' };
+    const refused = await realFetch(`${base}/v1/ilias/viewer?refId=4665501`, { headers });
+    assert.equal(refused.status, 415);
+    assert.equal((await refused.json()).error, 'ilias_file_not_pptx');
+
+    file = { contentType: pptxType, filename: 'folien.pptx' };
+    const response = await realFetch(`${base}/v1/ilias/viewer?refId=4665501&locale=de`, { headers });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('content-type') ?? '', /text\/html/);
+    const html = await response.text();
+    assert.match(html, /pptxPreview\.init/);
+    assert.ok(html.includes(bytes.toString('base64')));
+    assert.match(html, /Präsentation wird geladen/);
+    assert.equal(html.includes('cdn.jsdelivr.net'), false);
+  } finally {
+    globalThis.fetch = realFetch;
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

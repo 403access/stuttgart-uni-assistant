@@ -1,17 +1,22 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, Text, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
 import { DrawerPanel } from '@/src/components/drawer-panel';
 import { OptionRows, type DropdownOption } from '@/src/components/option-rows';
-import { Screen } from '@/src/components/ui';
+import { Button, Card, Screen } from '@/src/components/ui';
 import { IliasDashboardView, iliasFilterLabel, type IliasFilter } from '@/src/ilias/components/ilias-dashboard';
 import { IliasToolbar } from '@/src/ilias/components/ilias-toolbar';
 import { useIlias } from '@/src/ilias/use-ilias';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { formatTimestamp, tx } from '@/src/text';
+import type { Locale } from '@/src/types';
+
+const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 
 /**
  * ILIAS is connected automatically from the signed-in C@MPUS session, so this
@@ -29,6 +34,11 @@ export default function IliasScreen() {
   const dashboard = ilias.dashboard;
   const connected = Boolean(ilias.status?.sessionActive && dashboard);
   const counts = dashboard?.counts;
+  const message = ilias.unsupported
+    ? tx(locale, 'tabsIlias.nur_konto')
+    : ilias.reason === 'ilias_credentials_missing'
+      ? tx(locale, 'tabsIlias.anmeldung_fehlt')
+      : ilias.error || tx(locale, 'tabsIlias.verbindung_fehler');
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -134,15 +144,59 @@ export default function IliasScreen() {
         }>
         {connected && dashboard ? (
           <IliasDashboardView dashboard={dashboard} locale={locale} filter={filter} query={query} />
-        ) : (
+        ) : ilias.loading && !ilias.unsupported ? (
           <View style={styles.loading}>
             <ActivityIndicator color={colors.blue} />
             <Text style={styles.loadingLabel}>{tx(locale, 'tabsIlias.laedt')}</Text>
           </View>
+        ) : (
+          <IliasUnavailable
+            locale={locale}
+            message={message}
+            actionLabel={
+              ilias.unsupported
+                ? tx(locale, 'tabsIlias.konto_wechseln')
+                : ilias.canRetry
+                  ? ilias.savedLogin?.biometrics
+                    ? tx(locale, 'tabsIlias.entsperren')
+                    : tx(locale, 'tabsIlias.erneut')
+                  : undefined
+            }
+            onAction={() => {
+              if (ilias.unsupported) router.push('/konto');
+              else void ilias.retry();
+            }}
+          />
         )}
-        {ilias.error ? <Text style={styles.error}>{ilias.error}</Text> : null}
+        {connected && ilias.error ? <Text style={styles.error}>{ilias.error}</Text> : null}
       </Screen>
     </Drawer>
+  );
+}
+
+/** The explained non-connected state; it never turns back into a login form. */
+function IliasUnavailable({
+  locale,
+  message,
+  actionLabel,
+  onAction,
+}: {
+  locale: Locale;
+  message: string;
+  actionLabel?: string;
+  onAction: () => void;
+}) {
+  return (
+    <Card>
+      <Text style={styles.offlineTitle}>{tx(locale, 'tabsIlias.nicht_verbunden')}</Text>
+      <Text style={styles.hint}>{message}</Text>
+      {actionLabel ? <Button label={actionLabel} onPress={onAction} /> : null}
+      <Button
+        secondary
+        label={tx(locale, 'tabsIlias.im_browser')}
+        onPress={() => void WebBrowser.openBrowserAsync(ILIAS_BASE).catch(() => undefined)}
+      />
+    </Card>
   );
 }
 
@@ -178,5 +232,7 @@ const styles = themedStyles((colors) => ({
   pressed: { opacity: 0.72 },
   loading: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 40 },
   loadingLabel: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
+  offlineTitle: { color: colors.anthracite, fontSize: 17, fontWeight: '700' },
+  hint: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
 }));

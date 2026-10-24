@@ -8,7 +8,7 @@ import { showToast } from '@/src/components/toast';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
-import { isPdfItem } from '@/src/ilias/files';
+import { iliasPreviewKind } from '@/src/ilias/files';
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
 import { iliasContentQuery, iliasMembersQuery, refreshIliasPage } from '@/src/ilias/queries';
 import type { IliasContentItem, IliasMember } from '@/src/ilias/types';
@@ -131,8 +131,10 @@ export default function IliasContentScreen() {
   const open = async (item: IliasContentItem) => {
     setActionError('');
     if (item.kind === 'file' && item.refId) {
-      // PDFs open in the reader; other formats keep the share sheet.
-      if (isPdfItem(item)) {
+      // PDFs and presentations open in the reader; other formats keep the
+      // share sheet.
+      const preview = iliasPreviewKind(item);
+      if (preview) {
         router.push({
           pathname: '/ilias/datei',
           params: {
@@ -141,6 +143,7 @@ export default function IliasContentScreen() {
             type: item.type,
             size: item.size,
             date: item.date,
+            view: preview,
           },
         });
         return;

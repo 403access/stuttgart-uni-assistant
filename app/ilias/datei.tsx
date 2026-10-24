@@ -6,15 +6,17 @@ import { Platform, Text, View } from 'react-native';
 import { showToast } from '@/src/components/toast';
 import { Button, Muted, Screen } from '@/src/components/ui';
 import { IliasPdfView } from '@/src/ilias/components/pdf-view';
+import { IliasPptxView } from '@/src/ilias/components/pptx-view';
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
+import { previewKindFromParams, type IliasPreviewKind } from '@/src/ilias/files';
 import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { firstParam, tx } from '@/src/text';
 
 const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 
-/** One ILIAS file rendered in the app. PDFs first; other kinds stay on share. */
+/** One ILIAS file rendered in the app: PDFs natively, PPTX in a WebView. */
 export default function IliasFileScreen() {
   const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{
@@ -23,15 +25,20 @@ export default function IliasFileScreen() {
     type?: string | string[];
     size?: string | string[];
     date?: string | string[];
+    view?: string | string[];
   }>();
   const refId = Number(firstParam(params.refId));
   const title = firstParam(params.title) || tx(locale, 'tabsIlias.datei');
   const type = firstParam(params.type);
   const size = firstParam(params.size);
   const date = firstParam(params.date);
+  const explicitView = firstParam(params.view);
+  const kind: IliasPreviewKind | null =
+    explicitView === 'pdf' || explicitView === 'pptx' ? explicitView : previewKindFromParams(type, title);
   const validRef = Number.isInteger(refId) && refId > 0;
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(0);
+  const [slides, setSlides] = useState(0);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState('');
 
@@ -50,7 +57,7 @@ export default function IliasFileScreen() {
     }
   };
 
-  const meta = [type ? type.toUpperCase() : 'PDF', size, date].filter(Boolean).join(' · ');
+  const meta = [type ? type.toUpperCase() : kind ? kind.toUpperCase() : '', size, date].filter(Boolean).join(' · ');
 
   return (
     <Screen
@@ -91,12 +98,16 @@ export default function IliasFileScreen() {
         <Text style={styles.metaText} numberOfLines={1}>
           {meta}
         </Text>
-        {pages > 0 ? (
+        {kind === 'pptx' && slides > 0 ? (
+          <Text style={styles.metaText}>{tx(locale, 'tabsIlias.folien', [String(slides)])}</Text>
+        ) : pages > 0 ? (
           <Text style={styles.metaText}>{tx(locale, 'tabsIlias.pdf_seite', [String(page), String(pages)])}</Text>
         ) : null}
       </View>
       <View style={styles.viewer}>
-        {validRef ? (
+        {validRef && kind === 'pptx' ? (
+          <IliasPptxView refId={refId} title={title} onSlides={setSlides} />
+        ) : validRef && kind === 'pdf' ? (
           <IliasPdfView
             refId={refId}
             title={title}
@@ -108,7 +119,7 @@ export default function IliasFileScreen() {
           />
         ) : (
           <View style={styles.state}>
-            <Muted>{tx(locale, 'tabsIlias.inhalte_leer')}</Muted>
+            <Muted>{tx(locale, 'tabsIlias.datei_nicht_unterstuetzt')}</Muted>
           </View>
         )}
       </View>

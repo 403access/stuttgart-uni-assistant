@@ -67,3 +67,4 @@ export {
   setUserIliasSession,
 } from './ilias/session.mjs';
 export { iliasLoginName, mask, resolveUrl } from './ilias/util.mjs';
+export { pptxViewerBundle, renderIliasPptxViewer } from './ilias/viewer.mjs';

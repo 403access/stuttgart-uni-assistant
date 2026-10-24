@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { getActiveAuthToken } from '@/src/auth/session';
+import { storedLoginHint } from '@/src/auth/vault';
 import { showToast } from '@/src/components/toast';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
+import { iliasAccountFrom } from '@/src/ilias/account';
 import { disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
 import { ensureIliasSession } from '@/src/ilias/auto-connect';
 import { iliasErrorMessage as describe } from '@/src/ilias/errors';
@@ -15,6 +17,7 @@ import { tx } from '@/src/text';
 export function useIlias() {
   const locale = useAppSelector((state) => state.locale);
   const authToken = useAppSelector((state) => state.authToken);
+  const sessionMode = useAppSelector((state) => state.sessionMode);
   const sessionAccount = useAppSelector((state) => state.sessionAccount);
   const sessionEmail = useAppSelector((state) => state.sessionEmail);
   const { refreshUser, refreshOrReauthenticate } = appActions;
@@ -24,7 +27,29 @@ export function useIlias() {
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [attempting, setAttempting] = useState(false);
+  const [reason, setReason] = useState('');
+  const [savedLogin, setSavedLogin] = useState<{ account: string; biometrics: boolean } | null>(null);
   const inFlight = useRef(false);
+  // Demonstration and local profiles have no university identity to connect.
+  const unsupported = sessionMode === 'demo' || sessionMode === 'local';
+  const loading = Boolean(authToken) && !unsupported && (settledToken !== authToken || attempting);
+
+  useEffect(() => {
+    let active = true;
+    storedLoginHint()
+      .then((hint) => {
+        if (!active) return;
+        const account = iliasAccountFrom(sessionEmail || sessionAccount).toLowerCase();
+        // Do not offer to unlock a saved login that belongs to someone else.
+        if (hint && (!account || iliasAccountFrom(hint.account).toLowerCase() === account)) setSavedLogin(hint);
+        else setSavedLogin(null);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [sessionAccount, sessionEmail]);
 
   const applyStatus = useCallback((next: IliasStatus) => {
     setStatus(next);
@@ -56,7 +81,7 @@ export function useIlias() {
   );
 
   useEffect(() => {
-    if (!authToken) return;
+    if (!authToken || unsupported) return;
     let active = true;
     (async () => {
       try {
@@ -81,7 +106,7 @@ export function useIlias() {
     return () => {
       active = false;
     };
-  }, [applyStatus, authToken, locale]);
+  }, [applyStatus, authToken, locale, unsupported]);
 
   const disconnect = useCallback(async () => {
     setBusy(true);
@@ -133,7 +158,7 @@ export function useIlias() {
 
   useAppStateChange(
     (state) => {
-      if (state === 'active' && authToken && settledToken === authToken) void revalidate();
+      if (state === 'active' && authToken && settledToken === authToken && !unsupported) void revalidate();
     },
     Platform.OS !== 'web',
   );
@@ -142,32 +167,81 @@ export function useIlias() {
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return undefined;
     const onVisibility = () => {
-      if (document.visibilityState === 'visible' && authToken && settledToken === authToken) void revalidate();
+      if (document.visibilityState === 'visible' && authToken && settledToken === authToken && !unsupported) void revalidate();
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [authToken, revalidate, settledToken]);
+  }, [authToken, revalidate, settledToken, unsupported]);
 
   /**
    * The server keeps ILIAS cookies in memory only, so a restart drops the
    * session. While the vault holds the C@MPUS credential, the tab reconnects
    * on first view instead of asking for the password again; later resumes go
-   * through `revalidate` above.
+   * through `revalidate` above. The outcome is kept so the tab can explain a
+   * failed attempt instead of loading forever.
    */
   const autoConnectedToken = useRef<string | null>(null);
-  useEffect(() => {
-    if (!authToken || settledToken !== authToken) return;
-    if (status?.sessionActive || dashboard) return;
-    if (autoConnectedToken.current === authToken) return;
-    autoConnectedToken.current = authToken;
-    void (async () => {
+  const connectInBackground = useCallback(async () => {
+    setAttempting(true);
+    setReason('');
+    try {
       const restored = await ensureIliasSession({
         token: authToken,
         account: sessionEmail || sessionAccount,
       });
-      if (restored.connected) await load({ quiet: true });
-    })();
-  }, [authToken, dashboard, load, sessionAccount, sessionEmail, settledToken, status?.sessionActive]);
+      if (restored.connected) {
+        await load({ quiet: true });
+        setError('');
+        setReason('');
+      } else {
+        setReason(restored.reason || 'ilias_failed');
+      }
+    } catch {
+      setReason('ilias_failed');
+    } finally {
+      setAttempting(false);
+    }
+  }, [authToken, load, sessionAccount, sessionEmail]);
+
+  useEffect(() => {
+    if (!authToken || unsupported) return;
+    if (settledToken !== authToken) return;
+    if (status?.sessionActive || dashboard) return;
+    if (autoConnectedToken.current === authToken) return;
+    autoConnectedToken.current = authToken;
+    void connectInBackground();
+  }, [authToken, connectInBackground, dashboard, settledToken, status?.sessionActive, unsupported]);
+
+  /**
+   * User-initiated reconnect from the not-connected card. Unlike the quiet
+   * background attempt, this may raise the vault's biometric prompt, which is
+   * the only way a biometric-gated C@MPUS login can be used again.
+   */
+  const retry = useCallback(async () => {
+    if (!authToken || attempting || unsupported) return;
+    setAttempting(true);
+    setError('');
+    setReason('');
+    autoConnectedToken.current = null;
+    try {
+      const restored = await ensureIliasSession({
+        token: authToken,
+        account: sessionEmail || sessionAccount,
+        allowBiometrics: true,
+        prompt: tx(locale, 'tabsIlias.entsperren'),
+      });
+      if (restored.connected) {
+        await load({ quiet: false });
+        setReason('');
+      } else {
+        setReason(restored.reason || 'ilias_failed');
+      }
+    } catch {
+      setReason('ilias_failed');
+    } finally {
+      setAttempting(false);
+    }
+  }, [attempting, authToken, load, locale, sessionAccount, sessionEmail, unsupported]);
 
   const pullToRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -181,9 +255,16 @@ export function useIlias() {
   return {
     status,
     dashboard,
+    loading,
+    attempting,
+    reason,
+    savedLogin,
+    unsupported,
+    canRetry: Boolean(authToken) && !unsupported,
     refreshing,
     busy,
     error,
+    retry,
     disconnect,
     pullToRefresh,
   };

@@ -21,6 +21,8 @@ import {
   type IliasPageResult,
 } from '@/src/ilias/headless';
 
+import type { Locale } from '@/src/types';
+
 import type {
   IliasContent,
   IliasContentItem,
@@ -587,6 +589,30 @@ export async function fetchIliasFile(refId: number): Promise<IliasFile> {
     contentType: response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream',
     filename: filenameFromDisposition(response.headers.get('content-disposition') ?? ''),
   };
+}
+
+/**
+ * The server-rendered presentation viewer. The page embeds the file bytes and
+ * the renderer, so the WebView needs no further network access.
+ */
+export function iliasPptxViewerUrl(refId: number, locale: Locale): string {
+  const query = new URLSearchParams({ refId: String(refId), locale });
+  return endpoint(`/v1/ilias/viewer?${query.toString()}`);
+}
+
+/** The same viewer page as text, for the web build's iframe. */
+export async function fetchIliasPptxViewer(refId: number, locale: Locale): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch(iliasPptxViewerUrl(refId, locale), { headers: { ...authHeaders() } });
+  } catch {
+    throw new IliasError('server_unreachable');
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw failure(payload, 'ilias_failed', response.status);
+  }
+  return response.text();
 }
 
 export async function disconnectIlias(): Promise<IliasStatus> {
