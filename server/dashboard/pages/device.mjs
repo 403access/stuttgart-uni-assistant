@@ -55,9 +55,8 @@ function renderDevice(device) {
   const view = $('view');
   const client = device.client || {};
   const session = device.session || null;
-  const account = device.account
-    ? h('a', { href: '#/users/' + encodeURIComponent(device.userId) + '/devices' }, device.userName || device.account)
-    : null;
+  const accountHref = device.userId ? '#/users/' + encodeURIComponent(device.userId) + '/overview' : null;
+  const devicesHref = device.userId ? '#/users/' + encodeURIComponent(device.userId) + '/devices' : null;
   const canRevoke = device.state !== 'revoked';
 
   const header = h('section', { className: 'card profile-card' },
@@ -72,7 +71,7 @@ function renderDevice(device) {
       ),
     ),
     h('div', { className: 'profile-actions' },
-      account ? h('a', { className: 'btn secondary', href: '#/users/' + encodeURIComponent(device.userId) + '/devices' }, icon('users'), 'Konto') : null,
+      accountHref ? h('a', { className: 'btn secondary', href: accountHref }, icon('users'), 'Konto öffnen') : null,
       canRevoke ? h('button', { className: 'btn danger-soft', type: 'button', onClick: () => revokeDevice(device) }, icon('trash'), 'Widerrufen') : null,
     ),
   );
@@ -107,9 +106,10 @@ function renderDevice(device) {
     sectionHead('Konto', device.account ? 'Diese Paarung gehört zu einem Konto' : 'Noch keinem Konto zugeordnet'),
     device.account
       ? h('div', { className: 'field-grid' },
-          fieldBox('Name', device.userName || '–'),
-          fieldBox('Kennung', device.account, { copy: true, copyLabel: 'Kennung' }),
+          fieldBox('Name', accountHref ? h('a', { href: accountHref }, device.userName || device.account) : (device.userName || '–')),
+          fieldBox('Kennung', accountHref ? h('a', { className: 'mono', href: accountHref }, device.account) : device.account),
           fieldBox('Konto-ID', device.userId || '–', { copy: true, copyLabel: 'Konto-ID' }),
+          fieldBox('Web-Geräte', devicesHref ? h('a', { href: devicesHref }, 'Alle Geräte dieses Kontos') : '–'),
         )
       : h('p', { className: 'hint', text: 'Der QR-Code wurde noch nicht von einer App bestätigt. Sobald das passiert, erscheint hier das Konto.' }),
   );

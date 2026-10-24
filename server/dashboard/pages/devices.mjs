@@ -171,7 +171,7 @@ function renderDeviceRows(data) {
     const client = device.client || {};
     const browser = client.browser || '';
     const userCell = device.account
-      ? h('a', { className: 'who-text', href: '#/users/' + encodeURIComponent(device.userId) + '/devices', style: { color: 'inherit', textDecoration: 'none' }, onClick: (event) => event.stopPropagation() },
+      ? h('a', { className: 'who-text', href: '#/users/' + encodeURIComponent(device.userId) + '/overview', style: { color: 'inherit', textDecoration: 'none' }, onClick: (event) => event.stopPropagation() },
           h('strong', { text: device.userName || device.account }),
           h('span', { text: device.account }),
         )
