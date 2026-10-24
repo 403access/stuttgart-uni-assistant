@@ -258,6 +258,7 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   assert.equal(deviceBody.total, 1);
   assert.equal(deviceBody.devices[0].name, 'Route Browser');
   assert.equal(deviceBody.devices[0].account, 'st123456');
+  assert.equal(deviceBody.devices[0].client.type, 'unknown');
   const deviceDetail = await call(`/v1/admin/users/${userId}`);
   assert.equal((await deviceDetail.json()).devices.length, 1);
   const revokeDevice = await call(`/v1/admin/devices/${pairing.id}`, { method: 'DELETE' });

@@ -7,6 +7,7 @@ process.env.DASHBOARD_TOKEN = 'test-admin-token';
 const db = await import('./db.mjs');
 const auth = await import('./auth.mjs');
 const admin = await import('./admin/index.mjs');
+const { parseUserAgent } = await import('./admin/user-agent.mjs');
 
 beforeEach(() => {
   db.resetDbForTests();
@@ -117,9 +118,64 @@ test('disconnecting C@MPUS clears the source and demotes the link', () => {
   assert.equal(detail.user.platforms.find((item) => item.id === 'campus').status, 'linked');
 });
 
+test('user agents resolve to form factor, OS, browser, model, and engine', () => {
+  const iphone = parseUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1');
+  assert.deepEqual(iphone, {
+    type: 'mobile', os: 'iOS', osVersion: '18.5', browser: 'Safari', browserVersion: '18.5', device: 'iPhone', engine: 'WebKit',
+  });
+
+  const ipad = parseUserAgent('Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1');
+  assert.equal(ipad.type, 'tablet');
+  assert.equal(ipad.device, 'iPad');
+  assert.equal(ipad.osVersion, '17.4');
+
+  const android = parseUserAgent('Mozilla/5.0 (Linux; Android 14; SM-S918B Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.6478.71 Mobile Safari/537.36');
+  assert.equal(android.type, 'mobile');
+  assert.equal(android.os, 'Android');
+  assert.equal(android.osVersion, '14');
+  assert.equal(android.browser, 'Android WebView');
+  assert.equal(android.browserVersion, '126.0.6478.71');
+  assert.equal(android.device, 'SM-S918B');
+  assert.equal(android.engine, 'Blink');
+
+  const tablet = parseUserAgent('Mozilla/5.0 (Linux; Android 13; SM-X700) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+  assert.equal(tablet.type, 'tablet');
+  assert.equal(tablet.device, 'SM-X700');
+
+  const windows = parseUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0');
+  assert.equal(windows.type, 'desktop');
+  assert.equal(windows.os, 'Windows');
+  assert.equal(windows.osVersion, '10/11');
+  assert.equal(windows.browser, 'Edge');
+  assert.equal(windows.device, 'PC');
+
+  const mac = parseUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15');
+  assert.equal(mac.type, 'desktop');
+  assert.equal(mac.os, 'macOS');
+  assert.equal(mac.osVersion, '10.15.7');
+  assert.equal(mac.browser, 'Safari');
+  assert.equal(mac.device, 'Mac');
+
+  const linux = parseUserAgent('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:127.0) Gecko/20100101 Firefox/127.0');
+  assert.equal(linux.os, 'Linux');
+  assert.equal(linux.osVersion, 'Ubuntu');
+  assert.equal(linux.browser, 'Firefox');
+  assert.equal(linux.browserVersion, '127.0');
+  assert.equal(linux.engine, 'Gecko');
+
+  const bot = parseUserAgent('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+  assert.equal(bot.type, 'bot');
+  assert.equal(bot.os, '');
+  assert.equal(bot.browser, '');
+
+  const unknown = parseUserAgent('');
+  assert.equal(unknown.type, 'unknown');
+  assert.equal(unknown.device, '');
+});
+
 test('device links are listed, counted, attached to sessions, and revocable', () => {
   const alice = user('st111111');
-  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0 Chrome' });
+  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36' });
   auth.approveDeviceLink(alice.user.id, link.token);
   const redeemed = auth.pollDeviceLink(link.token);
   assert.equal(redeemed.status, 'approved');
@@ -135,12 +191,17 @@ test('device links are listed, counted, attached to sessions, and revocable', ()
   assert.equal(listed.devices[0].name, 'Chrome · macOS');
   assert.equal(listed.devices[0].state, 'active');
   assert.equal(listed.devices[0].account, 'st111111');
+  assert.equal(listed.devices[0].client.browser, 'Chrome');
+  assert.equal(listed.devices[0].client.type, 'desktop');
   assert.equal(admin.listAdminDevices({ state: 'revoked' }).total, 0);
   assert.equal(admin.listAdminDevices({ query: 'chrome' }).total, 1);
+  assert.equal(admin.listAdminDevices({ query: 'desktop' }).total, 1);
 
   const detail = admin.adminUserDetail(alice.user.id);
   assert.equal(detail.devices.length, 1);
+  assert.equal(detail.devices[0].client.browser, 'Chrome');
   assert.equal(detail.sessions[0].device.name, 'Chrome · macOS');
+  assert.equal(detail.sessions[0].device.client.browser, 'Chrome');
   assert.equal(admin.listUsers({}).users[0].deviceCount, 1);
 
   const revoked = admin.revokeAdminDevice(link.id);

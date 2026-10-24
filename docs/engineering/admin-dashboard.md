@@ -40,7 +40,7 @@ that survives reloads and can be shared between operators:
 | `#/overview` | KPI cards, distribution bars, recent accounts, recent audit actions, configuration health |
 | `#/news` | Operator-managed app news with drafts, publishing, editing, and deletion |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
-| `#/devices` | QR-linked web browsers with state, account, timestamps, and revoke |
+| `#/devices` | QR-linked web browsers with form factor, OS, browser, account, state, timestamps, and revoke |
 | `#/ilias` | ILIAS connections, session state, and parsed course/news/mail counts |
 | `#/users/<id>/overview` | Profile, status, per-study summary, audit preview, delete zone |
 | `#/users/<id>/sessions` | App sessions with state, timestamps, copy and revoke |
@@ -80,8 +80,10 @@ status filter narrows to published items or drafts. Publishing and deleting are
 confirmed and recorded in the audit log.
 
 **Web devices:** every browser pairing carries the browser label and user
-agent, the account that approved it, the pairing and approval timestamps, and
-the session minted when the browser redeemed the code. A browser whose QR code
+agent, the parsed form factor (desktop, mobile, tablet, or bot), operating
+system and version, browser and version, rendering engine, and device model,
+the account that approved it, the pairing and approval timestamps, and the
+session minted when the browser redeemed the code. A browser whose QR code
 expires without approval is shown as expired; revoking a linked device ends
 its web session immediately.
 
@@ -196,7 +198,7 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/admin/users/<id>/ilias/profile?userId=&url=` | Live-read one member's public profile. |
 | `GET /v1/admin/users/<id>/ilias/image?url=` | Stream a profile image with the account's ILIAS session. |
 | `GET /v1/admin/users/<id>/ilias/file?refId=` | Stream one repository file with the account's ILIAS session. |
-| `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers, newest pairing first. |
+| `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers with parsed client details, newest pairing first. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
 | `GET /v1/admin/users?query=&mode=&platform=&credential=&activity=&data=&sort=&limit=&offset=` | Paginated user list with stored-data counts and platform chips. |
 | `POST /v1/admin/users` | Pre-provisions an account (`account`, `name`, `email`, `matriculation`, `subject`, `mode`) without a session. |
@@ -240,7 +242,8 @@ screen cannot replay them.
 | `server/admin/audit.mjs` | Audit writes, filters, and facets. |
 | `server/admin/overview.mjs` | Cross-account counts and statistics. |
 | `server/admin/users.mjs` | Account list and detail reads. |
-| `server/admin/devices.mjs` | QR-linked browser list, stats, and revoke. |
+| `server/admin/devices.mjs` | QR-linked browser list, parsed client details, stats, and revoke. |
+| `server/admin/user-agent.mjs` | User-Agent parsing for form factor, OS, browser, model, and engine. |
 | `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content, member, profile and image reads, file download, and disconnect. |
 | `server/admin/news.mjs` | News list, create, update, publish, and delete. |
 | `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |

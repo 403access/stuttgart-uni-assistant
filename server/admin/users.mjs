@@ -8,6 +8,7 @@ import { listAdminAudit } from './audit.mjs';
 import { adminUserStudies } from './explorers.mjs';
 import { adminUserIlias } from './ilias.mjs';
 import { sessionRow, userCounts } from './overview.mjs';
+import { parseUserAgent } from './user-agent.mjs';
 import { pageOffset, pageSize } from './util.mjs';
 
 /* ------------------------------------------------------------------ users -- */
@@ -148,7 +149,10 @@ export function adminUserDetail(userId) {
   const user = getUser(userId);
   if (!user) return null;
   const db = getDb();
-  const devices = listUserDevices(userId);
+  const devices = listUserDevices(userId).map((device) => ({
+    ...device,
+    client: parseUserAgent(device.userAgent),
+  }));
   const deviceBySession = new Map(devices.filter((item) => item.sessionId).map((item) => [item.sessionId, item]));
   const sessions = db
     .prepare('SELECT id, created_at, expires_at, last_seen_at, revoked_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC, rowid DESC')
@@ -158,7 +162,7 @@ export function adminUserDetail(userId) {
       const device = deviceBySession.get(session.id);
       return {
         ...session,
-        device: device ? { id: device.id, name: device.name, kind: device.kind, userAgent: device.userAgent } : null,
+        device: device ? { id: device.id, name: device.name, kind: device.kind, userAgent: device.userAgent, client: device.client } : null,
       };
     });
   const campusSource = loadCampusSource(userId);

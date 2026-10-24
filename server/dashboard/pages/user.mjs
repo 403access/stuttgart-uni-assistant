@@ -296,29 +296,55 @@ function deviceBadge(state) {
   return badge(label, tone);
 }
 
+const DEVICE_TYPE_LABELS = {
+  desktop: ['Desktop', ''],
+  mobile: ['Mobil', 'blue'],
+  tablet: ['Tablet', 'info'],
+  bot: ['Bot', 'warn'],
+  unknown: ['Unbekannt', ''],
+};
+
+function deviceTypeBadge(client) {
+  const [label, tone] = DEVICE_TYPE_LABELS[client?.type] || DEVICE_TYPE_LABELS.unknown;
+  return badge(label, tone);
+}
+
+function deviceClientCell(main, detail) {
+  return h('div', { className: 'who-text' },
+    h('strong', { text: main || 'Unbekannt', style: { fontSize: '12.5px' } }),
+    detail ? h('span', { text: detail }) : null,
+  );
+}
+
 function renderDevicesTab(container, detail) {
   const user = detail.user;
   const devices = detail.devices || [];
   const active = devices.filter((device) => device.state === 'active' || device.state === 'linked').length;
   const rows = devices.length
-    ? devices.map((device) => h('tr', null,
-        h('td', null, h('strong', { text: device.name }), h('div', { className: 'hint', text: device.userAgent || device.id })),
-        h('td', null, deviceBadge(device.state)),
-        h('td', null, date(device.createdAt)),
-        h('td', null, device.approvedAt ? date(device.approvedAt) : h('span', { className: 'muted', text: '–' })),
-        h('td', null, device.session ? h('div', { className: 'who-text' }, h('strong', { className: 'mono', text: device.session.id, style: { fontSize: '11px' } }), h('span', { text: device.session.expiresAt ? 'bis ' + date(device.session.expiresAt) : '' })) : h('span', { className: 'muted', text: 'keine' })),
-        h('td', null, device.state !== 'revoked' ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: () => revokeUserDevice(user.id, device) }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
-      ))
-    : [h('tr', null, h('td', { colspan: '6' }, emptyState('smartphone', 'Keine Web-Geräte', 'Dieses Konto hat noch keinen Browser per QR-Code freigegeben.')))];
+    ? devices.map((device) => {
+        const client = device.client || {};
+        return h('tr', null,
+          h('td', null, h('strong', { text: device.name }), h('div', { className: 'hint', text: device.userAgent || device.id })),
+          h('td', null, deviceTypeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
+          h('td', null, deviceClientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
+          h('td', null, deviceClientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
+          h('td', null, deviceBadge(device.state)),
+          h('td', null, date(device.createdAt)),
+          h('td', null, device.approvedAt ? date(device.approvedAt) : h('span', { className: 'muted', text: '–' })),
+          h('td', null, device.session ? h('div', { className: 'who-text' }, h('strong', { className: 'mono', text: device.session.id, style: { fontSize: '11px' } }), h('span', { text: device.session.expiresAt ? 'bis ' + date(device.session.expiresAt) : '' })) : h('span', { className: 'muted', text: 'keine' })),
+          h('td', null, device.state !== 'revoked' ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: () => revokeUserDevice(user.id, device) }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
+        );
+      })
+    : [h('tr', null, h('td', { colspan: '9' }, emptyState('smartphone', 'Keine Web-Geräte', 'Dieses Konto hat noch keinen Browser per QR-Code freigegeben.')))];
 
   container.append(
     callout('Die Web-App kann sich nur mit einem QR-Code anmelden, den die App auf dem Telefon freigibt. Ein Widerruf beendet die zugehörige Websitzung sofort.', '', 'shield'),
     h('div', { className: 'detail-section' },
       sectionHead('Web-Geräte', active + ' aktiv · ' + devices.length + ' insgesamt'),
       h('div', { className: 'table-wrap' },
-        h('table', { className: 'data', style: { minWidth: '820px' } },
+        h('table', { className: 'data', style: { minWidth: '1250px' } },
           h('caption', { className: 'sr-only' }, 'Mit dem Konto verknüpfte Web-Geräte'),
-          h('thead', null, h('tr', null, h('th', null, 'Gerät'), h('th', null, 'Status'), h('th', null, 'Erstellt'), h('th', null, 'Genehmigt'), h('th', null, 'Sitzung'), h('th', null, ''))),
+          h('thead', null, h('tr', null, h('th', null, 'Gerät'), h('th', null, 'Typ'), h('th', null, 'Betriebssystem'), h('th', null, 'Browser'), h('th', null, 'Status'), h('th', null, 'Erstellt'), h('th', null, 'Genehmigt'), h('th', null, 'Sitzung'), h('th', null, ''))),
           h('tbody', null, ...rows),
         ),
       ),

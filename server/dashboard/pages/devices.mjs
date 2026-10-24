@@ -28,18 +28,29 @@ const STATE_LABELS = {
   revoked: ['widerrufen', 'danger'],
 };
 
+const TYPE_LABELS = {
+  desktop: ['Desktop', ''],
+  mobile: ['Mobil', 'blue'],
+  tablet: ['Tablet', 'info'],
+  bot: ['Bot', 'warn'],
+  unknown: ['Unbekannt', ''],
+};
+
 function stateBadge(deviceState) {
   const [label, tone] = STATE_LABELS[deviceState] || [deviceState, ''];
   return badge(label, tone);
 }
 
-function browserLabel(device) {
-  const agent = device.userAgent || '';
-  if (/Edg\//.test(agent)) return 'Edge';
-  if (/Firefox\//.test(agent)) return 'Firefox';
-  if (/Chrome\//.test(agent)) return 'Chrome';
-  if (/Safari\//.test(agent)) return 'Safari';
-  return '';
+function typeBadge(client) {
+  const [label, tone] = TYPE_LABELS[client?.type] || TYPE_LABELS.unknown;
+  return badge(label, tone);
+}
+
+function clientCell(main, detail) {
+  return h('div', { className: 'who-text' },
+    h('strong', { text: main || 'Unbekannt', style: { fontSize: '12.5px' } }),
+    detail ? h('span', { text: detail }) : null,
+  );
 }
 
 export async function renderDevicesPage(route) {
@@ -51,7 +62,7 @@ export async function renderDevicesPage(route) {
 
   const search = h('input', {
     id: 'device-query', type: 'search', value: state.devices.query, autocomplete: 'off',
-    placeholder: 'Gerät, Konto, Benutzeragent oder Geräte-ID',
+    placeholder: 'Gerät, Konto, Browser, Betriebssystem oder Geräte-ID',
   });
   const stateSelect = h('select', { id: 'device-state', onChange: () => applyDeviceFilters() },
     ...STATES.map(([key, label]) => h('option', { value: key, selected: state.devices.state === key, text: label })),
@@ -89,10 +100,13 @@ export async function renderDevicesPage(route) {
       ),
       h('section', { className: 'card table-card' },
         h('div', { className: 'table-wrap' },
-          h('table', { className: 'data', style: { minWidth: '980px' } },
+          h('table', { className: 'data', style: { minWidth: '1500px' } },
             h('caption', { className: 'sr-only' }, 'Verknüpfte Web-Geräte'),
             h('thead', null, h('tr', null,
               h('th', null, 'Gerät'),
+              h('th', null, 'Typ'),
+              h('th', null, 'Betriebssystem'),
+              h('th', null, 'Browser'),
               h('th', null, 'Konto'),
               h('th', null, 'Status'),
               h('th', null, 'Erstellt'),
@@ -161,7 +175,7 @@ async function loadDevices() {
   const seq = ++state.devices.seq;
   const tbody = $('devices-body');
   if (!tbody) return;
-  tbody.replaceChildren(...skeletonRows(8, 6));
+  tbody.replaceChildren(...skeletonRows(11, 6));
   const summary = $('devices-summary');
   if (summary) summary.textContent = 'Lade Geräte …';
   try {
@@ -179,7 +193,7 @@ async function loadDevices() {
     if (badgeNode) { badgeNode.textContent = number(data.total); badgeNode.hidden = false; }
   } catch (error) {
     if (error.code === 'unauthorized' || seq !== state.devices.seq) return;
-    tbody.replaceChildren(h('tr', null, h('td', { colspan: '8' }, emptyState('alert', 'Geräte konnten nicht geladen werden', errorText(error), h('button', { className: 'btn secondary', type: 'button', onClick: () => loadDevices() }, icon('refresh'), 'Erneut versuchen')))));
+    tbody.replaceChildren(h('tr', null, h('td', { colspan: '11' }, emptyState('alert', 'Geräte konnten nicht geladen werden', errorText(error), h('button', { className: 'btn secondary', type: 'button', onClick: () => loadDevices() }, icon('refresh'), 'Erneut versuchen')))));
     if (summary) summary.textContent = 'Fehler beim Laden.';
     toast(errorText(error), 'error');
   }
@@ -194,11 +208,12 @@ function renderDeviceRows(data) {
     summary.textContent = data.total === 1 ? '1 Gerät entspricht den Filtern.' : number(data.total) + ' Geräte entsprechen den Filtern.';
   }
   if (!data.devices.length) {
-    tbody.append(h('tr', null, h('td', { colspan: '8' }, emptyState('qr', 'Keine Geräte', 'Sobald sich die Web-App per QR-Code anmeldet, erscheint die Paarung hier.'))));
+    tbody.append(h('tr', null, h('td', { colspan: '11' }, emptyState('qr', 'Keine Geräte', 'Sobald sich die Web-App per QR-Code anmeldet, erscheint die Paarung hier.'))));
     return;
   }
   for (const device of data.devices) {
-    const browser = browserLabel(device);
+    const client = device.client || {};
+    const browser = client.browser || '';
     const userCell = device.account
       ? h('a', { className: 'who-text', href: '#/users/' + encodeURIComponent(device.userId) + '/devices', style: { color: 'inherit', textDecoration: 'none' } },
           h('strong', { text: device.userName || device.account }),
@@ -211,6 +226,9 @@ function renderDeviceRows(data) {
         h('strong', { text: device.name + (browser && !device.name.includes(browser) ? ' · ' + browser : '') }),
         h('span', { text: device.userAgent || device.id }),
       )),
+      h('td', null, typeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
+      h('td', null, clientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
+      h('td', null, clientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
       h('td', null, userCell),
       h('td', null, stateBadge(device.state)),
       h('td', null, h('div', { className: 'who-text' }, h('strong', { text: relative(device.createdAt), style: { fontSize: '12.5px' } }), h('span', { text: date(device.createdAt) }))),
