@@ -107,13 +107,26 @@ export interface MapRegion {
   label: Localized;
   /** Short marker label, e.g. `DE`. */
   short: string;
-  /** Position on the schematic map in percent (0–100). */
-  x: number;
-  y: number;
+  /** Country outline in the map's viewBox coordinate system. */
+  path: string;
+  /** Label anchor in the map's viewBox coordinate system. */
+  labelX: number;
+  labelY: number;
+  /** Optional offset of the label from the anchor, in viewBox units. */
+  labelDx?: number;
+  labelDy?: number;
+  /** Draw a dot at the anchor. Useful for regions too small to label directly. */
+  marker?: boolean;
+  /** Invisible tap target around the anchor, in viewBox units. */
+  hitRadius?: number;
 }
 
 export interface MapQuestion extends QuizQuestionBase {
   kind: 'map';
+  /** SVG viewBox for the map, e.g. `0 0 1000 839`. */
+  viewBox: string;
+  /** Non-interactive outlines drawn under the regions for geographic context. */
+  backdrop?: string[];
   zones: MapZone[];
   regions: MapRegion[];
   /** Region id → zone id. */

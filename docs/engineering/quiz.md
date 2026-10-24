@@ -18,12 +18,19 @@ reusable question views live in `src/quiz/components/`.
 | `matching` | `matching.tsx` | `Record<leftId, rightId>` | Tap a left term, then its right match. Assigned pairs can be removed. |
 | `ordering` | `ordering.tsx` | ordered ids | Arrow buttons move an item up or down. |
 | `cloze` | `cloze.tsx` | one string per blank | Inline inputs inside the sentence. |
-| `map` | `map.tsx` | `Record<regionId, zoneId>` | Pick a zone chip, then tap a country on a schematic map or in the country list. |
+| `map` | `map.tsx` | `Record<regionId, zoneId>` | Pick a zone chip, then tap a country on the map or in the country list. |
 | `flashcard` | `flashcard.tsx` | `known` / `unknown` | Reveal the back, then self-assess. |
 
 Every view receives the same props (`value`, `revealed`, `onChange`) from
 `question-view.tsx`. The round screen owns the draft answer and the checked
 state; the views render only.
+
+The map view uses `react-native-svg`. A `MapQuestion` carries its own `viewBox`
+and `backdrop` outlines, and every region carries an SVG `path` plus a label
+anchor. The Europe shapes live in `src/quiz/maps/europe.ts`, generated from
+Natural Earth 1:50m Admin 0 Countries and 1:10m Admin 1 States/Provinces (public
+domain) with a Lambert conformal conic projection. The backdrop countries are
+context only; the interactive regions are keyed by the same ids as `correct`.
 
 ## Content
 

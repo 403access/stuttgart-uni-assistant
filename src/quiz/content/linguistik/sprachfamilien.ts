@@ -1,3 +1,4 @@
+import { europeMap } from '@/src/quiz/maps/europe';
 import type { QuizTopic } from '@/src/quiz/types';
 
 import { l } from '../helpers';
@@ -393,13 +394,15 @@ export const sprachfamilien: QuizTopic = {
       kind: 'map',
       difficulty: 3,
       prompt: l(
-        'Wähle eine Sprachfamilie und tippe dann auf die passenden Länder.',
-        'Pick a language family, then tap the matching countries.',
+        'Wähle eine Sprachfamilie und tippe dann auf die beschrifteten Länder.',
+        'Pick a language family, then tap the labelled countries.',
       ),
       hint: l(
-        'Die Karte ist schematisch. Malta ist der südlichste Punkt und gehört zu den afro-asiatischen Sprachen.',
-        'The map is schematic. Malta is the southernmost point and belongs to the Afro-Asiatic languages.',
+        'Die Karte zeigt Europa. Malta ist der südlichste Punkt und gehört zu den afro-asiatischen Sprachen.',
+        'The map shows Europe. Malta is the southernmost point and belongs to the Afro-Asiatic languages.',
       ),
+      viewBox: europeMap.viewBox,
+      backdrop: europeMap.backdrop,
       zones: [
         { id: 'ine', label: l('Indogermanisch', 'Indo-European'), tone: 'blue' },
         { id: 'fu', label: l('Finno-Ugrisch', 'Finno-Ugric'), tone: 'ok' },
@@ -409,21 +412,69 @@ export const sprachfamilien: QuizTopic = {
         { id: 'afa', label: l('Afro-Asiatisch', 'Afro-Asiatic'), tone: 'light' },
       ],
       regions: [
-        { id: 'de', short: 'DE', label: l('Deutschland', 'Germany'), x: 48, y: 40 },
-        { id: 'hu', short: 'HU', label: l('Ungarn', 'Hungary'), x: 60, y: 54 },
-        { id: 'fi', short: 'FI', label: l('Finnland', 'Finland'), x: 69, y: 16 },
-        { id: 'ee', short: 'EE', label: l('Estland', 'Estonia'), x: 67, y: 29 },
-        { id: 'eu', short: 'ES', label: l('Baskenland', 'Basque Country'), x: 28, y: 67 },
-        { id: 'tr', short: 'TR', label: l('Türkei', 'Türkiye'), x: 80, y: 67 },
-        { id: 'ge', short: 'GE', label: l('Georgien', 'Georgia'), x: 90, y: 57 },
-        { id: 'mt', short: 'MT', label: l('Malta', 'Malta'), x: 51, y: 83 },
+        {
+          id: 'de',
+          short: 'DE',
+          label: l('Deutschland', 'Germany'),
+          ...europeMap.countries.de,
+        },
+        {
+          id: 'hu',
+          short: 'HU',
+          label: l('Ungarn', 'Hungary'),
+          ...europeMap.countries.hu,
+        },
+        {
+          id: 'fi',
+          short: 'FI',
+          label: l('Finnland', 'Finland'),
+          ...europeMap.countries.fi,
+        },
+        {
+          id: 'ee',
+          short: 'EE',
+          label: l('Estland', 'Estonia'),
+          ...europeMap.countries.ee,
+        },
+        {
+          id: 'pv',
+          short: 'PV',
+          label: l('Baskenland (Spanien)', 'Basque Country (Spain)'),
+          ...europeMap.countries.pv,
+          marker: true,
+          hitRadius: 16,
+          labelDx: -34,
+          labelDy: -10,
+        },
+        {
+          id: 'tr',
+          short: 'TR',
+          label: l('Türkei', 'Türkiye'),
+          ...europeMap.countries.tr,
+        },
+        {
+          id: 'ge',
+          short: 'GE',
+          label: l('Georgien', 'Georgia'),
+          ...europeMap.countries.ge,
+        },
+        {
+          id: 'mt',
+          short: 'MT',
+          label: l('Malta', 'Malta'),
+          ...europeMap.countries.mt,
+          marker: true,
+          hitRadius: 18,
+          labelDx: -36,
+          labelDy: -4,
+        },
       ],
       correct: {
         de: 'ine',
         hu: 'fu',
         fi: 'fu',
         ee: 'fu',
-        eu: 'eu',
+        pv: 'eu',
         tr: 'trk',
         ge: 'cau',
         mt: 'afa',

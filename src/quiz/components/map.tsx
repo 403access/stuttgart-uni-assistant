@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
@@ -25,6 +26,20 @@ function zoneColors(tone: MapTone): { bg: string; fg: string } {
   }
 }
 
+/** The map's width/height ratio, so the SVG keeps the viewBox proportions. */
+function viewBoxAspect(viewBox: string): number {
+  const [, , width, height] = viewBox.split(/[\s,]+/).map(Number);
+  return width > 0 && height > 0 ? width / height : 1;
+}
+
+const LABEL_SIZE = 28;
+const LABEL_HALO = 6;
+const LABEL_FONT = Platform.select({
+  ios: 'System',
+  android: 'sans-serif',
+  web: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+});
+
 export function MapView({
   question,
   locale,
@@ -38,7 +53,11 @@ export function MapView({
   revealed: boolean;
   onChange: (value: Record<string, string>) => void;
 }) {
-  const [activeZone, setActiveZone] = useState<string | null>(question.zones[0]?.id ?? null);
+  const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const activeZone =
+    selectedZone && question.zones.some((zone) => zone.id === selectedZone)
+      ? selectedZone
+      : (question.zones[0]?.id ?? null);
   const assignments = value ?? {};
   const zoneById = new Map(question.zones.map((zone) => [zone.id, zone]));
 
@@ -62,14 +81,14 @@ export function MapView({
         <View style={styles.zoneWrap}>
           {question.zones.map((zone) => {
             const palette = zoneColors(zone.tone);
-            const isActive = activeZone === zone.id;
+            const isActive = !revealed && activeZone === zone.id;
             return (
               <Pressable
                 key={zone.id}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isActive }}
                 disabled={revealed}
-                onPress={() => setActiveZone(zone.id)}
+                onPress={() => setSelectedZone(zone.id)}
                 style={[
                   styles.zoneChip,
                   { backgroundColor: palette.bg, borderColor: isActive ? colors.blue : 'transparent' },
@@ -83,64 +102,109 @@ export function MapView({
         </View>
       </View>
 
-      <View style={styles.canvas}>
-        <View style={[styles.gridLine, styles.gridVertical, { left: '25%' }]} />
-        <View style={[styles.gridLine, styles.gridVertical, { left: '50%' }]} />
-        <View style={[styles.gridLine, styles.gridVertical, { left: '75%' }]} />
-        <View style={[styles.gridLine, styles.gridHorizontal, { top: '25%' }]} />
-        <View style={[styles.gridLine, styles.gridHorizontal, { top: '50%' }]} />
-        <View style={[styles.gridLine, styles.gridHorizontal, { top: '75%' }]} />
+      <View style={[styles.canvas, { aspectRatio: viewBoxAspect(question.viewBox) }]}>
+        <Svg width="100%" height="100%" viewBox={question.viewBox}>
+          {question.backdrop?.map((path, index) => (
+            <Path
+              key={index}
+              d={path}
+              fill={colors.paper}
+              stroke={colors.line}
+              strokeWidth={1}
+              fillRule="evenodd"
+            />
+          ))}
 
-        <View style={[styles.land, { left: '8%', top: '57%', width: '22%', height: '19%', transform: [{ rotate: '-9deg' }] }]} />
-        <View style={[styles.land, { left: '29%', top: '40%', width: '20%', height: '21%' }]} />
-        <View style={[styles.land, { left: '28%', top: '20%', width: '9%', height: '15%' }]} />
-        <View style={[styles.land, { left: '38%', top: '26%', width: '5%', height: '10%' }]} />
-        <View style={[styles.land, { left: '55%', top: '4%', width: '13%', height: '25%', transform: [{ rotate: '9deg' }] }]} />
-        <View style={[styles.land, { left: '45%', top: '34%', width: '29%', height: '25%' }]} />
-        <View style={[styles.land, { left: '64%', top: '23%', width: '6%', height: '7%' }]} />
-        <View style={[styles.land, { left: '46%', top: '57%', width: '8%', height: '17%', transform: [{ rotate: '-14deg' }] }]} />
-        <View style={[styles.land, { left: '54%', top: '57%', width: '14%', height: '14%' }]} />
-        <View style={[styles.land, { left: '68%', top: '62%', width: '23%', height: '10%' }]} />
-        <View style={[styles.land, { left: '79%', top: '51%', width: '11%', height: '7%' }]} />
-        <View style={[styles.land, { left: '49%', top: '80%', width: '4%', height: '3%' }]} />
+          {question.regions.map((region) => {
+            const zoneId = assignments[region.id];
+            const zone = zoneId ? zoneById.get(zoneId) : undefined;
+            const palette = zone ? zoneColors(zone.tone) : null;
+            const isCorrect = revealed && zoneId === question.correct[region.id];
+            const isWrong = revealed && Boolean(zoneId) && zoneId !== question.correct[region.id];
+            const labelX = region.labelX + (region.labelDx ?? 0);
+            const labelY = region.labelY + (region.labelDy ?? 0);
+            const labelTone = palette?.fg ?? colors.inkSoft;
+            // Labels over water need the water colour as their halo, not the land colour.
+            const halo = region.marker ? colors.blueSoft : colors.paper;
+            // react-native-svg attaches pointer responders for onPress, which React
+            // DOM warns about on web. Use a plain click there instead.
+            const pressProps = revealed
+              ? {}
+              : Platform.OS === 'web'
+                ? ({ onPress: null, onClick: () => assign(region.id) } as unknown as {
+                    onPress?: () => void;
+                  })
+                : { onPress: () => assign(region.id) };
 
-        {question.regions.map((region) => {
-          const zoneId = assignments[region.id];
-          const zone = zoneId ? zoneById.get(zoneId) : undefined;
-          const palette = zone ? zoneColors(zone.tone) : null;
-          const isCorrect = revealed && zoneId === question.correct[region.id];
-          const isWrong = revealed && Boolean(zoneId) && zoneId !== question.correct[region.id];
-          return (
-            <Pressable
-              key={region.id}
-              accessibilityRole="button"
-              accessibilityLabel={`${pick(region.label, locale)}${zone ? `: ${pick(zone.label, locale)}` : ''}`}
-              disabled={revealed}
-              onPress={() => assign(region.id)}
-              style={[
-                styles.marker,
-                {
-                  left: `${region.x}%`,
-                  top: `${region.y}%`,
-                  backgroundColor: palette?.bg ?? colors.paper,
-                  borderColor: isCorrect ? colors.success : isWrong ? colors.danger : palette?.fg ?? colors.line,
-                },
-              ]}
-            >
-              <Text style={[styles.markerText, { color: palette?.fg ?? colors.inkSoft }]}>{region.short}</Text>
-              {isCorrect ? (
-                <View style={[styles.badge, { backgroundColor: colors.success }]}>
-                  <MaterialIcons name="check" size={9} color="#FFFFFF" />
-                </View>
-              ) : null}
-              {isWrong ? (
-                <View style={[styles.badge, { backgroundColor: colors.danger }]}>
-                  <MaterialIcons name="close" size={9} color="#FFFFFF" />
-                </View>
-              ) : null}
-            </Pressable>
-          );
-        })}
+            return (
+              <G key={region.id} {...pressProps}>
+                <Path
+                  d={region.path}
+                  fill={palette?.bg ?? colors.paper}
+                  stroke={isCorrect ? colors.success : isWrong ? colors.danger : palette?.fg ?? colors.mute}
+                  strokeWidth={isCorrect || isWrong ? 2.5 : 1.5}
+                  fillRule="evenodd"
+                />
+
+                {region.marker ? (
+                  <>
+                    {region.labelDx || region.labelDy ? (
+                      <Line
+                        x1={region.labelX}
+                        y1={region.labelY}
+                        x2={labelX}
+                        y2={labelY}
+                        stroke={labelTone}
+                        strokeWidth={1.5}
+                        strokeDasharray="5 4"
+                      />
+                    ) : null}
+                    <Circle
+                      cx={region.labelX}
+                      cy={region.labelY}
+                      r={7}
+                      fill={isCorrect ? colors.success : isWrong ? colors.danger : labelTone}
+                      stroke={halo}
+                      strokeWidth={3}
+                    />
+                  </>
+                ) : null}
+
+                {region.hitRadius ? (
+                  <Circle cx={region.labelX} cy={region.labelY} r={region.hitRadius} fill="transparent" />
+                ) : null}
+
+                <SvgText
+                  x={labelX}
+                  y={labelY}
+                  dy={LABEL_SIZE * 0.35}
+                  fontFamily={LABEL_FONT}
+                  fontSize={LABEL_SIZE}
+                  fontWeight="700"
+                  textAnchor="middle"
+                  fill="none"
+                  stroke={halo}
+                  strokeWidth={LABEL_HALO}
+                  strokeLinejoin="round"
+                >
+                  {region.short}
+                </SvgText>
+                <SvgText
+                  x={labelX}
+                  y={labelY}
+                  dy={LABEL_SIZE * 0.35}
+                  fontFamily={LABEL_FONT}
+                  fontSize={LABEL_SIZE}
+                  fontWeight="700"
+                  textAnchor="middle"
+                  fill={labelTone}
+                >
+                  {region.short}
+                </SvgText>
+              </G>
+            );
+          })}
+        </Svg>
       </View>
 
       <View style={styles.legend}>
@@ -206,38 +270,11 @@ const styles = themedStyles((colors) => ({
   zoneDot: { width: 8, height: 8, borderRadius: 4 },
   zoneLabel: { fontSize: 12, fontWeight: '700' },
   canvas: {
-    aspectRatio: 1.1,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.line,
-    backgroundColor: colors.paper,
+    backgroundColor: colors.blueSoft,
     overflow: 'hidden',
-  },
-  gridLine: { position: 'absolute', backgroundColor: colors.line, opacity: 0.45 },
-  gridVertical: { top: 0, bottom: 0, width: 1 },
-  gridHorizontal: { left: 0, right: 0, height: 1 },
-  land: { position: 'absolute', borderRadius: 999, backgroundColor: colors.line, opacity: 0.7 },
-  marker: {
-    position: 'absolute',
-    width: 34,
-    height: 34,
-    marginLeft: -17,
-    marginTop: -17,
-    borderRadius: 17,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerText: { fontSize: 10, fontWeight: '800' },
-  badge: {
-    position: 'absolute',
-    right: -5,
-    top: -5,
-    width: 15,
-    height: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   legend: {
     borderRadius: 14,

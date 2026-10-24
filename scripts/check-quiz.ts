@@ -151,6 +151,24 @@ for (const question of allQuestions) {
         question.regions.every((region) => zoneIds.has(question.correct[region.id])),
         `every map region maps to an existing zone: ${question.id}`,
       );
+      expect(
+        /^0 0 \d+(?:\.\d+)? \d+(?:\.\d+)?$/.test(question.viewBox),
+        `map viewBox has the expected shape: ${question.id}`,
+      );
+      expect(
+        question.regions.every((region) => region.path.trim().length > 0),
+        `every map region has an outline: ${question.id}`,
+      );
+      expect(
+        question.regions.every(
+          (region) => Number.isFinite(region.labelX) && Number.isFinite(region.labelY),
+        ),
+        `every map region has a label anchor: ${question.id}`,
+      );
+      expect(
+        !question.backdrop || question.backdrop.every((path) => path.trim().length > 0),
+        `map backdrop paths are non-empty: ${question.id}`,
+      );
       break;
     }
     case 'true-false':
