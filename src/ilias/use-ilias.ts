@@ -2,18 +2,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { getActiveAuthToken } from '@/src/auth/session';
-import { readLogin, storedLoginHint } from '@/src/auth/vault';
 import { showToast } from '@/src/components/toast';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
-import { iliasAccountFrom } from '@/src/ilias/account';
-import { connectIlias, disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
+import { disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
 import { ensureIliasSession } from '@/src/ilias/auto-connect';
 import { iliasErrorMessage as describe } from '@/src/ilias/errors';
 import type { IliasDashboard, IliasStatus } from '@/src/ilias/types';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@/src/text';
 
-/** Owns status, dashboard rows, and the one-shot credential handoff. */
+/** Owns the automatically restored ILIAS session and its dashboard rows. */
 export function useIlias() {
   const locale = useAppSelector((state) => state.locale);
   const authToken = useAppSelector((state) => state.authToken);
@@ -26,22 +24,7 @@ export function useIlias() {
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [note, setNote] = useState('');
-  const [savedLogin, setSavedLogin] = useState<{ account: string; biometrics: boolean } | null>(null);
   const inFlight = useRef(false);
-  const loading = Boolean(authToken) && settledToken !== authToken;
-
-  useEffect(() => {
-    let active = true;
-    storedLoginHint()
-      .then((hint) => {
-        if (active && hint) setSavedLogin(hint);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const applyStatus = useCallback((next: IliasStatus) => {
     setStatus(next);
@@ -52,10 +35,7 @@ export function useIlias() {
     async (options: { quiet?: boolean; pull?: boolean } = {}) => {
       if (inFlight.current) return;
       inFlight.current = true;
-      if (!options.quiet) {
-        setError('');
-        if (!options.pull) setNote('');
-      }
+      if (!options.quiet) setError('');
       try {
         const result = await loadIliasDashboard({ refresh: Boolean(options.pull) });
         applyStatus(result.status);
@@ -103,43 +83,9 @@ export function useIlias() {
     };
   }, [applyStatus, authToken, locale]);
 
-  const connect = useCallback(
-    async (input: { account?: string; password?: string; cookie?: string }, options: { quiet?: boolean } = {}) => {
-      if (busy) return;
-      setBusy(true);
-      if (!options.quiet) {
-        setError('');
-        setNote('');
-      }
-      try {
-        const result = await connectIlias({
-          ...input,
-          account: iliasAccountFrom(input.account),
-        });
-        applyStatus(result.status);
-        setDashboard(result.dashboard);
-        void refreshUser();
-        if (!options.quiet) {
-          showToast({
-            tone: 'success',
-            title: tx(locale, 'tabsIlias.verbunden'),
-            message: result.dashboard.name || result.dashboard.account || tx(locale, 'tabsIlias.ilias'),
-          });
-          setNote(tx(locale, 'tabsIlias.geladen', [String(result.dashboard.counts.memberships)]));
-        }
-      } catch (caught) {
-        setError(describe(caught, locale));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [applyStatus, busy, locale, refreshUser],
-  );
-
   const disconnect = useCallback(async () => {
     setBusy(true);
     setError('');
-    setNote('');
     try {
       const next = await disconnectIlias();
       applyStatus(next);
@@ -152,34 +98,6 @@ export function useIlias() {
       setBusy(false);
     }
   }, [applyStatus, locale, refreshUser]);
-
-  /**
-   * Reuse the opt-in C@MPUS device vault: same university password, ILIAS
-   * login name from the address before the @. The vault read may raise the
-   * biometric prompt the user chose when saving it. A quiet attempt is the
-   * automatic one, so a cancelled prompt or an empty vault stays silent.
-   */
-  const connectSaved = useCallback(
-    async (options: { quiet?: boolean } = {}) => {
-      if (!savedLogin || busy) return;
-      // A background reconnect never raises the biometric prompt. The user can
-      // still unlock the vault explicitly with the saved-login button.
-      if (options.quiet && savedLogin.biometrics) return;
-      if (!options.quiet) {
-        setError('');
-        setNote('');
-      }
-      const stored = await readLogin(tx(locale, 'tabsIlias.entsperren'), savedLogin.biometrics);
-      if (!stored) {
-        if (options.quiet) return;
-        setSavedLogin(null);
-        setError(tx(locale, 'tabsIlias.gespeicherte'));
-        return;
-      }
-      await connect({ account: iliasAccountFrom(stored.account), password: stored.password }, options);
-    },
-    [busy, connect, locale, savedLogin],
-  );
 
   /**
    * The app session refresh runs on every resume; the ILIAS session follows it.
@@ -251,10 +169,6 @@ export function useIlias() {
     })();
   }, [authToken, dashboard, load, sessionAccount, sessionEmail, settledToken, status?.sessionActive]);
 
-  const refresh = useCallback(async () => {
-    await load({ pull: true });
-  }, [load]);
-
   const pullToRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -267,17 +181,10 @@ export function useIlias() {
   return {
     status,
     dashboard,
-    loading,
     refreshing,
     busy,
     error,
-    note,
-    authToken,
-    savedLogin,
-    connect,
-    connectSaved,
     disconnect,
-    refresh,
     pullToRefresh,
   };
 }
