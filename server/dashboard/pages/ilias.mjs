@@ -56,16 +56,6 @@ export async function renderIliasPage() {
       : null;
 
     view.replaceChildren(
-      h('div', { className: 'page-intro' },
-        h('div', null,
-          h('div', { className: 'eyebrow' }, 'Plattform'),
-          h('h2', { text: 'ILIAS' }),
-          h('p', { text: 'Standard-Anmeldung über HTTPS, Dashboard-Blöcke und live gelesene Kursinhalte pro Konto.' }),
-        ),
-        h('div', { className: 'health-strip' },
-          h('span', { className: 'health-chip ' + (data.configured ? 'ok' : 'warn') }, h('span', { className: 'dot' }), data.configured ? 'ENV-Sitzung gesetzt' : 'keine ENV-Sitzung'),
-          h('span', { className: 'health-chip ok' }, h('span', { className: 'dot' }), data.activeSessions + ' aktiv'),
-        )),
       kpiGrid,
       callout('Das Passwort wird nur für den einen Anmelde-POST verwendet und nicht gespeichert. Im Speicher bleibt ausschließlich die PHPSESSID; die Tabelle zeigt den zuletzt gelesenen Dashboard-Stand.', '', 'shield'),
       callout('Kursinhalte werden nicht gespeichert. Unter „Öffnen“ liest der Reiter ILIAS eines Kontos die Seite live über dessen Sitzung, zeigt Unterordner und Gruppen und lädt Dateien über den Server herunter.', '', 'grid'),

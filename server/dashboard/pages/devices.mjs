@@ -82,17 +82,6 @@ export async function renderDevicesPage(route) {
 
   $('view').replaceChildren(
     h('div', { className: 'view-stack' },
-      h('div', { className: 'page-intro' },
-        h('div', null,
-          h('div', { className: 'eyebrow' }, 'Web-Anmeldung'),
-          h('h2', { text: 'Geräte' }),
-          h('p', { text: 'Die Web-App meldet sich ausschließlich über einen QR-Code an, den eine angemeldete App auf dem Telefon freigibt. Hier siehst du alle Paarungen und kannst einzelne Browser sofort abmelden.' }),
-        ),
-        h('div', { className: 'row' },
-          h('a', { className: 'btn secondary', href: '#/users' }, icon('users'), 'Konten'),
-          h('button', { className: 'btn secondary', type: 'button', onClick: () => loadDevices() }, icon('refresh'), 'Aktualisieren'),
-        ),
-      ),
       h('section', { className: 'card toolbar', 'aria-label': 'Gerätefilter' },
         h('label', { className: 'field grow' }, 'Suche', h('div', { className: 'search-field' }, icon('search'), search)),
         h('label', { className: 'field' }, 'Status', stateSelect),

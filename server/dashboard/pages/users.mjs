@@ -53,6 +53,7 @@ export async function renderUsersPage(route) {
     )),
     h('button', { className: 'btn secondary', type: 'button', onClick: () => resetUserFilters() }, icon('rotate-ccw'), 'Zurücksetzen'),
     h('button', { className: 'btn secondary', type: 'button', onClick: () => exportUsersCsv() }, icon('download'), 'CSV'),
+    h('button', { className: 'btn', type: 'button', onClick: () => openCreateUser() }, icon('plus'), 'Konto anlegen'),
   );
 
   const bulkBar = h('div', { id: 'bulk-bar', className: 'card', hidden: true, style: { padding: '11px 14px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } });
@@ -90,17 +91,6 @@ export async function renderUsersPage(route) {
 
   view.replaceChildren(
     h('div', { className: 'view-stack' },
-      h('div', { className: 'page-intro' },
-        h('div', null,
-          h('div', { className: 'eyebrow' }, 'Nutzerverwaltung'),
-          h('h2', { text: 'Konten' }),
-          h('p', { id: 'users-summary', text: 'Lade Konten …' }),
-        ),
-        h('div', { className: 'row' },
-          h('button', { className: 'btn', type: 'button', onClick: () => openCreateUser() }, icon('plus'), 'Konto anlegen'),
-          h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivitätsprotokoll'),
-        ),
-      ),
       toolbar,
       bulkBar,
       table,
@@ -210,8 +200,6 @@ async function loadUsers() {
   const tbody = $('users-body');
   if (!tbody) return;
   tbody.replaceChildren(...skeletonRows(9, 6));
-  const summary = $('users-summary');
-  if (summary) summary.textContent = 'Lade Konten …';
   try {
     const data = await api('/v1/admin/users?' + userQueryParams().toString());
     if (seq !== state.usersSeq) return;
@@ -225,21 +213,14 @@ async function loadUsers() {
     if (error.code === 'unauthorized') return;
     if (seq !== state.usersSeq) return;
     tbody.replaceChildren(h('tr', null, h('td', { colspan: '9' }, emptyState('alert', 'Konten konnten nicht geladen werden', errorText(error), h('button', { className: 'btn secondary', type: 'button', onClick: () => loadUsers() }, icon('refresh'), 'Erneut versuchen')))));
-    if (summary) summary.textContent = 'Fehler beim Laden.';
     toast(errorText(error), 'error');
   }
 }
 
 function renderUserRows(data) {
   const tbody = $('users-body');
-  const summary = $('users-summary');
   if (!tbody) return;
   tbody.replaceChildren();
-  if (summary) {
-    summary.textContent = data.total === 1
-      ? '1 Konto entspricht den Filtern.'
-      : number(data.total) + ' Konten entsprechen den Filtern.';
-  }
   if (!data.users.length) {
     tbody.append(h('tr', null, h('td', { colspan: '9' }, emptyState('search', 'Keine Konten gefunden', 'Passe Suche oder Filter an, um wieder Ergebnisse zu sehen.', h('button', { className: 'btn secondary', type: 'button', onClick: () => resetUserFilters() }, icon('rotate-ccw'), 'Filter zurücksetzen')))));
   }

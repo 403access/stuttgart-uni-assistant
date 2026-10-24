@@ -105,15 +105,6 @@ export async function renderOverview() {
     : emptyState('activity', 'Noch keine Aktionen', 'Jede Änderung im Dashboard wird hier protokolliert.');
 
   view.replaceChildren(
-    h('div', { className: 'page-intro' },
-      h('div', null,
-        h('div', { className: 'eyebrow' }, 'Betriebszentrale'),
-        h('h2', { text: 'Willkommen zurück' }),
-        h('p', { text: 'Alle Konten, Portal-Daten und Systemzustände an einem Ort.' }),
-      ),
-      h('div', { className: 'health-strip' }, ...health.map(([label, ok]) => h('span', { className: 'health-chip ' + (ok ? 'ok' : 'warn') },
-        h('span', { className: 'dot' }), label + (ok ? '' : ' · fehlt'),
-      )))),
     kpiGrid,
     h('div', { className: 'overview-grid' },
       h('div', { className: 'overview-col' },

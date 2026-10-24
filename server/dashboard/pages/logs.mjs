@@ -168,17 +168,6 @@ function renderLogsShell(data) {
 
   view.replaceChildren(
     h('div', { className: 'view-stack' },
-      h('div', { className: 'page-intro' },
-        h('div', null,
-          h('div', { className: 'eyebrow' }, 'Diagnose'),
-          h('h2', { text: 'Logs' }),
-          h('p', { text: 'Servermeldungen aus C@MPUS, ILIAS, UniMail, SIAM/OIDC, Sync, Anmeldung und Assistent. Neueste zuerst, höchstens 5.000 Einträge und 30 Tage.' }),
-        ),
-        h('div', { className: 'row' },
-          h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivität'),
-          h('a', { className: 'btn secondary', href: '#/system' }, icon('server'), 'Systemzustand'),
-        ),
-      ),
       h('section', { className: 'card toolbar' },
         h('label', { className: 'field grow' }, 'Suche', h('div', { className: 'search-field' }, icon('search'), search)),
         h('label', { className: 'field grow' }, 'Dienst', serviceSelect),

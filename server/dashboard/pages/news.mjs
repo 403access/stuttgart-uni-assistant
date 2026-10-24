@@ -79,16 +79,10 @@ function renderShell(data) {
 
   view.replaceChildren(
     h('div', { className: 'view-stack' },
-      h('div', { className: 'page-intro' },
-        h('div', null, h('div', { className: 'eyebrow' }, 'Redaktion'), h('h2', { text: 'News' }), h('p', { text: 'Nur veröffentlichte Meldungen erscheinen im Feed der App. Entwürfe bleiben hier sichtbar.' })),
-        h('div', { className: 'row' },
-          h('button', { className: 'btn', type: 'button', onClick: () => openNewsEditor(null) }, icon('plus'), 'Meldung anlegen'),
-          h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivität'),
-        ),
-      ),
       h('section', { className: 'card toolbar' },
         h('label', { className: 'field grow' }, 'Suche', h('div', { className: 'search-field' }, icon('search'), search)),
         h('label', { className: 'field' }, 'Status', stateSelect),
+        h('button', { className: 'btn', type: 'button', onClick: () => openNewsEditor(null) }, icon('plus'), 'Meldung anlegen'),
       ),
       h('section', { className: 'card table-card' },
         h('div', { className: 'table-wrap' }, h('table', { className: 'data' },

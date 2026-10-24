@@ -70,10 +70,6 @@ function renderAuditShell(data) {
   );
   view.replaceChildren(
     h('div', { className: 'view-stack' },
-      h('div', { className: 'page-intro' },
-        h('div', null, h('div', { className: 'eyebrow' }, 'Nachvollziehbarkeit'), h('h2', { text: 'Aktivität' }), h('p', { text: 'Anmeldungen, Kontobearbeitungen und jede Datenlöschung werden serverseitig protokolliert.' })),
-        h('a', { className: 'btn secondary', href: '#/system' }, icon('server'), 'Systemzustand'),
-      ),
       h('section', { className: 'card toolbar' },
         h('label', { className: 'field grow' }, 'Suche', h('div', { className: 'search-field' }, icon('search'), search)),
         h('label', { className: 'field grow' }, 'Aktion', actionSelect),

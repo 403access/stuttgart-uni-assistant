@@ -52,12 +52,9 @@ function environmentSection(environment, revealed) {
   const envFile = environment.envFile || {};
   const totals = environment.totals || {};
   const variables = environment.variables || [];
-  const actions = [
-    h('button', { className: 'btn secondary small', type: 'button', onClick: () => renderSystemPage() }, icon('refresh'), 'Neu laden'),
-    revealed
-      ? h('button', { className: 'btn secondary small', type: 'button', onClick: () => hideEnvironment() }, icon('eye-off'), 'Geheimnisse verbergen')
-      : h('button', { className: 'btn secondary small', type: 'button', onClick: () => revealEnvironment() }, icon('eye'), 'Geheimnisse anzeigen'),
-  ];
+  const actions = revealed
+    ? h('button', { className: 'btn secondary small', type: 'button', onClick: () => hideEnvironment() }, icon('eye-off'), 'Geheimnisse verbergen')
+    : h('button', { className: 'btn secondary small', type: 'button', onClick: () => revealEnvironment() }, icon('eye'), 'Geheimnisse anzeigen');
   const rows = variables.length
     ? variables.map((variable) => h('tr', null,
         h('td', null, h('div', { className: 'row tight' },
@@ -70,7 +67,7 @@ function environmentSection(environment, revealed) {
       ))
     : [h('tr', null, h('td', { colspan: '4' }, emptyState('key', 'Keine Variablen', 'Weder .env.example noch die Prozessumgebung liefern Variablen.')))];
 
-  return h('section', { className: 'card section-card' },
+  return h('section', { className: 'card section-card', style: { marginTop: '16px' } },
     sectionHead('Umgebung', 'Variablen aus .env und der Prozessumgebung', actions),
     h('div', { className: 'field-grid' },
       fieldBox('.env-Datei', h('span', { className: 'mono tiny', text: envFile.path || '–' })),
@@ -150,13 +147,6 @@ function renderSystem(data) {
     : emptyState('zap', 'Keine Synchronisationen', 'Aktive und abgeschlossene C@MPUS-Sync-Jobs erscheinen hier. Nach einem Server-Neustart ist der Verlauf leer.');
 
   view.replaceChildren(
-    h('div', { className: 'page-intro' },
-      h('div', null, h('div', { className: 'eyebrow' }, 'Betrieb'), h('h2', { text: 'Systemzustand' }), h('p', { text: 'Laufzeit, Umgebung, Konfiguration und Datenbank auf einen Blick.' })),
-      h('div', { className: 'row' },
-        h('button', { className: 'btn secondary', type: 'button', onClick: () => renderSystemPage() }, icon('refresh'), 'Neu laden'),
-        h('a', { className: 'btn secondary', href: '#/audit' }, icon('activity'), 'Aktivität'),
-      ),
-    ),
     h('div', { className: 'kpi-grid' },
       h('article', { className: 'kpi green' }, h('div', { className: 'kpi-top' }, h('span', { className: 'kpi-icon' }, icon('clock', 17))), h('div', { className: 'value', text: uptime(runtime.uptimeSeconds) }), h('div', { className: 'label', text: 'Laufzeit' }), h('div', { className: 'sub', text: 'seit ' + date(runtime.startedAt) })),
       h('article', { className: 'kpi cyan' }, h('div', { className: 'kpi-top' }, h('span', { className: 'kpi-icon' }, icon('monitor', 17))), h('div', { className: 'value', text: bytes(runtime.memory.rss) }), h('div', { className: 'label', text: 'Arbeitsspeicher' }), h('div', { className: 'sub', text: 'Heap ' + bytes(runtime.memory.heapUsed) + ' / ' + bytes(runtime.memory.heapTotal) })),
