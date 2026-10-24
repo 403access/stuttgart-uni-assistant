@@ -92,9 +92,11 @@ the time of the last read. Opening a row shows the stored dashboard: course and
 group titles with their ILIAS links, the newest news, the ILIAS mailbox, and
 to-dos. From a course or group, **Inhalte** browses the live object list and
 its PDF/download rows; the same view loads the object's members tab beneath
-the table, with each member's role, tutor marker, and profile link. **Trennen**
-forgets the cookie and demotes the platform link; the stored snapshot stays
-readable. The cookie and password are never shown.
+the table, with each member's role, tutor marker, and avatar. **Profil** opens
+the member's public profile inline with the avatar, published sections, e-mail,
+ILIAS-mail, vCard, and any course links. **Trennen** forgets the cookie and
+demotes the platform link; the stored snapshot stays readable. The cookie and
+password are never shown.
 
 **User list:** search by account, name, email, or matriculation; filter by
 sign-in mode, linked platform, C@MPUS source (`env` / browser / active in
@@ -185,6 +187,8 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/admin/ilias` | ILIAS connections, active sessions, and aggregated course/news/mail counts. |
 | `GET /v1/admin/users/<id>/ilias/content?refId=&kind=` | Live-read one course, group, or folder page for the account. |
 | `GET /v1/admin/users/<id>/ilias/members?refId=&kind=&url=` | Live-read the members tab; `url` is the members link from the content page. |
+| `GET /v1/admin/users/<id>/ilias/profile?userId=&url=` | Live-read one member's public profile. |
+| `GET /v1/admin/users/<id>/ilias/image?url=` | Stream a profile image with the account's ILIAS session. |
 | `GET /v1/admin/users/<id>/ilias/file?refId=` | Stream one repository file with the account's ILIAS session. |
 | `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers, newest pairing first. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
@@ -230,7 +234,7 @@ screen cannot replay them.
 | `server/admin/overview.mjs` | Cross-account counts and statistics. |
 | `server/admin/users.mjs` | Account list and detail reads. |
 | `server/admin/devices.mjs` | QR-linked browser list, stats, and revoke. |
-| `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content and member reads, file download, and disconnect. |
+| `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content, member, profile and image reads, file download, and disconnect. |
 | `server/admin/news.mjs` | News list, create, update, publish, and delete. |
 | `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
 | `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |

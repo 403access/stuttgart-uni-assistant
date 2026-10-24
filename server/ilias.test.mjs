@@ -16,10 +16,13 @@ const {
   cachedIliasContent,
   cachedIliasDashboard,
   cachedIliasMembers,
+  cachedIliasProfile,
   fetchIliasContent,
   fetchIliasDashboard,
   fetchIliasFile,
+  fetchIliasImage,
   fetchIliasMembers,
+  fetchIliasProfile,
   iliasLoginName,
   ingestIliasPage,
   loginIlias,
@@ -30,6 +33,7 @@ const {
   parseIliasDashboard,
   parseIliasMembers,
   parseIliasLoginForm,
+  parseIliasProfile,
   publicIliasStatus,
   setUserIliasSession,
   clearUserIliasSession,
@@ -199,6 +203,38 @@ const MEMBERS_PAGE = `<!doctype html><html><head><title>Mitglieder: Tutorium 1</
   </div></div>
 </body></html>`;
 
+const PROFILE_PAGE = `<!doctype html><html><head><title>Mitglieder: Bross, Fabian [FabianBross]</title></head><body>
+  <div class="media il_HeaderInner">
+    <h1 class="il-page-content-header media-heading ilHeader ">Bross, Fabian [FabianBross]</h1>
+    <div class="media-body"><div class="ilHeaderDesc">Syntax I</div></div>
+  </div>
+  <div class="ilProfile">
+    <div class="row">
+      <div class="col-sm-6">
+        <h3 class="ilProfileName">Herr Fabian Bross</h3>
+        <div class="ilProfileSection">
+          <h3 class="ilProfileSectionHead">Institution / Abteilung</h3>
+          Universität Stuttgart / Institut für Linguistik/Germanistik
+        </div>
+        <div class="ilProfileSection">
+          <h3 class="ilProfileSectionHead">Kontakt</h3>
+          E-Mail: fabian.bross@ling.uni-stuttgart.de
+        </div>
+        <div class="ilProfileSection">
+          <h3 class="ilProfileSectionHead">Kurse und Gruppen</h3>
+          <a href="https://ilias3.uni-stuttgart.de/go/crs/4572012">Syntax I</a>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <img class="ilProfileImage" src="https://ilias3.uni-stuttgart.de/deliver.php/avatar-857845" title="Profilbild" alt="Profilbild" /><br />
+        <a class="il_ContainerItemCommand" href="ilias.php?baseClass=ilMailGUI&amp;type=new&amp;rcp_to=FabianBross">Mail versenden</a><br />
+        <a class="il_ContainerItemCommand" href="ilias.php?baseClass=ilrepositorygui&amp;cmdClass=ilPublicUserProfileGUI&amp;cmd=deliverVCard&amp;user_id=857845&amp;user=857845">Visitenkarte herunterladen</a>
+      </div>
+    </div>
+  </div>
+  <footer></footer>
+</body></html>`;
+
 function page(action = 'http://127.0.0.1/login', extra = '') {
   return LOGIN_FORM.replaceAll('__ACTION__', action).replace('</body>', `${extra}</body>`);
 }
@@ -330,6 +366,8 @@ test('members tabs list the tutor first and keep hidden names readable', () => {
   assert.equal(tutor.role, 'Kontaktperson');
   assert.equal(tutor.roleKind, 'tutor');
   assert.match(tutor.profileUrl, /ilPublicUserProfileGUI/);
+  assert.equal(tutor.userId, 5855743);
+  assert.match(tutor.avatarUrl, /avatar\.png$/);
 
   // "Nicht freigegeben" still names the member through the login.
   assert.equal(hidden.name, 'Vivian Eichholz');
@@ -369,6 +407,78 @@ test('members read the members tab with the session cookie', async () => {
       }),
     (error) => error.status === 400 && error.message === 'ilias_url_invalid',
   );
+});
+
+test('public profiles keep the name, context, sections, and contact actions', () => {
+  const profile = parseIliasProfile(PROFILE_PAGE, {
+    userId: 857845,
+    url: 'https://ilias3.uni-stuttgart.de/ilias.php?cmdClass=ilPublicUserProfileGUI&user=857845',
+    fetchedAt: '2026-10-23T23:32:14.000Z',
+  });
+  assert.equal(profile.userId, 857845);
+  assert.equal(profile.name, 'Herr Fabian Bross');
+  assert.equal(profile.title, 'Bross, Fabian [FabianBross]');
+  assert.equal(profile.context, 'Syntax I');
+  assert.match(profile.avatarUrl, /deliver\.php\/avatar-857845/);
+  assert.equal(profile.email, 'fabian.bross@ling.uni-stuttgart.de');
+  assert.match(profile.mailUrl, /rcp_to=FabianBross/);
+  assert.match(profile.vcardUrl, /cmd=deliverVCard/);
+  assert.equal(profile.profileUrl, 'https://ilias3.uni-stuttgart.de/go/usr/857845');
+  assert.equal(profile.sections.length, 3);
+  assert.equal(profile.sections[0].title, 'Institution / Abteilung');
+  assert.match(profile.sections[0].text, /Institut für Linguistik/);
+  assert.equal(profile.courses.length, 1);
+  assert.equal(profile.courses[0].refId, 4572012);
+  assert.equal(profile.courses[0].kind, 'crs');
+});
+
+test('profile reads need a trusted ILIAS link and the profile markup', async () => {
+  const requested = [];
+  const fetchImpl = async (url) => {
+    requested.push(String(url));
+    return { status: 200, ok: true, headers: { get: () => null }, text: async () => PROFILE_PAGE };
+  };
+  const profile = await fetchIliasProfile({
+    cookie: 'session-abc',
+    userId: 857845,
+    profileUrl: 'https://ilias3.uni-stuttgart.de/ilias.php?cmdClass=ilPublicUserProfileGUI&user=857845',
+    fetchImpl,
+  });
+  assert.equal(profile.name, 'Herr Fabian Bross');
+  assert.match(requested[0], /ilPublicUserProfileGUI/);
+
+  await assert.rejects(
+    () =>
+      fetchIliasProfile({
+        cookie: 'session-abc',
+        profileUrl: 'https://example.com/profile',
+        fetchImpl,
+      }),
+    (error) => error.status === 400 && error.message === 'ilias_url_invalid',
+  );
+});
+
+test('profile images stream through the session and stay image-only', async () => {
+  resetDbForTests();
+  const auth = await import('./auth.mjs');
+  const created = auth.createUserSession({ account: 'st445566', name: 'ILIAS Image', mode: 'local' });
+  setUserIliasSession(created.user.id, { cookie: 'session-abc', account: 'st445566', source: 'browser' });
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  const fetchImpl = async () => ({
+    status: 200,
+    ok: true,
+    headers: { get: (name) => (name.toLowerCase() === 'content-type' ? 'image/png' : null) },
+    arrayBuffer: async () => png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength),
+  });
+  const image = await fetchIliasImage(created.user.id, 'https://ilias3.uni-stuttgart.de/deliver.php/avatar', fetchImpl);
+  assert.equal(image.contentType, 'image/png');
+  assert.deepEqual(Buffer.from(image.bytes), png);
+
+  await assert.rejects(
+    () => fetchIliasImage(created.user.id, 'https://example.com/avatar.png', fetchImpl),
+    (error) => error.status === 400 && error.message === 'ilias_url_invalid',
+  );
+  clearUserIliasSession(created.user.id);
 });
 
 test('content reads use the session cookie and report an expired session', async () => {
@@ -593,6 +703,30 @@ test('the admin layer lists course and group members for an active session', asy
   assert.equal(members.members[0].roleKind, 'tutor');
   assert.equal(members.members[1].hidden, true);
   assert.equal(JSON.stringify(members).includes('session-abc'), false);
+
+  const profile = await admin.readAdminUserIliasProfile(
+    created.user.id,
+    {
+      profileUserId: 857845,
+      profileUrl: 'https://ilias3.uni-stuttgart.de/ilias.php?cmdClass=ilPublicUserProfileGUI&user=857845',
+    },
+    async () => ({ status: 200, ok: true, headers: { get: () => null }, text: async () => PROFILE_PAGE }),
+  );
+  assert.equal(profile.name, 'Herr Fabian Bross');
+  assert.equal(profile.sections.length, 3);
+
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  const image = await admin.readAdminUserIliasImage(
+    created.user.id,
+    'https://ilias3.uni-stuttgart.de/deliver.php/avatar-857845',
+    async () => ({
+      status: 200,
+      ok: true,
+      headers: { get: (name) => (name.toLowerCase() === 'content-type' ? 'image/png' : null) },
+      arrayBuffer: async () => png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength),
+    }),
+  );
+  assert.deepEqual(Buffer.from(image.bytes), png);
 });
 
 test('client-harvested pages are stored and served without a server-side ILIAS read', async () => {
@@ -654,6 +788,21 @@ test('client-harvested pages are stored and served without a server-side ILIAS r
   assert.equal(members.members.members.length, 3);
   assert.equal(members.members.members[0].roleKind, 'tutor');
   assert.equal(cachedIliasMembers(created.user.id, { refId: 4590579, kind: 'crs' }).members.members.length, 3);
+
+  assert.throws(
+    () => cachedIliasProfile(created.user.id, { userId: 857845 }),
+    (error) => error.status === 404 && error.message === 'ilias_cache_miss',
+  );
+  const profile = ingestIliasPage(created.user.id, {
+    page: 'profile',
+    userId: 857845,
+    html: PROFILE_PAGE,
+    url: 'https://ilias3.uni-stuttgart.de/ilias.php?cmdClass=ilPublicUserProfileGUI&user=857845',
+    fetchedAt: new Date().toISOString(),
+  });
+  assert.equal(profile.page, 'profile');
+  assert.equal(profile.profile.name, 'Herr Fabian Bross');
+  assert.equal(cachedIliasProfile(created.user.id, { userId: 857845 }).profile.sections.length, 3);
 
   ingestIliasPage(created.user.id, {
     page: 'content',
@@ -744,6 +893,20 @@ test('the HTTP layer ingests, caches, and hands back the WebView cookie', async 
     assert.equal(membersBody.members.length, 3);
     assert.equal(membersBody.members[0].roleKind, 'tutor');
     assert.equal(membersBody.cached, true);
+
+    const profileIngest = await fetch(`${base}/v1/ilias/ingest`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ page: 'profile', userId: 857845, html: PROFILE_PAGE, url: 'https://ilias3.uni-stuttgart.de/ilias.php?cmdClass=ilPublicUserProfileGUI&user=857845' }),
+    });
+    assert.equal(profileIngest.status, 200);
+    assert.equal((await profileIngest.json()).name, 'Herr Fabian Bross');
+
+    const profile = await fetch(`${base}/v1/ilias/profile?userId=857845`, { headers });
+    assert.equal(profile.status, 200);
+    const profileBody = await profile.json();
+    assert.equal(profileBody.sections.length, 3);
+    assert.equal(profileBody.cached, true);
 
     // A harvested login page tells the app to report the dead session; the
     // stored rows stay readable and the source marker survives for reconnect.

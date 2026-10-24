@@ -251,6 +251,16 @@ export function getDb() {
       PRIMARY KEY (user_id, ref_id, kind)
     );
     CREATE INDEX IF NOT EXISTS user_ilias_members_user ON user_ilias_members(user_id, fetched_at DESC);
+    /* Public member profiles opened from a members tab. Keyed by the target
+       profile's user id, which is the same across all courses. */
+    CREATE TABLE IF NOT EXISTS user_ilias_profiles (
+      user_id TEXT NOT NULL,
+      profile_user_id INTEGER NOT NULL,
+      payload TEXT NOT NULL DEFAULT '{}',
+      fetched_at TEXT,
+      PRIMARY KEY (user_id, profile_user_id)
+    );
+    CREATE INDEX IF NOT EXISTS user_ilias_profiles_user ON user_ilias_profiles(user_id, fetched_at DESC);
     /* The HTML the client harvested, kept so a parser fix can replay a page
        without asking the device to fetch it again. Pruned per account. */
     CREATE TABLE IF NOT EXISTS user_ilias_pages (
@@ -952,6 +962,36 @@ export function loadIliasMembers(userId, refId, kind = 'crs') {
   try {
     const parsed = JSON.parse(row.payload);
     return parsed && typeof parsed === 'object' ? { members: parsed, fetchedAt: row.fetched_at ?? null } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** One parsed public profile, keyed by the target user id. */
+export function saveIliasProfile(userId, profile) {
+  const owner = scope(userId);
+  const profileUserId = Number(profile?.userId);
+  if (!Number.isInteger(profileUserId) || profileUserId <= 0) return;
+  const fetchedAt = iliasFetchedAt(profile?.fetchedAt);
+  getDb()
+    .prepare('INSERT INTO user_ilias_profiles (user_id, profile_user_id, payload, fetched_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, profile_user_id) DO UPDATE SET payload = excluded.payload, fetched_at = excluded.fetched_at')
+    .run(owner, profileUserId, JSON.stringify(profile ?? {}), fetchedAt);
+  getDb()
+    .prepare('DELETE FROM user_ilias_profiles WHERE user_id = ? AND rowid NOT IN (SELECT rowid FROM user_ilias_profiles WHERE user_id = ? ORDER BY fetched_at DESC LIMIT 500)')
+    .run(owner, owner);
+}
+
+export function loadIliasProfile(userId, profileUserId) {
+  const owner = scope(userId);
+  const id = Number(profileUserId);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const row = getDb()
+    .prepare('SELECT payload, fetched_at FROM user_ilias_profiles WHERE user_id = ? AND profile_user_id = ?')
+    .get(owner, id);
+  if (!row) return null;
+  try {
+    const parsed = JSON.parse(row.payload);
+    return parsed && typeof parsed === 'object' ? { profile: parsed, fetchedAt: row.fetched_at ?? null } : null;
   } catch {
     return null;
   }

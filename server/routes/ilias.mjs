@@ -11,9 +11,11 @@ import {
   cachedIliasContent,
   cachedIliasDashboard,
   cachedIliasMembers,
+  cachedIliasProfile,
   clearUserIliasSession,
   connectIlias,
   disconnectIlias,
+  fetchIliasImage,
   iliasCookieFor,
   iliasError,
   iliasLoginName,
@@ -23,6 +25,7 @@ import {
   readIliasDashboard,
   readIliasFile,
   readIliasMembers,
+  readIliasProfile,
 } from '../ilias.mjs';
 import { attachmentDisposition, readJsonBody, send } from '../http.mjs';
 import { errorBody, logRequest } from '../request-log.mjs';
@@ -165,6 +168,45 @@ export async function handleIlias(request, response, url) {
     }
     return true;
   }
+  if (request.method === 'GET' && url.pathname === '/v1/ilias/profile') {
+    const reqId = logRequest('GET /v1/ilias/profile');
+    try {
+      const auth = requireAuth(request);
+      const profileUserId = Number(url.searchParams.get('userId'));
+      const profileUrl = url.searchParams.get('url') || '';
+      const live = url.searchParams.get('live') === '1';
+      const result = live
+        ? { profile: await readIliasProfile(auth.user.id, { profileUserId, profileUrl }), cached: false, stale: false }
+        : cachedIliasProfile(auth.user.id, { userId: profileUserId });
+      const profile = result.profile;
+      const user = touchPlatform(auth.user.id, 'ilias');
+      logService('ilias', 'info', `#${reqId} profile ${live ? 'live' : 'cache'} user=${profile.userId} sections=${profile.sections.length} stale=${result.stale}`, { userId: auth.user.id });
+      send(response, 200, { ok: true, ...profile, cached: result.cached, stale: Boolean(result.stale), user });
+    } catch (error) {
+      logService('ilias', 'warn', `#${reqId} profile failed ${error?.message ?? 'ilias_failed'}`);
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && url.pathname === '/v1/ilias/image') {
+    const reqId = logRequest('GET /v1/ilias/image');
+    try {
+      const auth = requireAuth(request);
+      const image = await fetchIliasImage(auth.user.id, url.searchParams.get('url') || '');
+      response.writeHead(200, {
+        'Content-Type': image.contentType,
+        'Content-Length': image.bytes.length,
+        'Cache-Control': 'private, max-age=600',
+        'Access-Control-Allow-Origin': '*',
+      });
+      response.end(image.bytes);
+      logService('ilias', 'info', `#${reqId} image ok bytes=${image.bytes.length} user=${auth.user.id}`, { userId: auth.user.id });
+    } catch (error) {
+      logService('ilias', 'warn', `#${reqId} image failed ${error?.message ?? 'ilias_failed'}`);
+      fail(response, error);
+    }
+    return true;
+  }
   if (request.method === 'POST' && url.pathname === '/v1/ilias/ingest') {
     const reqId = logRequest('POST /v1/ilias/ingest');
     // HTML plus its JSON escaping; the page cap is checked again in the parser.
@@ -187,9 +229,12 @@ export async function handleIlias(request, response, url) {
       } else if (result.page === 'content') {
         logService('ilias', 'info', `#${reqId} ingest content ref=${result.content.refId} items=${result.content.items.length} user=${auth.user.id}`, { userId: auth.user.id });
         send(response, 200, { ok: true, ...result.content, cached: false, stale: false, user });
-      } else {
+      } else if (result.page === 'members') {
         logService('ilias', 'info', `#${reqId} ingest members ref=${result.members.refId} members=${result.members.members.length} user=${auth.user.id}`, { userId: auth.user.id });
         send(response, 200, { ok: true, ...result.members, cached: false, stale: false, user });
+      } else {
+        logService('ilias', 'info', `#${reqId} ingest profile user=${result.profile.userId} sections=${result.profile.sections.length} user=${auth.user.id}`, { userId: auth.user.id });
+        send(response, 200, { ok: true, ...result.profile, cached: false, stale: false, user });
       }
     } catch (error) {
       logService('ilias', 'warn', `#${reqId} ingest failed ${error?.message ?? 'ilias_failed'}`);

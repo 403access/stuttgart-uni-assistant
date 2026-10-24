@@ -2,13 +2,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { RefreshControl, Text, View } from 'react-native';
+import { Pressable, RefreshControl, Text, View } from 'react-native';
 
 import { showToast } from '@/src/components/toast';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
 import { isPdfItem } from '@/src/ilias/files';
+import { MemberAvatar } from '@/src/ilias/components/member-avatar';
 import { iliasContentQuery, iliasMembersQuery, refreshIliasPage } from '@/src/ilias/queries';
 import type { IliasContentItem, IliasMember } from '@/src/ilias/types';
 import { useAppSelector } from '@/src/state/AppState';
@@ -54,14 +55,19 @@ function MemberRow({
   locale,
   last,
   showRoles,
+  onPress,
 }: {
   member: IliasMember;
   locale: Locale;
   last: boolean;
   showRoles: boolean;
+  onPress: () => void;
 }) {
   return (
-    <View style={[styles.memberRow, !last && styles.memberDivider]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.memberRow, !last && styles.memberDivider, pressed && styles.memberPressed]}>
+      <MemberAvatar imageUrl={member.avatarUrl} name={member.name} size={38} />
       <View style={styles.memberText}>
         <Text style={styles.memberName} numberOfLines={1}>
           {member.name}
@@ -78,7 +84,7 @@ function MemberRow({
           tone={member.roleKind === 'tutor' ? 'blue' : 'neutral'}
         />
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -102,6 +108,25 @@ export default function IliasContentScreen() {
   // without telling members apart, so a "Teilnehmer" pill would be a guess.
   const showMemberRoles = members.some((member) => member.roleKind === 'tutor');
   const title = content?.title || initialTitle || 'ILIAS';
+
+  const openMember = (member: IliasMember) => {
+    router.push({
+      pathname: '/ilias/mitglied',
+      params: {
+        userId: member.userId ? String(member.userId) : '',
+        url: member.profileUrl,
+        name: member.name,
+        username: member.username,
+        avatar: member.avatarUrl,
+        hidden: member.hidden ? '1' : '',
+        role: member.role,
+        roleKind: member.roleKind,
+        course: title,
+        refId: String(refId),
+        kind,
+      },
+    });
+  };
 
   const open = async (item: IliasContentItem) => {
     setActionError('');
@@ -225,6 +250,7 @@ export default function IliasContentScreen() {
                       locale={locale}
                       last={index === members.length - 1}
                       showRoles={showMemberRoles}
+                      onPress={() => openMember(member)}
                     />
                   ))}
                 </View>
@@ -251,6 +277,7 @@ const styles = themedStyles((colors) => ({
   rowMeta: { color: colors.mute, fontSize: 12 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
   memberDivider: { borderBottomWidth: 1, borderBottomColor: colors.line },
+  memberPressed: { opacity: 0.65 },
   memberText: { flex: 1, gap: 2 },
   memberName: { color: colors.anthracite, fontSize: 15, fontWeight: '600' },
   memberMeta: { color: colors.mute, fontSize: 12 },

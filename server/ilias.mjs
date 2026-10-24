@@ -19,11 +19,13 @@ import {
   loadIliasContent,
   loadIliasMembers,
   loadIliasPage,
+  loadIliasProfile,
   loadIliasSource,
   loadIliasSnapshot,
   saveIliasContent,
   saveIliasMembers,
   saveIliasPage,
+  saveIliasProfile,
   saveIliasSnapshot,
   saveIliasSource,
 } from './db.mjs';
@@ -530,6 +532,7 @@ function memberCard(segment, index) {
   const username = memberProperty(segment, /^(anmeldename|benutzername|login|login name)$/i);
   const role = memberProperty(segment, /^(zuständigkeit|zustaendigkeit|rolle|funktion|role|function)$/i);
   let profileHref = titleHtml.match(/<a\b[^>]*href\s*=\s*["']([^"']+)["']/i)?.[1] ?? '';
+  profileHref = decodeEntities(profileHref);
   if (!profileHref) {
     for (const match of segment.matchAll(/<a\b[^>]*>/gi)) {
       const href = attributesOf(match[0]).href ?? '';
@@ -543,6 +546,12 @@ function memberCard(segment, index) {
   const name = hidden ? memberNameFromLogin(username) || title : title;
   if (!name) return null;
 
+  const userId = Number(
+    profileHref.match(/[?&]user=(\d+)/i)?.[1] ?? profileHref.match(/\/go\/usr\/(\d+)/i)?.[1] ?? 0,
+  ) || null;
+  const avatarTag = segment.match(/<img\b[^>]*>/i)?.[0] ?? '';
+  const avatarSrc = avatarTag ? attributesOf(avatarTag).src ?? '' : '';
+
   return {
     id: `member-${username || name || index}`,
     name,
@@ -550,6 +559,8 @@ function memberCard(segment, index) {
     role,
     roleKind: MEMBER_TUTOR_ROLE.test(role) ? 'tutor' : 'participant',
     hidden: hidden && Boolean(username),
+    userId,
+    avatarUrl: avatarSrc ? resolveUrl(ILIAS_BASE, avatarSrc) : '',
     profileUrl: profileHref ? resolveUrl(ILIAS_BASE, profileHref) : '',
   };
 }
@@ -589,6 +600,127 @@ export function parseIliasMembers(html, { refId = null, kind = 'crs', fetchedAt 
     kind,
     title,
     members,
+    fetchedAt,
+  };
+}
+
+/* ---------------------------------------------------------------- profile -- */
+
+const PROFILE_SECTION = /<div[^>]*class\s*=\s*["'][^"']*\bilProfileSection\b[^"']*["'][^>]*>/gi;
+
+/** Keep the line structure of a profile section, which plain `textOf` drops. */
+function profileText(html) {
+  return decodeEntities(
+    String(html ?? '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(?:p|div|li|dd)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' '),
+  )
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+function profileLinks(html) {
+  const links = [];
+  for (const match of String(html ?? '').matchAll(/<a\b[^>]*href\s*=\s*["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const label = textOf(match[2]);
+    if (!label) continue;
+    links.push({ label, url: resolveUrl(ILIAS_BASE, decodeEntities(match[1])) });
+  }
+  return links;
+}
+
+/** Course and group links a profile may carry in a section. */
+function profileCourses(links) {
+  const courses = [];
+  const seen = new Set();
+  for (const link of links) {
+    const go = link.url.match(/\/go\/(crs|grp)\/(\d+)(?:[?#]|$)/i);
+    const command = link.url.match(/cmdClass\s*=\s*ilObj(Course|Group)GUI/i);
+    const refId = Number(link.url.match(/[?&]ref_id=(\d+)/i)?.[1] ?? go?.[2] ?? 0);
+    const kind = go?.[1]?.toLowerCase() ?? (command ? (command[1].toLowerCase() === 'course' ? 'crs' : 'grp') : '');
+    if (!kind || !Number.isInteger(refId) || refId <= 0) continue;
+    const key = `${kind}-${refId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    courses.push({ refId, kind, title: link.label, url: link.url });
+  }
+  return courses;
+}
+
+function profileAvatar(block) {
+  const tag = block.match(/<img\b[^>]*class\s*=\s*["'][^"']*\bilProfileImage\b[^"']*["'][^>]*>/i)?.[0];
+  return tag ? attributesOf(tag).src ?? '' : '';
+}
+
+function profileSection(segment) {
+  const headTag = segment.match(
+    /<h3[^>]*class\s*=\s*["'][^"']*\bilProfileSectionHead\b[^"']*["'][^>]*>([\s\S]*?)<\/h3>/i,
+  );
+  const title = headTag ? textOf(headTag[1]) : '';
+  const actionLink =
+    /<a\b[^>]*href\s*=\s*["'][^"']*(?:ilMailGUI|deliverVCard)[^"']*["'][^>]*>[\s\S]*?<\/a>/gi;
+  const body = (headTag ? segment.replace(headTag[0], '') : segment).replace(actionLink, ' ');
+  const text = profileText(body);
+  const links = profileLinks(segment).filter(
+    (link) => !/baseClass\s*=\s*ilMailGUI/i.test(link.url) && !/\bcmd\s*=\s*deliverVCard\b/i.test(link.url),
+  );
+  return { title, text, links };
+}
+
+/**
+ * Parse the public profile ILIAS opens from a member card. The page is small:
+ * the profile name, an optional avatar, and one or more `ilProfileSection`
+ * blocks (institution, contact, and whatever else the user published). The
+ * header keeps the course context and the h1 form of the name.
+ */
+export function parseIliasProfile(html, { userId = null, url = '', fetchedAt = new Date().toISOString() } = {}) {
+  const source = String(html ?? '');
+  const start = source.search(/<div[^>]*class\s*=\s*["'][^"']*\bilProfile\b[^"']*["'][^>]*>/i);
+  const end = start >= 0 ? source.indexOf('<footer', start) : -1;
+  const block = start >= 0 ? source.slice(start, end >= 0 ? end : source.length) : source;
+
+  const id = Number(
+    userId ||
+      url.match(/[?&]user=(\d+)/i)?.[1] ||
+      url.match(/\/go\/usr\/(\d+)/i)?.[1] ||
+      0,
+  ) || null;
+  const name =
+    textOf(block.match(/<h3[^>]*class\s*=\s*["'][^"']*\bilProfileName\b[^"']*["'][^>]*>([\s\S]*?)<\/h3>/i)?.[1] ?? '') ||
+    textOf(source.match(/<h1[^>]*class\s*=\s*["'][^"']*\bil-page-content-header\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '');
+  const title = textOf(source.match(/<h1[^>]*class\s*=\s*["'][^"']*\bil-page-content-header\b[^"']*["'][^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '') || name;
+  const context = textOf(source.match(/<div[^>]*class\s*=\s*["'][^"']*\bilHeaderDesc\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? '');
+  const avatar = profileAvatar(block);
+  const allLinks = profileLinks(block);
+
+  const markers = [...block.matchAll(PROFILE_SECTION)];
+  const sections = [];
+  for (const [index, marker] of markers.entries()) {
+    const segment = block.slice(marker.index ?? 0, markers[index + 1]?.index ?? block.length);
+    const section = profileSection(segment);
+    if (section.title || section.text || section.links.length) sections.push(section);
+  }
+
+  const emailFromText = sections.map((section) => section.text).join('\n').match(/E-?Mail\s*:\s*([^\s\n]+@[^\s\n]+)/i)?.[1] ?? '';
+  const emailFromLink = allLinks.map((link) => link.url.match(/mailto:([^?&\s]+)/i)?.[1] ?? '').find(Boolean) ?? '';
+  const mailLink = allLinks.find((link) => /baseClass\s*=\s*ilMailGUI/i.test(link.url));
+  const vcardLink = allLinks.find((link) => /\bcmd\s*=\s*deliverVCard\b/i.test(link.url));
+
+  return {
+    userId: id,
+    name,
+    title,
+    context,
+    avatarUrl: avatar ? resolveUrl(ILIAS_BASE, avatar) : '',
+    email: emailFromText || emailFromLink,
+    mailUrl: mailLink?.url ?? '',
+    vcardUrl: vcardLink?.url ?? '',
+    profileUrl: id ? `${ILIAS_BASE}/go/usr/${id}` : url,
+    sections,
+    courses: profileCourses(allLinks),
     fetchedAt,
   };
 }
@@ -815,6 +947,58 @@ export async function fetchIliasMembers({ cookie, refId, kind = 'crs', fetchImpl
   return parseIliasMembers(html, { refId: id, kind: safeKind });
 }
 
+/** Read one public profile page. The link comes from a member card. */
+export async function fetchIliasProfile({ cookie, userId, profileUrl, fetchImpl = fetch }) {
+  const url = String(profileUrl ?? '').trim();
+  if (!url) throw iliasError(400, 'ilias_profile_url_missing');
+  if (!isIliasUrl(url)) throw iliasError(400, 'ilias_url_invalid');
+  const { html } = await fetchIliasHtml({ cookie, url, fetchImpl, referer: ILIAS_DASHBOARD_URL });
+  if (!/\bilProfile\b/i.test(html)) throw iliasError(502, 'ilias_profile_missing');
+  return parseIliasProfile(html, { userId: Number(userId) || null, url });
+}
+
+/**
+ * Fetch a profile image (or another image the signed-in profile page points to)
+ * with the account's cookie. The bytes stay out of the parsed JSON cache.
+ */
+export async function fetchIliasImage(userId, imageUrl, fetchImpl = fetch) {
+  const url = String(imageUrl ?? '').trim();
+  if (!url) throw iliasError(400, 'ilias_image_url_missing');
+  if (!isIliasUrl(url)) throw iliasError(400, 'ilias_url_invalid');
+  const { cookie } = resolveIliasSession(userId);
+  if (!cookie) throw iliasError(409, 'ilias_credentials_missing');
+  let current = url;
+  for (let hop = 0; hop <= 5; hop += 1) {
+    let response;
+    try {
+      response = await fetchImpl(current, {
+        redirect: 'manual',
+        headers: { ...DASHBOARD_HEADERS, Referer: ILIAS_BASE, Cookie: cookie },
+      });
+    } catch (error) {
+      throw iliasError(502, 'ilias_unreachable', String(error?.message ?? error));
+    }
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location') ?? '';
+      if (!location) throw iliasError(502, 'ilias_http_error', `HTTP ${response.status}`);
+      current = resolveUrl(current, location);
+      if (!isIliasUrl(current)) throw iliasError(400, 'ilias_url_invalid');
+      continue;
+    }
+    if (response.status === 401 || response.status === 403) {
+      clearUserIliasSession(userId);
+      throw iliasError(401, 'ilias_session_expired');
+    }
+    if (!response.ok) throw iliasError(502, 'ilias_http_error', `HTTP ${response.status}`);
+    const contentType = String(response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+    if (!contentType.startsWith('image/')) throw iliasError(502, 'ilias_image_invalid');
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length > 3_000_000) throw iliasError(413, 'ilias_image_too_large');
+    return { bytes, contentType };
+  }
+  throw iliasError(502, 'ilias_redirect_loop');
+}
+
 function filenameFromDisposition(value) {
   const text = String(value ?? '');
   const encoded = text.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)?.[1];
@@ -928,7 +1112,12 @@ function isIliasUrl(value) {
  * as well, so a parser change can replay it without another device fetch.
  */
 export function ingestIliasPage(userId, input = {}) {
-  if (input.page !== 'dashboard' && input.page !== 'content' && input.page !== 'members') {
+  if (
+    input.page !== 'dashboard' &&
+    input.page !== 'content' &&
+    input.page !== 'members' &&
+    input.page !== 'profile'
+  ) {
     throw iliasError(400, 'ilias_page_invalid');
   }
   const html = String(input.html ?? '');
@@ -960,6 +1149,22 @@ export function ingestIliasPage(userId, input = {}) {
     saveIliasMembers(userId, members);
     saveIliasPage(userId, { key: `members-${kind}-${refId}`, kind, refId, url, html, fetchedAt });
     return { page: 'members', members, ...cacheMeta(fetchedAt) };
+  }
+
+  if (input.page === 'profile') {
+    const profileUserId = Number(input.userId) || null;
+    const profile = parseIliasProfile(html, { userId: profileUserId, url, fetchedAt });
+    if (!profile.userId) throw iliasError(400, 'ilias_profile_user_invalid');
+    saveIliasProfile(userId, profile);
+    saveIliasPage(userId, {
+      key: `profile-${profile.userId}`,
+      kind: 'profile',
+      refId: null,
+      url,
+      html,
+      fetchedAt,
+    });
+    return { page: 'profile', profile, ...cacheMeta(fetchedAt) };
   }
 
   const dashboard = parseIliasDashboard(html, fetchedAt);
@@ -1008,6 +1213,18 @@ export function cachedIliasMembers(userId, input = {}, ttl = ILIAS_CACHE_TTL_MS)
   return {
     members: stored.members,
     ...cacheMeta(stored.fetchedAt ?? stored.members?.fetchedAt, ttl),
+  };
+}
+
+/** The stored public profile; no ILIAS request. Throws 404 when it was never harvested. */
+export function cachedIliasProfile(userId, input = {}, ttl = ILIAS_CACHE_TTL_MS) {
+  const profileUserId = Number(input.userId);
+  if (!Number.isInteger(profileUserId) || profileUserId <= 0) throw iliasError(400, 'ilias_profile_user_invalid');
+  const stored = loadIliasProfile(userId, profileUserId);
+  if (!stored) throw iliasError(404, 'ilias_cache_miss');
+  return {
+    profile: stored.profile,
+    ...cacheMeta(stored.fetchedAt ?? stored.profile?.fetchedAt, ttl),
   };
 }
 
@@ -1130,6 +1347,22 @@ export async function readIliasMembers(userId, input = {}, fetchImpl = fetch) {
       kind: input.kind,
       fetchImpl,
       membersUrl: input.membersUrl,
+    });
+  } catch (error) {
+    if (error?.status === 401) clearUserIliasSession(userId);
+    throw error;
+  }
+}
+
+/** Read one public profile with the user's session. */
+export async function readIliasProfile(userId, input = {}, fetchImpl = fetch) {
+  const session = resolveIliasSession(userId);
+  try {
+    return await fetchIliasProfile({
+      cookie: session.cookie,
+      userId: input.profileUserId,
+      profileUrl: input.profileUrl,
+      fetchImpl,
     });
   } catch (error) {
     if (error?.status === 401) clearUserIliasSession(userId);

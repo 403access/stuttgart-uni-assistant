@@ -29,6 +29,10 @@ import type {
   IliasItem,
   IliasMember,
   IliasMembers,
+  IliasProfile,
+  IliasProfileCourse,
+  IliasProfileLink,
+  IliasProfileSection,
   IliasStatus,
 } from './types';
 
@@ -160,6 +164,8 @@ function asMember(value: unknown): IliasMember | null {
     role: typeof member.role === 'string' ? member.role : '',
     roleKind: member.roleKind === 'tutor' ? 'tutor' : 'participant',
     hidden: Boolean(member.hidden),
+    userId: typeof member.userId === 'number' && member.userId > 0 ? member.userId : null,
+    avatarUrl: typeof member.avatarUrl === 'string' ? member.avatarUrl : '',
     profileUrl: typeof member.profileUrl === 'string' ? member.profileUrl : '',
   };
 }
@@ -173,6 +179,61 @@ export function asIliasMembers(value: unknown): IliasMembers {
     members: Array.isArray(body.members) ? body.members.flatMap((entry) => asMember(entry) ?? []) : [],
     fetchedAt: typeof body.fetchedAt === 'string' ? body.fetchedAt : new Date().toISOString(),
   };
+}
+
+function asProfileLink(value: unknown): IliasProfileLink | null {
+  if (!value || typeof value !== 'object') return null;
+  const link = value as Partial<IliasProfileLink>;
+  if (typeof link.url !== 'string' || !link.url) return null;
+  return { label: typeof link.label === 'string' ? link.label : link.url, url: link.url };
+}
+
+function asProfileSection(value: unknown): IliasProfileSection | null {
+  if (!value || typeof value !== 'object') return null;
+  const section = value as Partial<IliasProfileSection>;
+  const title = typeof section.title === 'string' ? section.title : '';
+  const text = typeof section.text === 'string' ? section.text : '';
+  const links = Array.isArray(section.links) ? section.links.flatMap((entry) => asProfileLink(entry) ?? []) : [];
+  if (!title && !text && links.length === 0) return null;
+  return { title, text, links };
+}
+
+function asProfileCourse(value: unknown): IliasProfileCourse | null {
+  if (!value || typeof value !== 'object') return null;
+  const course = value as Partial<IliasProfileCourse>;
+  if (typeof course.refId !== 'number' || course.refId <= 0) return null;
+  if (typeof course.kind !== 'string' || !course.kind) return null;
+  return {
+    refId: course.refId,
+    kind: course.kind,
+    title: typeof course.title === 'string' ? course.title : '',
+    url: typeof course.url === 'string' ? course.url : '',
+  };
+}
+
+export function asIliasProfile(value: unknown): IliasProfile {
+  const body = (value ?? {}) as Partial<IliasProfile>;
+  return {
+    userId: typeof body.userId === 'number' && body.userId > 0 ? body.userId : null,
+    name: typeof body.name === 'string' ? body.name : '',
+    title: typeof body.title === 'string' ? body.title : '',
+    context: typeof body.context === 'string' ? body.context : '',
+    avatarUrl: typeof body.avatarUrl === 'string' ? body.avatarUrl : '',
+    email: typeof body.email === 'string' ? body.email : '',
+    mailUrl: typeof body.mailUrl === 'string' ? body.mailUrl : '',
+    vcardUrl: typeof body.vcardUrl === 'string' ? body.vcardUrl : '',
+    profileUrl: typeof body.profileUrl === 'string' ? body.profileUrl : '',
+    sections: Array.isArray(body.sections) ? body.sections.flatMap((entry) => asProfileSection(entry) ?? []) : [],
+    courses: Array.isArray(body.courses) ? body.courses.flatMap((entry) => asProfileCourse(entry) ?? []) : [],
+    fetchedAt: typeof body.fetchedAt === 'string' ? body.fetchedAt : new Date().toISOString(),
+  };
+}
+
+/** The assistant-server proxy for a profile image; the bytes need the ILIAS cookie. */
+export function iliasImageUrl(imageUrl: string): string {
+  const value = imageUrl?.trim();
+  if (!value) return '';
+  return endpoint(`/v1/ilias/image?url=${encodeURIComponent(value)}`);
 }
 
 export function asIliasDashboard(value: unknown): IliasDashboard {
@@ -436,12 +497,65 @@ export async function loadIliasMembers(input: {
   }
 }
 
+/**
+ * A public member profile. Cached by the target user id; on a miss the app
+ * harvests the profile link it got from the members tab in its WebView.
+ */
+export async function loadIliasProfile(input: {
+  userId: number | null;
+  url: string;
+  refresh?: boolean;
+}): Promise<IliasProfile> {
+  const userId = input.userId && input.userId > 0 ? input.userId : 0;
+  const profileUrl = input.url?.trim() || '';
+  const query = new URLSearchParams();
+  if (userId) query.set('userId', String(userId));
+  if (profileUrl) query.set('url', profileUrl);
+  let cached: IliasProfile | null = null;
+  try {
+    if (userId) {
+      const payload = (await request(`/v1/ilias/profile?userId=${userId}`, { headers: { ...authHeaders() } })) as Record<string, unknown>;
+      cached = asIliasProfile(payload);
+      if (!input.refresh && !payload.stale) return cached;
+    }
+  } catch (caught) {
+    if (!cacheMiss(caught)) throw caught;
+  }
+
+  try {
+    if (iliasHeadlessReady() && profileUrl) {
+      const page = await fetchPageWithSession(profileUrl);
+      if (page) {
+        if (looksLikeIliasLoginHtml(page.html)) throw new IliasError('ilias_session_expired');
+        const payload = await ingestPage({
+          page: 'profile',
+          userId,
+          html: page.html,
+          url: page.url,
+        });
+        return asIliasProfile(payload);
+      }
+    }
+  } catch (caught) {
+    if (cached && !sessionExpired(caught)) return cached;
+    throw caught;
+  }
+
+  try {
+    return asIliasProfile(
+      await request(`/v1/ilias/profile?${query.toString()}&live=1`, { headers: { ...authHeaders() } }),
+    );
+  } catch (caught) {
+    if (cached) return cached;
+    throw caught;
+  }
+}
+
 export interface IliasFile {
   data: ArrayBuffer;
   contentType: string;
   filename: string;
 }
-
 function filenameFromDisposition(value: string): string {
   const encoded = value.match(/filename\*\s*=\s*UTF-8''([^;]+)/i)?.[1];
   if (encoded) {

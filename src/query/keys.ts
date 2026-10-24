@@ -20,6 +20,7 @@ export const keys = {
   news: () => ['app', 'news'] as const,
   iliasContent: (refId: number, kind: string) => ['app', 'ilias', 'content', kind, refId] as const,
   iliasMembers: (refId: number, kind: string) => ['app', 'ilias', 'members', kind, refId] as const,
+  iliasProfile: (userId: number | null) => ['app', 'ilias', 'profile', userId ?? 0] as const,
 
   campusStatus: () => ['app', 'campus', 'status'] as const,
   campusStudies: () => ['app', 'campus', 'studies'] as const,

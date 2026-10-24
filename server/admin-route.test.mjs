@@ -146,6 +146,12 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   const iliasMembers = await call(`/v1/admin/users/${userId}/ilias/members?refId=4590579&kind=crs`);
   assert.equal(iliasMembers.status, 409);
   assert.equal((await iliasMembers.json()).error, 'ilias_credentials_missing');
+  const iliasProfile = await call(`/v1/admin/users/${userId}/ilias/profile?userId=857845&url=${encodeURIComponent('https://ilias3.uni-stuttgart.de/ilias.php?cmdClass=ilPublicUserProfileGUI&user=857845')}`);
+  assert.equal(iliasProfile.status, 409);
+  assert.equal((await iliasProfile.json()).error, 'ilias_credentials_missing');
+  const iliasImage = await call(`/v1/admin/users/${userId}/ilias/image?url=${encodeURIComponent('https://ilias3.uni-stuttgart.de/deliver.php/avatar')}`);
+  assert.equal(iliasImage.status, 409);
+  assert.equal((await iliasImage.json()).error, 'ilias_credentials_missing');
   const iliasFile = await call(`/v1/admin/users/${userId}/ilias/file?refId=4665501`);
   assert.equal(iliasFile.status, 409);
 

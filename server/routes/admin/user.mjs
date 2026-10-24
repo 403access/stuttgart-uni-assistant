@@ -16,7 +16,9 @@ import {
   linkAdminPlatform,
   readAdminUserIliasContent,
   readAdminUserIliasFile,
+  readAdminUserIliasImage,
   readAdminUserIliasMembers,
+  readAdminUserIliasProfile,
   revokeAdminSession,
   revokeAdminSessions,
   startAdminSyncJob,
@@ -161,6 +163,33 @@ export async function handleUser(request, response, url) {
         membersUrl: url.searchParams.get('url') || '',
       });
       send(response, 200, members);
+    } catch (error) {
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && action === 'ilias/profile') {
+    try {
+      const profile = await readAdminUserIliasProfile(userId, {
+        profileUserId: url.searchParams.get('userId'),
+        profileUrl: url.searchParams.get('url') || '',
+      });
+      send(response, 200, profile);
+    } catch (error) {
+      fail(response, error);
+    }
+    return true;
+  }
+  if (request.method === 'GET' && action === 'ilias/image') {
+    try {
+      const image = await readAdminUserIliasImage(userId, url.searchParams.get('url') || '');
+      response.writeHead(200, {
+        'Content-Type': image.contentType,
+        'Content-Length': image.bytes.length,
+        'Cache-Control': 'private, max-age=600',
+        'X-Content-Type-Options': 'nosniff',
+      });
+      response.end(image.bytes);
     } catch (error) {
       fail(response, error);
     }

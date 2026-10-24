@@ -24,6 +24,8 @@ export function apiCatalog() {
       { id: 'ilias-dashboard', method: 'GET', path: '/v1/ilias/dashboard', replay: true },
       { id: 'ilias-content', method: 'GET', path: '/v1/ilias/content', replay: false },
       { id: 'ilias-members', method: 'GET', path: '/v1/ilias/members', replay: false },
+      { id: 'ilias-profile', method: 'GET', path: '/v1/ilias/profile', replay: false },
+      { id: 'ilias-image', method: 'GET', path: '/v1/ilias/image', replay: false },
       { id: 'ilias-file', method: 'GET', path: '/v1/ilias/file', replay: false },
       { id: 'mail-config', method: 'GET', path: '/v1/mail/config', replay: true },
       { id: 'mail-folders', method: 'GET', path: '/v1/mail/folders', replay: false },

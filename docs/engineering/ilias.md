@@ -54,6 +54,7 @@ change can replay a page without asking the device to fetch it again.
 | `user_ilias_snapshot` | Last parsed dashboard per account |
 | `user_ilias_content` | Parsed course/group/folder pages, keyed by account, ref id, kind |
 | `user_ilias_members` | Parsed members tabs for courses and groups, keyed by account, ref id, kind |
+| `user_ilias_profiles` | Parsed public member profiles, keyed by account and target user id |
 | `user_ilias_pages` | Raw harvested HTML, keyed by account and page |
 | `user_ilias` | Source marker and account name |
 
@@ -103,8 +104,28 @@ URL. The members page is parsed by `parseIliasMembers()`:
 - Course galleries expose no roles at all. A course therefore lists every
   member without a tutor/participant badge instead of guessing.
 
-Members are cached like content and pruned to the newest 500 tabs per account.
-Pull-to-refresh on the app screen re-reads both the material and member pages.
+Members and profiles are cached like content and pruned to the newest 500 tabs
+and profiles per account. Pull-to-refresh on the app screen re-reads both the
+material and member pages.
+
+Tapping a member opens the public profile ILIAS offers for that row
+(`ilPublicUserProfileGUI`). `parseIliasProfile()` reads that page:
+
+- the rendered name (`ilProfileName`, e.g. “Herr Fabian Bross”), the h1 form
+  with the login (`Bross, Fabian [FabianBross]`), and the course context;
+- the profile image (`ilProfileImage`), which is streamed through the
+  assistant server because `deliver.php` needs the ILIAS cookie;
+- every published `ilProfileSection` (institution, contact, and anything else
+  the user enabled), with prose and links;
+- the e-mail, the ILIAS-mail link, the vCard link, and any course/group links
+  a section carries.
+
+Profiles are cached per target user id, so the same person is not re-read from
+a second course. Members without a public profile have no profile link; their
+detail screen shows the login name and a note that the profile is not public.
+ILIAS public profiles do not, by default, list a user's other courses; the
+screen shows the current course as context and renders any course links the
+profile itself exposes.
 
 ## Server routes
 
@@ -113,10 +134,12 @@ Pull-to-refresh on the app screen re-reads both the material and member pages.
 | `GET /v1/ilias/config` | optional | Does this server have an `.env` session, and is this account connected? |
 | `GET /v1/ilias/session` | app | Hands the current `PHPSESSID` back so the app can seed its WebView |
 | `POST /v1/ilias/session` | app | `{ account, password }`, `{ cookie }`, or `{ env: true }`; signs in once and returns the dashboard plus the cookie |
-| `POST /v1/ilias/ingest` | app | `{ page: 'dashboard' \| 'content' \| 'members', html, url, refId?, kind?, fetchedAt? }`; parses and stores a harvested page |
+| `POST /v1/ilias/ingest` | app | `{ page: 'dashboard' \| 'content' \| 'members' \| 'profile', html, url, refId?, kind?, userId?, fetchedAt? }`; parses and stores a harvested page |
 | `GET /v1/ilias/dashboard` | app | Serves the stored dashboard (`cached`, `stale`); `?live=1` is the web fallback |
 | `GET /v1/ilias/content` | app | Serves one stored course/group/folder page; `?live=1` is the web fallback |
 | `GET /v1/ilias/members` | app | Serves one stored members tab; with `?live=1` the app passes the members link from the content page as `?url=` |
+| `GET /v1/ilias/profile` | app | Serves one stored public profile by `?userId=`; with `?live=1` the profile link is passed as `?url=` |
+| `GET /v1/ilias/image` | app | Streams a profile image with the account's cookie; `?url=` must point at ILIAS and return `image/*` |
 | `POST /v1/ilias/session/expired` | app | The WebView saw a login page: drops only the in-memory cookie so the vault can reconnect |
 | `DELETE /v1/ilias/session` | app | Forgets the in-memory cookie, clears the WebView cookie, demotes the platform link |
 | `GET /v1/ilias/file` | app | Streams one repository file with its ILIAS content type and filename |
@@ -164,12 +187,14 @@ password again.
 A course or group row opens its content page in the app (`/ilias/<refId>`).
 Folders and categories in that list drill down into the same screen. When the
 object has a members tab, the screen lists its tutor and members below the
-materials, with the member count in the section heading. A PDF row opens the
-reader at `/ilias/datei`: the app fetches the bytes through `/v1/ilias/file`,
-writes them to the cache, and renders them with `react-native-pdf` (PDFKit on
-iOS, PdfRenderer on Android). The web build hands a blob URL to the browser's
-own PDF viewer in an iframe. Other file types keep the share sheet, and every
-file still has "Open in browser" and "Share" actions.
+materials, with the member count in the section heading. Tapping a member opens
+`/ilias/mitglied`: avatar, profile sections, e-mail and ILIAS-mail actions, and
+any course links the profile publishes. A PDF row opens the reader at
+`/ilias/datei`: the app fetches the bytes through `/v1/ilias/file`, writes them
+to the cache, and renders them with `react-native-pdf` (PDFKit on iOS,
+PdfRenderer on Android). The web build hands a blob URL to the browser's own
+PDF viewer in an iframe. Other file types keep the share sheet, and every file
+still has "Open in browser" and "Share" actions.
 
 `react-native-pdf` and `react-native-blob-util` carry native code, so the
 development build has to be rebuilt after a fresh install. The config plugins
@@ -180,8 +205,9 @@ in `app.json` add the Android blob provider and the PDF packaging options.
 `#/ilias` lists every account with a stored snapshot or live session, the
 source, session state, parsed counts, and the last read. `#/users/<id>/ilias`
 shows the stored dashboard, browses the live content page of a course or group,
-and lists that object's members tab; it can also disconnect the session. The
-overview adds an `ILIAS` health chip and a live-session KPI.
+lists that object's members tab, and opens a member's public profile with the
+same avatar and sections; it can also disconnect the session. The overview adds
+an `ILIAS` health chip and a live-session KPI.
 
 ## Limits
 

@@ -4,7 +4,7 @@ import { queryOptions, type QueryClient } from '@tanstack/react-query';
 
 import { keys } from '@/src/query/keys';
 
-import { loadIliasContent, loadIliasMembers } from './api';
+import { loadIliasContent, loadIliasMembers, loadIliasProfile } from './api';
 
 export function iliasContentQuery(refId: number, kind: string, options?: { enabled?: boolean }) {
   return queryOptions({
@@ -46,4 +46,20 @@ export async function refreshIliasPage(queryClient: QueryClient, refId: number, 
     queryFn: () => loadIliasMembers({ refId, kind, membersUrl: content.membersUrl, refresh: true }),
   });
   return content;
+}
+
+export function iliasProfileQuery(userId: number | null, url: string, options?: { enabled?: boolean }) {
+  return queryOptions({
+    queryKey: keys.iliasProfile(userId),
+    queryFn: () => loadIliasProfile({ userId, url }),
+    staleTime: 60_000,
+    ...(options?.enabled === false || (!userId && !url) ? { enabled: false } : {}),
+  });
+}
+
+export async function refreshIliasProfile(queryClient: QueryClient, userId: number | null, url: string) {
+  return queryClient.fetchQuery({
+    queryKey: keys.iliasProfile(userId),
+    queryFn: () => loadIliasProfile({ userId, url, refresh: true }),
+  });
 }

@@ -592,6 +592,8 @@ test('api catalog only names known paths', () => {
     '/v1/ilias/dashboard',
     '/v1/ilias/content',
     '/v1/ilias/members',
+    '/v1/ilias/profile',
+    '/v1/ilias/image',
     '/v1/ilias/file',
     '/v1/mail/config',
     '/v1/mail/folders',

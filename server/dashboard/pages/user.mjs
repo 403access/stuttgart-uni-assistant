@@ -500,9 +500,15 @@ function renderIliasTab(container, detail) {
     }
   };
 
-  const loadMembers = async (data, host) => {
+  const loadMembers = async (data, host, trail = []) => {
     if (!host?.isConnected) return;
     host.replaceChildren(loading('ILIAS-Mitglieder werden geladen …'));
+    const imageHref = (member) => {
+      const url = member.avatarUrl || '';
+      if (!url) return '';
+      if (url.startsWith('data:')) return url;
+      return '/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/image?url=' + encodeURIComponent(url);
+    };
     try {
       const params = new URLSearchParams({ refId: String(data.refId), kind: String(data.kind || 'crs') });
       if (data.membersUrl) params.set('url', data.membersUrl);
@@ -511,15 +517,20 @@ function renderIliasTab(container, detail) {
       const members = Array.isArray(result.members) ? result.members : [];
       const rows = members.length
         ? members.map((member) => h('tr', null,
-            h('td', null,
-              h('strong', { text: member.name || member.username || '–' }),
-              member.username && member.username !== member.name ? h('div', { className: 'hint', text: member.username }) : null,
-            ),
+            h('td', null, h('div', { className: 'row tight', style: { alignItems: 'center' } },
+              imageHref(member)
+                ? h('img', { src: imageHref(member), alt: '', style: { width: '28px', height: '28px', borderRadius: '999px', objectFit: 'cover', flex: '0 0 auto' } })
+                : null,
+              h('div', null,
+                h('strong', { text: member.name || member.username || '–' }),
+                member.username && member.username !== member.name ? h('div', { className: 'hint', text: member.username }) : null,
+              ),
+            )),
             h('td', null, member.role ? h('span', { className: 'chip', text: member.role }) : '–'),
             h('td', null, member.roleKind === 'tutor' ? h('span', { className: 'chip', text: 'Tutor' }) : '–'),
             h('td', null, member.profileUrl
-              ? h('a', { className: 'btn secondary small', href: member.profileUrl, target: '_blank', rel: 'noreferrer' }, icon('external'), 'Profil')
-              : '–'),
+              ? h('button', { className: 'btn secondary small', type: 'button', onClick: () => loadProfile(member, data, trail) }, icon('user'), 'Profil')
+              : h('span', { className: 'hint', text: 'nicht öffentlich' })),
           ))
         : [h('tr', null, h('td', { colspan: '4' }, h('p', { className: 'hint', text: 'Keine Mitglieder sichtbar.' })))];
       host.replaceChildren(
@@ -602,7 +613,66 @@ function renderIliasTab(container, detail) {
       ),
       ...(membersHost ? [membersHost] : []),
     );
-    if (membersHost) void loadMembers(data, membersHost);
+    if (membersHost) void loadMembers(data, membersHost, trail);
+  };
+
+  const loadProfile = async (member, data, trail = []) => {
+    contentHost.hidden = false;
+    contentHost.replaceChildren(loading('Profil wird geladen …'));
+    try {
+      const params = new URLSearchParams();
+      if (member.userId) params.set('userId', String(member.userId));
+      if (member.profileUrl) params.set('url', member.profileUrl);
+      const profile = await api('/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/profile?' + params.toString());
+      const avatarUrl = String(profile.avatarUrl || member.avatarUrl || '');
+      const avatarSrc = avatarUrl
+        ? avatarUrl.startsWith('data:')
+          ? avatarUrl
+          : '/v1/admin/users/' + encodeURIComponent(detail.user.id) + '/ilias/image?url=' + encodeURIComponent(avatarUrl)
+        : '';
+      const sections = (Array.isArray(profile.sections) ? profile.sections : []).map((section) =>
+        h('div', { className: 'detail-section' },
+          section.title ? h('h3', { text: section.title }) : null,
+          section.text ? h('p', { className: 'hint', style: { whiteSpace: 'pre-line' }, text: section.text }) : null,
+          ...(Array.isArray(section.links) ? section.links : []).map((link) =>
+            h('a', { className: 'btn secondary small', href: link.url, target: '_blank', rel: 'noreferrer' }, icon('external'), link.label),
+          ),
+        ),
+      );
+      contentHost.replaceChildren(
+        sectionHead(profile.name || member.name || 'Profil', [profile.title, profile.context].filter(Boolean).join(' · ')),
+        h('div', { className: 'row', style: { marginBottom: '10px' } },
+          h('button', { className: 'btn secondary small', type: 'button', onClick: () => renderContent(data, trail) }, icon('chevron-left'), 'Zurück'),
+          profile.profileUrl
+            ? h('a', { className: 'btn secondary small', href: profile.profileUrl, target: '_blank', rel: 'noreferrer' }, icon('external'), 'In ILIAS öffnen')
+            : null,
+          profile.mailUrl
+            ? h('a', { className: 'btn secondary small', href: profile.mailUrl, target: '_blank', rel: 'noreferrer' }, icon('mail'), 'Mail')
+            : null,
+          profile.vcardUrl
+            ? h('a', { className: 'btn secondary small', href: profile.vcardUrl, target: '_blank', rel: 'noreferrer' }, icon('download'), 'vCard')
+            : null,
+        ),
+        h('div', { className: 'detail-section' },
+          h('div', { className: 'row tight', style: { alignItems: 'center' } },
+            avatarSrc
+              ? h('img', { src: avatarSrc, alt: '', style: { width: '72px', height: '72px', borderRadius: '999px', objectFit: 'cover', flex: '0 0 auto' } })
+              : null,
+            h('div', null,
+              h('h2', { text: profile.name || member.name || 'Profil' }),
+              profile.email ? h('p', { className: 'hint', text: profile.email }) : null,
+            ),
+          ),
+        ),
+        ...sections,
+      );
+    } catch (error) {
+      if (error.code === 'unauthorized') return;
+      contentHost.replaceChildren(emptyState('alert', 'Profil konnte nicht geladen werden', errorText(error), [
+        h('button', { className: 'btn secondary', type: 'button', onClick: () => loadProfile(member, data, trail) }, icon('refresh'), 'Erneut versuchen'),
+        h('button', { className: 'btn secondary', type: 'button', onClick: () => renderContent(data, trail) }, icon('chevron-left'), 'Zurück'),
+      ]));
+    }
   };
 
   const membershipRows = (dashboard?.memberships || []).length
