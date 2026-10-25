@@ -2,7 +2,7 @@
 
 This folder analyses how the repository is structured today, proposes a module layout shared by the Expo app (iOS, Android, web), the operator dashboard, the distribution service, the marketing site, and the assistant server, and records the migration.
 
-The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phase 1 is complete: the apps and tools live under `apps/` and `tools/`. Shared package extraction is next.
+The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1 and 2 are in place: the apps and tools live under `apps/` and `tools/`, and the shared kernel packages exist. Phase 3 is next.
 
 ## Target architecture
 
@@ -85,9 +85,9 @@ The detailed package catalog, dependency matrix, and target tree are in [target 
 | --- | --- |
 | Analysis baseline | `main` at `d147414`, working tree with the in-progress quiz catalog and quiz-sync work |
 | Decision | [ADR-001](05-adr-001-target-architecture.md) accepted |
-| Code moved | Phase 1 complete: apps and tools moved; no shared packages yet |
-| Files added | These documents, the workspace manifests, and the Phase 1 path updates |
-| Next step | Phase 2: extract `@ua/contracts`, `@ua/format`, `@ua/design-tokens`, and `@ua/core` |
+| Code moved | Phase 1 complete. Phase 2 extracted `@ua/format`, `@ua/contracts`, `@ua/design-tokens`, and the first `@ua/core` slice. |
+| Files added | The workspace manifests, the shared packages, the generators, and these documents |
+| Next step | Phase 3: `@ua/api-client`, `@ua/ui`, `@ua/server-kit`, and the bundled dist service |
 
 The three questions from the first draft are answered:
 
