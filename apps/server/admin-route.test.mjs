@@ -10,6 +10,9 @@ import { after, before, test } from 'node:test';
 
 process.env.CAMPUS_DB_PATH = ':memory:';
 process.env.DASHBOARD_TOKEN = 'route-token';
+// This test covers the legacy dashboard modules; force the fallback so a local
+// Vite build in apps/admin/dist does not change the fixture.
+process.env.ADMIN_DIST_DIR = '/tmp/ua-admin-test-no-build';
 
 const db = await import('./db.mjs');
 const auth = await import('./auth.mjs');

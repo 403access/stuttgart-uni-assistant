@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 import { sendAsset, sendHtml } from '../../http.mjs';
 
-const ROOT = process.env.ADMIN_DIST_DIR
+const DIST_ROOT = process.env.ADMIN_DIST_DIR
   ? resolve(process.env.ADMIN_DIST_DIR)
-  : fileURLToPath(new URL('../../../admin/public/', import.meta.url));
+  : fileURLToPath(new URL('../../../admin/dist/', import.meta.url));
+const LEGACY_ROOT = fileURLToPath(new URL('../../../admin/public/', import.meta.url));
+const ROOT = existsSync(resolve(DIST_ROOT, 'index.html')) ? DIST_ROOT : LEGACY_ROOT;
 const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
@@ -32,7 +34,11 @@ function assetFile(pathname) {
 
 function dashboardIndex(response) {
   // Read per request: a dashboard edit or a new Vite build does not need a restart.
-  sendHtml(response, readFileSync(resolve(ROOT, 'index.html'), 'utf8'));
+  try {
+    sendHtml(response, readFileSync(resolve(ROOT, 'index.html'), 'utf8'));
+  } catch {
+    sendHtml(response, `<!doctype html><html lang="de"><meta charset="utf-8"><title>Verwaltung</title><body style="font:16px/1.5 -apple-system,sans-serif;padding:40px"><h1>Verwaltung nicht gebaut</h1><p>Baue das React-Admin mit <code>bun run admin:build</code> oder setze <code>ADMIN_DIST_DIR</code>.</p></body></html>`);
+  }
 }
 
 export function dashboardPage(request, response, url) {

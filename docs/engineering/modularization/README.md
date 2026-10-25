@@ -2,7 +2,7 @@
 
 This folder analyses how the repository is structured today, proposes a module layout shared by the Expo app (iOS, Android, web), the operator dashboard, the distribution service, the marketing site, and the assistant server, and records the migration.
 
-The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–4 are in place and Phase 5 is mostly ported: the React admin now covers overview, users, devices, news, audit, logs, system, ILIAS, and components. Quiz and the full user detail page remain, along with the cutover. Feature UI remains in the app until its services and primitives are decoupled.
+The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–4 are in place and Phase 5 is largely complete: the React admin covers overview, users, full user detail, devices, news, audit, logs, system, ILIAS, components, and quiz. It is the default build when `apps/admin/dist` exists; the vanilla dashboard remains a fallback for the ILIAS content viewers and quiz question editor. Feature UI remains in the app until its services and primitives are decoupled.
 
 ## Target architecture
 
@@ -87,7 +87,7 @@ The detailed package catalog, dependency matrix, and target tree are in [target 
 | Decision | [ADR-001](05-adr-001-target-architecture.md) accepted |
 | Code moved | Phases 1–4 complete: workspace, kernel, design tokens, server kit, API client, shared UI, bundled dist service, and the feature cores. |
 | Files added | The workspace manifests, the shared packages, the generators, and these documents |
-| Next step | Port the quiz and user-detail admin pages, then switch `ADMIN_DIST_DIR` to the Vite build and remove `public/` |
+| Next step | Port the ILIAS content viewers and quiz question editor, then remove the legacy `public/` dashboard |
 
 The three questions from the first draft are answered:
 
