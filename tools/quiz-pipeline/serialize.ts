@@ -1,5 +1,5 @@
 import type { Localized } from '@ua/core/domain/types';
-import type { QuizTopic } from '@/src/quiz/types';
+import type { QuizTopic } from '@ua/quiz-content/types';
 
 function quote(value: string): string {
   const escaped = value
@@ -79,7 +79,7 @@ function serialize(value: unknown, indent: number): string {
 /** Writes one generated topic as a source file the app can import. */
 export function serializeTopicFile(topic: QuizTopic, exportName: string): string {
   return [
-    "import type { QuizTopic } from '@/src/quiz/types';",
+    "import type { QuizTopic } from '@ua/quiz-content/types';",
     '',
     "import { l } from '../helpers';",
     '',

@@ -263,7 +263,7 @@ expectInvalid(
 );
 
 const serialized = serializeTopicFile(normalized, 'pragTest');
-expect(serialized.includes("import type { QuizTopic } from '@/src/quiz/types';"), 'serializer emits the type import');
+expect(serialized.includes("import type { QuizTopic } from '@ua/quiz-content/types';"), 'serializer emits the type import');
 expect(serialized.includes("import { l } from '../helpers';"), 'serializer emits the localized helper import');
 expect(serialized.includes('export const pragTest: QuizTopic = {'), 'serializer emits a typed export');
 expect(serialized.includes("title: l('Testthema', 'Test topic'),"), 'serializer renders localized strings');

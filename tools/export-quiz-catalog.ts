@@ -11,7 +11,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { quizModules, quizStudies } from '../apps/mobile/src/quiz/content';
+import { quizModules, quizStudies } from '@ua/quiz-content';
 
 const target = resolve('apps/server/quiz/catalog.json');
 const catalog = {

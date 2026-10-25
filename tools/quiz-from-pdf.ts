@@ -7,15 +7,15 @@
  *
  * The PDF is embedded text only; scanned pages need OCR first. Text and the
  * generated topic never leave the machine except for the xAI request. Generated
- * topics are committed source under `apps/mobile/src/quiz/content/generated/` and attached
- * to an existing module by `src/quiz/content/index.ts`.
+ * topics are committed source under `packages/quiz-content/src/content/generated/` and attached
+ * to an existing module by `packages/quiz-content/src/content/index.ts`.
  */
 
 import { basename, extname, relative, resolve } from 'node:path';
 import { readdir, stat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-import { quizModules, quizTopics } from '../apps/mobile/src/quiz/content/index';
+import { quizModules, quizTopics } from '@ua/quiz-content';
 import { assertUsableText, capSource, extractPdf } from './quiz-pipeline/extract';
 import { generateDraftTopic, GenerationError } from './quiz-pipeline/generate';
 import { InvalidDraftError, normalizeTopic, topicIdFor } from './quiz-pipeline/normalize';
@@ -319,7 +319,7 @@ async function main(): Promise<void> {
         }
         if (fileExists && !registered) {
           throw new Error(
-            `apps/mobile/src/quiz/content/generated/${topicId}.ts exists but is not registered; ` +
+            `packages/quiz-content/src/content/generated/${topicId}.ts exists but is not registered; ` +
               'remove it or pass --force',
           );
         }

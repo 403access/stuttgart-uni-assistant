@@ -1,13 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { initialAnswer } from '../apps/mobile/src/quiz/answer';
-import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '../apps/mobile/src/quiz/content';
-import { generatedTopics } from '../apps/mobile/src/quiz/content/generated';
-import { describeGivenAnswer, evaluateAnswer, isAnswerComplete, matchesAccepted } from '../apps/mobile/src/quiz/evaluate';
-import { questionKindLabel } from '../apps/mobile/src/quiz/labels';
-import { questionsForMode, statsForQuestions } from '../apps/mobile/src/quiz/session';
-import type { QuestionProgress, QuizAnswer, QuizQuestion, QuizQuestionKind } from '../apps/mobile/src/quiz/types';
+import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '@ua/quiz-content';
+import { generatedTopics } from '@ua/quiz-content/content/generated';
+import { describeGivenAnswer, evaluateAnswer, initialAnswer, isAnswerComplete, matchesAccepted, questionKindLabel, questionsForMode, statsForQuestions } from '@ua/feature-quiz';
+import type { QuestionProgress, QuizAnswer, QuizQuestion, QuizQuestionKind } from '@ua/quiz-content/types';
 
 const failures: string[] = [];
 

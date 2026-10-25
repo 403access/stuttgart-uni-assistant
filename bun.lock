@@ -43,7 +43,9 @@
         "@ua/design-tokens": "workspace:*",
         "@ua/feature-ilias": "workspace:*",
         "@ua/feature-mail": "workspace:*",
+        "@ua/feature-quiz": "workspace:*",
         "@ua/format": "workspace:*",
+        "@ua/quiz-content": "workspace:*",
         "@ua/ui": "workspace:*",
         "docx-preview": "^0.4.1",
         "expo": "^58.0.0",
@@ -141,9 +143,24 @@
         "@ua/core": "workspace:*",
       },
     },
+    "packages/features/quiz": {
+      "name": "@ua/feature-quiz",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ua/core": "workspace:*",
+        "@ua/quiz-content": "workspace:*",
+      },
+    },
     "packages/format": {
       "name": "@ua/format",
       "version": "0.0.0",
+    },
+    "packages/quiz-content": {
+      "name": "@ua/quiz-content",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ua/core": "workspace:*",
+      },
     },
     "packages/server-kit": {
       "name": "@ua/server-kit",
@@ -735,9 +752,13 @@
 
     "@ua/feature-mail": ["@ua/feature-mail@workspace:packages/features/mail"],
 
+    "@ua/feature-quiz": ["@ua/feature-quiz@workspace:packages/features/quiz"],
+
     "@ua/format": ["@ua/format@workspace:packages/format"],
 
     "@ua/mobile": ["@ua/mobile@workspace:apps/mobile"],
+
+    "@ua/quiz-content": ["@ua/quiz-content@workspace:packages/quiz-content"],
 
     "@ua/server": ["@ua/server@workspace:apps/server"],
 

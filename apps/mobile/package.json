@@ -72,7 +72,9 @@
     "@ua/api-client": "workspace:*",
     "@ua/ui": "workspace:*",
     "@ua/feature-mail": "workspace:*",
-    "@ua/feature-ilias": "workspace:*"
+    "@ua/feature-ilias": "workspace:*",
+    "@ua/quiz-content": "workspace:*",
+    "@ua/feature-quiz": "workspace:*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",

@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 export const REPO_ROOT = join(HERE, '..', '..');
-export const GENERATED_DIR = join(REPO_ROOT, 'apps', 'mobile', 'src', 'quiz', 'content', 'generated');
+export const GENERATED_DIR = join(REPO_ROOT, 'packages', 'quiz-content', 'src', 'content', 'generated');
 export const REGISTRY_PATH = join(GENERATED_DIR, 'index.ts');
 
 export interface GeneratedEntry {
@@ -64,7 +64,7 @@ export async function writeRegistry(
       left.moduleId.localeCompare(right.moduleId) || left.topicId.localeCompare(right.topicId),
   );
   const lines = [
-    "import type { QuizTopic } from '@/src/quiz/types';",
+    "import type { QuizTopic } from '@ua/quiz-content/types';",
     ...(sorted.length
       ? ['', ...sorted.map((entry) => `import { ${entry.exportName} } from './${entry.topicId}';`)]
       : []),

@@ -1,5 +1,5 @@
 import type { Localized } from '@ua/core/domain/types';
-import type { QuizDifficulty, QuizQuestion, QuizTopic } from '@/src/quiz/types';
+import type { QuizDifficulty, QuizQuestion, QuizTopic } from '@ua/quiz-content/types';
 
 import type {
   DraftLocalized,
