@@ -6,7 +6,7 @@ import {
   hostFromUri,
   isLoopbackHost,
   resolveAssistantBaseUrl,
-} from '../apps/mobile/src/assistant/endpoints.ts';
+} from '@ua/core/assistant/endpoints';
 
 /**
  * The assistant base URL decides whether the simulator and a phone on the same

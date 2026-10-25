@@ -37,6 +37,7 @@
         "@tanstack/react-store": "^0.11.2",
         "@tanstack/store": "^0.11.2",
         "@ua/contracts": "workspace:*",
+        "@ua/core": "workspace:*",
         "@ua/design-tokens": "workspace:*",
         "@ua/format": "workspace:*",
         "docx-preview": "^0.4.1",
@@ -100,6 +101,14 @@
     "packages/contracts": {
       "name": "@ua/contracts",
       "version": "0.0.0",
+    },
+    "packages/core": {
+      "name": "@ua/core",
+      "version": "0.0.0",
+      "dependencies": {
+        "@tanstack/store": "^0.11.2",
+        "@ua/format": "workspace:*",
+      },
     },
     "packages/design-tokens": {
       "name": "@ua/design-tokens",
@@ -666,6 +675,8 @@
     "@ua/admin": ["@ua/admin@workspace:apps/admin"],
 
     "@ua/contracts": ["@ua/contracts@workspace:packages/contracts"],
+
+    "@ua/core": ["@ua/core@workspace:packages/core"],
 
     "@ua/design-tokens": ["@ua/design-tokens@workspace:packages/design-tokens"],
 

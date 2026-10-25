@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { asNewsItem, asNewsList, mergeNews } from '../apps/mobile/src/news/parse.ts';
+import { asNewsItem, asNewsList, mergeNews } from '@ua/core/news/parse';
 
 /**
  * The server payload is untrusted input: one malformed row must not blank the

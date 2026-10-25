@@ -67,7 +67,8 @@
     "react-native-worklets": "0.13.0",
     "@ua/format": "workspace:*",
     "@ua/contracts": "workspace:*",
-    "@ua/design-tokens": "workspace:*"
+    "@ua/design-tokens": "workspace:*",
+    "@ua/core": "workspace:*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",

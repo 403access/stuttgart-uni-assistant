@@ -1,4 +1,4 @@
-import type { Localized } from '@/src/types';
+import type { Localized } from '@ua/core/domain/types';
 import type { QuizDifficulty, QuizQuestion, QuizTopic } from '@/src/quiz/types';
 
 import type {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { appStore, patchApp, samePersisted, selectPersisted, updateApp } from '../apps/mobile/src/state/app-store.ts';
+import { appStore, patchApp, samePersisted, selectPersisted, updateApp } from '@ua/core/state/app-store';
 
 /**
  * The store holds runtime session values next to the persisted record. The

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { asUserAccount, findPlatform, initialsFor, localUser, sameAccount } from '../apps/mobile/src/auth/user.ts';
+import { asUserAccount, findPlatform, initialsFor, localUser, sameAccount } from '@ua/core/auth/user';
 
 /**
  * The server user record is copied to the device. This parser is the only gate

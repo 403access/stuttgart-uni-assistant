@@ -1,7 +1,7 @@
-import { buildLocalAnswer } from '../apps/mobile/src/assistant/answer';
-import { buildAnswerInput } from '../apps/mobile/src/assistant/context';
-import { modules, program } from '../apps/mobile/src/data';
-import { suggestNextSemester, totals, weightedAverage } from '../apps/mobile/src/domain/plan';
+import { buildLocalAnswer } from '@ua/core/assistant/answer';
+import { buildAnswerInput } from '@ua/core/assistant/context';
+import { modules, program } from '@ua/core/data';
+import { suggestNextSemester, totals, weightedAverage } from '@ua/core/domain/plan';
 
 const failures: string[] = [];
 
