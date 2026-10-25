@@ -17,6 +17,7 @@ const pluginPath = fileURLToPath(new URL('../apps/mobile/plugins/withVpnTunnel.j
 
 const TEAM = 'QML5B57EMH';
 const sandboxes = [];
+const MAC_ONLY = process.platform !== 'darwin' ? 'iOS archives need macOS and Xcode' : false;
 
 const APP_JSON = JSON.stringify({
   expo: {
@@ -338,7 +339,7 @@ test('--clean regenerates the project, so it implies --prebuild', () => {
   assert.equal(options.prebuild, true);
 });
 
-test('preflight refuses entitlements a free account cannot sign, before xcodebuild runs', async () => {
+test('preflight refuses entitlements a free account cannot sign, before xcodebuild runs', { skip: MAC_ONLY }, async () => {
   const { dir, log } = await sandbox({ entitlements: VPN_ENTITLEMENTS });
   const result = await run(dir, [], log);
 
@@ -350,7 +351,7 @@ test('preflight refuses entitlements a free account cannot sign, before xcodebui
   assert.deepEqual(await invocations(log), ['-version']);
 });
 
-test('a clean tree archives, exports, and reports the ipa', async () => {
+test('a clean tree archives, exports, and reports the ipa', { skip: MAC_ONLY }, async () => {
   const { dir, log } = await sandbox();
   const result = await run(dir, [], log);
 
@@ -385,7 +386,7 @@ test('the day count decides whether the team is reported as paid', () => {
   assert.match(free.notes.join(' '), /free Apple Account issues/);
 });
 
-test('a missing team is reported instead of guessed', async () => {
+test('a missing team is reported instead of guessed', { skip: MAC_ONLY }, async () => {
   const { dir, log } = await sandbox();
   await writeFile(join(dir, 'apps', 'mobile', 'ios', 'UniversityAssistant.xcodeproj', 'project.pbxproj'), 'CODE_SIGN_STYLE = Automatic;\n');
   const result = await run(dir, [], log);
@@ -395,7 +396,7 @@ test('a missing team is reported instead of guessed', async () => {
   assert.deepEqual(await invocations(log), ['-version']);
 });
 
-test('--clean remembers the team that the regenerated project dropped', async () => {
+test('--clean remembers the team that the regenerated project dropped', { skip: MAC_ONLY }, async () => {
   const { dir, log } = await sandbox();
   const result = await run(dir, ['--clean'], log);
 
