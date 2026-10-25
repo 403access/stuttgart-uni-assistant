@@ -6,6 +6,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import { findQuizTopic, isMixedTopic } from '@/src/quiz/content';
+import { DiagramFigureCard } from '@/src/quiz/components/diagram-figure';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
 import { questionKindLabel } from '@/src/quiz/labels';
 import { useQuizProgress } from '@/src/quiz/progress';
@@ -180,6 +181,8 @@ function TopicOverview({
           </View>
         </View>
       ) : null}
+
+      {topic.figure ? <DiagramFigureCard figure={topic.figure} locale={locale} /> : null}
 
       <Section title={tx(locale, 'quiz.new_round')} />
       <Card>

@@ -12,6 +12,8 @@ export function initialAnswer(question: QuizQuestion): QuizAnswer | undefined {
     case 'matching':
     case 'map':
       return {};
+    case 'diagram':
+      return [];
     case 'ordering':
       return shuffle(question.items.map((item) => item.id));
     case 'cloze':

@@ -3,6 +3,7 @@ import type { QuizModule, QuizQuestion, QuizStudy, QuizTopic } from '@/src/quiz/
 import { l } from './helpers';
 import { generatedTopics } from './generated';
 import { phonemMorphem } from './linguistik/phonem-morphem';
+import { phonetikModule } from './linguistik/phonetik';
 import { sprachfamilien } from './linguistik/sprachfamilien';
 import { spracheDialekt } from './linguistik/sprache-dialekt';
 import { philosophieModule } from './philosophie';
@@ -56,6 +57,7 @@ export const quizModules: QuizModule[] = [
     ),
     topics: [sprachfamilien, spracheDialekt, phonemMorphem],
   },
+  phonetikModule,
   philosophieModule,
   pragmatikModule,
   syntaxModule,

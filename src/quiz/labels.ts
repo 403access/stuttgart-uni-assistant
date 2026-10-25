@@ -19,6 +19,7 @@ const kindKeys: Record<QuizQuestionKind, TranslationKey> = {
   ordering: 'quiz.type.ordering',
   cloze: 'quiz.type.cloze',
   map: 'quiz.type.map',
+  diagram: 'quiz.type.diagram',
   flashcard: 'quiz.type.flashcard',
 };
 

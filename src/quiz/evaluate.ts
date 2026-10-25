@@ -102,6 +102,8 @@ export function isAnswerComplete(question: QuizQuestion, answer: QuizAnswer | un
       if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return false;
       return question.regions.every((region) => Boolean((answer as Record<string, string>)[region.id]));
     }
+    case 'diagram':
+      return Array.isArray(answer) && answer.length > 0;
     case 'flashcard':
       return answer === 'known' || answer === 'unknown';
   }
@@ -141,6 +143,14 @@ export function evaluateAnswer(question: QuizQuestion, answer: QuizAnswer | unde
       const assigned = answer as Record<string, string>;
       return question.regions.every((region) => assigned[region.id] === question.correct[region.id]);
     }
+    case 'diagram': {
+      if (!Array.isArray(answer)) return false;
+      const selected = new Set(answer);
+      return (
+        selected.size === question.correctIds.length &&
+        question.correctIds.every((id) => selected.has(id))
+      );
+    }
     case 'flashcard':
       return answer === 'known';
   }
@@ -179,6 +189,11 @@ export function describeCorrectAnswer(question: QuizQuestion, locale: Locale): s
           return `${pick(region.label, locale)} → ${zone ? pick(zone.label, locale) : ''}`;
         })
         .join(' · ');
+    case 'diagram':
+      return question.regions
+        .filter((region) => question.correctIds.includes(region.id))
+        .map((region) => pick(region.label, locale))
+        .join(', ');
     case 'flashcard':
       return pick(question.back, locale);
   }

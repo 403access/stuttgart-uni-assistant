@@ -2,6 +2,7 @@ import type { Locale } from '@/src/types';
 
 import type { QuizAnswer, QuizQuestion } from '../types';
 import { ClozeView } from './cloze';
+import { DiagramView } from './diagram';
 import { FlashcardView } from './flashcard';
 import { FreeTextView } from './free-text';
 import { MapView } from './map';
@@ -110,6 +111,16 @@ export function QuestionView({
           question={question}
           locale={locale}
           value={value as Record<string, string> | undefined}
+          revealed={revealed}
+          onChange={onChange}
+        />
+      );
+    case 'diagram':
+      return (
+        <DiagramView
+          question={question}
+          locale={locale}
+          value={value as string[] | undefined}
           revealed={revealed}
           onChange={onChange}
         />

@@ -41,6 +41,8 @@ function correctAnswer(question: QuizQuestion): QuizAnswer {
         .map((segment) => segment.accepted[0]);
     case 'map':
       return { ...question.correct };
+    case 'diagram':
+      return [...question.correctIds];
     case 'flashcard':
       return 'known';
   }
@@ -83,6 +85,10 @@ function incorrectAnswer(question: QuizQuestion): QuizAnswer | undefined {
         mapping[regionId] = question.zones[(index + 1) % question.zones.length].id;
       }
       return mapping;
+    }
+    case 'diagram': {
+      const wrong = question.regions.find((region) => !question.correctIds.includes(region.id));
+      return wrong ? [wrong.id] : [];
     }
     case 'flashcard':
       return 'unknown';
@@ -175,6 +181,34 @@ for (const question of allQuestions) {
     case 'free-text':
     case 'flashcard':
       break;
+    case 'diagram': {
+      const regionIds = new Set(question.regions.map((region) => region.id));
+      expect(regionIds.size === question.regions.length, `diagram region ids are unique: ${question.id}`);
+      expect(question.correctIds.length > 0, `diagram has at least one correct region: ${question.id}`);
+      expect(
+        question.correctIds.every((id) => regionIds.has(id)),
+        `diagram correct ids exist: ${question.id}`,
+      );
+      expect(
+        question.regions.every((region) => Boolean(region.path || region.circle)),
+        `every diagram region has an outline: ${question.id}`,
+      );
+      expect(
+        question.regions.every(
+          (region) => Number.isFinite(region.labelX) && Number.isFinite(region.labelY),
+        ),
+        `every diagram region has a label anchor: ${question.id}`,
+      );
+      expect(
+        /^\s*-?\d+(?:\.\d+)? -?\d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)?\s*$/.test(question.viewBox),
+        `diagram viewBox has the expected shape: ${question.id}`,
+      );
+      expect(
+        question.backdrop.every((path) => path.trim().length > 0),
+        `diagram backdrop paths are non-empty: ${question.id}`,
+      );
+      break;
+    }
   }
 
   const right = correctAnswer(question);
@@ -204,6 +238,7 @@ const kinds: QuizQuestionKind[] = [
   'ordering',
   'cloze',
   'map',
+  'diagram',
   'flashcard',
 ];
 for (const kind of kinds) {
@@ -218,6 +253,29 @@ for (const topic of quizTopics) {
   expect(topic.questions.length >= 5, `topic has at least five questions: ${topic.id}`);
   expect(Boolean(topic.title.de && topic.title.en), `topic title is bilingual: ${topic.id}`);
   expect(Boolean(topic.summary.de && topic.summary.en), `topic summary is bilingual: ${topic.id}`);
+  if (topic.figure) {
+    const regionIds = new Set(topic.figure.regions.map((region) => region.id));
+    expect(
+      regionIds.size === topic.figure.regions.length,
+      `figure region ids are unique: ${topic.id}`,
+    );
+    expect(
+      topic.figure.regions.every(
+        (region) =>
+          Boolean(region.label.de && region.label.en) &&
+          Boolean(region.path || region.circle) &&
+          Number.isFinite(region.labelX) &&
+          Number.isFinite(region.labelY),
+      ),
+      `figure regions are labelled and drawable: ${topic.id}`,
+    );
+    expect(
+      /^\s*-?\d+(?:\.\d+)? -?\d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)?\s*$/.test(
+        topic.figure.viewBox,
+      ),
+      `figure viewBox has the expected shape: ${topic.id}`,
+    );
+  }
 }
 
 for (const entry of generatedTopics) {

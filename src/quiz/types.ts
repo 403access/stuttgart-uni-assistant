@@ -13,6 +13,7 @@ export type QuizQuestionKind =
   | 'ordering'
   | 'cloze'
   | 'map'
+  | 'diagram'
   | 'flashcard';
 
 export type QuizDifficulty = 1 | 2 | 3;
@@ -133,6 +134,68 @@ export interface MapQuestion extends QuizQuestionBase {
   correct: Record<string, string>;
 }
 
+/** Colour families for illustrated anatomical/linguistic figures. */
+export type DiagramTone =
+  | 'blue'
+  | 'violet'
+  | 'rose'
+  | 'tongue'
+  | 'sand'
+  | 'bone'
+  | 'teeth'
+  | 'larynx'
+  | 'cords'
+  | 'trachea'
+  | 'lip'
+  | 'mouth';
+
+export interface DiagramRegion {
+  id: string;
+  label: Localized;
+  /** Outline of the structure, in the figure's viewBox coordinates. */
+  path?: string;
+  /** Circular outline for dot-like structures (IPA positions, callouts). */
+  circle?: { cx: number; cy: number; r: number };
+  /** Where the number badge / revealed name is drawn. */
+  labelX: number;
+  labelY: number;
+  /** Invisible tap target around the label anchor, in viewBox units. */
+  hitRadius?: number;
+  /** Always-visible glyph at the anchor, e.g. an IPA symbol. */
+  glyph?: string;
+  /** Stable badge number in the reference legend. Defaults to the array position. */
+  number?: number;
+  tone?: DiagramTone;
+}
+
+/**
+ * A visual question answered by tapping structures in an SVG figure. The
+ * figure is shared with the topic's reference card, so learners can study the
+ * labelled version before answering.
+ */
+export interface DiagramQuestion extends QuizQuestionBase {
+  kind: 'diagram';
+  /** SVG viewBox, e.g. `160 40 760 960`. */
+  viewBox: string;
+  /** Non-interactive outlines drawn under the regions. */
+  backdrop: string[];
+  regions: DiagramRegion[];
+  /** Region ids that make up the answer. */
+  correctIds: string[];
+  /** Draw the names of the correct structures once the answer is checked. */
+  revealNames?: boolean;
+}
+
+export interface QuizFigure {
+  title: Localized;
+  caption?: Localized;
+  viewBox: string;
+  backdrop: string[];
+  regions: DiagramRegion[];
+  /** Show a numbered legend under the figure. Defaults to true. */
+  numbered?: boolean;
+}
+
 export interface FlashcardQuestion extends QuizQuestionBase {
   kind: 'flashcard';
   back: Localized;
@@ -147,6 +210,7 @@ export type QuizQuestion =
   | OrderingQuestion
   | ClozeQuestion
   | MapQuestion
+  | DiagramQuestion
   | FlashcardQuestion;
 
 /** Answer values, keyed by question kind. */
@@ -166,6 +230,8 @@ export interface QuizTopic {
   meeting?: Localized;
   /** Where the content came from. */
   source?: Localized;
+  /** Optional labelled reference figure shown above the round options. */
+  figure?: QuizFigure;
   questions: QuizQuestion[];
 }
 

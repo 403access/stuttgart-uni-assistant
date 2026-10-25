@@ -19,6 +19,7 @@ reusable question views live in `src/quiz/components/`.
 | `ordering` | `ordering.tsx` | ordered ids | Arrow buttons move an item up or down. |
 | `cloze` | `cloze.tsx` | one string per blank | Inline inputs inside the sentence. |
 | `map` | `map.tsx` | `Record<regionId, zoneId>` | Pick a zone chip, then tap a country on the map or in the country list. |
+| `diagram` | `diagram.tsx` | region ids | Tap structures in an SVG figure; multiple correct regions toggle. |
 | `flashcard` | `flashcard.tsx` | `known` / `unknown` | Reveal the back, then self-assess. |
 
 Every view receives the same props (`value`, `revealed`, `onChange`) from
@@ -31,6 +32,15 @@ anchor. The Europe shapes live in `src/quiz/maps/europe.ts`, generated from
 Natural Earth 1:50m Admin 0 Countries and 1:10m Admin 1 States/Provinces (public
 domain) with a Lambert conformal conic projection. The backdrop countries are
 context only; the interactive regions are keyed by the same ids as `correct`.
+
+The diagram view uses the same SVG approach for illustrated questions. A
+`DiagramQuestion` owns a `viewBox`, `backdrop` outlines, labelled regions and one
+or more correct region ids. Regions can be paths or circles and carry a fixed
+tone, so the anatomy stays readable in both themes. The head cross-section and
+the IPA vowel chart live in `src/quiz/figures/vocal-tract.ts`. A topic can also
+carry a `figure` (`QuizFigure`), which the overview renders as a numbered study
+card above the round options; the card and the questions share the exact same
+geometry, so a label can never drift from its tap target.
 
 ## Content
 
