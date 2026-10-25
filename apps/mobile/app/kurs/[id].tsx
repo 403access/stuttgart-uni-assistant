@@ -8,9 +8,10 @@ import { findCachedCourse } from '@/src/campus/db';
 import { Button, Card, InfoRow, Muted, Screen } from '@/src/components/ui';
 import { deviceCourseQuery } from '@/src/query/queries';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { firstParam, formatDay, formatTime, tx } from '@/src/text';
-import type { CampusCourse } from '@/src/types';
+import { colors } from '@ua/ui/theme';
+import { formatDay, formatTime, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
+import type { CampusCourse } from '@ua/core/domain/types';
 
 /** One C@MPUS course: session cache first, persisted course cache after a restart. */
 export default function CourseScreen() {

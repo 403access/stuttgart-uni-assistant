@@ -3,9 +3,11 @@
 A server-hosted operator console for the user store, sessions, platform links,
 C@MPUS and ILIAS data, portal activity, app news, and server health. Open
 `http://127.0.0.1:8787/admin` while the assistant server is running. It is a
-plain HTML page served by `apps/server/routes/admin/index.mjs`; there is no separate
-frontend build and no npm dependency. The browser modules are native ES modules,
-also served by the same Node process.
+React + Vite app in `apps/admin`, built to `apps/admin/dist` and served by
+`apps/server/routes/admin/index.mjs`. Run `bun run admin:build` before starting
+the server; if the build is missing, the server falls back to the legacy vanilla
+dashboard in `apps/admin/public`. The React app uses `@ua/ui-react` and
+`@ua/api-client/admin`.
 
 ## Access
 

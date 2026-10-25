@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { usePaneMode , useResponsive } from '@ua/ui';
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from '@ua/ui/theme';
 
 /** Pressable state as reported by react-native-web (native only sends `pressed`). */
 type InteractionState = { pressed: boolean; hovered?: boolean; focused?: boolean };

@@ -7,15 +7,15 @@ import { Pressable, RefreshControl, Text, View } from 'react-native';
 import { showToast } from '@ua/ui';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { saveIliasFile } from '@/src/ilias/download';
-import { iliasContentErrorMessage } from '@/src/ilias/errors';
-import { iliasPreviewKind } from '@/src/ilias/files';
+import { iliasContentErrorMessage , iliasPreviewKind } from '@ua/feature-ilias';
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
 import { iliasContentQuery, iliasMembersQuery, refreshIliasPage } from '@/src/ilias/queries';
-import type { IliasContentItem, IliasMember } from '@/src/ilias/types';
+import type { IliasContentItem, IliasMember } from '@ua/feature-ilias';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { firstParam, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
+import type { Locale } from '@ua/core/domain/types';
 
 const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 /** Object kinds whose page the same list parser understands. */

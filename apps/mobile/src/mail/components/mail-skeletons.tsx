@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
 import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from '@ua/ui/theme';
 
 /**
  * The list is never revealed faster than this, so opening the tab or a mailbox

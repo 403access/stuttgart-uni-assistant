@@ -6,8 +6,8 @@ import { Pressable, Text, View } from 'react-native';
 import { Button, Card, Pill, Screen, SearchField, Section } from '@/src/components/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { tx, type TranslationKey } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { tx, type TranslationKey } from '@ua/core/format';
 import {
   defaultTikServerId,
   defaultVpnProviderId,

@@ -4,27 +4,25 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen } from '@/src/components/ui';
-import { initialAnswer } from '@/src/quiz/answer';
+import { initialAnswer , describeGivenAnswer, evaluateAnswer, isAnswerComplete , difficultyLabel, questionKindLabel , questionsForMode } from '@ua/feature-quiz';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
-import { findQuizQuestion, findQuizTopic, findQuizTopicForQuestion, isMixedTopic } from '@/src/quiz/content';
+import { findQuizQuestion, findQuizTopic, findQuizTopicForQuestion, isMixedTopic } from '@ua/quiz-content';
 import { QuestionFeedback } from '@/src/quiz/components/question-feedback';
 import { QuestionView } from '@/src/quiz/components/question-view';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
-import { describeGivenAnswer, evaluateAnswer, isAnswerComplete } from '@/src/quiz/evaluate';
-import { difficultyLabel, questionKindLabel } from '@/src/quiz/labels';
 import { useQuizProgress } from '@/src/quiz/progress';
-import { questionsForMode } from '@/src/quiz/session';
 import type {
   ActiveQuizSession,
   QuizAnswer,
   QuizMode,
   QuizQuestion,
   QuizTopic,
-} from '@/src/quiz/types';
+} from '@ua/quiz-content/types';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { firstParam, pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
+import type { Locale } from '@ua/core/domain/types';
 
 function parseMode(value: string | undefined): QuizMode {
   return value === 'quick' || value === 'review' || value === 'mixed' ? value : 'all';

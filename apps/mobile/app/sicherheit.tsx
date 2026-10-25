@@ -10,8 +10,8 @@ import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { useResponsive } from '@ua/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Dedicated security screen reached from the App group on the Campus tab. The

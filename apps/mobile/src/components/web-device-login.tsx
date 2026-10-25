@@ -11,8 +11,8 @@ import { useCountdown } from '@/src/hooks/use-countdown';
 import { usePolling } from '@/src/hooks/use-polling';
 import { useResponsive } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 type Phase = 'starting' | 'waiting' | 'approved' | 'expired' | 'error';
 

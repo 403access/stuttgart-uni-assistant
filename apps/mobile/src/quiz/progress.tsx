@@ -3,8 +3,8 @@ import { createStore } from '@tanstack/store';
 import { useSelector } from '@tanstack/react-store';
 import { useEffect, type ReactNode } from 'react';
 
-import { uid } from '@/src/text';
-import type { Localized } from '@/src/types';
+import { uid } from '@ua/core/format';
+import type { Localized } from '@ua/core/domain/types';
 
 import { enqueueQuizAttempt, enqueueQuizSession } from './remote';
 import type {
@@ -14,7 +14,7 @@ import type {
   QuizMode,
   QuizQuestionKind,
   QuizSessionRecord,
-} from './types';
+} from '@ua/quiz-content/types';
 
 export const QUIZ_PROGRESS_STORAGE_KEY = 'university-assistant/quiz/v1';
 const MAX_SESSIONS = 60;

@@ -1,9 +1,9 @@
 import { createServerSession, type AuthSession } from '@/src/auth/session';
-import { localUser } from '@/src/auth/user';
+import { localUser } from '@ua/core/auth/user';
 import { establishAuthSession } from '@/src/state/actions/auth-session';
-import { getAppState, patchApp } from '@/src/state/app-store';
-import { pickActiveStudyId, sessionFields } from '@/src/state/persisted';
-import type { CampusStudy, CurriculumNode, PersistedState } from '@/src/types';
+import { getAppState, patchApp } from '@ua/core/state/app-store';
+import { pickActiveStudyId, sessionFields } from '@ua/core/state/persisted';
+import type { CampusStudy, CurriculumNode, PersistedState } from '@ua/core/domain/types';
 
 export interface CampusSignInProfile {
   account: string;

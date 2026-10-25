@@ -3,12 +3,13 @@ import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
 import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
-import { documents, exams, modules, people, places, reviews as seedReviews, tutorials } from '@/src/data';
-import { lockReason } from '@/src/domain/plan';
-import { moduleStatus, sessionKind } from '@/src/labels';
+import { documents, exams, modules, people, places, reviews as seedReviews, tutorials } from '@ua/core/data';
+import { lockReason } from '@ua/core/domain/plan';
+import { moduleStatus, sessionKind } from '@ua/core/labels';
 import { appActions, useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
-import { firstParam, formatGrade, pick, tx, uid, weekdays } from '@/src/text';
+import { colors, themedStyle } from '@ua/ui/theme';
+import { formatGrade, pick, tx, uid, weekdays } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 export default function ModuleScreen() {
   const locale = useAppSelector((state) => state.locale);

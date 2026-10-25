@@ -3,11 +3,11 @@ import { RefreshControl } from 'react-native';
 
 import { ResponsiveGrid } from '@ua/ui';
 import { InfoRow, Screen } from '@/src/components/ui';
-import { newsSource } from '@/src/labels';
+import { newsSource } from '@ua/core/labels';
 import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { formatDate, pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { formatDate, pick, tx } from '@ua/core/format';
 
 export default function FeedScreen() {
   const locale = useAppSelector((state) => state.locale);

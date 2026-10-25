@@ -7,9 +7,9 @@ import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage, s
 import { MailBody } from '@/src/components/mailBody';
 import { Button, Card, Pill } from '@/src/components/ui';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailBody as MailBodyData, MailMessage } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailBody as MailBodyData, MailMessage } from '@ua/core/domain/types';
 
 import { MailComposeActions } from './compose-actions';
 

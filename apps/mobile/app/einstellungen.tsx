@@ -8,8 +8,8 @@ import { assistantUrl } from '@/src/assistant/remote';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { useResponsive } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 type SettingsSectionId = 'server' | 'device' | 'university' | 'local';
 

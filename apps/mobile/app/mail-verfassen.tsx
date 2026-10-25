@@ -6,23 +6,22 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { fetchMailBody, folderKind, getMailSnapshot, mailDetail, mailMessage, sendMail } from '@/src/auth/mail';
 import { showToast } from '@ua/ui';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
-import { people } from '@/src/data/people';
+import { people } from '@ua/core/data/people';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
-import { getAppState } from '@/src/state/app-store';
+import { getAppState } from '@ua/core/state/app-store';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { MailAttachment, MailRecipient } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { MailAttachment, MailRecipient } from '@ua/core/domain/types';
 
 import { AttachmentList } from '@/src/mail/components/attachment-list';
 import { RecipientField } from '@/src/mail/components/recipient-field';
 import { TemplateSheet } from '@/src/mail/components/template-sheet';
-import { buildComposeDraft, buildSignature, forwardSubject, replySubject, type ComposeMode } from '@/src/mail/compose-draft';
+import { buildComposeDraft, buildSignature, forwardSubject, replySubject, type ComposeMode , MailTemplate } from '@ua/feature-mail';
 import { clearMailDraft, loadMailDraft, saveMailDraft } from '@/src/mail/draft-storage';
 import { pickMailAttachments } from '@/src/mail/attachments';
 import { loadRecentRecipients, rememberRecipients } from '@/src/mail/recent-recipients';
-import { buildContactRegistry, parseRecipient, parseRecipientHeader } from '@/src/mail/recipients';
-import type { MailTemplate } from '@/src/mail/templates';
+import { buildContactRegistry, parseRecipient, parseRecipientHeader } from '@ua/feature-mail';
 
 /**
  * Compose, reply and forward in one screen. The address field doubles as the

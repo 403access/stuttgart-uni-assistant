@@ -3,11 +3,11 @@ import { ActivityIndicator, Text, View } from 'react-native';
 
 import { Button } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 import { fetchIliasFile } from '../api';
-import { iliasContentErrorMessage } from '../errors';
+import { iliasContentErrorMessage } from '@ua/feature-ilias';
 import type { IliasPdfViewProps } from './pdf-view';
 
 const Iframe = 'iframe' as unknown as ComponentType<{

@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native';
 
 import { Card, Section } from '@/src/components/ui';
-import { themedStyles } from '@/src/theme';
-import { pick } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { pick } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { QuizFigure } from '../types';
+import type { QuizFigure } from '@ua/quiz-content/types';
 import { DiagramCanvas, diagramAspect } from './diagram';
 
 /**

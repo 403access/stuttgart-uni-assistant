@@ -4,8 +4,8 @@
  */
 
 import type { HarvestMessage } from '@/src/auth/login-messages';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /** Caps from the page scripts and the credentials route. */
 const KEY_LIMIT = 120;

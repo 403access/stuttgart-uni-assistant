@@ -1,7 +1,7 @@
 import { readLogin, storedLoginHint } from '@/src/auth/vault';
-import { iliasAccountFrom } from '@/src/ilias/account';
+import { iliasAccountFrom } from '@ua/feature-ilias';
 import { connectIlias, fetchIliasStatus } from '@/src/ilias/api';
-import type { IliasDashboard, IliasStatus } from '@/src/ilias/types';
+import type { IliasDashboard, IliasStatus } from '@ua/feature-ilias';
 
 /**
  * Re-establish the ILIAS session without UI.

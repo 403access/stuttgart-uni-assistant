@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { MailAttachment, MailRecipient } from '@/src/types';
+import type { MailAttachment, MailRecipient } from '@ua/core/domain/types';
 
 export const MAIL_DRAFT_KEY = 'mail-draft/v1';
 /** Attachments ride along only below this raw size; AsyncStorage is not a blob store. */

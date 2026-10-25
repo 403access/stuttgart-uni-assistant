@@ -11,11 +11,11 @@ import { ResponsiveGrid , showToast } from '@ua/ui';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { StudySelector } from '@/src/components/study-selector';
-import { keys } from '@/src/query/keys';
+import { keys } from '@ua/core/query/keys';
 import { coursesFetchedIdsQuery, coursesSyncQuery, deviceCoursesQuery, deviceNodesQuery, serverCoursesQuery } from '@/src/query/queries';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
-import { formatDay, formatTime, tx } from '@/src/text';
+import { colors, themedStyle } from '@ua/ui/theme';
+import { formatDay, formatTime, tx } from '@ua/core/format';
 
 type CourseSort = 'title' | 'type' | 'time';
 

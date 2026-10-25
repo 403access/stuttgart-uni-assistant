@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
 import { useAppSelector } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
+import { themedStyles } from '@ua/ui/theme';
 
 /**
  * Backdrop used by the app screens, mirroring the marketing site's section

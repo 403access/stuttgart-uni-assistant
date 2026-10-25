@@ -3,7 +3,7 @@ import { createServerSession, fetchSessionUser, getActiveAuthToken, readAuthToke
 import { clearCampusHarvest, readCampusHarvest } from '@/src/auth/vault';
 import { adoptAuthSession, clearLocalSession, establishAuthSession } from '@/src/state/actions/auth-session';
 import { signInCampus } from '@/src/state/actions/sign-in';
-import { getAppState } from '@/src/state/app-store';
+import { getAppState } from '@ua/core/state/app-store';
 
 /**
  * Re-establish the app session without UI. Demo and local accounts can be

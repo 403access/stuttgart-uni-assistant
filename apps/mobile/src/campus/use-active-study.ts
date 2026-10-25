@@ -1,6 +1,6 @@
 import { activeStudy } from '@/src/auth/campus';
 import { useAppSelector } from '@/src/state/AppState';
-import type { CampusStudy } from '@/src/types';
+import type { CampusStudy } from '@ua/core/domain/types';
 
 export interface ActiveStudy {
   study: CampusStudy | null;

@@ -1,11 +1,11 @@
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { DropdownOption } from '../types';
+import type { DropdownOption } from '@ua/feature-mail';
 import { ControlIcon, ToolButton , DropdownPicker } from '@ua/ui';
 import { ToolbarReveal, ToolbarSkeleton } from './mail-skeletons';
 

@@ -2,7 +2,7 @@
 
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 
-import { keys } from '@/src/query/keys';
+import { keys } from '@ua/core/query/keys';
 
 import { loadIliasContent, loadIliasMembers, loadIliasProfile } from './api';
 

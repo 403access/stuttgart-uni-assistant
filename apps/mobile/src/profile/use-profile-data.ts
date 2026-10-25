@@ -1,11 +1,11 @@
-import { findPlatform, initialsFor } from '@/src/auth/user';
+import { findPlatform, initialsFor } from '@ua/core/auth/user';
 import { useActiveStudy } from '@/src/campus/use-active-study';
-import { program, student } from '@/src/data';
-import { platformName } from '@/src/labels';
-import { PROFILE_FIELDS, isProfileFieldPublic, publicProfileFieldCount } from '@/src/profile/privacy';
+import { program, student } from '@ua/core/data';
+import { platformName } from '@ua/core/labels';
+import { PROFILE_FIELDS, isProfileFieldPublic, publicProfileFieldCount } from '@ua/core/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
-import { pick, tx } from '@/src/text';
-import type { Locale, ProfileFieldId, ProfilePrivacy, SessionMode, UserAccount } from '@/src/types';
+import { pick, tx } from '@ua/core/format';
+import type { Locale, ProfileFieldId, ProfilePrivacy, SessionMode, UserAccount } from '@ua/core/domain/types';
 
 export interface ProfileData {
   locale: Locale;

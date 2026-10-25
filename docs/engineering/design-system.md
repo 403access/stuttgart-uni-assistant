@@ -6,7 +6,7 @@ The interface follows the university's published corporate colors and an origina
 
 ## Color
 
-Defined in `apps/mobile/src/theme.ts`.
+Defined in `packages/design-tokens/tokens.json` and generated into `packages/design-tokens/generated/theme.ts`; the app reads it through `@ua/ui/theme`.
 
 | Token | Hex | Use |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ Interface strings are requested by key through `tx(locale, key, values?)`, backe
 
 ## Components
 
-`apps/mobile/src/components/ui.tsx` is the set screens actually share. The full inventory — every component under `apps/mobile/src/`, its native/web files, its exports, every import and usage, and which exports have live previews — is generated in [component-catalog.md](component-catalog.md), available in development builds at **Dev → Komponenten** (`/dev/components`), and mirrored in the operator console at **Komponenten** (`/admin#/components`). Live demos are defined in `apps/mobile/src/components/component-previews.tsx`; the admin page links them to the Expo web app on port 8081.
+`apps/mobile/src/components/ui.tsx` holds the app-specific primitives; the generic primitives live in `@ua/ui`. Together they are the set screens actually share. The full inventory — every component under `apps/mobile/src/`, its native/web files, its exports, every import and usage, and which exports have live previews — is generated in [component-catalog.md](component-catalog.md), available in development builds at **Dev → Komponenten** (`/dev/components`), and mirrored in the operator console at **Komponenten** (`/admin#/components`). Live demos are defined in `apps/mobile/src/components/component-previews.tsx`; the admin page links them to the Expo web app on port 8081.
 
 | Piece | Role |
 | --- | --- |

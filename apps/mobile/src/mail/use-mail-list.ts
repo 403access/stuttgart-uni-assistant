@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { folderLabel } from '@/src/auth/mail';
-import type { Locale, MailFolder, MailMessage } from '@/src/types';
+import type { Locale, MailFolder, MailMessage } from '@ua/core/domain/types';
 
 import {
   buildFilterOptions,
@@ -12,7 +12,7 @@ import {
   resolveFilter,
   resolveSort,
 } from './options';
-import type { InboxFilter, InboxSort } from './types';
+import type { InboxFilter, InboxSort } from '@ua/feature-mail';
 
 /**
  * Search, filter and sort over the loaded rows, plus the dropdown options they

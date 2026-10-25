@@ -26,14 +26,14 @@ import {
   filterCurriculum,
   type CurriculumSortKey,
   type CurriculumStatusFilter,
-} from '@/src/domain/curriculum';
-import { curriculumDetail } from '@/src/labels';
-import { keys } from '@/src/query/keys';
+} from '@ua/core/domain/curriculum';
+import { curriculumDetail } from '@ua/core/labels';
+import { keys } from '@ua/core/query/keys';
 import { apiLogQuery, deviceTreesQuery, serverCallsQuery } from '@/src/query/queries';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { CurriculumNode } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { CurriculumNode } from '@ua/core/domain/types';
 
 const SEARCH_LIMIT = 200;
 

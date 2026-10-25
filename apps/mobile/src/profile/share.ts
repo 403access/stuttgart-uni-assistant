@@ -1,8 +1,8 @@
 import { Platform, Share } from 'react-native';
 
 import { showToast } from '@ua/ui';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * Share sheet on native and in supporting browsers; on the web without

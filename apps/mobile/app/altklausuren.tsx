@@ -1,9 +1,9 @@
 import { Stack, router } from 'expo-router';
 
 import { InfoRow, Screen } from '@/src/components/ui';
-import { exams, modules } from '@/src/data';
+import { exams, modules } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
-import { pick, tx } from '@/src/text';
+import { pick, tx } from '@ua/core/format';
 
 export default function ExamsScreen() {
   const locale = useAppSelector((state) => state.locale);

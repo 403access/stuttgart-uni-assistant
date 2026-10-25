@@ -9,9 +9,9 @@ import type { CampusLoginPhase } from '@/src/auth/campus-progress';
 import { ErrorText } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * The automated sign-in: a hidden WebView drives the real C@MPUS pages, and the

@@ -21,7 +21,7 @@
     "ios": "cd apps/mobile && expo run:ios",
     "tunnel": "cd apps/mobile && expo start --tunnel",
     "typecheck": "bun run check:types",
-    "check": "bun run check:types && bun run check:lint && bun run check:tokens && bun run check:catalog && bun run check:components && bun run check:campus-db && bun run check:packages && bun run check:app-tests && bun run check:server-tests && bun run check:tooling-tests && bun run check:admin",
+    "check": "bun run check:types && bun run check:lint && bun run check:boundaries && bun run check:tokens && bun run check:catalog && bun run check:components && bun run check:campus-db && bun run check:packages && bun run check:app-tests && bun run check:server-tests && bun run check:tooling-tests && bun run check:admin",
     "check:types": "tsc -p apps/mobile/tsconfig.json --noEmit",
     "check:lint": "cd apps/mobile && expo lint src app && cd ../.. && eslint apps/server tools apps/admin/public apps/dist",
     "check:catalog": "tsx tools/check-assistant.ts && tsx tools/check-quiz.ts && tsx tools/check-quiz-pipeline.ts",
@@ -58,7 +58,8 @@
     "check:packages": "tsc -p packages/format/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/design-tokens/tsconfig.json --noEmit && tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/api-client/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && tsc -p packages/ui-react/tsconfig.json --noEmit && tsc -p packages/features/mail/tsconfig.json --noEmit && tsc -p packages/features/ilias/tsconfig.json --noEmit && tsc -p packages/features/quiz/tsconfig.json --noEmit && tsc -p packages/quiz-content/tsconfig.json --noEmit && node --test packages/format/test/*.test.mjs packages/contracts/test/*.test.mjs packages/server-kit/test/*.test.mjs packages/api-client/test/*.test.mjs && bun run --filter @ua/ui-react test",
     "admin": "bun run --filter @ua/admin dev",
     "admin:build": "bun run --filter @ua/admin build",
-    "check:admin": "bun run --filter @ua/admin typecheck && bun run --filter @ua/admin test"
+    "check:admin": "bun run --filter @ua/admin typecheck && bun run --filter @ua/admin test",
+    "check:boundaries": "node tools/check-boundaries.mjs"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

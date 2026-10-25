@@ -12,9 +12,9 @@ import { saveCampusHarvest } from '@/src/auth/vault';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@ua/ui';
 import { ensureIliasSession } from '@/src/ilias/auto-connect';
-import { keys } from '@/src/query/keys';
+import { keys } from '@ua/core/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { tx } from '@/src/text';
+import { tx } from '@ua/core/format';
 
 /**
  * The mail server stores the short account id (`st123456`); the sign-in form may

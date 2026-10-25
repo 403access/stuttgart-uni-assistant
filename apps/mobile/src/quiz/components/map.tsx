@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
-import { colors, themedStyles } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { MapQuestion, MapTone } from '../types';
+import type { MapQuestion, MapTone } from '@ua/quiz-content/types';
 
 function zoneColors(tone: MapTone): { bg: string; fg: string } {
   switch (tone) {

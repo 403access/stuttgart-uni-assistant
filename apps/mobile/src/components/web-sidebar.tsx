@@ -8,8 +8,8 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { useActiveStudy } from '@/src/campus/use-active-study';
 import { Mark } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 type NavItem = {
   href: Href;

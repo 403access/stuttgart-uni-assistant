@@ -13,8 +13,8 @@ import {
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /** Opened from the E-Mail item on the Campus tab. */
 export default function MailConnectionScreen() {

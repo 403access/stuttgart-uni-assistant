@@ -3,7 +3,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Screen } from '@/src/components/ui';
 import { MailReader } from '@/src/mail/components/mail-reader';
 import { useAppSelector } from '@/src/state/AppState';
-import { tx } from '@/src/text';
+import { tx } from '@ua/core/format';
 
 /**
  * The read view for one message, pushed from a row of the Messages tab. The

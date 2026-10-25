@@ -17,10 +17,10 @@ import { showToast } from '@ua/ui';
 import { useInterval } from '@/src/hooks/use-interval';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { tx } from '@/src/text';
-import type { MailMessage } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { MailMessage } from '@ua/core/domain/types';
 
-import { sameMessageOrder, sameMessageRows } from './format';
+import { sameMessageOrder, sameMessageRows } from '@ua/feature-mail';
 
 /** Deliberate fetching interval: one quiet inbox read per minute while connected. */
 const REFRESH_INTERVAL_MS = 60_000;

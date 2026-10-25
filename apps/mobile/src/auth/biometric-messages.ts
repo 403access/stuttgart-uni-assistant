@@ -1,5 +1,5 @@
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /** A cancelled prompt is a decision, not a hardware failure. */
 export function isBiometricCancel(code?: string): boolean {

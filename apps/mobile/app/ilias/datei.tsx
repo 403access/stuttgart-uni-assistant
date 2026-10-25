@@ -8,11 +8,12 @@ import { Button, Muted, Screen } from '@/src/components/ui';
 import { IliasOfficeView } from '@/src/ilias/components/office-view';
 import { IliasPdfView } from '@/src/ilias/components/pdf-view';
 import { saveIliasFile } from '@/src/ilias/download';
-import { iliasContentErrorMessage } from '@/src/ilias/errors';
-import { previewKindFromParams, type IliasPreviewKind } from '@/src/ilias/files';
+import { iliasContentErrorMessage } from '@ua/feature-ilias';
+import { previewKindFromParams, type IliasPreviewKind } from '@ua/feature-ilias';
 import { useAppSelector } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
-import { firstParam, tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 

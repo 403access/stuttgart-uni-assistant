@@ -1,9 +1,9 @@
 import { clearMailCache } from '@/src/auth/mail';
 import { getActiveAuthToken, linkServerPlatform, syncServerPlatform, unlinkServerPlatform } from '@/src/auth/session';
-import { findPlatform } from '@/src/auth/user';
+import { findPlatform } from '@ua/core/auth/user';
 import { refreshOrReauthenticate } from '@/src/state/actions/session-resume';
-import { updateApp } from '@/src/state/app-store';
-import type { AccountPlatformId, PlatformLinkStatus } from '@/src/types';
+import { updateApp } from '@ua/core/state/app-store';
+import type { AccountPlatformId, PlatformLinkStatus } from '@ua/core/domain/types';
 
 /** Account-level server calls: refresh the profile, link, sync, and unlink platforms. */
 export async function refreshUser(): Promise<void> {

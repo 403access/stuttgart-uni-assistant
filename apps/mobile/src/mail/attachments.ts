@@ -1,7 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { Platform } from 'react-native';
 
-import type { MailAttachment } from '@/src/types';
+import type { MailAttachment } from '@ua/core/domain/types';
 
 export const MAX_ATTACHMENTS = 5;
 export const MAX_ATTACHMENT_BYTES = 6_000_000;

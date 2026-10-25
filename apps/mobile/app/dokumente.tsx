@@ -4,11 +4,11 @@ import { Text, TextInput } from 'react-native';
 
 import { ResponsiveGrid } from '@ua/ui';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { documents } from '@/src/data';
+import { documents } from '@ua/core/data';
 import { pickStudyFile } from '@/src/documents/io';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
-import { pick, tx, uid } from '@/src/text';
+import { colors, themedStyle } from '@ua/ui/theme';
+import { pick, tx, uid } from '@ua/core/format';
 
 export default function DocumentsScreen() {
   const locale = useAppSelector((state) => state.locale);

@@ -1,7 +1,7 @@
-import { documents } from '@/src/data';
-import { pickActiveStudyId } from '@/src/state/persisted';
-import { updateApp } from '@/src/state/app-store';
-import type { CampusStudy, CurriculumNode, ImportedDocument, PlatformId, Review, TransferDraft } from '@/src/types';
+import { documents } from '@ua/core/data';
+import { pickActiveStudyId } from '@ua/core/state/persisted';
+import { updateApp } from '@ua/core/state/app-store';
+import type { CampusStudy, CurriculumNode, ImportedDocument, PlatformId, Review, TransferDraft } from '@ua/core/domain/types';
 
 /**
  * Device-local content mutations: the curriculum tree, study selection,

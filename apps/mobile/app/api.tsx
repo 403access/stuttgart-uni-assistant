@@ -6,12 +6,12 @@ import { Text, TextInput } from 'react-native';
 import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperation } from '@/src/auth/api';
 import { asCampusCourses, asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
 import { asAuthSession } from '@/src/auth/session';
-import type { CampusCourse } from '@/src/types';
+import type { CampusCourse } from '@ua/core/domain/types';
 import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
-import { keys } from '@/src/query/keys';
+import { keys } from '@ua/core/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 function summary(locale: 'de' | 'en', id: string): string {
   if (id === 'health') return tx(locale, 'api.serverstatus');

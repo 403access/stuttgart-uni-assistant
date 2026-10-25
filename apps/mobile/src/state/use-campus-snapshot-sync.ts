@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 
 import { loadCampusStudies } from '@/src/auth/campus';
-import { updateApp } from '@/src/state/app-store';
-import { pickActiveStudyId } from '@/src/state/persisted';
+import { updateApp } from '@ua/core/state/app-store';
+import { pickActiveStudyId } from '@ua/core/state/persisted';
 import { useAppSelector } from '@/src/state/use-app-store';
 
 /**

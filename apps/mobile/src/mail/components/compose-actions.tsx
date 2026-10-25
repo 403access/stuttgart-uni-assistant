@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /** Reply and forward shortcuts under the read view header. */
 export function MailComposeActions({ uid, folder, locale }: { uid: number; folder: string; locale: Locale }) {

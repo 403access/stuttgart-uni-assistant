@@ -2,9 +2,9 @@ import { Text, View } from 'react-native';
 
 import { Chip, Field, Notice, SectionTitle } from '@/src/components/login-blocks';
 import { Button } from '@/src/components/ui';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * The automated sign-in form. The credential is typed here and, if the user

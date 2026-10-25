@@ -2,8 +2,8 @@ import { Text, View } from 'react-native';
 
 import { Card, Pill } from '@/src/components/ui';
 import type { ProfileData } from '@/src/profile/use-profile-data';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /** Identity block shared by the profile overview and its sub-views. */
 export function ProfileSummary({ data }: { data: ProfileData }) {

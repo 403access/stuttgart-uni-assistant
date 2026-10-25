@@ -16,16 +16,16 @@ import {
   quizModules,
   quizModulesForStudy,
   quizStudies,
-} from '@/src/quiz/content';
+} from '@ua/quiz-content';
 import { QuizToolbar } from '@/src/quiz/components/quiz-toolbar';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { useQuizProgress } from '@/src/quiz/progress';
-import { moduleStats, statsForQuestions, topicStats } from '@/src/quiz/session';
-import type { QuestionProgress, QuizMode, QuizModule, QuizStudy, QuizTopic } from '@/src/quiz/types';
+import { moduleStats, statsForQuestions, topicStats } from '@ua/feature-quiz';
+import type { QuestionProgress, QuizMode, QuizModule, QuizStudy, QuizTopic } from '@ua/quiz-content/types';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { hay, pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { hay, pick, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 const ALL_STUDIES = 'all';
 

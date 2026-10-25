@@ -5,13 +5,12 @@ import { getActiveAuthToken } from '@/src/auth/session';
 import { storedLoginHint } from '@/src/auth/vault';
 import { showToast } from '@ua/ui';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
-import { iliasAccountFrom } from '@/src/ilias/account';
+import { iliasAccountFrom , iliasErrorMessage as describe } from '@ua/feature-ilias';
 import { disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';
 import { ensureIliasSession } from '@/src/ilias/auto-connect';
-import { iliasErrorMessage as describe } from '@/src/ilias/errors';
-import type { IliasDashboard, IliasStatus } from '@/src/ilias/types';
+import type { IliasDashboard, IliasStatus } from '@ua/feature-ilias';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { tx } from '@/src/text';
+import { tx } from '@ua/core/format';
 
 /** Owns the automatically restored ILIAS session and its dashboard rows. */
 export function useIlias() {

@@ -13,8 +13,8 @@ import {
   type OnboardingPreferences,
 } from '@/src/onboarding/OnboardingState';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Development-only diagnostics for the first-run flow. It shows the live

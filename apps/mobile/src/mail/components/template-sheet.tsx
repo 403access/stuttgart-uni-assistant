@@ -1,11 +1,11 @@
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { ControlIcon } from '@ua/ui';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import { mailTemplates, type MailTemplate } from '../templates';
+import { mailTemplates, type MailTemplate } from '@ua/feature-mail';
 
 /** Bottom sheet with the localized starting points for a new message. */
 export function TemplateSheet({

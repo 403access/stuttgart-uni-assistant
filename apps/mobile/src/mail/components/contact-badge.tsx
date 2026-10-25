@@ -1,8 +1,8 @@
 import { Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailContactSource } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailContactSource } from '@ua/core/domain/types';
 
 /** Tones are read during render so a theme switch repaints the badges too. */
 function toneFor(source: MailContactSource | 'manual'): { background: string; text: string } {

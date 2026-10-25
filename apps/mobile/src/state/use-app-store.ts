@@ -1,6 +1,6 @@
 import { useSelector } from '@tanstack/react-store';
 
-import { appStore, type AppStoreState } from '@/src/state/app-store';
+import { appStore, type AppStoreState } from '@ua/core/state/app-store';
 
 /**
  * Subscribe a component to one slice of the app store. The selector must

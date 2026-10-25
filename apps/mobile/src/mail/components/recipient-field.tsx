@@ -2,11 +2,11 @@ import { useMemo, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailContact, MailRecipient } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailContact, MailRecipient } from '@ua/core/domain/types';
 
-import { contactInitials, addRecipient, parseRecipient, sameRecipient, searchContacts } from '../recipients';
+import { contactInitials, addRecipient, parseRecipient, sameRecipient, searchContacts } from '@ua/feature-mail';
 import { ContactBadge } from './contact-badge';
 
 const AVATAR_KEYS = ['blue', 'success', 'warning', 'light'] as const;

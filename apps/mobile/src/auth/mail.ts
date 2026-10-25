@@ -4,8 +4,8 @@ import { createStore } from '@tanstack/store';
 import { assistantUrl } from '@/src/assistant/remote';
 import { MAIL_DRAFT_KEY } from '@/src/mail/draft-storage';
 import { MAIL_RECIPIENTS_KEY } from '@/src/mail/recent-recipients';
-import { tx } from '@/src/text';
-import type { MailAttachment, MailBody, MailFolder, MailMessage, MailRecipient, MailSendResult, MailStatus } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { MailAttachment, MailBody, MailFolder, MailMessage, MailRecipient, MailSendResult, MailStatus } from '@ua/core/domain/types';
 
 /**
  * UniMail (https://mail.uni-stuttgart.de/) — Exchange of Universität Stuttgart.

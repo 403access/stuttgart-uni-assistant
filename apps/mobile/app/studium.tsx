@@ -6,13 +6,13 @@ import { CampusInfoView } from '@/src/components/campus-info-view';
 import { LecturersList } from '@/src/components/lecturers-list';
 import { TutorialsList } from '@/src/components/tutorials-list';
 import { Card, InfoRow, Meter, Pill, Screen, Section } from '@/src/components/ui';
-import { modules, program } from '@/src/data';
-import { searchModules, totals } from '@/src/domain/plan';
-import { moduleStatus } from '@/src/labels';
+import { modules, program } from '@ua/core/data';
+import { searchModules, totals } from '@ua/core/domain/plan';
+import { moduleStatus } from '@ua/core/labels';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-import type { ModuleStatus } from '@/src/types';
+import { colors, themedStyle } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import type { ModuleStatus } from '@ua/core/domain/types';
 
 const filters: (ModuleStatus | 'all')[] = ['all', 'enrolled', 'open', 'passed'];
 

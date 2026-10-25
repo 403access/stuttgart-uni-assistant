@@ -12,9 +12,9 @@ import { IliasDashboardView, iliasFilterLabel, type IliasFilter } from '@/src/il
 import { IliasToolbar } from '@/src/ilias/components/ilias-toolbar';
 import { useIlias } from '@/src/ilias/use-ilias';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { formatTimestamp, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { formatTimestamp, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 

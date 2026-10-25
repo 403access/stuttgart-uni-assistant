@@ -13,9 +13,9 @@ import {
 import { COMPONENT_PREVIEWS } from '@/src/components/component-previews';
 import { Card, Muted, Pill, Screen, SearchField, Section, Strong } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx, type TranslationKey } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx, type TranslationKey } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 type CategoryFilter = 'all' | ComponentCatalogCategory;
 type PlatformFilter = 'all' | 'native' | 'web';

@@ -1,12 +1,12 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import { describeCorrectAnswer } from '../evaluate';
-import type { QuizQuestion } from '../types';
+import { describeCorrectAnswer } from '@ua/feature-quiz';
+import type { QuizQuestion } from '@ua/quiz-content/types';
 
 export function QuestionFeedback({
   question,

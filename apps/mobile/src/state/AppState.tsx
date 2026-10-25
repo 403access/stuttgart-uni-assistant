@@ -5,7 +5,7 @@
  */
 export { AppStateProvider } from '@/src/state/AppStateProvider';
 export { appActions } from '@/src/state/actions';
-export { appStore, getAppState, type AppStoreState } from '@/src/state/app-store';
+export { appStore, getAppState, type AppStoreState } from '@ua/core/state/app-store';
 export { useAppSelector, useAppState } from '@/src/state/use-app-store';
-export { APP_STATE_STORAGE_KEY, pickActiveStudyId } from '@/src/state/persisted';
+export { APP_STATE_STORAGE_KEY, pickActiveStudyId } from '@ua/core/state/persisted';
 export type { CampusSignInProfile, OidcSignInProfile } from '@/src/state/actions/sign-in';

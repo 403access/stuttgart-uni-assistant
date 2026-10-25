@@ -3,11 +3,11 @@ import { Linking, Pressable, Text, View } from 'react-native';
 
 import { ResponsiveGrid } from '@ua/ui';
 import { Card, Pill, Section } from '@/src/components/ui';
-import { hay, tx } from '@/src/text';
-import { themedStyles } from '@/src/theme';
-import type { Locale } from '@/src/types';
+import { hay, tx } from '@ua/core/format';
+import { themedStyles } from '@ua/ui/theme';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { IliasDashboard, IliasItem } from '../types';
+import type { IliasDashboard, IliasItem } from '@ua/feature-ilias';
 
 /** Dashboard category as selected in the ILIAS drawer. */
 export type IliasFilter = 'all' | 'courses' | 'groups' | 'news' | 'mails' | 'tasks';

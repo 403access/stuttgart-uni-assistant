@@ -7,11 +7,11 @@ import Svg, {
   Text as SvgText,
 } from 'react-native-svg';
 
-import { themedStyles } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { DiagramQuestion, DiagramRegion, DiagramTone } from '../types';
+import type { DiagramQuestion, DiagramRegion, DiagramTone } from '@ua/quiz-content/types';
 
 /**
  * Fixed illustration palette. The figure keeps its paper look in both themes,

@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import type { Campus, Localized } from '@/src/types';
+import type { Campus, Localized } from '@ua/core/domain/types';
 
 export interface PrinterLocation {
   id: string;

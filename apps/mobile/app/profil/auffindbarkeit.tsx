@@ -2,13 +2,13 @@ import { Stack, router } from 'expo-router';
 import { Switch, Text, View } from 'react-native';
 
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { PROFILE_FIELDS } from '@/src/profile/privacy';
+import { PROFILE_FIELDS } from '@ua/core/profile/privacy';
 import { ProfilePreview } from '@/src/profile/profile-preview';
 import { ProfileSummary } from '@/src/profile/profile-summary';
 import { useProfileData } from '@/src/profile/use-profile-data';
 import { appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /** Whether other students can find the profile at all. */
 export default function ProfileDiscoverabilityScreen() {

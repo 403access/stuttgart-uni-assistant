@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { Text, View } from 'react-native';
 
 import { Card } from '@/src/components/ui';
-import { colors } from '@/src/theme';
+import { colors } from '@ua/ui/theme';
 
 /** Single-choice row used by the appearance and language screens. */
 export function ChoiceCard({

@@ -3,13 +3,13 @@ import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { Card, InfoRow, Pill, Screen, Section } from '@/src/components/ui';
-import { formatStamp, modeLabel } from '@/src/profile/format';
-import { PROFILE_FIELDS, isProfileFieldPublic } from '@/src/profile/privacy';
+import { formatStamp, modeLabel } from '@ua/core/profile/format';
+import { PROFILE_FIELDS, isProfileFieldPublic } from '@ua/core/profile/privacy';
 import { ProfileSummary } from '@/src/profile/profile-summary';
 import { shareText } from '@/src/profile/share';
 import { profileLine, useProfileData } from '@/src/profile/use-profile-data';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /** All account data in one place, with a direct share action per detail. */
 export default function ProfileDataScreen() {

@@ -5,14 +5,14 @@ import { Text, View } from 'react-native';
 
 import { fetchCampusStatus } from '@/src/auth/campus';
 import { openOfficialCampus, universityUrls } from '@/src/auth/oidc';
-import { findPlatform, initialsFor } from '@/src/auth/user';
+import { findPlatform, initialsFor } from '@ua/core/auth/user';
 import { useLeaveSession } from '@/src/auth/use-leave-session';
 import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
-import { platformName } from '@/src/labels';
+import { platformName } from '@ua/core/labels';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { AccountPlatformId, PlatformId, PlatformLink } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { AccountPlatformId, PlatformId, PlatformLink } from '@ua/core/domain/types';
 
 /** The platforms one account can carry, in the order they read best. */
 const PLATFORM_ORDER: AccountPlatformId[] = ['campus', 'ilias', 'sdg', 'siam', 'mail'];

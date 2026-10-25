@@ -1,5 +1,5 @@
-import { updateApp } from '@/src/state/app-store';
-import type { ChatMessage } from '@/src/types';
+import { updateApp } from '@ua/core/state/app-store';
+import type { ChatMessage } from '@ua/core/domain/types';
 
 /** The local transcript and the planned-question list. */
 export function addMessage(message: ChatMessage): void {

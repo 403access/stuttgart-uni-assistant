@@ -2,12 +2,12 @@ import { Stack, router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { PROFILE_FIELDS } from '@/src/profile/privacy';
+import { PROFILE_FIELDS } from '@ua/core/profile/privacy';
 import { ProfileSummary } from '@/src/profile/profile-summary';
 import { shareText } from '@/src/profile/share';
 import { profileLine, useProfileData } from '@/src/profile/use-profile-data';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 export default function ProfileOverviewScreen() {
   const data = useProfileData();

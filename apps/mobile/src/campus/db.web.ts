@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { CampusLogEntry, PersistedApiCall } from '@/src/auth/campus-log';
-import type { BulkCourse, CampusCourse, CurriculumNode } from '@/src/types';
+import type { BulkCourse, CampusCourse, CurriculumNode } from '@ua/core/domain/types';
 
 /**
  * Web implementation of the curriculum cache (`src/campus/db.ts` is the

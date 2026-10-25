@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { Button, Mark } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Full-screen lock shown while biometrics are enabled. It covers the app (the

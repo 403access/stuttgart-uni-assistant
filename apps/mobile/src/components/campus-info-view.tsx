@@ -12,12 +12,12 @@ import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { CurriculumTree } from '@/src/components/curriculum-tree';
 import { StudySelector } from '@/src/components/study-selector';
-import { keys } from '@/src/query/keys';
+import { keys } from '@ua/core/query/keys';
 import { deviceNodesQuery, syncInfoQuery } from '@/src/query/queries';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { formatDay, formatTime, tx } from '@/src/text';
-import type { CampusStudy } from '@/src/types';
+import { colors } from '@ua/ui/theme';
+import { formatDay, formatTime, tx } from '@ua/core/format';
+import type { CampusStudy } from '@ua/core/domain/types';
 
 /** Live C@MPUS curriculum structure for the selected study (`POST /v1/campus/structure`). */
 export function CampusInfoView() {

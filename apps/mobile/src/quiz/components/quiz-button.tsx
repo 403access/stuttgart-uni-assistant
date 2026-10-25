@@ -1,6 +1,6 @@
 import { Pressable, Text } from 'react-native';
 
-import { themedStyles } from '@/src/theme';
+import { themedStyles } from '@ua/ui/theme';
 
 /** Footer button with a proper disabled state (the shared Button has none). */
 export function QuizButton({

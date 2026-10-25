@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
 import { Pill } from '@/src/components/ui';
-import { themedStyles } from '@/src/theme';
+import { themedStyles } from '@ua/ui/theme';
 
 /**
  * One curriculum node in a single row: toggle arrow, name, designation,

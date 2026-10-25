@@ -4,7 +4,7 @@ import { authenticateWithBiometrics, type BiometricAuthResult } from '@/src/auth
 import { biometricMessage, isBiometricCancel } from '@/src/auth/biometric-messages';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useAppSelector } from '@/src/state/AppState';
-import { tx, type TranslationKey } from '@/src/text';
+import { tx, type TranslationKey } from '@ua/core/format';
 
 export interface BiometricPrompt {
   /** Run the system prompt; null when one is already open. */

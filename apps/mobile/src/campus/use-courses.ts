@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { deviceCoursesQuery, serverCoursesQuery } from '@/src/query/queries';
-import type { BulkCourse, CampusStudy } from '@/src/types';
+import type { BulkCourse, CampusStudy } from '@ua/core/domain/types';
 
 const EMPTY_COURSES: BulkCourse[] = [];
 

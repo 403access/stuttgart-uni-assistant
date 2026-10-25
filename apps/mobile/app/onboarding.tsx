@@ -10,13 +10,13 @@ import { AmbientBackground } from '@/src/components/ambient-background';
 import { ChoiceCard } from '@/src/components/choice-card';
 import { Button, Mark, Pill } from '@/src/components/ui';
 import { showToast } from '@ua/ui';
-import type { IliasTutorial, IliasTutorialFile } from '@/src/ilias/tutorials';
+import type { IliasTutorial, IliasTutorialFile } from '@ua/feature-ilias';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { formatTime, localDay, monthShort, tx } from '@/src/text';
-import type { CampusCalendarEvent, DesignMode, MailMessage, ThemeMode } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { formatTime, localDay, monthShort, tx } from '@ua/core/format';
+import type { CampusCalendarEvent, DesignMode, MailMessage, ThemeMode } from '@ua/core/domain/types';
 
 type Step = 'biometrics' | 'appearance' | 'calendar' | 'mail' | 'timetable' | 'tutorials';
 type IconName = ComponentProps<typeof MaterialIcons>['name'];

@@ -1,5 +1,5 @@
-import { updateApp } from '@/src/state/app-store';
-import type { ProfileFieldId, ProfileVisibility } from '@/src/types';
+import { updateApp } from '@ua/core/state/app-store';
+import type { ProfileFieldId, ProfileVisibility } from '@ua/core/domain/types';
 
 /**
  * Profile visibility lives on the device: there is no peer directory on the

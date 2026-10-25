@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
-import { pick } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { pick } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import { shuffle } from '../session';
-import type { MultipleChoiceQuestion } from '../types';
+import { shuffle } from '@ua/feature-quiz';
+import type { MultipleChoiceQuestion } from '@ua/quiz-content/types';
 import { OptionRow } from './option-row';
 
 export function MultipleChoiceView({

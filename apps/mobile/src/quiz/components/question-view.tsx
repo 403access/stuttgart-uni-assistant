@@ -1,6 +1,6 @@
-import type { Locale } from '@/src/types';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { QuizAnswer, QuizQuestion } from '../types';
+import type { QuizAnswer, QuizQuestion } from '@ua/quiz-content/types';
 import { ClozeView } from './cloze';
 import { DiagramView } from './diagram';
 import { FlashcardView } from './flashcard';

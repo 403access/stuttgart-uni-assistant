@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-import { themedStyles } from '@/src/theme';
+import { themedStyles } from '@ua/ui/theme';
 
 /** Native map embed. The web build uses `uni-map-view.web.tsx` (iframe) instead. */
 export function UniMapView({ url, onError }: { url: string; onError: () => void }) {

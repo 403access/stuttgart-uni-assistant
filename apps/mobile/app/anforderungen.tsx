@@ -1,11 +1,11 @@
 import { Stack, router } from 'expo-router';
 
 import { Card, Meter, Screen } from '@/src/components/ui';
-import { modules, program, student } from '@/src/data';
-import { areaTotals, totals, weightedAverage } from '@/src/domain/plan';
+import { modules, program, student } from '@ua/core/data';
+import { areaTotals, totals, weightedAverage } from '@ua/core/domain/plan';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { formatGrade, pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { formatGrade, pick, tx } from '@ua/core/format';
 import { Text } from 'react-native';
 
 export default function RequirementsScreen() {

@@ -4,13 +4,14 @@ import { useMutation } from '@tanstack/react-query';
 import { Text, View } from 'react-native';
 
 import { askGrok } from '@/src/assistant/remote';
-import { asBullets, summarize } from '@/src/assistant/summarize';
+import { asBullets, summarize } from '@ua/core/assistant/summarize';
 import { Button, Card, Screen } from '@/src/components/ui';
-import { documents } from '@/src/data';
+import { documents } from '@ua/core/data';
 import { exportText } from '@/src/documents/io';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { firstParam, pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 export default function DocumentScreen() {
   const locale = useAppSelector((state) => state.locale);

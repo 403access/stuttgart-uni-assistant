@@ -15,8 +15,8 @@ import {
   type CurriculumSyncInfo,
 } from '@/src/campus/db';
 import type { CampusLogEntry } from '@/src/auth/campus-log';
-import type { BulkCourse, CurriculumNode } from '@/src/types';
-import { keys } from '@/src/query/keys';
+import type { BulkCourse, CurriculumNode } from '@ua/core/domain/types';
+import { keys } from '@ua/core/query/keys';
 import { fetchPublishedNews } from '@/src/news/api';
 
 interface QueryOpt {

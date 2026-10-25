@@ -1,11 +1,11 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import type { OrderingQuestion } from '../types';
+import type { OrderingQuestion } from '@ua/quiz-content/types';
 
 export function OrderingView({
   question,

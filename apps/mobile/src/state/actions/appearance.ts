@@ -1,7 +1,7 @@
-import { emptyState } from '@/src/state/persisted';
-import { getAppState, updateApp } from '@/src/state/app-store';
-import type { DesignMode, Locale, ThemeMode } from '@/src/types';
-import { applyTheme } from '@/src/theme';
+import { emptyState } from '@ua/core/state/persisted';
+import { getAppState, updateApp } from '@ua/core/state/app-store';
+import type { DesignMode, Locale, ThemeMode } from '@ua/core/domain/types';
+import { applyTheme } from '@ua/ui/theme';
 
 /**
  * Appearance plus the dev reset. `reset` clears the content but keeps the

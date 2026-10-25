@@ -2,7 +2,7 @@ import { createPublicClient } from '@ua/api-client/public';
 import { API_OPERATIONS, type ApiOperation } from '@ua/contracts/api';
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders } from '@/src/auth/session';
-import { tx } from '@/src/text';
+import { tx } from '@ua/core/format';
 
 export type { ApiOperation } from '@ua/contracts/api';
 

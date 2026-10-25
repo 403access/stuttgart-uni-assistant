@@ -6,8 +6,8 @@ import { activeStudy, campusDetail, loadCampusCurriculum } from '@/src/auth/camp
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Enrolled studies from `GET /v1/campus/studies`, shown at the very top after login.

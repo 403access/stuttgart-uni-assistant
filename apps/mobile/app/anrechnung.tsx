@@ -3,11 +3,11 @@ import { Stack } from 'expo-router';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
-import { modules } from '@/src/data';
-import { suggestRecognitionTarget } from '@/src/domain/plan';
+import { modules } from '@ua/core/data';
+import { suggestRecognitionTarget } from '@ua/core/domain/plan';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
-import { pick, tx, uid } from '@/src/text';
+import { colors, themedStyle } from '@ua/ui/theme';
+import { pick, tx, uid } from '@ua/core/format';
 
 export default function RecognitionScreen() {
   const locale = useAppSelector((state) => state.locale);

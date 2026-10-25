@@ -13,13 +13,12 @@ import {
 } from '@/src/campus/db';
 import { ensureIliasSession } from '@/src/ilias/auto-connect';
 import { loadIliasContent, loadIliasDashboard } from '@/src/ilias/api';
-import { iliasContentErrorMessage } from '@/src/ilias/errors';
-import { tutorialFromContent, tutorialItems, type IliasTutorial } from '@/src/ilias/tutorials';
-import type { IliasStatus } from '@/src/ilias/types';
-import { decodeBase64Utf8, parseIcsEvents } from '@/src/onboarding/ics';
-import { keys } from '@/src/query/keys';
+import { iliasContentErrorMessage } from '@ua/feature-ilias';
+import { tutorialFromContent, tutorialItems, type IliasTutorial , IliasStatus } from '@ua/feature-ilias';
+import { decodeBase64Utf8, parseIcsEvents } from '@ua/core/onboarding/ics';
+import { keys } from '@ua/core/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import type { BulkCourse, CampusCalendarEvent, CampusStudy, MailFolder, MailMessage, MailStatus } from '@/src/types';
+import type { BulkCourse, CampusCalendarEvent, CampusStudy, MailFolder, MailMessage, MailStatus } from '@ua/core/domain/types';
 
 /** A cached course tagged with the study it belongs to (the timetable spans all studies). */
 export interface OnboardingCalendarCourse extends BulkCourse {

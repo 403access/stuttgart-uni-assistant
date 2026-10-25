@@ -10,11 +10,11 @@ import { PaneModeProvider , ResponsiveGrid , useResponsive } from '@ua/ui';
 import { Button, Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { SETTINGS_PANELS } from '@/src/settings/settings-panels';
 import { StudySelector } from '@/src/components/study-selector';
-import { program, student } from '@/src/data';
-import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';
+import { program, student } from '@ua/core/data';
+import { PROFILE_FIELDS, publicProfileFieldCount } from '@ua/core/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { pick, tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
 
 type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/components' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };

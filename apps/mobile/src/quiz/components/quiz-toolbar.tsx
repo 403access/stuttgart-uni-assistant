@@ -1,9 +1,9 @@
 import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { ControlIcon, ToolButton } from '@ua/ui';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * Sticky quiz controls: the study drawer on the left, search, and the filter

@@ -6,17 +6,17 @@ import { Pressable, Text, View } from 'react-native';
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
-import { findQuizTopic, isMixedTopic } from '@/src/quiz/content';
+import { findQuizTopic, isMixedTopic } from '@ua/quiz-content';
 import { DiagramFigureCard } from '@/src/quiz/components/diagram-figure';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
-import { questionKindLabel } from '@/src/quiz/labels';
+import { questionKindLabel , topicStats } from '@ua/feature-quiz';
 import { useQuizProgress } from '@/src/quiz/progress';
-import { topicStats } from '@/src/quiz/session';
-import type { QuizMode, QuizTopic } from '@/src/quiz/types';
+import type { QuizMode, QuizTopic } from '@ua/quiz-content/types';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { firstParam, formatTimestamp, pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { formatTimestamp, pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
+import type { Locale } from '@ua/core/domain/types';
 
 function parseMode(value: string | undefined): QuizMode {
   return value === 'quick' || value === 'review' || value === 'mixed' ? value : 'all';

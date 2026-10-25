@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 
 import { InfoRow, Muted } from '@/src/components/ui';
-import { people, places } from '@/src/data';
+import { people, places } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
-import { pick, tx } from '@/src/text';
+import { pick, tx } from '@ua/core/format';
 
 export function LecturersList() {
   const locale = useAppSelector((state) => state.locale);

@@ -1,7 +1,7 @@
 import { useState, type ComponentType } from 'react';
 import { View } from 'react-native';
 
-import { themedStyles } from '@/src/theme';
+import { themedStyles } from '@ua/ui/theme';
 
 const Iframe = 'iframe' as unknown as ComponentType<{
   src: string;

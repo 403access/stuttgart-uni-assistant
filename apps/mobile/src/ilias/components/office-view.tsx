@@ -5,8 +5,8 @@ import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { authHeaders } from '@/src/auth/session';
 import { Button } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 import { iliasOfficeViewerUrl } from '../api';
 

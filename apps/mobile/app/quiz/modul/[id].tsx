@@ -4,14 +4,15 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
-import { findQuizModuleById, studyForModule } from '@/src/quiz/content';
+import { findQuizModuleById, studyForModule } from '@ua/quiz-content';
 import { useQuizProgress } from '@/src/quiz/progress';
-import { moduleStats, topicStats } from '@/src/quiz/session';
-import type { QuizModule, QuizMode, QuizTopic } from '@/src/quiz/types';
+import { moduleStats, topicStats } from '@ua/feature-quiz';
+import type { QuizModule, QuizMode, QuizTopic } from '@ua/quiz-content/types';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { firstParam, pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
+import type { Locale } from '@ua/core/domain/types';
 
 function startTopic(topic: QuizTopic, mode: QuizMode) {
   router.push({ pathname: '/quiz/[topic]', params: { topic: topic.id, mode } });

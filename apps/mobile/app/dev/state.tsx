@@ -7,8 +7,8 @@ import { JsonTree } from '@ua/ui';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { APP_STATE_STORAGE_KEY, useAppState } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Development-only read-only snapshot of the session and the AsyncStorage

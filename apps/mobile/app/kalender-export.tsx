@@ -7,12 +7,12 @@ import { Platform, Pressable, Text, View } from 'react-native';
 import { exportCampusCalendar, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
 import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
-import { keys } from '@/src/query/keys';
+import { keys } from '@ua/core/query/keys';
 import { apiLogQuery } from '@/src/query/queries';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 function germanDate(date: Date): string {
   return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;

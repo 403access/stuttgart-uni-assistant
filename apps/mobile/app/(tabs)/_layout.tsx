@@ -7,8 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useResponsive } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * The navigator defaults to an icon-and-label height (49pt) even when

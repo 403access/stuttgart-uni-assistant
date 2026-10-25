@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 
 import type { CampusLogEntry, PersistedApiCall } from '@/src/auth/campus-log';
-import type { BulkCourse, CampusCourse, CurriculumNode } from '@/src/types';
+import type { BulkCourse, CampusCourse, CurriculumNode } from '@ua/core/domain/types';
 
 const DATABASE_NAME = 'campus-cache.db';
 const FALLBACK_PREFIX = 'campus-cache/sqlite-fallback/';

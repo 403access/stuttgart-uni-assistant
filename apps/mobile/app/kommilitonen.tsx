@@ -4,11 +4,11 @@ import { Text, View } from 'react-native';
 
 import { ResponsiveGrid } from '@ua/ui';
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { documents, modules, reviews as seedReviews } from '@/src/data';
-import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';
+import { documents, modules, reviews as seedReviews } from '@ua/core/data';
+import { PROFILE_FIELDS, publicProfileFieldCount } from '@ua/core/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
 
 export default function PeersScreen() {
   const locale = useAppSelector((state) => state.locale);

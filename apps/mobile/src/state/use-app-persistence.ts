@@ -2,10 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
 
 import { hydrateMailSnapshot } from '@/src/auth/mail';
-import { appStore, patchApp, samePersisted, selectPersisted } from '@/src/state/app-store';
-import { APP_STATE_STORAGE_KEY, sanitize } from '@/src/state/persisted';
-import { applyTheme } from '@/src/theme';
-import type { PersistedState } from '@/src/types';
+import { appStore, patchApp, samePersisted, selectPersisted } from '@ua/core/state/app-store';
+import { APP_STATE_STORAGE_KEY, sanitize } from '@ua/core/state/persisted';
+import { applyTheme } from '@ua/ui/theme';
+import type { PersistedState } from '@ua/core/domain/types';
 
 /**
  * Disk-backed app state. Hydration runs once; afterwards the store subscription

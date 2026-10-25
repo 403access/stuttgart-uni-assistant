@@ -21,8 +21,8 @@ import { QuizCatalogProvider } from '@/src/quiz/catalog-provider';
 import { QuizProgressProvider } from '@/src/quiz/progress';
 import { QueryProvider } from '@/src/query/client';
 import { AppStateProvider, useAppSelector, appActions } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 WebBrowser.maybeCompleteAuthSession();
 

@@ -2,10 +2,11 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen } from '@/src/components/ui';
-import { modules, people, places } from '@/src/data';
+import { modules, people, places } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { firstParam, pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 export default function PersonScreen() {
   const locale = useAppSelector((state) => state.locale);

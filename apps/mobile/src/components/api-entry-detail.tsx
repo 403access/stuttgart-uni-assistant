@@ -5,9 +5,9 @@ import { loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/sr
 import type { CampusLogEntry } from '@/src/auth/campus-log';
 import { JsonTree } from '@ua/ui';
 import { Button, Card, Muted, Pill, Section } from '@/src/components/ui';
-import { colors, themedStyles } from '@/src/theme';
-import { breakable, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { breakable, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 type ResponseView = 'text' | 'json' | 'pretty';
 

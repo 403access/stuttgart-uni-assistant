@@ -15,8 +15,8 @@ import { MailToolbar } from '@/src/mail/components/mail-toolbar';
 import { useMailInbox } from '@/src/mail/use-mail-inbox';
 import { useMailList } from '@/src/mail/use-mail-list';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 export default function MailScreen() {
   const locale = useAppSelector((state) => state.locale);

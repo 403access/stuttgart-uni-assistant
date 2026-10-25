@@ -3,8 +3,8 @@ import { usePathname } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { useAppSelector } from '@/src/state/AppState';
-import { tx, type TranslationKey } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx, type TranslationKey } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * Browser tab title and description. React Navigation's web headers do not

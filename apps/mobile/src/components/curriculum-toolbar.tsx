@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Pill, SearchField } from '@/src/components/ui';
-import { curriculumSortOrder, type CurriculumSortKey, type CurriculumStatusFilter } from '@/src/domain/curriculum';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { curriculumSortOrder, type CurriculumSortKey, type CurriculumStatusFilter } from '@ua/core/domain/curriculum';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 function sortLabel(sort: CurriculumSortKey, locale: Locale): string {
   return sort === 'name' ? tx(locale, 'curriculumToolbar.name') : sort === 'designation' ? tx(locale, 'common.kennung') : 'ID';

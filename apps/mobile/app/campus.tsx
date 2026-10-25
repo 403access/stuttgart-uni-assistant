@@ -5,12 +5,12 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, InfoRow, Muted, Pill, Screen } from '@/src/components/ui';
 import { UniMapView } from '@/src/components/uni-map-view';
-import { places } from '@/src/data';
-import { campusName, placeKind } from '@/src/labels';
+import { places } from '@ua/core/data';
+import { campusName, placeKind } from '@ua/core/labels';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
-import { hay, pick, tx } from '@/src/text';
-import type { Campus } from '@/src/types';
+import { colors, themedStyle } from '@ua/ui/theme';
+import { hay, pick, tx } from '@ua/core/format';
+import type { Campus } from '@ua/core/domain/types';
 
 const UNI_MAPS_URL = 'https://maps.uni-stuttgart.de/';
 

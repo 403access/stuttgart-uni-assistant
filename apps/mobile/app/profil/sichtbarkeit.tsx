@@ -3,15 +3,15 @@ import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { Button, Card, Screen, Section } from '@/src/components/ui';
-import { PROFILE_FIELDS } from '@/src/profile/privacy';
+import { PROFILE_FIELDS } from '@ua/core/profile/privacy';
 import { ProfilePreview } from '@/src/profile/profile-preview';
 import { ProfileSummary } from '@/src/profile/profile-summary';
 import { shareText } from '@/src/profile/share';
 import { profileLine, useProfileData } from '@/src/profile/use-profile-data';
 import { appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { ProfileVisibility } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { ProfileVisibility } from '@ua/core/domain/types';
 
 /** Per-detail visibility plus the share actions that use it. */
 export default function ProfileVisibilityScreen() {

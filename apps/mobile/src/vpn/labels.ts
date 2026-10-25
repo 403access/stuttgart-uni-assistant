@@ -1,7 +1,7 @@
 import * as Network from 'expo-network';
 
-import { tx, type TranslationKey } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx, type TranslationKey } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 import type { VpnEngine, VpnTunnelState } from '@/src/vpn/types';
 
 const stateKeys: Record<VpnTunnelState, TranslationKey> = {

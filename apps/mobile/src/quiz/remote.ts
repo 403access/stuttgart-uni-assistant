@@ -2,10 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders, getActiveAuthToken } from '@/src/auth/session';
-import type { Localized } from '@/src/types';
+import type { Localized } from '@ua/core/domain/types';
 
-import type { QuizAnswer, QuizModule, QuizQuestionKind, QuizStudy } from './types';
-import { installQuizCatalog } from './content';
+import type { QuizAnswer, QuizModule, QuizQuestionKind, QuizStudy } from '@ua/quiz-content/types';
+import { installQuizCatalog } from '@ua/quiz-content';
 import { markQuizCatalog } from './catalog-state';
 
 const CATALOG_CACHE_KEY = 'university-assistant/quiz-catalog/v1';

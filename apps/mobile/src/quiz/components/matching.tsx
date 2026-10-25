@@ -2,12 +2,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import { pick, tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
-import { shuffle } from '../session';
-import type { MatchingQuestion } from '../types';
+import { shuffle } from '@ua/feature-quiz';
+import type { MatchingQuestion } from '@ua/quiz-content/types';
 
 type Side = 'left' | 'right';
 

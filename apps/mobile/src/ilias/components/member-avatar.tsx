@@ -3,7 +3,7 @@ import { Image, Text, View } from 'react-native';
 
 import { authHeaders } from '@/src/auth/session';
 import { iliasImageUrl } from '@/src/ilias/api';
-import { themedStyles } from '@/src/theme';
+import { themedStyles } from '@ua/ui/theme';
 function initials(name: string): string {
   const parts = String(name ?? '')
     .replace(/\[[^\]]*\]/g, ' ')

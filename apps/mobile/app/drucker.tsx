@@ -3,12 +3,12 @@ import * as WebBrowser from 'expo-web-browser';
 import { Linking, Text, View } from 'react-native';
 
 import { Button, Card, Screen, Section } from '@/src/components/ui';
-import { campusName } from '@/src/labels';
+import { campusName } from '@ua/core/labels';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
 import { printerLinks, printerLocations, printerPrices, type PrinterPrice } from '@/src/vpn/printer';
-import type { Locale } from '@/src/types';
+import type { Locale } from '@ua/core/domain/types';
 
 function open(url: string) {
   WebBrowser.openBrowserAsync(url).catch(() => undefined);

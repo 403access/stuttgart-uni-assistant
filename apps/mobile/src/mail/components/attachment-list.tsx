@@ -1,9 +1,9 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { ControlIcon } from '@ua/ui';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailAttachment } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailAttachment } from '@ua/core/domain/types';
 
 import { MAX_TOTAL_ATTACHMENT_BYTES, formatBytes } from '../attachments';
 

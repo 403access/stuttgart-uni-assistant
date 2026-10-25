@@ -22,7 +22,7 @@ import {
   type IliasPageResult,
 } from '@/src/ilias/headless';
 
-import type { Locale } from '@/src/types';
+import type { Locale } from '@ua/core/domain/types';
 
 import type {
   IliasContent,
@@ -37,7 +37,7 @@ import type {
   IliasProfileLink,
   IliasProfileSection,
   IliasStatus,
-} from './types';
+} from '@ua/feature-ilias';
 
 export { IliasError };
 

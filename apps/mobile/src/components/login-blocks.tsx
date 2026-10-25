@@ -2,8 +2,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import type { ReactNode } from 'react';
 import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import type { Locale } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * The building blocks the login screen repeats: a section title, a notice, a

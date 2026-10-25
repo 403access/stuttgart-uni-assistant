@@ -11,8 +11,8 @@ import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
 import { WebDeviceLogin } from '@/src/components/web-device-login';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * The sign-in screen the gate redirects to once the splash screen lifts. On the

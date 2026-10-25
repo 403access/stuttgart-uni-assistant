@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /** One run of ordinary text or one run of quoted ("> " prefixed) lines. */
 type BodySegment = { kind: 'text'; lines: string[] } | { kind: 'quote'; lines: string[] };

@@ -4,11 +4,11 @@ import Pdf from 'react-native-pdf';
 
 import { Button } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 import { cacheIliasFile } from '../download';
-import { iliasContentErrorMessage } from '../errors';
+import { iliasContentErrorMessage } from '@ua/feature-ilias';
 
 export interface IliasPdfViewProps {
   refId: number;

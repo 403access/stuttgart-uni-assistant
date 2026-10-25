@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Pressable, Text } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from '@ua/ui/theme';
 
 export interface OptionRowProps {
   label: string;

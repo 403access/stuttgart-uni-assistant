@@ -1,9 +1,9 @@
 import { folderKind, folderLabel, type FolderKind } from '@/src/auth/mail';
-import { tx } from '@/src/text';
-import type { Locale, MailFolder, MailMessage } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { Locale, MailFolder, MailMessage } from '@ua/core/domain/types';
 
-import { messageTime, senderName } from './format';
-import type { DropdownOption, InboxFilter, InboxSort } from './types';
+import { messageTime, senderName } from '@ua/feature-mail';
+import type { DropdownOption, InboxFilter, InboxSort } from '@ua/feature-mail';
 
 /** Well-known mailboxes first in a stable order, then the user's own folders (`other` last). */
 const SYSTEM_FOLDER_ORDER: FolderKind[] = ['inbox', 'sent', 'drafts', 'archive', 'junk', 'trash', 'other'];

@@ -24,11 +24,11 @@ import { showFetchAlert } from '@/src/components/fetch-alert';
 import { Footer, Field, LanguagePicker, Meta, Notice, SectionTitle } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@/src/components/ui';
-import { student } from '@/src/data';
-import { keys } from '@/src/query/keys';
+import { student } from '@ua/core/data';
+import { keys } from '@ua/core/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 export default function LoginScreen() {
   // The web build has exactly one door: the QR pairing on /login.

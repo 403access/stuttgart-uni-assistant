@@ -1,11 +1,11 @@
 import { Text, View } from 'react-native';
 
 import { Card } from '@/src/components/ui';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailMessage } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailMessage } from '@ua/core/domain/types';
 
-import type { InboxFilter } from '../types';
+import type { InboxFilter } from '@ua/feature-mail';
 import { MailRow } from './mail-row';
 
 /** The loaded rows plus the meta line and empty hints that describe the current view. */

@@ -8,8 +8,8 @@ import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { cancelCardScan, isNfcSupported, readStudentCard } from '@/src/nfc/card';
 import type { CardReading } from '@/src/nfc/types';
 import { useAppSelector } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Development-only NFC reader for the student ID card. It shows the public

@@ -1,9 +1,9 @@
 import { Text, TextInput, View } from 'react-native';
 
 import { Button, Card, FieldLabel, Pill } from '@/src/components/ui';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailStatus } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailStatus } from '@ua/core/domain/types';
 
 /** The signed-out mailbox tab: credential handoff and the server-side privacy note. */
 export function MailConnectionPanel({

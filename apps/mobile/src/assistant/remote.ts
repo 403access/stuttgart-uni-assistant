@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 
-import { resolveAssistantBaseUrl } from '@/src/assistant/endpoints';
-import type { Locale } from '@/src/types';
+import { resolveAssistantBaseUrl } from '@ua/core/assistant/endpoints';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * Where the assistant server lives. Resolved in `src/assistant/endpoints.ts`:

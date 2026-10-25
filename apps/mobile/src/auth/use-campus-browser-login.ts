@@ -10,7 +10,7 @@ import {
 } from '@/src/auth/campus-browser';
 import { buildHarvest, diagnoseLines, type BrowserHarvest } from '@/src/auth/campus-harvest';
 import { parseHarvestMessage } from '@/src/auth/login-messages';
-import type { Locale } from '@/src/types';
+import type { Locale } from '@ua/core/domain/types';
 
 /**
  * The visible "adopt sign-in" browser: the user drives the real C@MPUS page,

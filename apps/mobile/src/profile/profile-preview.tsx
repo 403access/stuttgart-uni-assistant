@@ -2,8 +2,8 @@ import { Text, View } from 'react-native';
 
 import { Card } from '@/src/components/ui';
 import type { ProfileData } from '@/src/profile/use-profile-data';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /** What other students see, derived from discoverability and the public fields. */
 export function ProfilePreview({ data }: { data: ProfileData }) {

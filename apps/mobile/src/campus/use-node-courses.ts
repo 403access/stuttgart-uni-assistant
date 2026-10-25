@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 
 import { cacheCampusCourses, loadCampusCourses } from '@/src/auth/campus';
 import { appendElementCourses, loadCachedCoursesByElement } from '@/src/campus/db';
-import { keys } from '@/src/query/keys';
-import type { CampusCourse } from '@/src/types';
+import { keys } from '@ua/core/query/keys';
+import type { CampusCourse } from '@ua/core/domain/types';
 
 export interface UseNodeCoursesOptions {
   studyId: number;

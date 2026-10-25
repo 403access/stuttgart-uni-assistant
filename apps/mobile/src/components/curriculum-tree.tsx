@@ -2,10 +2,10 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { StructureRow, TreeChildren } from '@/src/components/structure-row';
-import { buildCurriculumIndex } from '@/src/domain/curriculum';
-import { curriculumProgress } from '@/src/labels';
-import { tx } from '@/src/text';
-import type { CurriculumNode, Locale } from '@/src/types';
+import { buildCurriculumIndex } from '@ua/core/domain/curriculum';
+import { curriculumProgress } from '@ua/core/labels';
+import { tx } from '@ua/core/format';
+import type { CurriculumNode, Locale } from '@ua/core/domain/types';
 
 interface TreeNodeProps {
   node: CurriculumNode;

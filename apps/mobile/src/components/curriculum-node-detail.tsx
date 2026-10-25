@@ -6,9 +6,9 @@ import { getCoursesSyncInfo, type CoursesSyncInfo } from '@/src/campus/db';
 import { useNodeCourses } from '@/src/campus/use-node-courses';
 import { Button, Card, InfoRow, Muted, Section } from '@/src/components/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
-import { colors } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { CampusStudy, CurriculumNode, Locale } from '@/src/types';
+import { colors } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { CampusStudy, CurriculumNode, Locale } from '@ua/core/domain/types';
 
 export interface CurriculumNodeDetailProps {
   node: CurriculumNode;

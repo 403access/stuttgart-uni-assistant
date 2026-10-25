@@ -15,8 +15,8 @@ import {
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 type Phase = 'idle' | 'scanning' | 'approving' | 'done' | 'error';
 

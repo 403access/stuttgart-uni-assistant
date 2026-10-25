@@ -5,8 +5,8 @@
  */
 
 import { assistantUrl } from '@/src/assistant/remote';
-import { asNewsList } from '@/src/news/parse';
-import type { NewsItem } from '@/src/types';
+import { asNewsList } from '@ua/core/news/parse';
+import type { NewsItem } from '@ua/core/domain/types';
 
 /** Throws when the server cannot answer, so callers can tell "offline" from "no news". */
 export async function fetchPublishedNews(): Promise<NewsItem[]> {

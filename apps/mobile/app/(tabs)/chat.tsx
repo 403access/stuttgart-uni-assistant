@@ -4,14 +4,15 @@ import { useMutation } from '@tanstack/react-query';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { buildLocalAnswer, renderFacts } from '@/src/assistant/answer';
-import { buildAnswerInput, bundledDocument } from '@/src/assistant/context';
+import { buildLocalAnswer, renderFacts } from '@ua/core/assistant/answer';
+import { buildAnswerInput, bundledDocument } from '@ua/core/assistant/context';
 import { askGrok } from '@/src/assistant/remote';
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { ResponsiveGrid , useResponsive } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyle, themedStyles } from '@/src/theme';
-import { firstParam, tx, uid } from '@/src/text';
+import { colors, themedStyle, themedStyles } from '@ua/ui/theme';
+import { tx, uid } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 export default function ChatScreen() {
   const locale = useAppSelector((state) => state.locale);

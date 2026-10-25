@@ -2,11 +2,11 @@ import { Stack, router } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { modules, program } from '@/src/data';
-import { lockReason, suggestNextSemester } from '@/src/domain/plan';
+import { modules, program } from '@ua/core/data';
+import { lockReason, suggestNextSemester } from '@ua/core/domain/plan';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
 
 export default function SequenceScreen() {
   const locale = useAppSelector((state) => state.locale);

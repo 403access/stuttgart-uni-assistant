@@ -2,11 +2,12 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, InfoRow, Screen } from '@/src/components/ui';
-import { modules, places } from '@/src/data';
-import { campusName, placeKind, sessionKind } from '@/src/labels';
+import { modules, places } from '@ua/core/data';
+import { campusName, placeKind, sessionKind } from '@ua/core/labels';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { firstParam, pick, tx, weekdays } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { pick, tx, weekdays } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 export default function RoomScreen() {
   const locale = useAppSelector((state) => state.locale);

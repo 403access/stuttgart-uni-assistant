@@ -16,8 +16,8 @@ import {
   Strong,
 } from '@/src/components/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import type { Locale, MailAttachment, MailMessage } from '@/src/types';
+import { colors } from '@ua/ui/theme';
+import type { Locale, MailAttachment, MailMessage } from '@ua/core/domain/types';
 
 import { ChoiceCard } from './choice-card';
 import { ControlIcon, ToolButton , DrawerPanel , DropdownPicker , JsonTree , ResponsiveGrid , showToast } from '@ua/ui';
@@ -54,7 +54,7 @@ import { QuizButton } from '@/src/quiz/components/quiz-button';
 import { QuizToolbar } from '@/src/quiz/components/quiz-toolbar';
 import { SingleChoiceView } from '@/src/quiz/components/single-choice';
 import { TrueFalseView } from '@/src/quiz/components/true-false';
-import type { ClozeQuestion, FlashcardQuestion, SingleChoiceQuestion, TrueFalseQuestion } from '@/src/quiz/types';
+import type { ClozeQuestion, FlashcardQuestion, SingleChoiceQuestion, TrueFalseQuestion } from '@ua/quiz-content/types';
 
 import { CalendarHero } from './calendar-hero';
 import { LecturersList } from './lecturers-list';

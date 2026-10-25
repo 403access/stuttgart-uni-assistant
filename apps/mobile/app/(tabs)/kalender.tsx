@@ -9,9 +9,9 @@ import { studyCourseKey, useCoursesForStudies, type StudyCourse } from '@/src/ca
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { useResponsive } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyle, themedStyles } from '@/src/theme';
-import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@/src/text';
-import type { CampusStudy } from '@/src/types';
+import { colors, themedStyle, themedStyles } from '@ua/ui/theme';
+import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@ua/core/format';
+import type { CampusStudy } from '@ua/core/domain/types';
 
 type CalView = 'agenda' | 'week' | 'day' | 'month';
 type CalSort = 'time' | 'title';

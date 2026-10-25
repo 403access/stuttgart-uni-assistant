@@ -16,8 +16,8 @@ import {
   type CoursesSyncInfo,
   type CurriculumSyncInfo,
 } from '@/src/campus/db';
-import { keys } from '@/src/query/keys';
-import type { BulkCourse, CurriculumNode } from '@/src/types';
+import { keys } from '@ua/core/query/keys';
+import type { BulkCourse, CurriculumNode } from '@ua/core/domain/types';
 
 /** Value of the aggregate device-tree query (structure browser / onboarding). */
 export interface DeviceTreesCache {

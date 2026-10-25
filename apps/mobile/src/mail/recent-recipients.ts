@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { MailRecipient } from '@/src/types';
+import type { MailRecipient } from '@ua/core/domain/types';
 
 export const MAIL_RECIPIENTS_KEY = 'mail-recipients/v1';
 const MAX_RECENT = 12;

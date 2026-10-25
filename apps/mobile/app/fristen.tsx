@@ -2,9 +2,9 @@ import { Stack } from 'expo-router';
 
 import { ResponsiveGrid } from '@ua/ui';
 import { InfoRow, Screen } from '@/src/components/ui';
-import { deadlines } from '@/src/data';
+import { deadlines } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
-import { formatDate, pick, tx } from '@/src/text';
+import { formatDate, pick, tx } from '@ua/core/format';
 
 export default function DeadlinesScreen() {
   const locale = useAppSelector((state) => state.locale);

@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { ChoiceCard } from '@/src/components/choice-card';
 import { Muted, Screen, Section } from '@/src/components/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { tx } from '@/src/text';
+import { tx } from '@ua/core/format';
 
 /** Dedicated appearance screen reached from the App group on the Campus tab. */
 export default function AppearanceScreen() {

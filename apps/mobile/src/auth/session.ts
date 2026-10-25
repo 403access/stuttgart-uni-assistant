@@ -9,8 +9,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 import { assistantUrl } from '@/src/assistant/remote';
-import { asUserAccount } from '@/src/auth/user';
-import type { AccountPlatformId, PlatformLinkStatus, UserAccount } from '@/src/types';
+import { asUserAccount } from '@ua/core/auth/user';
+import type { AccountPlatformId, PlatformLinkStatus, UserAccount } from '@ua/core/domain/types';
 
 const TOKEN_KEY = 'university-assistant/auth.v1';
 /** Server-side id of the session the token belongs to (`ses_…`). Not a credential. */

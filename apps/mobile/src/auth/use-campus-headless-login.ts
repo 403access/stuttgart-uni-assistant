@@ -14,8 +14,8 @@ import { isLoginFailureStep, phaseForStep, type CampusLoginPhase } from '@/src/a
 import { formatDump, hostOf, parseHarvestMessage } from '@/src/auth/login-messages';
 import { biometricUnlockAvailable, clearLogin, readLogin, saveLogin, storedLoginHint } from '@/src/auth/vault';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 const POLL_MS = 3000;
 const TIMEOUT_MS = 90_000;

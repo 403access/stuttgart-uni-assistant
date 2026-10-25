@@ -2,11 +2,12 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
 import { Card, Screen } from '@/src/components/ui';
-import { newsSource } from '@/src/labels';
+import { newsSource } from '@ua/core/labels';
 import { useNewsItem } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
-import { firstParam, formatDate, pick, tx } from '@/src/text';
+import { colors } from '@ua/ui/theme';
+import { formatDate, pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 export default function NewsDetailScreen() {
   const locale = useAppSelector((state) => state.locale);

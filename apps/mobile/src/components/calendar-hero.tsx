@@ -5,9 +5,9 @@ import { Pressable, Text, View } from 'react-native';
 import { useActiveStudy } from '@/src/campus/use-active-study';
 import { useCoursesForStudy } from '@/src/campus/use-courses';
 import { useAppSelector } from '@/src/state/AppState';
-import { themedStyles } from '@/src/theme';
-import { formatDay, formatTime, localDay, monthShort, tx, weekdayOf } from '@/src/text';
-import type { BulkCourse } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { formatDay, formatTime, localDay, monthShort, tx, weekdayOf } from '@ua/core/format';
+import type { BulkCourse } from '@ua/core/domain/types';
 
 /** Assigned to the student: the portal marks it with a fixed place (`Fixplatz zugewiesen`). */
 function isAssigned(status: string): boolean {

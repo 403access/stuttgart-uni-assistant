@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { Locale, MailMessage } from '@/src/types';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { Locale, MailMessage } from '@ua/core/domain/types';
 
 /** One inbox row; the read flag only dims the dot and the subject, the row stays tappable. */
 export function MailRow({

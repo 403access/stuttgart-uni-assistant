@@ -3,8 +3,8 @@
  * so the mappings are unit-testable (scripts/campus-login-messages.test.mjs).
  */
 
-import { tx } from '@/src/text';
-import type { Locale } from '@/src/types';
+import { tx } from '@ua/core/format';
+import type { Locale } from '@ua/core/domain/types';
 
 /** One message from either WebView. Every field the page scripts can send. */
 export interface HarvestMessage {

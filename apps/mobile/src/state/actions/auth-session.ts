@@ -12,9 +12,9 @@ import {
 } from '@/src/auth/session';
 import { clearCampusHarvest } from '@/src/auth/vault';
 import { clearQuizSyncQueue } from '@/src/quiz/remote';
-import { getAppState, patchApp } from '@/src/state/app-store';
-import { sessionFields } from '@/src/state/persisted';
-import type { PersistedState, UserAccount } from '@/src/types';
+import { getAppState, patchApp } from '@ua/core/state/app-store';
+import { sessionFields } from '@ua/core/state/persisted';
+import type { PersistedState, UserAccount } from '@ua/core/domain/types';
 
 const signedOutFields = {
   user: null,

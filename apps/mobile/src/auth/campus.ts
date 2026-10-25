@@ -1,7 +1,7 @@
 import { assistantUrl } from '@/src/assistant/remote';
 import { recordCampusCall, type CampusLogEntry, type CampusOp } from '@/src/auth/campus-log';
 import { asAuthSession, authHeaders, getActiveAuthToken, type AuthSession } from '@/src/auth/session';
-import type { CampusCalendarEvent, CampusCourse, CampusStudy, CurriculumNode } from '@/src/types';
+import type { CampusCalendarEvent, CampusCourse, CampusStudy, CurriculumNode } from '@ua/core/domain/types';
 
 export interface CampusLogin {
   account: string;

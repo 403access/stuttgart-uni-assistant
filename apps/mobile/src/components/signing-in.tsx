@@ -3,8 +3,8 @@ import { Animated, Easing, Text, View } from 'react-native';
 
 import { CAMPUS_LOGIN_PHASES, isPhaseDone, type CampusLoginPhase } from '@/src/auth/campus-progress';
 import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
-import { colors, themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
 
 /**
  * Waiting state for a sign-in. The mark orbits while the phases below fill in,

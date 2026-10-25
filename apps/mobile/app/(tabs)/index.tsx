@@ -3,14 +3,14 @@ import { Text, View } from 'react-native';
 
 import { CalendarHero } from '@/src/components/calendar-hero';
 import { Card, InfoRow, Meter, Screen, Section } from '@/src/components/ui';
-import { deadlines, modules, places, program } from '@/src/data';
-import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
+import { deadlines, modules, places, program } from '@ua/core/data';
+import { scheduleForDay, totals, weightedAverage } from '@ua/core/domain/plan';
 import { useResponsive } from '@ua/ui';
-import { newsSource, sessionKind } from '@/src/labels';
+import { newsSource, sessionKind } from '@ua/core/labels';
 import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { formatDate, formatGrade, localDay, pick, tx, weekdays } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { formatDate, formatGrade, localDay, pick, tx, weekdays } from '@ua/core/format';
 
 export default function TodayScreen() {
   const locale = useAppSelector((state) => state.locale);

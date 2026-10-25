@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { news as bundledNews } from '@/src/data';
-import { mergeNews } from '@/src/news/parse';
+import { news as bundledNews } from '@ua/core/data';
+import { mergeNews } from '@ua/core/news/parse';
 import { publishedNewsQuery } from '@/src/query/queries';
-import type { NewsItem } from '@/src/types';
+import type { NewsItem } from '@ua/core/domain/types';
 
 /**
  * The feed the screens render. A successful server read is authoritative, even

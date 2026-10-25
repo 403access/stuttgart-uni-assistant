@@ -2,9 +2,9 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Button, Card } from '@/src/components/ui';
 import type { CurriculumSyncInfo } from '@/src/campus/db';
-import { themedStyles } from '@/src/theme';
-import { tx } from '@/src/text';
-import type { CampusStudy, Locale } from '@/src/types';
+import { themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import type { CampusStudy, Locale } from '@ua/core/domain/types';
 
 export interface StudyFetchProgress {
   fetched: number;

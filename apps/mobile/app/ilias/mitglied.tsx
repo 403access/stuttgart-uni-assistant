@@ -4,13 +4,14 @@ import * as WebBrowser from 'expo-web-browser';
 import { Linking, RefreshControl, Text, View } from 'react-native';
 
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
-import { iliasContentErrorMessage } from '@/src/ilias/errors';
+import { iliasContentErrorMessage } from '@ua/feature-ilias';
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
 import { iliasProfileQuery, refreshIliasProfile } from '@/src/ilias/queries';
-import type { IliasProfileCourse } from '@/src/ilias/types';
+import type { IliasProfileCourse } from '@ua/feature-ilias';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors, themedStyles } from '@/src/theme';
-import { firstParam, tx } from '@/src/text';
+import { colors, themedStyles } from '@ua/ui/theme';
+import { tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
 
 /**
  * A public ILIAS profile opened by tapping a member. The page is harvested in
