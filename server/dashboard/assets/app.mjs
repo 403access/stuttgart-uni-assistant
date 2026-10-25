@@ -12,7 +12,7 @@ import { renderDevicesPage } from '../pages/devices.mjs';
 import { renderIliasPage } from '../pages/ilias.mjs';
 import { renderLogsPage, stopLogsAutoRefresh } from '../pages/logs.mjs';
 import { renderNewsPage, submitNewsForm } from '../pages/news.mjs';
-import { renderQuizPage } from '../pages/quiz.mjs';
+import { renderQuizPage } from '../pages/quiz/index.mjs';
 import { renderOverview } from '../pages/overview.mjs';
 import { renderSystemPage } from '../pages/system.mjs';
 import { renderUserPage } from '../pages/user.mjs';

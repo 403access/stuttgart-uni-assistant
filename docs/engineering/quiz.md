@@ -9,7 +9,7 @@ Status: implemented. The tab is `app/(tabs)/quiz.tsx`, the topic overview is
 `app/quiz/[topic]/index.tsx`, a round is `app/quiz/[topic]/run.tsx`, and the
 reusable question views live in `src/quiz/components/`. The server catalog and
 analytics live in `server/quiz/`; the admin screens are
-`server/dashboard/pages/quiz.mjs`.
+`server/dashboard/pages/quiz/`.
 
 ## Question kinds
 
