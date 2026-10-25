@@ -7152,7 +7152,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/ui/src/option-rows.tsx",
-          "line": 45,
+          "line": 40,
           "kind": "render",
           "exportName": "ControlIcon",
           "count": 1

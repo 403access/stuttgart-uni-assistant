@@ -41,6 +41,7 @@
         "@ua/contracts": "workspace:*",
         "@ua/core": "workspace:*",
         "@ua/design-tokens": "workspace:*",
+        "@ua/feature-mail": "workspace:*",
         "@ua/format": "workspace:*",
         "@ua/ui": "workspace:*",
         "docx-preview": "^0.4.1",
@@ -124,6 +125,13 @@
     "packages/design-tokens": {
       "name": "@ua/design-tokens",
       "version": "0.0.0",
+    },
+    "packages/features/mail": {
+      "name": "@ua/feature-mail",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ua/core": "workspace:*",
+      },
     },
     "packages/format": {
       "name": "@ua/format",
@@ -714,6 +722,8 @@
     "@ua/design-tokens": ["@ua/design-tokens@workspace:packages/design-tokens"],
 
     "@ua/dist": ["@ua/dist@workspace:apps/dist"],
+
+    "@ua/feature-mail": ["@ua/feature-mail@workspace:packages/features/mail"],
 
     "@ua/format": ["@ua/format@workspace:packages/format"],
 

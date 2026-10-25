@@ -4,8 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildSignature, buildComposeDraft, forwardSubject, replySubject } from '../apps/mobile/src/mail/compose-draft.ts';
-import { addRecipient, buildContactRegistry, contactInitials, parseRecipient, parseRecipientHeader, searchContacts } from '../apps/mobile/src/mail/recipients.ts';
+import { addRecipient, buildComposeDraft, buildContactRegistry, buildSignature, contactInitials, forwardSubject, parseRecipient, parseRecipientHeader, replySubject, searchContacts } from '@ua/feature-mail';
 
 const message = {
   uid: 7,

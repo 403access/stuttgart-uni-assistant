@@ -1,3 +1,11 @@
+export interface DropdownOption {
+  key: string;
+  label: string;
+  meta?: string;
+  selected: boolean;
+  group?: string;
+}
+
 export type Locale = 'de' | 'en';
 
 export type ThemeMode = 'light' | 'dark';

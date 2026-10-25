@@ -193,7 +193,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `packages/ui/src/drawer-panel.tsx`: 7 import `ControlIcon`; 23 render `ControlIcon`
 - `packages/ui/src/dropdown-picker.tsx`: 7 import `ControlIcon`; 34 render `ControlIcon`
 - `packages/ui/src/index.ts`: 1 re-export `ControlIcon`; 1 re-export `ToolButton`
-- `packages/ui/src/option-rows.tsx`: 6 import `ControlIcon`; 45 render `ControlIcon`
+- `packages/ui/src/option-rows.tsx`: 6 import `ControlIcon`; 40 render `ControlIcon`
 
 ### ChoiceCard
 

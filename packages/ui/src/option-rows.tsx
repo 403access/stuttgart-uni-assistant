@@ -6,14 +6,9 @@ import { colors, themedStyles } from './theme';
 import { ControlIcon } from './control-icon';
 
 /** One selectable row in a dropdown, sheet, or drawer. */
-export interface DropdownOption {
-  key: string;
-  label: string;
-  meta?: string;
-  selected: boolean;
-  /** Section header this option sits under; consecutive options sharing it render one header. */
-  group?: string;
-}
+import type { DropdownOption } from '@ua/core/domain/types';
+
+export type { DropdownOption };
 
 /** One list of options, shared by the sort sheet and both drawers. */
 export function OptionRows({ options, onSelect }: { options: DropdownOption[]; onSelect: (key: string) => void }) {

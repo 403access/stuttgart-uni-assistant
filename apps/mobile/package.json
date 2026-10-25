@@ -70,7 +70,8 @@
     "@ua/design-tokens": "workspace:*",
     "@ua/core": "workspace:*",
     "@ua/api-client": "workspace:*",
-    "@ua/ui": "workspace:*"
+    "@ua/ui": "workspace:*",
+    "@ua/feature-mail": "workspace:*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",
