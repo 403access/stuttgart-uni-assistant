@@ -17,7 +17,7 @@ export default function ProfileDiscoverabilityScreen() {
   const { setProfileSearchable } = appActions;
 
   return (
-    <Screen kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.auffindbarkeit_detail')}>
+    <Screen narrow kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.auffindbarkeit_detail')}>
       <Stack.Screen options={{ title: tx(locale, 'profil.auffindbarkeit') }} />
 
       <ProfileSummary data={data} />

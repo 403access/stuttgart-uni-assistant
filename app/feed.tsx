@@ -1,6 +1,7 @@
 import { Stack, router } from 'expo-router';
 import { RefreshControl } from 'react-native';
 
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
 import { InfoRow, Screen } from '@/src/components/ui';
 import { newsSource } from '@/src/labels';
 import { useNewsItems } from '@/src/news/use-news';
@@ -26,15 +27,17 @@ export default function FeedScreen() {
         />
       }>
       <Stack.Screen options={{ title: tx(locale, 'common.meldungen') }} />
-      {items.map((item) => (
-        <InfoRow
-          key={item.id}
-          title={pick(item.title, locale)}
-          meta={newsSource(item.source, locale)}
-          detail={`${formatDate(item.date, locale)} · ${pick(item.summary, locale)}`}
-          onPress={() => router.push({ pathname: '/meldung/[id]', params: { id: item.id } })}
-        />
-      ))}
+      <ResponsiveGrid minColumnWidth={360}>
+        {items.map((item) => (
+          <InfoRow
+            key={item.id}
+            title={pick(item.title, locale)}
+            meta={newsSource(item.source, locale)}
+            detail={`${formatDate(item.date, locale)} · ${pick(item.summary, locale)}`}
+            onPress={() => router.push({ pathname: '/meldung/[id]', params: { id: item.id } })}
+          />
+        ))}
+      </ResponsiveGrid>
     </Screen>
   );
 }

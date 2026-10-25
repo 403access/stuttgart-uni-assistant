@@ -11,6 +11,7 @@ export default function LanguageScreen() {
   const { setLocale } = appActions;
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'common.app')}
       title={tx(locale, 'einstellungen.sprache')}
       subtitle={tx(locale, 'einstellungen.sprache_hinweis')}>

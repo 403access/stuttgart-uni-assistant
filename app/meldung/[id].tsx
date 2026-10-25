@@ -15,6 +15,7 @@ export default function NewsDetailScreen() {
   if (!item) {
     return (
       <Screen
+        narrow
         kicker={isLoading ? tx(locale, 'common.meldungen') : tx(locale, 'meldung.meldung')}
         subtitle={isLoading ? undefined : tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'common.meldungen') }} />
@@ -22,7 +23,7 @@ export default function NewsDetailScreen() {
     );
   }
   return (
-    <Screen kicker={newsSource(item.source, locale)} subtitle={formatDate(item.date, locale)}>
+    <Screen narrow kicker={newsSource(item.source, locale)} subtitle={formatDate(item.date, locale)}>
       <Stack.Screen options={{ title: pick(item.title, locale) }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 16, lineHeight: 24 }}>{pick(item.body, locale)}</Text>

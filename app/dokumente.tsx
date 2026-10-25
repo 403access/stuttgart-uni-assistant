@@ -2,6 +2,7 @@ import { Stack, router } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput } from 'react-native';
 
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents } from '@/src/data';
 import { pickStudyFile } from '@/src/documents/io';
@@ -72,29 +73,33 @@ export default function DocumentsScreen() {
       <Button label={tx(locale, 'dokumente.datei_vom')} onPress={importFile} secondary />
       {message ? <Text style={{ color: colors.inkSoft }}>{message}</Text> : null}
       <Section title="ILIAS" />
-      {documents
-        .filter((item) => item.source === 'ilias')
-        .map((item) => (
-          <InfoRow
-            key={item.id}
-            title={pick(item.title, locale)}
-            meta={downloadedIds.includes(item.id) ? tx(locale, 'dokumente.offline') : 'ILIAS'}
-            detail={pick(item.folder, locale)}
-            onPress={() => {
-              if (!downloadedIds.includes(item.id)) toggleDownload(item.id);
-              router.push({ pathname: '/dokument/[id]', params: { id: item.id } });
-            }}
-          />
-        ))}
+      <ResponsiveGrid minColumnWidth={330}>
+        {documents
+          .filter((item) => item.source === 'ilias')
+          .map((item) => (
+            <InfoRow
+              key={item.id}
+              title={pick(item.title, locale)}
+              meta={downloadedIds.includes(item.id) ? tx(locale, 'dokumente.offline') : 'ILIAS'}
+              detail={pick(item.folder, locale)}
+              onPress={() => {
+                if (!downloadedIds.includes(item.id)) toggleDownload(item.id);
+                router.push({ pathname: '/dokument/[id]', params: { id: item.id } });
+              }}
+            />
+          ))}
+      </ResponsiveGrid>
       <Section title={tx(locale, 'dokumente.geteilt_eigene')} />
-      {documents
-        .filter((item) => item.source === 'peer')
-        .map((item) => (
-          <InfoRow key={item.id} title={pick(item.title, locale)} meta={item.author} detail={pick(item.folder, locale)} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
+      <ResponsiveGrid minColumnWidth={330}>
+        {documents
+          .filter((item) => item.source === 'peer')
+          .map((item) => (
+            <InfoRow key={item.id} title={pick(item.title, locale)} meta={item.author} detail={pick(item.folder, locale)} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
+          ))}
+        {imports.map((item) => (
+          <InfoRow key={item.id} title={item.title} meta={item.shared ? tx(locale, 'dokumente.geteilt') : item.folder} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
         ))}
-      {imports.map((item) => (
-        <InfoRow key={item.id} title={item.title} meta={item.shared ? tx(locale, 'dokumente.geteilt') : item.folder} onPress={() => router.push({ pathname: '/dokument/[id]', params: { id: item.id } })} />
-      ))}
+      </ResponsiveGrid>
       <Card>
         <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'dokumente.notiz')}</Text>
         <TextInput value={title} onChangeText={setTitle} placeholder={tx(locale, 'common.titel')} placeholderTextColor={colors.mute} style={{ ...input }} />

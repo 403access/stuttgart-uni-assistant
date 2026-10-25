@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { Button, Card } from '@/src/components/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
@@ -23,6 +24,7 @@ import { tx } from '@/src/text';
 export default function SecurityScreen() {
   const locale = useAppSelector((state) => state.locale);
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsive();
   const {
     biometricsEnabled,
     biometricsHardware,
@@ -88,9 +90,10 @@ export default function SecurityScreen() {
           contentStyle: { backgroundColor: colors.brand },
         }}
       />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+      <View style={[styles.frame, isDesktop && styles.frameDesktop]}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <View style={styles.hero}>
           <View style={styles.blobOne} pointerEvents="none" />
           <View style={styles.blobTwo} pointerEvents="none" />
@@ -142,12 +145,15 @@ export default function SecurityScreen() {
           ) : null}
         </View>
       </ScrollView>
+      </View>
     </View>
   );
 }
 
 const styles = themedStyles((colors) => ({
   screen: { flex: 1, backgroundColor: colors.brand },
+  frame: { flex: 1 },
+  frameDesktop: { width: '100%', maxWidth: 1100, alignSelf: 'center' },
   scroll: { flex: 1 },
   content: { flexGrow: 1 },
   hero: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 30, alignItems: 'center', gap: 10, overflow: 'hidden' },

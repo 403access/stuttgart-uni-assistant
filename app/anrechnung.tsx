@@ -58,6 +58,7 @@ export default function RecognitionScreen() {
 
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'anrechnung.pruefungsausschuss')}
       subtitle={tx(locale, 'anrechnung.app')}>
       <Stack.Screen options={{ title: tx(locale, 'common.anrechnung') }} />

@@ -57,7 +57,7 @@ export default function QuizRunScreen() {
 
   if (!ready) {
     return (
-      <Screen kicker={tx(locale, 'quiz.kicker')}>
+      <Screen narrow kicker={tx(locale, 'quiz.kicker')}>
         <Stack.Screen options={{ title: tx(locale, 'quiz.title') }} />
         <Card>
           <Text style={styles.muted}>{tx(locale, 'quiz.loading')}</Text>
@@ -68,7 +68,7 @@ export default function QuizRunScreen() {
 
   if (!topic) {
     return (
-      <Screen kicker={tx(locale, 'quiz.kicker')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'quiz.kicker')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'quiz.title') }} />
       </Screen>
     );
@@ -186,7 +186,7 @@ function QuizRound({
 
   if (!questions.length) {
     return (
-      <Screen
+      <Screen narrow
         kicker={tx(locale, 'quiz.kicker')}
         title={tx(locale, 'quiz.review_empty_title')}
         subtitle={tx(locale, 'quiz.review_empty')}>
@@ -277,7 +277,7 @@ function QuizRound({
     );
 
   return (
-    <Screen
+    <Screen narrow
       kicker={`${tx(locale, 'quiz.question')} ${index + 1} / ${questions.length}`}
       title={pick(topic.title, locale)}
       subtitle={tx(locale, `quiz.mode.${activeMode}`)}
@@ -339,7 +339,7 @@ function QuizResult({
   const byId = new Map(results.map((entry) => [entry.questionId, entry.correct]));
 
   return (
-    <Screen
+    <Screen narrow
       kicker={tx(locale, 'quiz.kicker')}
       title={tx(locale, 'quiz.result_title')}
       subtitle={pick(topic.title, locale)}

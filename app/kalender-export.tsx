@@ -134,6 +134,7 @@ export default function CalendarExportScreen() {
 
   return (
     <Screen
+      narrow
       kicker="C@MPUS"
       subtitle={tx(locale, 'kalenderExport.laedt')}>
       <Stack.Screen options={{ title: tx(locale, 'common.kalender') }} />

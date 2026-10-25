@@ -26,7 +26,7 @@ export default function ProfileVisibilityScreen() {
   }
 
   return (
-    <Screen kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.sichtbarkeit_text')}>
+    <Screen narrow kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.sichtbarkeit_text')}>
       <Stack.Screen options={{ title: tx(locale, 'profil.sichtbarkeit_titel') }} />
 
       <ProfileSummary data={data} />

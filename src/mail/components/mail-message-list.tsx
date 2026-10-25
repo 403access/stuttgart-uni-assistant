@@ -17,6 +17,8 @@ export function MailMessageList({
   filter,
   messages,
   visibleMessages,
+  selectedUid,
+  onSelect,
 }: {
   locale: Locale;
   folder: string;
@@ -25,6 +27,9 @@ export function MailMessageList({
   filter: InboxFilter;
   messages: MailMessage[];
   visibleMessages: MailMessage[];
+  /** Desktop split view: the row whose message is open in the reader pane. */
+  selectedUid?: number | null;
+  onSelect?: (message: MailMessage) => void;
 }) {
   return (
     <>
@@ -46,7 +51,15 @@ export function MailMessageList({
       {visibleMessages.length > 0 ? (
         <View style={styles.list}>
           {visibleMessages.map((message, index) => (
-            <MailRow key={message.uid} message={message} folder={folder} last={index === visibleMessages.length - 1} locale={locale} />
+            <MailRow
+              key={message.uid}
+              message={message}
+              folder={folder}
+              last={index === visibleMessages.length - 1}
+              locale={locale}
+              selected={selectedUid === message.uid}
+              onSelect={onSelect}
+            />
           ))}
         </View>
       ) : null}

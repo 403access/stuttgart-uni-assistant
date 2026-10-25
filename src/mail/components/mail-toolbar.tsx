@@ -28,6 +28,7 @@ export function MailToolbar({
   onOpenFilter,
   onCompose,
   loadingLabel,
+  showDrawers = true,
 }: {
   locale: Locale;
   revealPending: boolean;
@@ -41,12 +42,16 @@ export function MailToolbar({
   onOpenFilter: () => void;
   onCompose: () => void;
   loadingLabel: string;
+  /** False on desktop where folders and filters live in a permanent side rail. */
+  showDrawers?: boolean;
 }) {
   const reduced = useReducedMotion();
   return (
     <View style={styles.stickyBar}>
       <View style={styles.controlsRow}>
-        <ToolButton symbol="line.3.horizontal" material="menu" label={tx(locale, 'tabsMail.postfach')} onPress={onOpenMailbox} />
+        {showDrawers ? (
+          <ToolButton symbol="line.3.horizontal" material="menu" label={tx(locale, 'tabsMail.postfach')} onPress={onOpenMailbox} />
+        ) : null}
         <ToolButton symbol="square.and.pencil" material="edit" label={tx(locale, 'tabsMail.verfassen')} onPress={onCompose} />
         {revealPending ? (
           <ToolbarSkeleton label={loadingLabel} animate={!reduced} />
@@ -70,7 +75,9 @@ export function MailToolbar({
               ) : null}
             </View>
             <DropdownPicker hint={tx(locale, 'tabsMail.sortieren')} valueText={sortValueText} options={sortOptions} onSelect={onSortSelect} />
-            <ToolButton symbol="line.3.horizontal.decrease" material="filter-alt" label={tx(locale, 'tabsMail.filter')} onPress={onOpenFilter} />
+            {showDrawers ? (
+              <ToolButton symbol="line.3.horizontal.decrease" material="filter-alt" label={tx(locale, 'tabsMail.filter')} onPress={onOpenFilter} />
+            ) : null}
           </ToolbarReveal>
         ) : null}
       </View>

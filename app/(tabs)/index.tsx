@@ -1,19 +1,21 @@
 import { router } from 'expo-router';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { CalendarHero } from '@/src/components/calendar-hero';
 import { Card, InfoRow, Meter, Screen, Section } from '@/src/components/ui';
 import { deadlines, modules, places, program } from '@/src/data';
 import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { newsSource, sessionKind } from '@/src/labels';
 import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
-import { colors } from '@/src/theme';
+import { colors, themedStyles } from '@/src/theme';
 import { formatDate, formatGrade, localDay, pick, tx, weekdays } from '@/src/text';
 
 export default function TodayScreen() {
   const locale = useAppSelector((state) => state.locale);
   const { items: newsItems } = useNewsItems();
+  const { isDesktop } = useResponsive();
   const now = new Date();
   const credit = totals(modules);
   const average = weightedAverage(modules);
@@ -21,8 +23,8 @@ export default function TodayScreen() {
   const upcoming = deadlines.filter((item) => item.date >= localDay(now)).slice(0, 3);
   const latest = newsItems.slice(0, 2);
 
-  return (
-    <Screen topInset>
+  const overview = (
+    <>
       <CalendarHero />
       <Card onPress={() => router.push('/anforderungen')}>
         <Text style={{ color: colors.inkSoft, fontWeight: '700' }}>{tx(locale, 'tabsIndex.bestandene')}</Text>
@@ -44,7 +46,11 @@ export default function TodayScreen() {
           {tx(locale, 'tabsIndex.module')}
         </Text>
       </Card>
+    </>
+  );
 
+  const today = (
+    <>
       <Section title={weekdays[locale][now.getDay()] ?? ''} action={tx(locale, 'common.campus')} onAction={() => router.push('/campus')} />
       {sessions.length ? (
         sessions.map((row) => (
@@ -83,6 +89,27 @@ export default function TodayScreen() {
           onPress={() => router.push({ pathname: '/meldung/[id]', params: { id: item.id } })}
         />
       ))}
+    </>
+  );
+
+  return (
+    <Screen topInset title={isDesktop ? tx(locale, 'tabsLayout.dashboard') : undefined}>
+      {isDesktop ? (
+        <View style={styles.columns}>
+          <View style={styles.column}>{overview}</View>
+          <View style={styles.column}>{today}</View>
+        </View>
+      ) : (
+        <>
+          {overview}
+          {today}
+        </>
+      )}
     </Screen>
   );
 }
+
+const styles = themedStyles(() => ({
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
+  column: { flex: 1, minWidth: 0, gap: 14 },
+}));

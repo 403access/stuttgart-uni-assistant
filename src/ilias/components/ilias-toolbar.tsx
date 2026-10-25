@@ -14,21 +14,26 @@ export function IliasToolbar({
   query,
   onQueryChange,
   onOpenMenu,
+  showMenu = true,
 }: {
   locale: Locale;
   query: string;
   onQueryChange: (value: string) => void;
   onOpenMenu: () => void;
+  /** False when the categories live in a permanent desktop side rail. */
+  showMenu?: boolean;
 }) {
   return (
     <View style={styles.stickyBar}>
       <View style={styles.controlsRow}>
-        <ToolButton
-          symbol="line.3.horizontal"
-          material="menu"
-          label={tx(locale, 'tabsIlias.drawer_menu')}
-          onPress={onOpenMenu}
-        />
+        {showMenu ? (
+          <ToolButton
+            symbol="line.3.horizontal"
+            material="menu"
+            label={tx(locale, 'tabsIlias.drawer_menu')}
+            onPress={onOpenMenu}
+          />
+        ) : null}
         <View style={styles.searchRow}>
           <ControlIcon symbol="magnifyingglass" material="search" color={colors.mute} />
           <TextInput

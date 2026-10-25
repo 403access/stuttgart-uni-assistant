@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
 import { InfoRow, Screen } from '@/src/components/ui';
 import { deadlines } from '@/src/data';
 import { useAppSelector } from '@/src/state/AppState';
@@ -11,9 +12,11 @@ export default function DeadlinesScreen() {
   return (
     <Screen kicker={tx(locale, 'fristen.termine')} subtitle={tx(locale, 'fristen.demonstrationsstand')}>
       <Stack.Screen options={{ title: tx(locale, 'common.fristen') }} />
-      {rows.map((item) => (
-        <InfoRow key={item.id} title={pick(item.title, locale)} meta={formatDate(item.date, locale)} detail={`${item.source.toUpperCase()} · ${pick(item.detail, locale)}`} />
-      ))}
+      <ResponsiveGrid minColumnWidth={320}>
+        {rows.map((item) => (
+          <InfoRow key={item.id} title={pick(item.title, locale)} meta={formatDate(item.date, locale)} detail={`${item.source.toUpperCase()} · ${pick(item.detail, locale)}`} />
+        ))}
+      </ResponsiveGrid>
     </Screen>
   );
 }

@@ -36,7 +36,12 @@ export function ToolButton({
 }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.toolButton, active && styles.toolButtonActive, pressed && styles.pressed]}
+      style={(state: { pressed: boolean; hovered?: boolean }) => [
+        styles.toolButton,
+        active && styles.toolButtonActive,
+        state.hovered && styles.toolButtonHover,
+        state.pressed && styles.pressed,
+      ]}
       onPress={onPress}
       accessibilityLabel={label}
       accessibilityRole="button"
@@ -61,5 +66,6 @@ const styles = themedStyles((colors) => ({
     backgroundColor: colors.paper,
   },
   toolButtonActive: { backgroundColor: colors.blueSoft, borderColor: colors.blueSoft },
+  toolButtonHover: { borderColor: colors.light },
   pressed: { opacity: 0.72 },
 }));

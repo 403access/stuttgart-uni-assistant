@@ -177,6 +177,7 @@ export default function LinkDeviceScreen() {
 
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'geraet.kicker')}
       title={tx(locale, 'geraet.titel')}
       subtitle={tx(locale, 'geraet.subtitle')}

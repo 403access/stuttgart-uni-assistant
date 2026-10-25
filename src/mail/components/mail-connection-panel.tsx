@@ -32,7 +32,7 @@ export function MailConnectionPanel({
   onConnect: () => void;
 }) {
   return (
-    <>
+    <View style={styles.panel}>
       <Card>
         <View style={styles.connectHeader}>
           <Text style={styles.brand}>UniMail</Text>
@@ -59,11 +59,14 @@ export function MailConnectionPanel({
       <Card>
         <Text style={styles.hint}>{tx(locale, 'tabsMail.gelesen')}</Text>
       </Card>
-    </>
+    </View>
   );
 }
 
 const styles = themedStyles((colors) => ({
+  // A credential form stays comfortable to read on a wide desktop instead of
+  // stretching its text fields across the whole content column.
+  panel: { width: '100%', maxWidth: 680, alignSelf: 'center', gap: 14 },
   connectHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   brand: { color: colors.anthracite, fontSize: 18, fontWeight: '700' },
   connectHint: { color: colors.inkSoft, lineHeight: 20 },

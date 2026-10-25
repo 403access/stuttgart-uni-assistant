@@ -8,6 +8,7 @@ import { Drawer } from 'react-native-drawer-layout';
 import { DrawerPanel } from '@/src/components/drawer-panel';
 import { OptionRows, type DropdownOption } from '@/src/components/option-rows';
 import { Button, Card, Screen } from '@/src/components/ui';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { IliasDashboardView, iliasFilterLabel, type IliasFilter } from '@/src/ilias/components/ilias-dashboard';
 import { IliasToolbar } from '@/src/ilias/components/ilias-toolbar';
 import { useIlias } from '@/src/ilias/use-ilias';
@@ -29,6 +30,7 @@ export default function IliasScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [filter, setFilter] = useState<IliasFilter>('all');
   const [query, setQuery] = useState('');
+  const { isDesktop } = useResponsive();
   const { width } = useWindowDimensions();
   const drawerWidth = Math.min(340, Math.round(width * 0.86));
   const dashboard = ilias.dashboard;
@@ -68,8 +70,116 @@ export default function IliasScreen() {
       query={query}
       onQueryChange={setQuery}
       onOpenMenu={() => setMenuOpen(true)}
+      showMenu={!isDesktop}
     />
   ) : undefined;
+
+  const refreshControl = connected ? (
+    <RefreshControl
+      refreshing={ilias.refreshing}
+      onRefresh={ilias.pullToRefresh}
+      tintColor={colors.blue}
+      colors={[colors.blue]}
+      progressBackgroundColor={colors.paper}
+    />
+  ) : undefined;
+
+  /** Account, categories and actions: drawer body on the phone, left rail on the desktop. */
+  const categories = (
+    <>
+      {dashboard ? (
+        <View style={styles.account}>
+          <Text style={styles.accountName}>{dashboard.name || dashboard.account || tx(locale, 'tabsIlias.ilias')}</Text>
+          <Text style={styles.accountStamp}>
+            {tx(locale, 'tabsIlias.stand', [formatTimestamp(dashboard.fetchedAt, locale)])}
+          </Text>
+        </View>
+      ) : null}
+      <OptionRows
+        options={filterOptions}
+        onSelect={(key) => {
+          setFilter(key as IliasFilter);
+          closeMenu();
+        }}
+      />
+      <Text style={styles.drawerGroup}>{tx(locale, 'tabsIlias.aktionen')}</Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => {
+          closeMenu();
+          void ilias.pullToRefresh();
+        }}
+        style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}>
+        <MaterialIcons name="refresh" size={18} color={colors.blue} />
+        <Text style={[styles.drawerActionText, styles.drawerActionBlue]}>
+          {tx(locale, 'tabsIlias.aktualisieren')}
+        </Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => {
+          closeMenu();
+          void ilias.disconnect();
+        }}
+        style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}>
+        <MaterialIcons name="link-off" size={18} color={colors.danger} />
+        <Text style={styles.drawerActionText}>
+          {ilias.busy ? tx(locale, 'tabsIlias.trennt') : tx(locale, 'tabsIlias.trennen')}
+        </Text>
+      </Pressable>
+    </>
+  );
+
+  const body = connected && dashboard ? (
+    <IliasDashboardView dashboard={dashboard} locale={locale} filter={filter} query={query} />
+  ) : ilias.loading && !ilias.unsupported ? (
+    <View style={styles.loading}>
+      <ActivityIndicator color={colors.blue} />
+      <Text style={styles.loadingLabel}>{tx(locale, 'tabsIlias.laedt')}</Text>
+    </View>
+  ) : (
+    <IliasUnavailable
+      locale={locale}
+      message={message}
+      actionLabel={
+        ilias.unsupported
+          ? tx(locale, 'tabsIlias.konto_wechseln')
+          : ilias.canRetry
+            ? ilias.savedLogin?.biometrics
+              ? tx(locale, 'tabsIlias.entsperren')
+              : tx(locale, 'tabsIlias.erneut')
+            : undefined
+      }
+      onAction={() => {
+        if (ilias.unsupported) router.push('/konto');
+        else void ilias.retry();
+      }}
+    />
+  );
+
+  const errorLine = connected && ilias.error ? <Text style={styles.error}>{ilias.error}</Text> : null;
+
+  if (isDesktop) {
+    if (!connected) {
+      return (
+        <Screen topInset wide stickyHeader={toolbar} refreshControl={refreshControl}>
+          {body}
+          {errorLine}
+        </Screen>
+      );
+    }
+    return (
+      <Screen topInset wide stickyHeader={toolbar} refreshControl={refreshControl}>
+        <View style={styles.desktopColumns}>
+          <View style={styles.desktopRail}>{categories}</View>
+          <View style={styles.desktopMain}>
+            {body}
+            {errorLine}
+          </View>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Drawer
@@ -86,89 +196,12 @@ export default function IliasScreen() {
           title={tx(locale, 'tabsIlias.drawer_menu')}
           closeLabel={tx(locale, 'common.schliessen')}
           onClose={closeMenu}>
-          {dashboard ? (
-            <View style={styles.account}>
-              <Text style={styles.accountName}>{dashboard.name || dashboard.account || tx(locale, 'tabsIlias.ilias')}</Text>
-              <Text style={styles.accountStamp}>
-                {tx(locale, 'tabsIlias.stand', [formatTimestamp(dashboard.fetchedAt, locale)])}
-              </Text>
-            </View>
-          ) : null}
-          <OptionRows
-            options={filterOptions}
-            onSelect={(key) => {
-              setFilter(key as IliasFilter);
-              closeMenu();
-            }}
-          />
-          <Text style={styles.drawerGroup}>{tx(locale, 'tabsIlias.aktionen')}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              closeMenu();
-              void ilias.pullToRefresh();
-            }}
-            style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}>
-            <MaterialIcons name="refresh" size={18} color={colors.blue} />
-            <Text style={[styles.drawerActionText, styles.drawerActionBlue]}>
-              {tx(locale, 'tabsIlias.aktualisieren')}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              closeMenu();
-              void ilias.disconnect();
-            }}
-            style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}>
-            <MaterialIcons name="link-off" size={18} color={colors.danger} />
-            <Text style={styles.drawerActionText}>
-              {ilias.busy ? tx(locale, 'tabsIlias.trennt') : tx(locale, 'tabsIlias.trennen')}
-            </Text>
-          </Pressable>
+          {categories}
         </DrawerPanel>
       )}>
-      <Screen
-        topInset
-        stickyHeader={toolbar}
-        refreshControl={
-          connected ? (
-            <RefreshControl
-              refreshing={ilias.refreshing}
-              onRefresh={ilias.pullToRefresh}
-              tintColor={colors.blue}
-              colors={[colors.blue]}
-              progressBackgroundColor={colors.paper}
-            />
-          ) : undefined
-        }>
-        {connected && dashboard ? (
-          <IliasDashboardView dashboard={dashboard} locale={locale} filter={filter} query={query} />
-        ) : ilias.loading && !ilias.unsupported ? (
-          <View style={styles.loading}>
-            <ActivityIndicator color={colors.blue} />
-            <Text style={styles.loadingLabel}>{tx(locale, 'tabsIlias.laedt')}</Text>
-          </View>
-        ) : (
-          <IliasUnavailable
-            locale={locale}
-            message={message}
-            actionLabel={
-              ilias.unsupported
-                ? tx(locale, 'tabsIlias.konto_wechseln')
-                : ilias.canRetry
-                  ? ilias.savedLogin?.biometrics
-                    ? tx(locale, 'tabsIlias.entsperren')
-                    : tx(locale, 'tabsIlias.erneut')
-                  : undefined
-            }
-            onAction={() => {
-              if (ilias.unsupported) router.push('/konto');
-              else void ilias.retry();
-            }}
-          />
-        )}
-        {connected && ilias.error ? <Text style={styles.error}>{ilias.error}</Text> : null}
+      <Screen topInset stickyHeader={toolbar} refreshControl={refreshControl}>
+        {body}
+        {errorLine}
       </Screen>
     </Drawer>
   );
@@ -201,6 +234,18 @@ function IliasUnavailable({
 }
 
 const styles = themedStyles((colors) => ({
+  desktopColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
+  desktopRail: {
+    width: 280,
+    flexShrink: 0,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  desktopMain: { flex: 1, minWidth: 0, gap: 14 },
   account: { gap: 3, paddingBottom: 12 },
   accountName: { color: colors.anthracite, fontSize: 20, fontWeight: '700' },
   accountStamp: { color: colors.inkSoft, fontSize: 12 },

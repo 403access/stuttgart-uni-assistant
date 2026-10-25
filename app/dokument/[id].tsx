@@ -48,7 +48,7 @@ export default function DocumentScreen() {
 
   if (!bundled && !imported) {
     return (
-      <Screen kicker={tx(locale, 'dokument.dokument')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'dokument.dokument')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'dokument.dokument') }} />
       </Screen>
     );
@@ -58,7 +58,7 @@ export default function DocumentScreen() {
   const offline = bundled ? downloadedIds.includes(bundled.id) : true;
 
   return (
-    <Screen kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'dokument.geteilt')) : tx(locale, 'dokument.eigene')} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>
+    <Screen narrow kicker={bundled ? (bundled.source === 'ilias' ? 'ILIAS' : tx(locale, 'dokument.geteilt')) : tx(locale, 'dokument.eigene')} subtitle={bundled ? `${bundled.author} · ${bundled.updated}` : imported?.folder}>
       <Stack.Screen options={{ title }} />
       <Text style={{ color: colors.inkSoft }}>{offline ? tx(locale, 'dokument.diesem') : tx(locale, 'dokument.offline')}</Text>
       {!plain ? (

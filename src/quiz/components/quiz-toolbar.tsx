@@ -17,6 +17,7 @@ export function QuizToolbar({
   onOpenFilter,
   studyActive,
   filterActive,
+  showMenus = true,
 }: {
   locale: Locale;
   query: string;
@@ -25,17 +26,21 @@ export function QuizToolbar({
   onOpenFilter: () => void;
   studyActive: boolean;
   filterActive: boolean;
+  /** False when studies and filters live in a permanent desktop side rail. */
+  showMenus?: boolean;
 }) {
   return (
     <View style={styles.stickyBar}>
       <View style={styles.controlsRow}>
-        <ToolButton
-          symbol="line.3.horizontal"
-          material="menu"
-          label={tx(locale, 'quiz.drawer_menu')}
-          onPress={onOpenStudies}
-          active={studyActive}
-        />
+        {showMenus ? (
+          <ToolButton
+            symbol="line.3.horizontal"
+            material="menu"
+            label={tx(locale, 'quiz.drawer_menu')}
+            onPress={onOpenStudies}
+            active={studyActive}
+          />
+        ) : null}
         <View style={styles.searchRow}>
           <ControlIcon symbol="magnifyingglass" material="search" color={colors.mute} />
           <TextInput
@@ -59,13 +64,15 @@ export function QuizToolbar({
             </Pressable>
           ) : null}
         </View>
-        <ToolButton
-          symbol="line.3.horizontal.decrease"
-          material="filter-alt"
-          label={tx(locale, 'quiz.drawer_filter')}
-          onPress={onOpenFilter}
-          active={filterActive}
-        />
+        {showMenus ? (
+          <ToolButton
+            symbol="line.3.horizontal.decrease"
+            material="filter-alt"
+            label={tx(locale, 'quiz.drawer_filter')}
+            onPress={onOpenFilter}
+            active={filterActive}
+          />
+        ) : null}
       </View>
     </View>
   );

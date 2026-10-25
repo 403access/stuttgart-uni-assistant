@@ -5,6 +5,7 @@ import type { ComponentProps } from 'react';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';
@@ -35,18 +36,23 @@ function BarIcon({
 export default function TabLayout() {
   const locale = useAppSelector((state) => state.locale);
   const insets = useSafeAreaInsets();
+  // The desktop shell uses the navigation rail from the root layout instead of
+  // a bottom bar. Narrow browser windows keep the familiar phone tab bar.
+  const { isDesktop, isTablet } = useResponsive();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: isTablet,
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.mute,
-        tabBarStyle: {
-          backgroundColor: colors.paper,
-          borderTopColor: colors.line,
-          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
-        },
+        tabBarStyle: isDesktop
+          ? { display: 'none' }
+          : {
+              backgroundColor: colors.paper,
+              borderTopColor: colors.line,
+              height: (isTablet ? 52 : TAB_BAR_CONTENT_HEIGHT) + insets.bottom,
+            },
         tabBarItemStyle: { justifyContent: 'center' },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}>

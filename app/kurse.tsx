@@ -7,6 +7,7 @@ import { campusDetail } from '@/src/auth/campus';
 import { useActiveStudy } from '@/src/campus/use-active-study';
 import { clearCachedCourses, getCoursesSyncInfo, loadCachedCourses, loadCoursesFetchedIds, saveCourses } from '@/src/campus/db';
 import { useCampusSync } from '@/src/campus/use-campus-sync';
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
 import { Button, Card, InfoRow, Muted, Pill, Screen, Section } from '@/src/components/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { showToast } from '@/src/components/toast';
@@ -272,23 +273,25 @@ export default function KurseScreen() {
                 ))}
               </View>
               <Section title={tx(locale, 'kurse.kurse_2', [visible.length])} />
-              {visible.map((course) => (
-                <InfoRow
-                  key={course.id}
-                  title={course.title}
-                  meta={[course.courseTypeShort || course.courseType, course.semester].filter(Boolean).join(' · ') || String(course.id)}
-                  detail={[
-                    course.lecturers.join(', '),
-                    course.startTime ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)}${course.endTime ? `–${formatTime(course.endTime)}` : ''}` : '',
-                    course.roomName,
-                    course.registrationStatus,
-                    course.elementNames.length > 1 ? `${course.elementNames.length} ${tx(locale, 'common.bereiche')}` : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                  onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })}
-                />
-              ))}
+              <ResponsiveGrid minColumnWidth={340}>
+                {visible.map((course) => (
+                  <InfoRow
+                    key={course.id}
+                    title={course.title}
+                    meta={[course.courseTypeShort || course.courseType, course.semester].filter(Boolean).join(' · ') || String(course.id)}
+                    detail={[
+                      course.lecturers.join(', '),
+                      course.startTime ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)}${course.endTime ? `–${formatTime(course.endTime)}` : ''}` : '',
+                      course.roomName,
+                      course.registrationStatus,
+                      course.elementNames.length > 1 ? `${course.elementNames.length} ${tx(locale, 'common.bereiche')}` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                    onPress={() => router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } })}
+                  />
+                ))}
+              </ResponsiveGrid>
             </>
           ) : null}
         </>

@@ -22,7 +22,7 @@ export default function ModuleScreen() {
   const [workload, setWorkload] = useState('8');
   if (!module) {
     return (
-      <Screen kicker={tx(locale, 'modul.modul')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'modul.modul')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'modul.modul') }} />
       </Screen>
     );
@@ -55,7 +55,7 @@ export default function ModuleScreen() {
   }
 
   return (
-    <Screen kicker={module.code} subtitle={`${module.ects} ECTS · ${area}`}>
+    <Screen narrow kicker={module.code} subtitle={`${module.ects} ECTS · ${area}`}>
       <Stack.Screen options={{ title: pick(module.title, locale) }} />
       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
         <Pill label={moduleStatus(module.status, locale)} tone={module.status === 'passed' ? 'ok' : module.status === 'enrolled' ? 'blue' : 'wait'} />

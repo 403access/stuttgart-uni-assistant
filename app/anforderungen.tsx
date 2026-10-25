@@ -16,6 +16,7 @@ export default function RequirementsScreen() {
   const gap = expected - credit.earned;
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'anforderungen.pruefungsordnung')}
       subtitle={tx(locale, 'anforderungen.vereinfachter')}>
       <Stack.Screen options={{ title: tx(locale, 'common.anforderungen') }} />

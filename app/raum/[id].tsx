@@ -14,7 +14,7 @@ export default function RoomScreen() {
   const place = places.find((item) => item.id === firstParam(params.id));
   if (!place) {
     return (
-      <Screen kicker={tx(locale, 'raum.ort_fehlt')} subtitle={tx(locale, 'raum.ort')}>
+      <Screen narrow kicker={tx(locale, 'raum.ort_fehlt')} subtitle={tx(locale, 'raum.ort')}>
         <Stack.Screen options={{ title: tx(locale, 'raum.ort_fehlt') }} />
       </Screen>
     );
@@ -23,7 +23,7 @@ export default function RoomScreen() {
     module.sessions.filter((session) => session.roomId === place.id).map((session) => ({ module, session })),
   );
   return (
-    <Screen kicker={campusName(place.campus, locale)} subtitle={placeKind(place.kind, locale)}>
+    <Screen narrow kicker={campusName(place.campus, locale)} subtitle={placeKind(place.kind, locale)}>
       <Stack.Screen options={{ title: place.name }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{place.address}</Text>

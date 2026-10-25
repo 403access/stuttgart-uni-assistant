@@ -29,7 +29,12 @@ export function OptionRows({ options, onSelect }: { options: DropdownOption[]; o
               </View>
             ) : null}
             <Pressable
-              style={({ pressed }) => [styles.option, option.group && styles.optionGrouped, pressed && styles.pressed]}
+              style={(state: { pressed: boolean; hovered?: boolean }) => [
+                styles.option,
+                option.group && styles.optionGrouped,
+                state.hovered && styles.optionHover,
+                state.pressed && styles.pressed,
+              ]}
               onPress={() => onSelect(option.key)}
               accessibilityRole="button"
             >
@@ -70,6 +75,7 @@ const styles = themedStyles((colors) => ({
     borderBottomColor: colors.line,
   },
   optionGrouped: { paddingLeft: 14, borderLeftWidth: 2, borderLeftColor: colors.line, marginLeft: 2 },
+  optionHover: { backgroundColor: colors.mist },
   optionText: { flex: 1, color: colors.anthracite, fontSize: 15 },
   optionTextActive: { color: colors.blue, fontWeight: '700' },
   optionMeta: { color: colors.mute, fontSize: 13, fontWeight: '700' },

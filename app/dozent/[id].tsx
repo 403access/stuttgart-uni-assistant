@@ -13,7 +13,7 @@ export default function PersonScreen() {
   const person = people.find((item) => item.id === firstParam(params.id));
   if (!person) {
     return (
-      <Screen kicker={tx(locale, 'dozent.profil')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'dozent.profil')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'dozent.profil') }} />
       </Screen>
     );
@@ -21,7 +21,7 @@ export default function PersonScreen() {
   const room = places.find((place) => place.id === person.roomId);
   const taught = modules.filter((item) => item.lecturerId === person.id);
   return (
-    <Screen kicker={pick(person.title, locale)} subtitle={pick(person.institute, locale)}>
+    <Screen narrow kicker={pick(person.title, locale)} subtitle={pick(person.institute, locale)}>
       <Stack.Screen options={{ title: person.name }} />
       <Card>
         <Text style={{ color: colors.anthracite, lineHeight: 22 }}>{pick(person.research, locale)}</Text>

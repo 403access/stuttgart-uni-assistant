@@ -86,7 +86,7 @@ export default function AccountScreen() {
   const online = authToken !== null;
 
   return (
-    <Screen kicker={tx(locale, 'konto.kicker')} subtitle={tx(locale, 'konto.subtitle')}>
+    <Screen narrow kicker={tx(locale, 'konto.kicker')} subtitle={tx(locale, 'konto.subtitle')}>
       <Stack.Screen options={{ title: tx(locale, 'common.konto') }} />
 
       <Card>

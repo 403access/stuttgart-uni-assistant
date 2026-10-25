@@ -2,13 +2,17 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
-import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { useLeaveSession } from '@/src/auth/use-leave-session';
 import { useActiveStudy } from '@/src/campus/use-active-study';
-import { Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
+import { PaneModeProvider } from '@/src/components/pane-mode';
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
+import { Button, Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
+import { SETTINGS_PANELS } from '@/src/settings/settings-panels';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
@@ -17,6 +21,10 @@ import { pick, tx } from '@/src/text';
 type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
+
+function entryKey(entry: CampusEntry): string {
+  return entry.href ?? entry.title;
+}
 
 export default function MoreScreen() {
   const locale = useAppSelector((state) => state.locale);
@@ -30,9 +38,14 @@ export default function MoreScreen() {
   const privacy = useAppSelector((state) => state.profilePrivacy);
   const { study } = useActiveStudy();
   const leave = useLeaveSession();
+  const { isDesktop } = useResponsive();
   const publicCount = publicProfileFieldCount(privacy);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
+  /** Desktop master–detail: the group whose rows are open beside the rail. */
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  /** Desktop master–detail: the entry whose actual screen is shown on the right. */
+  const [activeEntry, setActiveEntry] = useState<string | null>(null);
   const groups: CampusGroup[] = [
     {
       title: tx(locale, 'profil.kategorie'),
@@ -157,9 +170,76 @@ export default function MoreScreen() {
     setSearchOpen(false);
   }
 
+  // Jumping to a category leaves search mode; the old group may have no match.
+  const currentGroup = visibleGroups.find((group) => group.title === activeGroup) ?? visibleGroups[0] ?? null;
+  const searching = needle.length > 0;
+  const activeEntries = searching
+    ? visibleGroups.flatMap((group) => group.entries.map((entry) => ({ group: group.title, entry })))
+    : currentGroup
+      ? currentGroup.entries.map((entry) => ({ group: currentGroup.title, entry }))
+      : [];
+  const currentMatch =
+    activeEntries.find(({ entry }) => entryKey(entry) === activeEntry) ?? activeEntries[0] ?? null;
+  const currentEntry = currentMatch?.entry ?? null;
+  const currentEntryGroup = currentMatch?.group ?? currentGroup?.title ?? '';
+  const Pane = currentEntry?.href ? SETTINGS_PANELS[currentEntry.href] : undefined;
+
+  function renderPaneEntries(entries: CampusEntry[]) {
+    return entries.map((entry) => {
+      const key = entryKey(entry);
+      const active = currentEntry !== null && entryKey(currentEntry) === key;
+      return (
+        <Pressable
+          key={key}
+          accessibilityRole="button"
+          accessibilityState={{ selected: active }}
+          onPress={() => setActiveEntry(key)}
+          style={(state: { pressed: boolean; hovered?: boolean }) => [
+            styles.entryItem,
+            active && styles.entryItemActive,
+            state.hovered && !active && styles.railItemHover,
+            state.pressed && styles.pressed,
+          ]}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[styles.entryTitle, active && styles.entryTitleActive]} numberOfLines={1}>
+              {entry.title}
+            </Text>
+            <Text style={styles.entryDetail} numberOfLines={2}>
+              {entry.detail}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={18} color={active ? colors.blue : colors.mute} />
+        </Pressable>
+      );
+    });
+  }
+
+  function renderEntries(entries: CampusEntry[]) {
+    return entries.map((entry, index) => (
+      <InfoRow
+        key={entry.href ?? entry.title}
+        title={entry.title}
+        detail={entry.detail}
+        tone={entry.tone}
+        position={listPosition(index, entries.length)}
+        onPress={entry.href ? () => router.push(entry.href as CampusHref) : entry.onPress}
+      />
+    ));
+  }
+
+  function renderGroup(group: CampusGroup) {
+    return (
+      <View key={group.title} style={{ gap: 8 }}>
+        <Section title={group.title} />
+        <View>{renderEntries(group.entries)}</View>
+      </View>
+    );
+  }
+
   return (
     <Screen
       topInset
+      scroll={!isDesktop}
       kicker={tx(locale, 'tabsMehr.profil')}
       title={tx(locale, 'common.campus')}
       action={
@@ -229,24 +309,97 @@ export default function MoreScreen() {
             {tx(locale, 'tabsMehr.einstellungen_gefunden')}
           </Text>
         </Card>
-      ) : (
-        visibleGroups.map((group) => (
-          <View key={group.title} style={{ gap: 8 }}>
-            <Section title={group.title} />
-            <View>
-              {group.entries.map((entry, index) => (
-                <InfoRow
-                  key={entry.href ?? entry.title}
-                  title={entry.title}
-                  detail={entry.detail}
-                  tone={entry.tone}
-                  position={listPosition(index, group.entries.length)}
-                  onPress={entry.href ? () => router.push(entry.href as CampusHref) : entry.onPress}
-                />
-              ))}
-            </View>
+      ) : isDesktop ? (
+        <View style={styles.columns}>
+          <ScrollView style={styles.rail} contentContainerStyle={styles.railContent} showsVerticalScrollIndicator={false}>
+            <Text style={styles.railHeading}>{tx(locale, 'common.bereiche')}</Text>
+            {visibleGroups.map((group) => {
+              const active = !searching && group.title === currentGroup?.title;
+              return (
+                <Pressable
+                  key={group.title}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => {
+                    setActiveGroup(group.title);
+                    setActiveEntry(null);
+                    if (searchOpen) closeSearch();
+                  }}
+                  style={(state: { pressed: boolean; hovered?: boolean }) => [
+                    styles.railItem,
+                    active && styles.railItemActive,
+                    state.hovered && !active && styles.railItemHover,
+                    state.pressed && styles.pressed,
+                  ]}>
+                  <Text style={[styles.railLabel, active && styles.railLabelActive]} numberOfLines={1}>
+                    {group.title}
+                  </Text>
+                  <Text style={[styles.railCount, active && styles.railLabelActive]}>{group.entries.length}</Text>
+                  <MaterialIcons name="chevron-right" size={18} color={active ? colors.blue : colors.mute} />
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <ScrollView style={styles.entries} contentContainerStyle={styles.entriesContent} showsVerticalScrollIndicator={false}>
+            {searching ? (
+              visibleGroups.map((group) => (
+                <View key={group.title} style={styles.entryGroupBlock}>
+                  <Text style={styles.entryGroup}>{group.title}</Text>
+                  {renderPaneEntries(group.entries)}
+                </View>
+              ))
+            ) : currentGroup ? (
+              <>
+                <Text style={styles.entryGroup}>{currentGroup.title}</Text>
+                {renderPaneEntries(currentGroup.entries)}
+              </>
+            ) : null}
+          </ScrollView>
+
+          <View style={styles.detailPane}>
+            {currentEntry ? (
+              <>
+                <View style={styles.paneHeader}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.paneKicker}>{currentEntryGroup}</Text>
+                    <Text style={styles.paneTitle} numberOfLines={1}>
+                      {currentEntry.title}
+                    </Text>
+                  </View>
+                </View>
+                {Pane ? (
+                  <View style={styles.paneContent}>
+                    <PaneModeProvider>
+                      <Pane key={entryKey(currentEntry)} />
+                    </PaneModeProvider>
+                  </View>
+                ) : (
+                  <ScrollView contentContainerStyle={styles.paneFallback}>
+                    <Card>
+                      <Text style={styles.paneDetail}>{currentEntry.detail}</Text>
+                    </Card>
+                    {currentEntry.href ? (
+                      <Button
+                        label={tx(locale, 'common.oeffnen')}
+                        onPress={() => router.push(currentEntry.href as CampusHref)}
+                      />
+                    ) : null}
+                    {currentEntry.onPress ? (
+                      <Button label={currentEntry.title} onPress={currentEntry.onPress} />
+                    ) : null}
+                  </ScrollView>
+                )}
+              </>
+            ) : (
+              <View style={styles.paneEmpty}>
+                <Text style={styles.paneDetail}>{tx(locale, 'tabsMehr.einstellungen_gefunden')}</Text>
+              </View>
+            )}
           </View>
-        ))
+        </View>
+      ) : (
+        <ResponsiveGrid minColumnWidth={360}>{visibleGroups.map(renderGroup)}</ResponsiveGrid>
       )}
     </Screen>
   );
@@ -254,6 +407,86 @@ export default function MoreScreen() {
 
 const styles = themedStyles((colors) => ({
   pressed: { opacity: 0.72 },
+  columns: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 16, minHeight: 0 },
+  rail: {
+    width: 240,
+    flexGrow: 0,
+    flexShrink: 0,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  railContent: { padding: 8, gap: 2 },
+  railHeading: {
+    color: colors.blue,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 6,
+  },
+  railItem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 12, borderRadius: 12 },
+  railItemActive: { backgroundColor: colors.blueSoft },
+  railItemHover: { backgroundColor: colors.mist },
+  railLabel: { flex: 1, color: colors.inkSoft, fontSize: 14, fontWeight: '600' },
+  railLabelActive: { color: colors.blue, fontWeight: '700' },
+  railCount: { color: colors.mute, fontSize: 12, fontWeight: '700' },
+  entries: {
+    width: 320,
+    flexGrow: 0,
+    flexShrink: 0,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  entriesContent: { padding: 8, gap: 2 },
+  entryGroupBlock: { gap: 2, marginBottom: 8 },
+  entryGroup: {
+    color: colors.blue,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  entryItem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingVertical: 10, borderRadius: 12, minHeight: 54 },
+  entryItemActive: { backgroundColor: colors.blueSoft },
+  entryTitle: { color: colors.anthracite, fontSize: 14, fontWeight: '700' },
+  entryTitleActive: { color: colors.blue },
+  entryDetail: { color: colors.mute, fontSize: 11, lineHeight: 15, marginTop: 2 },
+  detailPane: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: colors.mist,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  paneHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: colors.paper,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+  },
+  paneKicker: { color: colors.blue, fontSize: 11, fontWeight: '700', letterSpacing: 1.1, textTransform: 'uppercase' },
+  paneTitle: { color: colors.anthracite, fontSize: 18, fontWeight: '700', marginTop: 2 },
+  paneContent: { flex: 1, minHeight: 0 },
+  paneFallback: { padding: 20, gap: 14 },
+  paneDetail: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
+  paneEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   profileHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   profileOpen: { color: colors.blue, fontSize: 13, fontWeight: '700' },
   iconButton: {

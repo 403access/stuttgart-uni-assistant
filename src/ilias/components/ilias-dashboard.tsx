@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { Linking, Pressable, Text, View } from 'react-native';
 
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
 import { Card, Pill, Section } from '@/src/components/ui';
 import { hay, tx } from '@/src/text';
 import { themedStyles } from '@/src/theme';
@@ -53,7 +54,11 @@ function ItemRow({ item, onOpen }: { item: IliasItem; onOpen: (item: IliasItem) 
     <Pressable
       disabled={!item.url && !inApp}
       onPress={() => onOpen(item)}
-      style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
+      style={(state: { pressed: boolean; hovered?: boolean }) => [
+        styles.item,
+        state.hovered && styles.itemHover,
+        state.pressed && styles.pressed,
+      ]}>
       <View style={styles.itemTop}>
         <Text style={styles.itemTitle} numberOfLines={2}>
           {item.title}
@@ -149,11 +154,11 @@ export function IliasDashboardView({
       {visible.map((section) => (
         <View key={section.id} style={styles.group}>
           <Section title={`${section.title} · ${section.items.length}`} />
-          <View style={styles.list}>
+          <ResponsiveGrid minColumnWidth={320} gap={8}>
             {section.items.map((item) => (
               <ItemRow key={`${section.id}-${item.id}`} item={item} onOpen={open} />
             ))}
-          </View>
+          </ResponsiveGrid>
         </View>
       ))}
       <Text style={styles.footer}>{tx(locale, 'tabsIlias.fussnote')}</Text>
@@ -163,8 +168,16 @@ export function IliasDashboardView({
 
 const styles = themedStyles((colors) => ({
   group: { gap: 8 },
-  list: { gap: 8 },
-  item: { backgroundColor: colors.paper, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 5 },
+  item: {
+    backgroundColor: colors.paper,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: 14,
+    gap: 5,
+    cursor: 'pointer',
+  },
+  itemHover: { borderColor: colors.light },
   pressed: { opacity: 0.72 },
   itemTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   itemTitle: { flex: 1, color: colors.anthracite, fontSize: 15, fontWeight: '600', lineHeight: 20 },

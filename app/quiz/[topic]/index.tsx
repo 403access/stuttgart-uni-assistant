@@ -29,7 +29,7 @@ export default function QuizTopicOverviewScreen() {
 
   if (!ready) {
     return (
-      <Screen kicker={tx(locale, 'quiz.kicker')}>
+      <Screen narrow kicker={tx(locale, 'quiz.kicker')}>
         <Stack.Screen options={{ title: tx(locale, 'quiz.title') }} />
         <Card>
           <Text style={styles.muted}>{tx(locale, 'quiz.loading')}</Text>
@@ -40,7 +40,7 @@ export default function QuizTopicOverviewScreen() {
 
   if (!topic) {
     return (
-      <Screen kicker={tx(locale, 'quiz.kicker')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'quiz.kicker')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'quiz.title') }} />
       </Screen>
     );
@@ -114,7 +114,7 @@ function TopicOverview({
   };
 
   return (
-    <Screen
+    <Screen narrow
       kicker={topic.meeting ? pick(topic.meeting, locale) : tx(locale, 'quiz.kicker')}
       title={pick(topic.title, locale)}
       subtitle={pick(topic.summary, locale)}>

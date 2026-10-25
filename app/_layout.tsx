@@ -11,7 +11,10 @@ import { SessionRefresh } from '@/src/auth/session-refresh';
 import { clearLogin } from '@/src/auth/vault';
 import { AppLock } from '@/src/components/app-lock';
 import { ToastHost } from '@/src/components/toast';
+import { WebHead } from '@/src/components/web-head';
+import { WebSidebar } from '@/src/components/web-sidebar';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { IliasAutoConnect } from '@/src/ilias/ilias-auto-connect';
 import { IliasHeadlessProvider } from '@/src/ilias/ilias-headless-provider';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
@@ -75,6 +78,7 @@ function Gate() {
   // The web build can only sign in through a phone that already completed the
   // first-run flow, so it never shows onboarding again.
   const isWeb = Platform.OS === 'web';
+  const { isDesktop } = useResponsive();
   const needsOnboarding = Boolean(sessionAccount) && onboardingReady && (!onboardingCompleted || forceOnboarding) && !isWeb;
   // Settled once the route matches the session and, while signed in, the
   // onboarding decision has been made. The effects below only perform redirects.
@@ -174,29 +178,46 @@ function Gate() {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
     document.documentElement.style.backgroundColor = colors.mist;
     document.body.style.backgroundColor = colors.mist;
-  }, [theme]);
+    // Native form controls (date pickers, scrollbars, caret) follow the app
+    // theme instead of the OS setting.
+    document.documentElement.style.colorScheme = theme;
+    document.documentElement.lang = locale;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? colors.mist : colors.brand);
+  }, [locale, theme]);
+
+  // The desktop shell keeps the navigation rail outside the router stack, so
+  // pushed detail screens keep their place while the sidebar stays put.
+  const showSidebar = isDesktop && settled && Boolean(sessionAccount) && !onLogin && !onOnboarding;
 
   return (
-    <View style={{ flex: 1, opacity: settled ? 1 : 0 }}>
+    <View style={[styles.root, { opacity: settled ? 1 : 0 }]}>
+      <WebHead />
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          contentStyle: { backgroundColor: colors.mist },
-          // On iOS 26 a header without a background defaults to transparent (Liquid
-          // Glass) and content is laid out underneath it. The opaque mist background
-          // keeps every pushed screen below its header, matching the rest of the app.
-          headerStyle: { backgroundColor: colors.mist },
-          headerTintColor: colors.blue,
-          headerTitleStyle: { color: colors.anthracite, fontWeight: '700', fontSize: 17 },
-          headerBackTitle: tx(locale, 'layout.zurueck'),
-          headerShadowVisible: false,
-        }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="login-legacy" options={{ headerShown: false }} />
-        <Stack.Screen name="oidc" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
-      </Stack>
+      <View style={styles.shell}>
+        {showSidebar ? <WebSidebar /> : null}
+        <View style={styles.content}>
+          <Stack
+            screenOptions={{
+              contentStyle: { backgroundColor: colors.mist },
+              // On iOS 26 a header without a background defaults to transparent (Liquid
+              // Glass) and content is laid out underneath it. The opaque mist background
+              // keeps every pushed screen below its header, matching the rest of the app.
+              headerStyle: { backgroundColor: colors.mist },
+              headerTintColor: colors.blue,
+              headerTitleStyle: { color: colors.anthracite, fontWeight: '700', fontSize: 17 },
+              headerBackTitle: tx(locale, 'layout.zurueck'),
+              headerShadowVisible: false,
+            }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="login-legacy" options={{ headerShown: false }} />
+            <Stack.Screen name="oidc" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
+          </Stack>
+        </View>
+      </View>
       {settled && lockable && !biometricsJustEnabled && !unlocked ? (
         <View style={StyleSheet.absoluteFill}>
           <AppLock onUnlock={unlock} onSignOut={leave} />
@@ -205,3 +226,9 @@ function Gate() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  shell: { flex: 1, flexDirection: 'row' },
+  content: { flex: 1, minWidth: 0 },
+});

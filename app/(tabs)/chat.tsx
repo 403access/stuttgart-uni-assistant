@@ -8,8 +8,10 @@ import { buildLocalAnswer, renderFacts } from '@/src/assistant/answer';
 import { buildAnswerInput, bundledDocument } from '@/src/assistant/context';
 import { askGrok } from '@/src/assistant/remote';
 import { AmbientBackground } from '@/src/components/ambient-background';
+import { ResponsiveGrid } from '@/src/components/responsive-grid';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { useAppSelector, appActions } from '@/src/state/AppState';
-import { colors, themedStyle } from '@/src/theme';
+import { colors, themedStyle, themedStyles } from '@/src/theme';
 import { firstParam, tx, uid } from '@/src/text';
 
 export default function ChatScreen() {
@@ -20,6 +22,7 @@ export default function ChatScreen() {
   const params = useLocalSearchParams<{ doc?: string }>();
   const docId = firstParam(params.doc);
   const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsive();
   const [draft, setDraft] = useState('');
   const bundled = docId ? bundledDocument(docId, locale) : null;
   const imported = imports.find((item) => item.id === docId);
@@ -81,67 +84,85 @@ export default function ChatScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.mist, paddingTop: insets.top }}>
+    <View style={styles.screen}>
       <AmbientBackground />
-      <View style={{ paddingHorizontal: 20, paddingTop: 12, gap: 6 }}>
-        <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1 }}>CHAT</Text>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ color: colors.anthracite, fontSize: 30, fontWeight: '700' }}>{tx(locale, 'tabsChat.assistent')}</Text>
-          <Pressable onPress={clearChat} hitSlop={8}>
-            <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'tabsChat.leeren')}</Text>
-          </Pressable>
-        </View>
-        <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
-          {tx(locale, 'tabsChat.antworten')}
-        </Text>
-        {focus ? (
-          <Text style={{ color: colors.blue, fontWeight: '700' }}>
-            {tx(locale, 'tabsChat.bezug')}: {focus.title}
-          </Text>
-        ) : null}
-      </View>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 10 }} keyboardShouldPersistTaps="handled">
-        {messages.length === 0 ? (
-          <View style={{ gap: 8 }}>
-            {suggestions.map((item) => (
-              <Pressable key={item} onPress={() => send(item)} style={{ ...chip }}>
-                <Text style={{ color: colors.blue, fontWeight: '700' }}>{item}</Text>
-              </Pressable>
-            ))}
+      <View style={[styles.frame, isDesktop && styles.frameDesktop, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700', letterSpacing: 1.1 }}>CHAT</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ color: colors.anthracite, fontSize: isDesktop ? 34 : 30, fontWeight: '700', letterSpacing: isDesktop ? -0.8 : 0 }}>
+              {tx(locale, 'tabsChat.assistent')}
+            </Text>
+            <Pressable onPress={clearChat} hitSlop={8} style={styles.pointer}>
+              <Text style={{ color: colors.blue, fontWeight: '700' }}>{tx(locale, 'tabsChat.leeren')}</Text>
+            </Pressable>
           </View>
-        ) : (
-          messages.map((message) => (
-            <View key={message.id} style={[bubble, message.role === 'user' ? { ...userBubble } : { ...assistantBubble }]}>
-              <Text style={{ color: message.role === 'user' ? '#FFFFFF' : colors.anthracite, fontSize: 15, lineHeight: 21 }}>{message.text}</Text>
-              {message.role === 'assistant' ? (
-                <Text style={{ color: colors.inkSoft, fontSize: 12, marginTop: 8 }}>
-                  {message.engine === 'grok' ? 'Grok' : tx(locale, 'tabsChat.campus')}
-                  {message.sources.length ? ` · ${message.sources.slice(0, 3).join(' · ')}` : ''}
-                </Text>
-              ) : null}
-            </View>
-          ))
-        )}
-        {busy ? <Text style={{ color: colors.inkSoft }}>{tx(locale, 'tabsChat.grok')}</Text> : null}
-      </ScrollView>
-      <View style={{ padding: 12, paddingBottom: 8, gap: 8 }}>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
-          <TextInput
-            value={draft}
-            onChangeText={setDraft}
-            placeholder={tx(locale, 'tabsChat.frage')}
-            placeholderTextColor={colors.mute}
-            style={[{ ...input }, { flex: 1 }]}
-            multiline
-          />
-          <Pressable onPress={() => send(draft)} style={{ ...sendButton }}>
-            <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{tx(locale, 'common.senden')}</Text>
-          </Pressable>
+          <Text style={{ color: colors.inkSoft, lineHeight: 20 }}>
+            {tx(locale, 'tabsChat.antworten')}
+          </Text>
+          {focus ? (
+            <Text style={{ color: colors.blue, fontWeight: '700' }}>
+              {tx(locale, 'tabsChat.bezug')}: {focus.title}
+            </Text>
+          ) : null}
+        </View>
+        <ScrollView contentContainerStyle={styles.messages} keyboardShouldPersistTaps="handled">
+          {messages.length === 0 ? (
+            <ResponsiveGrid minColumnWidth={320} gap={8}>
+              {suggestions.map((item) => (
+                <Pressable key={item} onPress={() => send(item)} style={{ ...chip }}>
+                  <Text style={{ color: colors.blue, fontWeight: '700' }}>{item}</Text>
+                </Pressable>
+              ))}
+            </ResponsiveGrid>
+          ) : (
+            messages.map((message) => (
+              <View
+                key={message.id}
+                style={[bubble, message.role === 'user' ? { ...userBubble } : { ...assistantBubble }, isDesktop && styles.bubbleDesktop]}>
+                <Text style={{ color: message.role === 'user' ? '#FFFFFF' : colors.anthracite, fontSize: 15, lineHeight: 21 }}>{message.text}</Text>
+                {message.role === 'assistant' ? (
+                  <Text style={{ color: colors.inkSoft, fontSize: 12, marginTop: 8 }}>
+                    {message.engine === 'grok' ? 'Grok' : tx(locale, 'tabsChat.campus')}
+                    {message.sources.length ? ` · ${message.sources.slice(0, 3).join(' · ')}` : ''}
+                  </Text>
+                ) : null}
+              </View>
+            ))
+          )}
+          {busy ? <Text style={{ color: colors.inkSoft }}>{tx(locale, 'tabsChat.grok')}</Text> : null}
+        </ScrollView>
+        <View style={styles.composer}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+            <TextInput
+              value={draft}
+              onChangeText={setDraft}
+              placeholder={tx(locale, 'tabsChat.frage')}
+              placeholderTextColor={colors.mute}
+              style={[{ ...input }, { flex: 1 }]}
+              multiline
+            />
+            <Pressable onPress={() => send(draft)} style={{ ...sendButton }}>
+              <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>{tx(locale, 'common.senden')}</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>
   );
 }
+
+const styles = themedStyles((colors) => ({
+  screen: { flex: 1, backgroundColor: colors.mist },
+  frame: { flex: 1, minWidth: 0 },
+  // Desktop chat column: readable width and room for two suggestion columns.
+  frameDesktop: { width: '100%', maxWidth: 1280, alignSelf: 'center' },
+  header: { paddingHorizontal: 20, paddingTop: 12, gap: 6 },
+  messages: { padding: 20, gap: 10 },
+  bubbleDesktop: { maxWidth: '78%' as const },
+  composer: { padding: 12, paddingBottom: 8, gap: 8 },
+  pointer: { cursor: 'pointer' as const },
+}));
 
 const chip = themedStyle((colors) => ({ backgroundColor: colors.paper, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 12 }));
 const bubble = { borderRadius: 16, padding: 12, maxWidth: '100%' as const };

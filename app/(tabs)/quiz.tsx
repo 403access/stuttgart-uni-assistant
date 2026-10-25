@@ -1,12 +1,13 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
 import { DrawerPanel } from '@/src/components/drawer-panel';
 import { OptionRows, type DropdownOption } from '@/src/components/option-rows';
 import { Card, Meter, Screen, Section } from '@/src/components/ui';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import {
   findQuizStudy,
@@ -110,7 +111,11 @@ export default function QuizScreen() {
   const [studiesOpen, setStudiesOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const { width } = useWindowDimensions();
+  const { isDesktop } = useResponsive();
   const drawerWidth = Math.min(340, Math.round(width * 0.86));
+  // Two tiles per row on the phone; the desktop grid grows with the room left
+  // next to the sidebar (3 at 1200, 4 at 1440, up to 6 on very wide displays).
+  const tileColumns = isDesktop ? Math.max(3, Math.min(6, Math.floor((width - 252 - 64) / 300))) : 2;
 
   if (!ready) {
     return (
@@ -234,8 +239,173 @@ export default function QuizScreen() {
       onOpenFilter={() => setFilterOpen(true)}
       studyActive={studyFilter !== ALL_STUDIES}
       filterActive={filterActive}
+      showMenus={!isDesktop}
     />
   );
+
+  const studiesPanel = (
+    <>
+      <OptionRows options={studyOptions} onSelect={applyStudyKey} />
+      {overall.seen > 0 ? (
+        <>
+          <Text style={styles.drawerGroup}>{tx(locale, 'quiz.actions')}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={confirmResetProgress}
+            style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
+          >
+            <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
+            <Text style={styles.drawerActionText}>{tx(locale, 'quiz.reset')}</Text>
+          </Pressable>
+        </>
+      ) : null}
+    </>
+  );
+
+  const filtersPanel = (
+    <>
+      <OptionRows options={filterOptions} onSelect={applyFilterKey} />
+      {filterActive ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={clearStatusAndSemester}
+          style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
+        >
+          <MaterialIcons name="filter-alt-off" size={18} color={colors.blue} />
+          <Text style={[styles.drawerActionText, styles.drawerActionBlue]}>
+            {tx(locale, 'quiz.reset_filters')}
+          </Text>
+        </Pressable>
+      ) : null}
+    </>
+  );
+
+  const mainContent = (
+    <>
+      <Card>
+        <View style={styles.statsHeader}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.statsLabel}>{tx(locale, 'quiz.mastered')}</Text>
+            <Text style={styles.statsValue}>
+              {overall.mastered}
+              <Text style={styles.statsTotal}> / {overall.total}</Text>
+            </Text>
+          </View>
+          <View style={styles.accuracy}>
+            <Text style={styles.accuracyValue}>{overall.accuracy}%</Text>
+            <Text style={styles.accuracyLabel}>{tx(locale, 'quiz.accuracy')}</Text>
+          </View>
+        </View>
+        <Meter value={overall.mastered} max={overall.total} />
+        <Text style={styles.muted}>
+          {tx(locale, 'quiz.stats_line', [overall.correct, overall.total, overall.wrong])}
+        </Text>
+        {lastSession && lastTopic ? (
+          <Pressable
+            onPress={() =>
+              startTopic(
+                lastTopic,
+                lastSession.mode === 'review' && topicStats(lastTopic, attempts).wrong === 0
+                  ? 'all'
+                  : lastSession.mode,
+              )
+            }
+            style={styles.lastSession}
+          >
+            <MaterialIcons name="history" size={18} color={colors.blue} />
+            <Text style={styles.lastSessionText}>
+              {tx(locale, 'quiz.last_session', [
+                lastSession.correct,
+                lastSession.total,
+                pick(lastTopic.title, locale),
+              ])}
+            </Text>
+            <MaterialIcons name="chevron-right" size={18} color={colors.blue} />
+          </Pressable>
+        ) : null}
+      </Card>
+
+      <Section
+        title={tx(locale, 'quiz.modules')}
+        action={filtersActive ? tx(locale, 'quiz.reset_filters') : undefined}
+        onAction={resetFilters}
+      />
+      {filtersActive ? (
+        <Text style={styles.resultCount}>
+          {tx(locale, 'quiz.result_count', [resultCount, quizModules.length])}
+        </Text>
+      ) : null}
+
+      {groups.length ? (
+        groups.map(({ study, modules }) => (
+          <StudyGroup
+            key={study.id}
+            study={study}
+            modules={modules}
+            locale={locale}
+            attempts={attempts}
+            columns={tileColumns}
+          />
+        ))
+      ) : (
+        <Card>
+          <Text style={styles.muted}>{tx(locale, 'quiz.no_matches')}</Text>
+          <Pressable accessibilityRole="button" onPress={resetFilters}>
+            <Text style={styles.link}>{tx(locale, 'quiz.reset_filters')}</Text>
+          </Pressable>
+        </Card>
+      )}
+
+      {practiceTopic ? (
+        <>
+          <Section title={tx(locale, 'quiz.practice')} />
+          <Card>
+            <View style={styles.mixedHeader}>
+              <View style={styles.mixedIcon}>
+                <MaterialIcons name="shuffle" size={22} color={colors.blue} />
+              </View>
+              <View style={{ flex: 1, gap: 3 }}>
+                <Text style={styles.topicTitle}>{pick(practiceTopic.title, locale)}</Text>
+                <Text style={styles.muted}>{pick(practiceTopic.summary, locale)}</Text>
+              </View>
+            </View>
+            <View style={styles.actions}>
+              <Pressable onPress={() => startTopic(practiceTopic, 'mixed')} style={styles.primaryAction}>
+                <MaterialIcons name="play-arrow" size={18} color="#FFFFFF" />
+                <Text style={styles.primaryActionText}>{tx(locale, 'quiz.start_mixed')}</Text>
+              </Pressable>
+            </View>
+          </Card>
+        </>
+      ) : null}
+    </>
+  );
+
+  if (isDesktop) {
+    return (
+      <Screen wide stickyHeader={toolbar} topInset>
+        <View style={styles.desktopColumns}>
+          <View style={styles.desktopRail}>
+            <Text style={styles.railTitle}>{tx(locale, 'quiz.drawer_studies')}</Text>
+            <OptionRows options={studyOptions.map((option) => ({ ...option, group: undefined }))} onSelect={applyStudyKey} />
+            {overall.seen > 0 ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={confirmResetProgress}
+                style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
+              >
+                <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
+                <Text style={styles.drawerActionText}>{tx(locale, 'quiz.reset')}</Text>
+              </Pressable>
+            ) : null}
+            <Text style={[styles.railTitle, styles.railTitleSpaced]}>{tx(locale, 'quiz.drawer_filter')}</Text>
+            {filtersPanel}
+          </View>
+          <View style={styles.desktopMain}>{mainContent}</View>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Drawer
@@ -252,20 +422,7 @@ export default function QuizScreen() {
           closeLabel={tx(locale, 'common.schliessen')}
           onClose={() => setStudiesOpen(false)}
         >
-          <OptionRows options={studyOptions} onSelect={applyStudyKey} />
-          {overall.seen > 0 ? (
-            <>
-              <Text style={styles.drawerGroup}>{tx(locale, 'quiz.actions')}</Text>
-              <Pressable
-                accessibilityRole="button"
-                onPress={confirmResetProgress}
-                style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
-              >
-                <MaterialIcons name="delete-outline" size={18} color={colors.danger} />
-                <Text style={styles.drawerActionText}>{tx(locale, 'quiz.reset')}</Text>
-              </Pressable>
-            </>
-          ) : null}
+          {studiesPanel}
         </DrawerPanel>
       )}
     >
@@ -283,119 +440,12 @@ export default function QuizScreen() {
             closeLabel={tx(locale, 'common.schliessen')}
             onClose={() => setFilterOpen(false)}
           >
-            <OptionRows options={filterOptions} onSelect={applyFilterKey} />
-            {filterActive ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={clearStatusAndSemester}
-                style={({ pressed }) => [styles.drawerAction, pressed && styles.pressed]}
-              >
-                <MaterialIcons name="filter-alt-off" size={18} color={colors.blue} />
-                <Text style={[styles.drawerActionText, styles.drawerActionBlue]}>
-                  {tx(locale, 'quiz.reset_filters')}
-                </Text>
-              </Pressable>
-            ) : null}
+            {filtersPanel}
           </DrawerPanel>
         )}
       >
         <Screen stickyHeader={toolbar} topInset>
-          <Card>
-            <View style={styles.statsHeader}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={styles.statsLabel}>{tx(locale, 'quiz.mastered')}</Text>
-                <Text style={styles.statsValue}>
-                  {overall.mastered}
-                  <Text style={styles.statsTotal}> / {overall.total}</Text>
-                </Text>
-              </View>
-              <View style={styles.accuracy}>
-                <Text style={styles.accuracyValue}>{overall.accuracy}%</Text>
-                <Text style={styles.accuracyLabel}>{tx(locale, 'quiz.accuracy')}</Text>
-              </View>
-            </View>
-            <Meter value={overall.mastered} max={overall.total} />
-            <Text style={styles.muted}>
-              {tx(locale, 'quiz.stats_line', [overall.correct, overall.total, overall.wrong])}
-            </Text>
-            {lastSession && lastTopic ? (
-              <Pressable
-                onPress={() =>
-                  startTopic(
-                    lastTopic,
-                    lastSession.mode === 'review' && topicStats(lastTopic, attempts).wrong === 0
-                      ? 'all'
-                      : lastSession.mode,
-                  )
-                }
-                style={styles.lastSession}
-              >
-                <MaterialIcons name="history" size={18} color={colors.blue} />
-                <Text style={styles.lastSessionText}>
-                  {tx(locale, 'quiz.last_session', [
-                    lastSession.correct,
-                    lastSession.total,
-                    pick(lastTopic.title, locale),
-                  ])}
-                </Text>
-                <MaterialIcons name="chevron-right" size={18} color={colors.blue} />
-              </Pressable>
-            ) : null}
-          </Card>
-
-          <Section
-            title={tx(locale, 'quiz.modules')}
-            action={filtersActive ? tx(locale, 'quiz.reset_filters') : undefined}
-            onAction={resetFilters}
-          />
-          {filtersActive ? (
-            <Text style={styles.resultCount}>
-              {tx(locale, 'quiz.result_count', [resultCount, quizModules.length])}
-            </Text>
-          ) : null}
-
-          {groups.length ? (
-            groups.map(({ study, modules }) => (
-              <StudyGroup
-                key={study.id}
-                study={study}
-                modules={modules}
-                locale={locale}
-                attempts={attempts}
-              />
-            ))
-          ) : (
-            <Card>
-              <Text style={styles.muted}>{tx(locale, 'quiz.no_matches')}</Text>
-              <Pressable accessibilityRole="button" onPress={resetFilters}>
-                <Text style={styles.link}>{tx(locale, 'quiz.reset_filters')}</Text>
-              </Pressable>
-            </Card>
-          )}
-
-          {practiceTopic ? (
-            <>
-              <Section title={tx(locale, 'quiz.practice')} />
-              <Card>
-                <View style={styles.mixedHeader}>
-                  <View style={styles.mixedIcon}>
-                    <MaterialIcons name="shuffle" size={22} color={colors.blue} />
-                  </View>
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <Text style={styles.topicTitle}>{pick(practiceTopic.title, locale)}</Text>
-                    <Text style={styles.muted}>{pick(practiceTopic.summary, locale)}</Text>
-                  </View>
-                </View>
-                <View style={styles.actions}>
-                  <Pressable onPress={() => startTopic(practiceTopic, 'mixed')} style={styles.primaryAction}>
-                    <MaterialIcons name="play-arrow" size={18} color="#FFFFFF" />
-                    <Text style={styles.primaryActionText}>{tx(locale, 'quiz.start_mixed')}</Text>
-                  </Pressable>
-                </View>
-              </Card>
-            </>
-          ) : null}
-
+          {mainContent}
         </Screen>
       </Drawer>
     </Drawer>
@@ -407,11 +457,13 @@ function StudyGroup({
   modules,
   locale,
   attempts,
+  columns,
 }: {
   study: QuizStudy;
   modules: QuizModule[];
   locale: Locale;
   attempts: Record<string, QuestionProgress>;
+  columns: number;
 }) {
   const questions = modules.flatMap((module) => module.topics.flatMap((topic) => topic.questions));
   const stats = statsForQuestions(questions, attempts);
@@ -437,6 +489,7 @@ function StudyGroup({
             studyColor={study.color}
             locale={locale}
             attempts={attempts}
+            columns={columns}
           />
         ))}
       </View>
@@ -449,27 +502,31 @@ function ModuleTile({
   studyColor,
   locale,
   attempts,
+  columns,
 }: {
   module: QuizModule;
   studyColor: string;
   locale: Locale;
   attempts: Record<string, QuestionProgress>;
+  columns: number;
 }) {
   const stats = moduleStats(module, attempts);
   const percent = stats.total > 0 ? Math.round((stats.mastered / stats.total) * 100) : 0;
   const complete = stats.total > 0 && stats.mastered === stats.total;
   const started = stats.seen > 0;
   const title = pick(module.title, locale);
+  const width = columns <= 2 ? '48%' : `${(100 / columns - 1.4).toFixed(2)}%`;
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={tx(locale, 'quiz.open_module', [title])}
       onPress={() => openModule(module.id)}
-      style={({ pressed }) => [
+      style={(state: { pressed: boolean; hovered?: boolean }) => [
         styles.tile,
-        { borderTopColor: studyColor, borderTopWidth: 3 },
-        pressed && styles.pressed,
+        { width, borderTopColor: studyColor, borderTopWidth: 3 },
+        state.hovered && styles.tileHover,
+        state.pressed && styles.pressed,
       ]}
     >
       <View style={[styles.badge, started && styles.badgeStarted, complete && styles.badgeComplete]}>
@@ -510,6 +567,27 @@ function ModuleTile({
 }
 
 const styles = themedStyles((colors) => ({
+  desktopColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
+  desktopRail: {
+    width: 300,
+    flexShrink: 0,
+    backgroundColor: colors.paper,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  desktopMain: { flex: 1, minWidth: 0, gap: 14 },
+  railTitle: {
+    color: colors.blue,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    paddingBottom: 4,
+  },
+  railTitleSpaced: { paddingTop: 18 },
   muted: { color: colors.inkSoft, fontSize: 13, lineHeight: 19 },
   statsHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statsLabel: { color: colors.inkSoft, fontSize: 12, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
@@ -564,14 +642,15 @@ const styles = themedStyles((colors) => ({
   studyMeta: { color: colors.mute, fontSize: 12, marginTop: -4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   tile: {
-    width: '48%',
     backgroundColor: colors.paper,
     borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.line,
     padding: 14,
     gap: 6,
+    cursor: Platform.OS === 'web' ? 'pointer' : undefined,
   },
+  tileHover: { borderColor: colors.light },
   pressed: { opacity: 0.7 },
   badge: {
     position: 'absolute',

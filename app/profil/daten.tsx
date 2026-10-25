@@ -17,7 +17,7 @@ export default function ProfileDataScreen() {
   const { locale, privacy, values } = data;
 
   return (
-    <Screen kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.daten_subtitle')}>
+    <Screen narrow kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.daten_subtitle')}>
       <Stack.Screen options={{ title: tx(locale, 'profil.daten') }} />
 
       <ProfileSummary data={data} />

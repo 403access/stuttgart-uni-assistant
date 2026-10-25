@@ -6,17 +6,42 @@ import { tx } from '@/src/text';
 import type { Locale, MailMessage } from '@/src/types';
 
 /** One inbox row; the read flag only dims the dot and the subject, the row stays tappable. */
-export function MailRow({ message, folder, last, locale }: { message: MailMessage; folder: string; last: boolean; locale: Locale }) {
+export function MailRow({
+  message,
+  folder,
+  last,
+  locale,
+  selected = false,
+  onSelect,
+}: {
+  message: MailMessage;
+  folder: string;
+  last: boolean;
+  locale: Locale;
+  /** Desktop split view: mark the row whose message is open beside the list. */
+  selected?: boolean;
+  /** Desktop split view: open the message in place instead of pushing a route. */
+  onSelect?: (message: MailMessage) => void;
+}) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.listRow, !last && styles.listRowLine, pressed && styles.pressed]}
+      style={(state: { pressed: boolean; hovered?: boolean }) => [
+        styles.listRow,
+        !last && styles.listRowLine,
+        selected && styles.listRowSelected,
+        state.hovered && !selected && styles.listRowHover,
+        state.pressed && styles.pressed,
+      ]}
       onPress={() =>
-        router.push({
-          pathname: '/mail-nachricht',
-          params: { uid: String(message.uid), folder },
-        })
+        onSelect
+          ? onSelect(message)
+          : router.push({
+              pathname: '/mail-nachricht',
+              params: { uid: String(message.uid), folder },
+            })
       }
       accessibilityLabel={tx(locale, 'tabsMail.nachricht', [message.subject || 'ohne Betreff'])}
+      accessibilityState={{ selected }}
     >
       <View style={styles.rowTop}>
         <View style={[styles.dot, { backgroundColor: message.seen ? colors.line : colors.blue }]} />
@@ -38,8 +63,10 @@ export function MailRow({ message, folder, last, locale }: { message: MailMessag
 }
 
 const styles = themedStyles((colors) => ({
-  listRow: { paddingHorizontal: 20, paddingVertical: 14 },
+  listRow: { paddingHorizontal: 20, paddingVertical: 14, cursor: 'pointer' },
   listRowLine: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+  listRowSelected: { backgroundColor: colors.blueSoft, borderLeftWidth: 3, borderLeftColor: colors.blue, paddingLeft: 17 },
+  listRowHover: { backgroundColor: colors.mist },
   pressed: { opacity: 0.72 },
   rowTop: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   rowBody: { flex: 1, gap: 4 },

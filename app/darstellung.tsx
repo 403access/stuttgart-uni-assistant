@@ -14,6 +14,7 @@ export default function AppearanceScreen() {
   const { setTheme, setDesign } = appActions;
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'common.app')}
       title={tx(locale, 'einstellungen.design')}
       subtitle={tx(locale, 'einstellungen.design_hinweis')}>

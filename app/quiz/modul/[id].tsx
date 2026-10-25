@@ -24,7 +24,7 @@ export default function QuizModuleScreen() {
 
   if (!ready) {
     return (
-      <Screen kicker={tx(locale, 'quiz.kicker')}>
+      <Screen narrow kicker={tx(locale, 'quiz.kicker')}>
         <Stack.Screen options={{ title: tx(locale, 'quiz.title') }} />
         <Card>
           <Text style={styles.muted}>{tx(locale, 'quiz.loading')}</Text>
@@ -35,7 +35,7 @@ export default function QuizModuleScreen() {
 
   if (!module) {
     return (
-      <Screen kicker={tx(locale, 'quiz.kicker')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'quiz.kicker')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'quiz.title') }} />
       </Screen>
     );
@@ -70,7 +70,7 @@ function ModuleOverview({
     : tx(locale, 'quiz.module_kicker');
 
   return (
-    <Screen kicker={kicker} title={title} subtitle={pick(module.subtitle, locale)}>
+    <Screen narrow kicker={kicker} title={title} subtitle={pick(module.subtitle, locale)}>
       <Stack.Screen options={{ title }} />
 
       <Card>

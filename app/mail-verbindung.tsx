@@ -69,6 +69,7 @@ export default function MailConnectionScreen() {
 
   return (
     <Screen
+      narrow
       kicker="UniMail"
       title={tx(locale, 'mailVerbindung.verbindung_2')}
       subtitle={tx(locale, 'mailVerbindung.lesen')}

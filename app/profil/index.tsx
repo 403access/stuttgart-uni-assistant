@@ -20,7 +20,7 @@ export default function ProfileOverviewScreen() {
   }
 
   return (
-    <Screen kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.uebersicht_detail')}>
+    <Screen narrow kicker={tx(locale, 'profil.kicker')} subtitle={tx(locale, 'profil.uebersicht_detail')}>
       <Stack.Screen options={{ title: tx(locale, 'profil.titel') }} />
 
       <ProfileSummary data={data} />

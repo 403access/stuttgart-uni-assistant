@@ -276,6 +276,7 @@ export default function MailComposeScreen() {
 
   return (
     <Screen
+      narrow
       scroll={false}
       footer={
         <View style={styles.footer}>

@@ -9,6 +9,7 @@ export default function ExamsScreen() {
   const locale = useAppSelector((state) => state.locale);
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'altklausuren.index')}
       subtitle={tx(locale, 'altklausuren.themen')}>
       <Stack.Screen options={{ title: tx(locale, 'common.altklausuren') }} />

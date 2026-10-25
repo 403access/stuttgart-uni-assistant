@@ -29,7 +29,7 @@ export default function CourseScreen() {
   const course: CampusCourse | null = getCachedCourse(id) ?? persisted.data ?? null;
   if (!course) {
     return (
-      <Screen kicker="C@MPUS">
+      <Screen narrow kicker="C@MPUS">
         <Stack.Screen options={{ title: tx(locale, 'kurs.kurs_fehlt') }} />
         <Muted>
           {tx(locale, 'kurs.kurs')}
@@ -44,7 +44,7 @@ export default function CourseScreen() {
         ? `${formatDay(course.startTime, locale)}, ${formatTime(course.startTime)} ${tx(locale, 'common.uhr')}`
         : '';
   return (
-    <Screen kicker={course.courseType || 'C@MPUS'} subtitle={course.semester}>
+    <Screen narrow kicker={course.courseType || 'C@MPUS'} subtitle={course.semester}>
       <Stack.Screen options={{ title: course.title }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontSize: 20, fontWeight: '700' }}>

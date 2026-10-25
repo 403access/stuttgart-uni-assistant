@@ -15,6 +15,7 @@ export default function SequenceScreen() {
   const semesters = [1, 2, 3, 4, 5, 6];
   return (
     <Screen
+      narrow
       kicker={tx(locale, 'reihenfolge.abhaengigkeiten')}
       subtitle={tx(locale, 'reihenfolge.zuerst')}>
       <Stack.Screen options={{ title: tx(locale, 'common.reihenfolge') }} />

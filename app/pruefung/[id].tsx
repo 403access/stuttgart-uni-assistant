@@ -13,14 +13,14 @@ export default function ExamScreen() {
   const exam = exams.find((item) => item.id === firstParam(params.id));
   if (!exam) {
     return (
-      <Screen kicker={tx(locale, 'pruefung.eintrag')} subtitle={tx(locale, 'common.eintrag')}>
+      <Screen narrow kicker={tx(locale, 'pruefung.eintrag')} subtitle={tx(locale, 'common.eintrag')}>
         <Stack.Screen options={{ title: tx(locale, 'pruefung.eintrag') }} />
       </Screen>
     );
   }
   const module = modules.find((item) => item.id === exam.moduleId);
   return (
-    <Screen kicker={exam.term}>
+    <Screen narrow kicker={exam.term}>
       <Stack.Screen options={{ title: module ? pick(module.title, locale) : exam.moduleId }} />
       <Card>
         <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{pick(exam.focus, locale)}</Text>

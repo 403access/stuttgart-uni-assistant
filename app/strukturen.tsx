@@ -247,7 +247,8 @@ export default function StrukturenScreen() {
     <Screen
       kicker="Web"
       subtitle={tx(locale, 'strukturen.alle_zwischengespeicherten')}
-      scroll={!isWeb}>
+      scroll={!isWeb}
+      wide>
       <Stack.Screen options={{ title: tx(locale, 'strukturen.strukturen') }} />
       <View style={[pageStyles.columns, isWeb && pageStyles.columnsWeb]}>
         <View style={[pageStyles.columnMain, isWeb && pageStyles.columnScroll]}>

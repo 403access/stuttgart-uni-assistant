@@ -7,6 +7,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { studyCourseKey, useCoursesForStudies, type StudyCourse } from '@/src/campus/use-courses';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { useResponsive } from '@/src/hooks/use-responsive';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle, themedStyles } from '@/src/theme';
 import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@/src/text';
@@ -58,7 +59,7 @@ export default function KalenderScreen() {
   const [sort, setSort] = useState<CalSort>('time');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
-  const isWeb = Platform.OS === 'web';
+  const { isDesktop } = useResponsive();
   const isCampus = sessionMode === 'campus' && campusStudies.length > 0;
   // Device store first, server snapshot second — a plain view-read: nothing is
   // written back; the refetch on revisit comes from the queries. The course
@@ -109,7 +110,9 @@ export default function KalenderScreen() {
   }
 
   function handleCoursePress(course: StudyCourse): void {
-    if (isWeb) setSelectedKey(studyCourseKey(course.studyId, course.id));
+    // Desktop keeps the calendar visible and opens the course beside it. A
+    // narrow browser window behaves like the phone and pushes the detail page.
+    if (isDesktop) setSelectedKey(studyCourseKey(course.studyId, course.id));
     else router.push({ pathname: '/kurs/[id]', params: { id: String(course.id) } });
   }
 
@@ -119,7 +122,7 @@ export default function KalenderScreen() {
   }
 
   return (
-    <Screen topInset>
+    <Screen topInset wide title={isDesktop ? tx(locale, 'tabsLayout.kalender') : undefined}>
       {!isCampus ? (
         <Card>
           <Muted>
@@ -194,9 +197,9 @@ export default function KalenderScreen() {
             sort={sort}
             setSort={setSort}
           />
-          {isWeb && selected ? (
-            <View style={{ flexDirection: 'row', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <View style={{ flex: 2, minWidth: 280, gap: 14 }}>
+          {isDesktop ? (
+            <View style={styles.detailColumns}>
+              <View style={styles.detailMain}>
                 <CalViews
                   view={view}
                   byDay={byDay}
@@ -207,13 +210,22 @@ export default function KalenderScreen() {
                   onCoursePress={handleCoursePress}
                 />
               </View>
-              <View style={{ flex: 1, minWidth: 280 }}>
-                <CourseDetailPanel
-                  key={selectedKey ?? selected.id}
-                  course={selected}
-                  locale={locale}
-                  onClose={() => setSelectedKey(null)}
-                />
+              <View style={styles.detailSide}>
+                {selected ? (
+                  <CourseDetailPanel
+                    key={selectedKey ?? selected.id}
+                    course={selected}
+                    locale={locale}
+                    onClose={() => setSelectedKey(null)}
+                  />
+                ) : (
+                  <>
+                    <Section title={tx(locale, 'tabsKalender.detail_titel')} />
+                    <Card>
+                      <Muted>{tx(locale, 'tabsKalender.detail_hinweis')}</Muted>
+                    </Card>
+                  </>
+                )}
               </View>
             </View>
           ) : (
@@ -390,7 +402,9 @@ function CalViews({
 function CourseRow({ course, locale, onPress }: { course: StudyCourse; locale: 'de' | 'en'; onPress: (course: StudyCourse) => void }) {
   const palette = paletteFor(course.courseType || '?');
   return (
-    <Pressable onPress={() => onPress(course)}>
+    <Pressable
+      onPress={() => onPress(course)}
+      style={(state: { pressed: boolean; hovered?: boolean }) => [state.hovered && styles.rowHover, state.pressed && styles.pressed]}>
       <View style={[{ ...rowCard }, { borderLeftColor: palette.bar }]}>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={{ ...rowTitle }} numberOfLines={2}>
@@ -676,6 +690,10 @@ const toolbarStyles = themedStyles((colors) => ({
 
 const styles = themedStyles((colors) => ({
   pressed: { opacity: 0.72 },
+  rowHover: { opacity: 0.86 },
+  detailColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 20 },
+  detailMain: { flex: 1, minWidth: 0, gap: 14 },
+  detailSide: { width: 340, flexShrink: 0, gap: 10 },
   controlBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   searchInput: { flex: 1, paddingVertical: 10 },
