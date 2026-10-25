@@ -101,18 +101,21 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 | --- | --- |
 | `apps/mobile/app/` | Expo Router screens |
 | `apps/site/` | Static website for the app (plain HTML, CSS, JS; `bun run site`) |
-| `apps/mobile/src/data/` | Demonstration curriculum, places, people, deadlines, documents |
-| `apps/mobile/src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
+| `packages/core/src/data/` | Demonstration curriculum, places, people, deadlines, documents |
+| `packages/core/src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
 | `apps/mobile/src/components/catalog.generated.ts` | Generated component inventory for **Dev → Komponenten**, the admin dashboard's **Komponenten** view, and [the docs page](docs/engineering/component-catalog.md); regenerate with `bun run catalog:components` |
-| `apps/mobile/src/assistant/` | Local answers, fact sheet, optional Grok call |
-| `apps/mobile/src/state/AppState.tsx` | TanStack Store: session, language, curriculum selection, notes, and chat, stored on the device |
+| `packages/core/src/assistant/` | Local answers, fact sheet, optional Grok call |
+| `packages/core/src/state/` | TanStack Store shape, persisted state, and pure actions |
+| `apps/mobile/src/state/AppState.tsx` | Provider that binds the store to the app and Async Storage |
 | `apps/mobile/src/onboarding/` | First-run completion and the biometric app-lock preference |
 | `apps/mobile/src/auth/biometrics.ts` | Device biometric availability and the system prompt |
 | `apps/mobile/src/auth/session.ts` | The server user session: token storage and the `/v1/auth/*` calls |
 | `apps/server/auth.mjs` | Server-side users, bearer sessions, and platform links |
 | `apps/mobile/app/api.tsx` | API overview. Replays known server routes |
+| `apps/admin/` | React + Vite operator dashboard; built to `apps/admin/dist` and served at `/admin` |
 | `apps/server/index.mjs` | Assistant server entry point. Loads `.env`, owns the listener, and dispatches to `apps/server/routes/` |
 | `apps/server/routes/` | Route modules for admin, health, auth, mail, C@MPUS, OIDC, and the Grok rewrite |
+| `packages/` | Shared workspace packages: `core`, `contracts`, `format`, `design-tokens`, `api-client`, `ui`, `ui-react`, `server-kit`, `quiz-content`, and `features/*` |
 | `tools/quiz-from-pdf.ts` | Builds quiz topics from PDF handouts; see [docs/engineering/quiz.md](docs/engineering/quiz.md) |
 | `tools/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
 | `tools/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
@@ -122,7 +125,7 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 
 Start with [docs/README.md](docs/README.md). The original product description is [docs/00-product-description.md](docs/00-product-description.md). The lifecycle, from initiation through maintenance, is under [docs/sdlc/](docs/sdlc/00-overview.md). Funding options, eligibility and an application plan are under [docs/funding/](docs/funding/README.md).
 
-The accepted target architecture — a modular monorepo with shared packages for the app, admin dashboard, distribution service, site, and server — is documented under [docs/engineering/modularization/](docs/engineering/modularization/README.md). The workspace skeleton is in place; shared package extraction is the next phase.
+The accepted target architecture — a modular monorepo with shared packages for the app, admin dashboard, distribution service, site, and server — is documented under [docs/engineering/modularization/](docs/engineering/modularization/README.md). The migration is implemented; the React admin is the default build when `apps/admin/dist` exists.
 
 ## Palette
 
