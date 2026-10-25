@@ -19,8 +19,8 @@
  * Sources, both read-only:
  *   - `defaults export com.apple.dt.Xcode -`, which holds
  *     `DVTDeveloperAccountManagerAppleIDLists` (the signed-in Apple IDs) and
- *     `IDEProvisioningTeams` (each account's teams). Neither can be converted to
- *     JSON wholesale, so each key is extracted with `plutil -extract`.
+ *     `IDEProvisioningTeams` (each account's teams). The key's XML subtree is
+ *     extracted without shelling out, so the parser also runs in tests.
  *   - `ios/**\/project.pbxproj`, for the team this project asks for.
  *
  * It cannot read credential state: the Xcode token lives in a keychain item this
@@ -28,6 +28,7 @@
  * account with no stored identifier.
  */
 
+import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
 import { invokedDirectly } from './ios/cli.mjs';
@@ -40,6 +41,42 @@ export const PREFERENCE_KEYS = {
   teamByIdentifier: 'IDEProvisioningTeamByIdentifier',
   lastSelected: 'IDEProvisioningTeamManagerLastSelectedTeamID',
 };
+
+/** One key's XML subtree from a plist, without invoking plutil. */
+export function extractPreferenceXml(xml, key) {
+  const source = String(xml ?? '');
+  const marker = `<key>${key}</key>`;
+  const at = source.indexOf(marker);
+  if (at < 0) return '';
+  let cursor = at + marker.length;
+  while (cursor < source.length && /\s/.test(source[cursor])) cursor += 1;
+  if (source.startsWith('<true/>', cursor)) return '<plist><true/></plist>';
+  if (source.startsWith('<false/>', cursor)) return '<plist><false/></plist>';
+  for (const tag of ['dict', 'array', 'string', 'integer', 'real', 'date', 'data']) {
+    const open = `<${tag}`;
+    if (!source.startsWith(open, cursor)) continue;
+    const openEnd = source.indexOf('>', cursor);
+    if (openEnd < 0) return '';
+    if (source[openEnd - 1] === '/') return `<plist>${source.slice(cursor, openEnd + 1)}</plist>`;
+    const close = `</${tag}>`;
+    let depth = 1;
+    let index = openEnd + 1;
+    while (depth > 0) {
+      const nextOpen = source.indexOf(`<${tag}`, index);
+      const nextClose = source.indexOf(close, index);
+      if (nextClose < 0) return '';
+      if (nextOpen >= 0 && nextOpen < nextClose) {
+        depth += 1;
+        index = nextOpen + tag.length + 1;
+      } else {
+        depth -= 1;
+        index = nextClose + close.length;
+      }
+    }
+    return `<plist>${source.slice(cursor, index)}</plist>`;
+  }
+  return '';
+}
 
 /** The Apple IDs signed in to Xcode, in Xcode's own order. */
 export function parseAccounts(xml) {
@@ -167,19 +204,17 @@ export function diagnose({ accounts = [], identifiers = [], teams = [], cachedTe
 function readPreference(key) {
   const fixture = process.env.XCODE_PREFS_XML_FILE;
   if (fixture) {
-    const result = spawnSync('plutil', ['-extract', key, 'xml1', '-o', '-', fixture], { encoding: 'utf8' });
-    return result.status === 0 ? result.stdout : '';
+    try {
+      return extractPreferenceXml(readFileSync(fixture, 'utf8'), key);
+    } catch {
+      return '';
+    }
   }
   const exported = spawnSync('defaults', ['export', 'com.apple.dt.Xcode', '-'], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   });
-  if (exported.status !== 0) return '';
-  const extracted = spawnSync('plutil', ['-extract', key, 'xml1', '-o', '-', '-'], {
-    input: exported.stdout,
-    encoding: 'utf8',
-  });
-  return extracted.status === 0 ? extracted.stdout : '';
+  return exported.status === 0 ? extractPreferenceXml(exported.stdout, key) : '';
 }
 
 function pad(value, width) {
