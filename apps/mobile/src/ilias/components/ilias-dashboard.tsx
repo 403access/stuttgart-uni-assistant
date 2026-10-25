@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Linking, Pressable, Text, View } from 'react-native';
 
-import { ResponsiveGrid } from '@/src/components/responsive-grid';
+import { ResponsiveGrid } from '@ua/ui';
 import { Card, Pill, Section } from '@/src/components/ui';
 import { hay, tx } from '@/src/text';
 import { themedStyles } from '@/src/theme';

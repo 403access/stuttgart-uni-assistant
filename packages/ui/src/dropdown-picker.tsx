@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from './theme';
 
 import type { DropdownOption } from './option-rows';
 import { ControlIcon } from './control-icon';

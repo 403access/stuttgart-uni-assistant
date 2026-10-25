@@ -16,6 +16,7 @@ import ts from 'typescript';
 const ROOT = process.cwd();
 const APP_DIR = path.join(ROOT, 'apps', 'mobile', 'app');
 const SRC_DIR = path.join(ROOT, 'apps', 'mobile', 'src');
+const UI_DIR = path.join(ROOT, 'packages', 'ui', 'src');
 const TS_OUT = path.join(SRC_DIR, 'components', 'catalog.generated.ts');
 const MD_OUT = path.join(ROOT, 'docs', 'engineering', 'component-catalog.md');
 const DASHBOARD_OUT = path.join(ROOT, 'apps', 'admin', 'public', 'assets', 'component-catalog.mjs');
@@ -52,7 +53,7 @@ function walk(dir) {
 }
 
 function baseFromRel(rel) {
-  return rel.replace(/\.(web|native)\.tsx$/, '').replace(/\.tsx$/, '');
+  return rel.replace(/\.(web|native)\.(tsx|ts)$/, '').replace(/\.(tsx|ts)$/, '');
 }
 
 function lineOf(node) {
@@ -158,6 +159,18 @@ function collectExports(file) {
 }
 
 function resolveModule(fromRel, specifier) {
+  if (specifier === '@ua/ui') {
+    const rel = 'packages/ui/src/index.ts';
+    return { base: baseFromRel(rel), file: rel };
+  }
+  if (specifier.startsWith('@ua/ui/')) {
+    const name = specifier.slice('@ua/ui/'.length);
+    for (const ext of ['.tsx', '.ts']) {
+      const rel = `packages/ui/src/${name}${ext}`;
+      if (fs.existsSync(path.join(ROOT, rel))) return { base: baseFromRel(rel), file: rel };
+    }
+    return null;
+  }
   if (!specifier.startsWith('@/') && !specifier.startsWith('.')) return null;
   const absolute = specifier.startsWith('@/')
     ? path.join(ROOT, 'apps', 'mobile', specifier.slice(2))
@@ -210,7 +223,7 @@ function collectPreviewNames() {
 }
 
 function categoryFor(base) {
-  if (base.startsWith('apps/mobile/src/components/')) return 'shared';
+  if (base.startsWith('apps/mobile/src/components/') || base.startsWith('packages/ui/src/')) return 'shared';
   if (/^apps\/mobile\/src\/[^/]+\/components\//.test(base)) return 'feature';
   if (/provider|state|client|progress|refresh|auto-connect|headless/i.test(base)) return 'provider';
   return 'feature';
@@ -288,7 +301,7 @@ function finalizeEntry(entry) {
 // Parse every TSX file once.
 // ---------------------------------------------------------------------------
 
-const allFiles = [...walk(APP_DIR), ...walk(SRC_DIR)]
+const allFiles = [...walk(APP_DIR), ...walk(SRC_DIR), ...walk(UI_DIR), 'packages/ui/src/index.ts']
   .map(toRel)
   .filter((rel) => !IGNORED_USAGE_FILES.has(rel))
   .sort();
@@ -313,7 +326,7 @@ const previewNames = collectPreviewNames();
 
 const groups = new Map();
 for (const file of parsed.values()) {
-  if (!file.rel.startsWith('apps/mobile/src/')) continue;
+  if (!file.rel.startsWith('apps/mobile/src/') && !file.rel.startsWith('packages/ui/src/')) continue;
   const exports = collectExports(file);
   // A barrel such as src/state/AppState.tsx only re-exports. The component
   // belongs to the file that declares it, so the barrel is not an entry.

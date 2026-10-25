@@ -6,13 +6,11 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { useLeaveSession } from '@/src/auth/use-leave-session';
 import { useActiveStudy } from '@/src/campus/use-active-study';
-import { PaneModeProvider } from '@/src/components/pane-mode';
-import { ResponsiveGrid } from '@/src/components/responsive-grid';
+import { PaneModeProvider , ResponsiveGrid , useResponsive } from '@ua/ui';
 import { Button, Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
 import { SETTINGS_PANELS } from '@/src/settings/settings-panels';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@/src/data';
-import { useResponsive } from '@/src/hooks/use-responsive';
 import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';

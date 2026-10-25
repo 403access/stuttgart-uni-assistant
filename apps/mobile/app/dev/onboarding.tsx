@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 
-import { JsonTree } from '@/src/components/json-tree';
+import { JsonTree } from '@ua/ui';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';

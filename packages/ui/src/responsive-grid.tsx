@@ -2,7 +2,7 @@ import { Children, type ReactNode } from 'react';
 import { View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { useResponsive } from './use-responsive';
 
 /**
  * Stacks cards on the phone and flows them into equal-width columns on the

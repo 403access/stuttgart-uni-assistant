@@ -1,4 +1,4 @@
-import type { DropdownOption } from '@/src/components/option-rows';
+import type { DropdownOption } from '@ua/ui';
 
 /** Filter options carry the chosen sender; the choices themselves are inferred from the loaded rows. */
 export type InboxFilter = { kind: 'all' } | { kind: 'unread' } | { kind: 'sender'; sender: string };

@@ -5,10 +5,9 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, Text, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
-import { DrawerPanel } from '@/src/components/drawer-panel';
-import { OptionRows, type DropdownOption } from '@/src/components/option-rows';
+import { DrawerPanel , useResponsive } from '@ua/ui';
+import { OptionRows, type DropdownOption } from '@ua/ui';
 import { Button, Card, Screen } from '@/src/components/ui';
-import { useResponsive } from '@/src/hooks/use-responsive';
 import { IliasDashboardView, iliasFilterLabel, type IliasFilter } from '@/src/ilias/components/ilias-dashboard';
 import { IliasToolbar } from '@/src/ilias/components/ilias-toolbar';
 import { useIlias } from '@/src/ilias/use-ilias';

@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { ResponsiveGrid } from '@/src/components/responsive-grid';
+import { ResponsiveGrid } from '@ua/ui';
 import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents, modules, reviews as seedReviews } from '@/src/data';
 import { PROFILE_FIELDS, publicProfileFieldCount } from '@/src/profile/privacy';

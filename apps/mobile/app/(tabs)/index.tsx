@@ -5,7 +5,7 @@ import { CalendarHero } from '@/src/components/calendar-hero';
 import { Card, InfoRow, Meter, Screen, Section } from '@/src/components/ui';
 import { deadlines, modules, places, program } from '@/src/data';
 import { scheduleForDay, totals, weightedAverage } from '@/src/domain/plan';
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { useResponsive } from '@ua/ui';
 import { newsSource, sessionKind } from '@/src/labels';
 import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';

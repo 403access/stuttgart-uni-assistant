@@ -4,8 +4,7 @@ import type { RefreshControlProps, StyleProp, TextInputProps, TextStyle } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/src/components/ambient-background';
-import { usePaneMode } from '@/src/components/pane-mode';
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { usePaneMode , useResponsive } from '@ua/ui';
 import { colors, themedStyles } from '@/src/theme';
 
 /** Pressable state as reported by react-native-web (native only sends `pressed`). */

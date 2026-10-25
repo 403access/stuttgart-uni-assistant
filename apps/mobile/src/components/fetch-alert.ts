@@ -1,4 +1,4 @@
-import { showToast } from '@/src/components/toast';
+import { showToast } from '@ua/ui';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 

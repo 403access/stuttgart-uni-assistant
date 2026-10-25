@@ -6,16 +6,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { Screen } from '@/src/components/ui';
-import { DrawerPanel } from '@/src/components/drawer-panel';
+import { DrawerPanel , OptionRows , useResponsive } from '@ua/ui';
 import { MailConnectionPanel } from '@/src/mail/components/mail-connection-panel';
 import { MailMessageList } from '@/src/mail/components/mail-message-list';
 import { MailReader } from '@/src/mail/components/mail-reader';
 import { MailReveal } from '@/src/mail/components/mail-skeletons';
 import { MailToolbar } from '@/src/mail/components/mail-toolbar';
-import { OptionRows } from '@/src/components/option-rows';
 import { useMailInbox } from '@/src/mail/use-mail-inbox';
 import { useMailList } from '@/src/mail/use-mail-list';
-import { useResponsive } from '@/src/hooks/use-responsive';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';

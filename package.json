@@ -55,7 +55,7 @@
     "ios:accounts": "node tools/xcode-accounts.mjs",
     "tokens": "node tools/generate-tokens.mjs",
     "check:tokens": "node tools/generate-tokens.mjs --check",
-    "check:packages": "tsc -p packages/format/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/design-tokens/tsconfig.json --noEmit && tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/api-client/tsconfig.json --noEmit && node --test packages/format/test/*.test.mjs packages/contracts/test/*.test.mjs packages/server-kit/test/*.test.mjs packages/api-client/test/*.test.mjs"
+    "check:packages": "tsc -p packages/format/tsconfig.json --noEmit && tsc -p packages/contracts/tsconfig.json --noEmit && tsc -p packages/design-tokens/tsconfig.json --noEmit && tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/api-client/tsconfig.json --noEmit && tsc -p packages/ui/tsconfig.json --noEmit && node --test packages/format/test/*.test.mjs packages/contracts/test/*.test.mjs packages/server-kit/test/*.test.mjs packages/api-client/test/*.test.mjs"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

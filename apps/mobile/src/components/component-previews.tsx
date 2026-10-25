@@ -20,11 +20,8 @@ import { colors } from '@/src/theme';
 import type { Locale, MailAttachment, MailMessage } from '@/src/types';
 
 import { ChoiceCard } from './choice-card';
-import { ControlIcon, ToolButton } from './control-icon';
+import { ControlIcon, ToolButton , DrawerPanel , DropdownPicker , JsonTree , ResponsiveGrid , showToast } from '@ua/ui';
 import { DeviceQr } from './device-qr';
-import { DrawerPanel } from './drawer-panel';
-import { DropdownPicker } from './dropdown-picker';
-import { JsonTree } from './json-tree';
 import {
   Checkbox,
   Chip,
@@ -37,11 +34,9 @@ import {
   SectionTitle,
 } from './login-blocks';
 import { MailBody } from './mailBody';
-import { OptionRows, type DropdownOption } from './option-rows';
-import { ResponsiveGrid } from './responsive-grid';
+import { OptionRows, type DropdownOption } from '@ua/ui';
 import { SigningIn } from './signing-in';
 import { StructureRow, TreeChildren } from './structure-row';
-import { showToast } from './toast';
 
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
 import { AttachmentList } from '@/src/mail/components/attachment-list';

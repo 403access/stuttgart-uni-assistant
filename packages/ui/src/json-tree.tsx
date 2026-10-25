@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { colors } from '@/src/theme';
+import { colors } from './theme';
 
 const mono = { fontSize: 12, lineHeight: 18, fontFamily: 'Menlo' } as const;
 const indent = 14;

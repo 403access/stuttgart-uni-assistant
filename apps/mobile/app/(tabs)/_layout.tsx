@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { useResponsive } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@/src/theme';
 import { tx } from '@/src/text';

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from './theme';
 
 import { ControlIcon } from './control-icon';
 

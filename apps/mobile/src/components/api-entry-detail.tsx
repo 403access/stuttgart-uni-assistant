@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { loadCampusCourses, loadCampusCurriculum, loadCampusStudies } from '@/src/auth/campus';
 import type { CampusLogEntry } from '@/src/auth/campus-log';
-import { JsonTree } from '@/src/components/json-tree';
+import { JsonTree } from '@ua/ui';
 import { Button, Card, Muted, Pill, Section } from '@/src/components/ui';
 import { colors, themedStyles } from '@/src/theme';
 import { breakable, tx } from '@/src/text';

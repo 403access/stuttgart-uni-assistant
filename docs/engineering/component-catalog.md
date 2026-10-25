@@ -21,7 +21,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | Components | 77 |
 | Exports | 113 |
 | Usage references | 816 |
-| Files with occurrences | 102 |
+| Files with occurrences | 103 |
 | Unused components | 0 |
 | Imported but never used | 0 |
 | Components with platform files | 4 |
@@ -36,21 +36,21 @@ Every component under `src/` with its exports, platform files, and every place i
 | --- | --- | --- | --- | --- | ---: | ---: |
 | `ui` | `apps/mobile/src/components/ui.tsx` | Native + Web | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, SearchField, Section, Strong | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, Screen, SearchField, Section, Strong, listPosition | 610 | 83 |
 | `login-blocks` | `apps/mobile/src/components/login-blocks.tsx` | Native + Web | Checkbox, Chip, ErrorText, Field, Footer, LanguagePicker, Meta, Notice, SectionTitle | Checkbox, Chip, ErrorText, Field, Footer, LanguagePicker, Meta, Notice, SectionTitle | 25 | 6 |
-| `control-icon` | `apps/mobile/src/components/control-icon.tsx` | Native + Web | ControlIcon, ToolButton | ControlIcon, ToolButton | 14 | 8 |
+| `control-icon` | `packages/ui/src/control-icon.tsx` | Native + Web | ControlIcon, ToolButton | ControlIcon, ToolButton | 14 | 9 |
 | `ChoiceCard` | `apps/mobile/src/components/choice-card.tsx` | Native + Web | ChoiceCard | ChoiceCard | 10 | 3 |
-| `ResponsiveGrid` | `apps/mobile/src/components/responsive-grid.tsx` | Native + Web | ResponsiveGrid | ResponsiveGrid | 10 | 8 |
-| `OptionRows` | `apps/mobile/src/components/option-rows.tsx` | Native + Web | OptionRows | OptionRows | 9 | 4 |
-| `toast` | `apps/mobile/src/components/toast.tsx` | Native + Web | showToast | ToastHost, showToast | 6 | 6 |
+| `ResponsiveGrid` | `packages/ui/src/responsive-grid.tsx` | Native + Web | ResponsiveGrid | ResponsiveGrid | 10 | 9 |
+| `OptionRows` | `packages/ui/src/option-rows.tsx` | Native + Web | OptionRows | OptionRows | 9 | 5 |
+| `toast` | `packages/ui/src/toast.tsx` | Native + Web | showToast | ToastHost, showToast | 6 | 7 |
 | `AmbientBackground` | `apps/mobile/src/components/ambient-background.tsx` | Native + Web | – | AmbientBackground | 5 | 5 |
-| `DrawerPanel` | `apps/mobile/src/components/drawer-panel.tsx` | Native + Web | DrawerPanel | DrawerPanel | 5 | 3 |
-| `JsonTree` | `apps/mobile/src/components/json-tree.tsx` | Native + Web | JsonTree | JsonTree | 5 | 4 |
+| `DrawerPanel` | `packages/ui/src/drawer-panel.tsx` | Native + Web | DrawerPanel | DrawerPanel | 5 | 4 |
+| `JsonTree` | `packages/ui/src/json-tree.tsx` | Native + Web | JsonTree | JsonTree | 5 | 5 |
 | `SigningIn` | `apps/mobile/src/components/signing-in.tsx` | Native + Web | SigningIn | SigningIn | 5 | 4 |
 | `StudySelector` | `apps/mobile/src/components/study-selector.tsx` | Native + Web | – | StudySelector | 3 | 3 |
 | `CampusBrowserModal` | `apps/mobile/src/components/campus-browser-modal.tsx` | Native + Web | – | CampusBrowserModal | 2 | 2 |
 | `CampusHeadlessModal` | `apps/mobile/src/components/campus-headless-modal.tsx` | Native + Web | – | CampusHeadlessModal | 2 | 2 |
 | `CampusInfoView` | `apps/mobile/src/components/campus-info-view.tsx` | Native + Web | – | CampusInfoView | 2 | 2 |
 | `CurriculumTree` | `apps/mobile/src/components/curriculum-tree.tsx` | Native + Web | – | CurriculumTree | 2 | 2 |
-| `pane-mode` | `apps/mobile/src/components/pane-mode.tsx` | Native + Web | – | PaneModeProvider, usePaneMode | 2 | 2 |
+| `pane-mode` | `packages/ui/src/pane-mode.tsx` | Native + Web | – | PaneModeProvider, usePaneMode | 2 | 3 |
 | `structure-row` | `apps/mobile/src/components/structure-row.tsx` | Native + Web | StructureRow, TreeChildren | StructureRow, TreeChildren | 2 | 1 |
 | `ApiEntryDetail` | `apps/mobile/src/components/api-entry-detail.tsx` | Native + Web | – | ApiEntryDetail | 1 | 1 |
 | `ApiHistory` | `apps/mobile/src/components/api-history.tsx` | Native + Web | – | ApiHistory | 1 | 1 |
@@ -60,7 +60,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | `CurriculumNodeDetail` | `apps/mobile/src/components/curriculum-node-detail.tsx` | Native + Web | – | CurriculumNodeDetail | 1 | 1 |
 | `CurriculumToolbar` | `apps/mobile/src/components/curriculum-toolbar.tsx` | Native + Web | – | CurriculumToolbar | 1 | 1 |
 | `DeviceQr` | `apps/mobile/src/components/device-qr.tsx` | Native + Web (split) | DeviceQr | DeviceQr | 1 | 1 |
-| `DropdownPicker` | `apps/mobile/src/components/dropdown-picker.tsx` | Native + Web | DropdownPicker | DropdownPicker | 1 | 1 |
+| `DropdownPicker` | `packages/ui/src/dropdown-picker.tsx` | Native + Web | DropdownPicker | DropdownPicker | 1 | 2 |
 | `LecturersList` | `apps/mobile/src/components/lecturers-list.tsx` | Native + Web | LecturersList | LecturersList | 1 | 1 |
 | `mailBody` | `apps/mobile/src/components/mailBody.tsx` | Native + Web | MailBody | MailBody, segmentQuotedText | 1 | 1 |
 | `StudyCacheCard` | `apps/mobile/src/components/study-cache-card.tsx` | Native + Web | – | StudyCacheCard | 1 | 1 |
@@ -78,12 +78,12 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `Button`, `Card`, `FieldLabel`, `InfoRow`, `Mark`, `Meter`, `Muted`, `Pill`, `SearchField`, `Section`, `Strong`
 - Usages: 610 references in 83 files
 
-- `apps/mobile/app/(tabs)/ilias.tsx`: 10 import `Button`; 10 import `Card`; 10 import `Screen`; 165 render `Screen`; 172 render `Screen`; 202 render `Screen`; 223 render `Card`; 226 render `Button`; 227 render `Button`
+- `apps/mobile/app/(tabs)/ilias.tsx`: 10 import `Button`; 10 import `Card`; 10 import `Screen`; 164 render `Screen`; 171 render `Screen`; 201 render `Screen`; 222 render `Card`; 225 render `Button`; 226 render `Button`
 - `apps/mobile/app/(tabs)/index.tsx`: 5 import `Card`; 5 import `InfoRow`; 5 import `Meter`; 5 import `Screen`; 5 import `Section`; 29 render `Card`; 35 render `Meter`; 41 render `Card`; 54 render `Section`; 57 render `InfoRow`; 66 render `Card`; 71 render `Section`; 73 render `InfoRow`; 82 render `Section`; 84 render `InfoRow`; 96 render `Screen`
 - `apps/mobile/app/(tabs)/kalender.tsx`: 9 import `Button`; 9 import `Card`; 9 import `Muted`; 9 import `Pill`; 9 import `Screen`; 9 import `Section`; 125 render `Screen`; 127 render `Card`; 128 render `Muted`; 133 render `Card`; 134 render `Muted`; 137 render `Button`; 223 render `Section`; 224 render `Card`; 225 render `Muted`; 286 render `Pill`; 290 render `Pill`; 297 render `Pill`; 300 render `Pill`; 316 render `Pill`; 320 render `Pill`; 335 render `Pill`; 339 render `Pill`; 355 render `Pill`; 434 render `Muted`; 500 render `Muted`; 509 render `Pill`; 512 render `Pill`; 515 render `Pill`; 540 render `Muted`; 624 render `Pill`; 627 render `Pill`; 630 render `Pill`; 837 render `Section`; 842 render `Card`; 859 render `Button`; 861 render `Button`
-- `apps/mobile/app/(tabs)/mail.tsx`: 8 import `Screen`; 167 render `Screen`
-- `apps/mobile/app/(tabs)/mehr.tsx`: 11 import `Button`; 11 import `Card`; 11 import `InfoRow`; 11 import `listPosition`; 11 import `Screen`; 11 import `Section`; 225 render `InfoRow`; 230 call `listPosition`; 239 render `Section`; 246 render `Screen`; 282 render `Card`; 313 render `Card`; 385 render `Card`; 389 render `Button`; 395 render `Button`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 9 import `Card`; 9 import `Meter`; 9 import `Screen`; 9 import `Section`; 124 render `Screen`; 125 render `Card`; 287 render `Card`; 301 render `Meter`; 330 render `Section`; 353 render `Card`; 363 render `Section`; 364 render `Card`; 388 render `Screen`; 449 render `Screen`; 559 render `Meter`
+- `apps/mobile/app/(tabs)/mail.tsx`: 8 import `Screen`; 165 render `Screen`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 10 import `Button`; 10 import `Card`; 10 import `InfoRow`; 10 import `listPosition`; 10 import `Screen`; 10 import `Section`; 223 render `InfoRow`; 228 call `listPosition`; 237 render `Section`; 244 render `Screen`; 280 render `Card`; 311 render `Card`; 383 render `Card`; 387 render `Button`; 393 render `Button`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 9 import `Card`; 9 import `Meter`; 9 import `Screen`; 9 import `Section`; 123 render `Screen`; 124 render `Card`; 286 render `Card`; 300 render `Meter`; 329 render `Section`; 352 render `Card`; 362 render `Section`; 363 render `Card`; 387 render `Screen`; 448 render `Screen`; 558 render `Meter`
 - `apps/mobile/app/altklausuren.tsx`: 3 import `InfoRow`; 3 import `Screen`; 11 render `Screen`; 19 render `InfoRow`
 - `apps/mobile/app/anforderungen.tsx`: 3 import `Card`; 3 import `Meter`; 3 import `Screen`; 18 render `Screen`; 23 render `Card`; 39 render `Card`; 45 render `Meter`
 - `apps/mobile/app/anrechnung.tsx`: 5 import `Button`; 5 import `Card`; 5 import `InfoRow`; 5 import `Pill`; 5 import `Screen`; 60 render `Screen`; 67 render `Pill`; 70 render `Pill`; 84 render `Pill`; 89 render `Card`; 101 render `Card`; 108 render `Button`; 110 render `InfoRow`
@@ -109,7 +109,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/kommilitonen.tsx`: 6 import `Card`; 6 import `InfoRow`; 6 import `Screen`; 6 import `Section`; 25 render `Screen`; 27 render `Section`; 28 render `Card`; 43 render `Section`; 48 render `Card`; 58 render `Section`; 61 render `InfoRow`
 - `apps/mobile/app/konto.tsx`: 10 import `Button`; 10 import `Card`; 10 import `InfoRow`; 10 import `listPosition`; 10 import `Pill`; 10 import `Screen`; 10 import `Section`; 89 render `Screen`; 92 render `Card`; 104 render `Pill`; 111 render `Section`; 118 render `InfoRow`; 123 call `listPosition`; 129 render `Section`; 131 render `InfoRow`; 138 render `Card`; 148 render `Button`; 149 render `Button`
 - `apps/mobile/app/kurs/[id].tsx`: 8 import `Button`; 8 import `Card`; 8 import `InfoRow`; 8 import `Muted`; 8 import `Screen`; 32 render `Screen`; 34 render `Muted`; 47 render `Screen`; 49 render `Card`; 60 render `InfoRow`; 66 render `InfoRow`; 78 render `InfoRow`; 84 render `InfoRow`; 87 render `Button`
-- `apps/mobile/app/kurse.tsx`: 11 import `Button`; 11 import `Card`; 11 import `InfoRow`; 11 import `Muted`; 11 import `Pill`; 11 import `Screen`; 11 import `Section`; 167 render `Screen`; 177 render `Card`; 178 render `Muted`; 184 render `Card`; 193 render `Muted`; 197 render `Button`; 199 render `Button`; 234 render `Button`; 236 render `Button`; 242 render `Button`; 257 render `Pill`; 261 render `Pill`; 268 render `Pill`; 275 render `Section`; 278 render `InfoRow`
+- `apps/mobile/app/kurse.tsx`: 11 import `Button`; 11 import `Card`; 11 import `InfoRow`; 11 import `Muted`; 11 import `Pill`; 11 import `Screen`; 11 import `Section`; 166 render `Screen`; 176 render `Card`; 177 render `Muted`; 183 render `Card`; 192 render `Muted`; 196 render `Button`; 198 render `Button`; 233 render `Button`; 235 render `Button`; 241 render `Button`; 256 render `Pill`; 260 render `Pill`; 267 render `Pill`; 274 render `Section`; 277 render `InfoRow`
 - `apps/mobile/app/login-legacy.tsx`: 26 import `Button`; 26 import `Mark`; 147 render `Mark`; 183 render `Button`; 195 render `Button`; 204 render `Button`; 211 render `Button`; 231 render `Button`; 252 render `Button`
 - `apps/mobile/app/login.tsx`: 11 import `Button`; 11 import `Mark`; 58 render `Mark`; 117 render `Button`; 126 render `Button`; 133 render `Button`
 - `apps/mobile/app/mail-nachricht.tsx`: 3 import `Screen`; 21 render `Screen`
@@ -179,20 +179,21 @@ Every component under `src/` with its exports, platform files, and every place i
 
 ### control-icon
 
-- File: `apps/mobile/src/components/control-icon.tsx`
+- File: `packages/ui/src/control-icon.tsx`
 - Category: Shared UI
 - Exports: `ControlIcon` (component), `ToolButton` (component)
 - Live preview in the app: `ControlIcon`, `ToolButton`
-- Usages: 14 references in 8 files
+- Usages: 14 references in 9 files
 
-- `apps/mobile/src/components/drawer-panel.tsx`: 7 import `ControlIcon`; 23 render `ControlIcon`
-- `apps/mobile/src/components/dropdown-picker.tsx`: 7 import `ControlIcon`; 34 render `ControlIcon`
-- `apps/mobile/src/components/option-rows.tsx`: 6 import `ControlIcon`; 45 render `ControlIcon`
 - `apps/mobile/src/ilias/components/ilias-toolbar.tsx`: 3 import `ControlIcon`; 3 import `ToolButton`; 30 render `ToolButton`; 38 render `ControlIcon`
 - `apps/mobile/src/mail/components/attachment-list.tsx`: 3 import `ControlIcon`; 34 render `ControlIcon`
-- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 9 import `ControlIcon`; 9 import `ToolButton`; 53 render `ToolButton`; 55 render `ToolButton`; 61 render `ControlIcon`; 79 render `ToolButton`
+- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 9 import `ControlIcon`; 9 import `ToolButton`; 52 render `ToolButton`; 54 render `ToolButton`; 60 render `ControlIcon`; 78 render `ToolButton`
 - `apps/mobile/src/mail/components/template-sheet.tsx`: 3 import `ControlIcon`; 46 render `ControlIcon`
 - `apps/mobile/src/quiz/components/quiz-toolbar.tsx`: 3 import `ControlIcon`; 3 import `ToolButton`; 36 render `ToolButton`; 45 render `ControlIcon`; 68 render `ToolButton`
+- `packages/ui/src/drawer-panel.tsx`: 7 import `ControlIcon`; 23 render `ControlIcon`
+- `packages/ui/src/dropdown-picker.tsx`: 7 import `ControlIcon`; 34 render `ControlIcon`
+- `packages/ui/src/index.ts`: 1 re-export `ControlIcon`; 1 re-export `ToolButton`
+- `packages/ui/src/option-rows.tsx`: 6 import `ControlIcon`; 45 render `ControlIcon`
 
 ### ChoiceCard
 
@@ -208,48 +209,51 @@ Every component under `src/` with its exports, platform files, and every place i
 
 ### ResponsiveGrid
 
-- File: `apps/mobile/src/components/responsive-grid.tsx`
+- File: `packages/ui/src/responsive-grid.tsx`
 - Category: Shared UI
 - Exports: `ResponsiveGrid` (component)
 - Live preview in the app: `ResponsiveGrid`
-- Usages: 10 references in 8 files
+- Usages: 10 references in 9 files
 
-- `apps/mobile/app/(tabs)/chat.tsx`: 11 import `ResponsiveGrid`; 111 render `ResponsiveGrid`
-- `apps/mobile/app/(tabs)/mehr.tsx`: 10 import `ResponsiveGrid`; 408 render `ResponsiveGrid`
+- `apps/mobile/app/(tabs)/chat.tsx`: 11 import `ResponsiveGrid`; 110 render `ResponsiveGrid`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `ResponsiveGrid`; 406 render `ResponsiveGrid`
 - `apps/mobile/app/dokumente.tsx`: 5 import `ResponsiveGrid`; 76 render `ResponsiveGrid`; 93 render `ResponsiveGrid`
 - `apps/mobile/app/feed.tsx`: 4 import `ResponsiveGrid`; 30 render `ResponsiveGrid`
 - `apps/mobile/app/fristen.tsx`: 3 import `ResponsiveGrid`; 15 render `ResponsiveGrid`
 - `apps/mobile/app/kommilitonen.tsx`: 5 import `ResponsiveGrid`; 44 render `ResponsiveGrid`; 59 render `ResponsiveGrid`
-- `apps/mobile/app/kurse.tsx`: 10 import `ResponsiveGrid`; 276 render `ResponsiveGrid`
+- `apps/mobile/app/kurse.tsx`: 10 import `ResponsiveGrid`; 275 render `ResponsiveGrid`
 - `apps/mobile/src/ilias/components/ilias-dashboard.tsx`: 4 import `ResponsiveGrid`; 157 render `ResponsiveGrid`
+- `packages/ui/src/index.ts`: 7 re-export `ResponsiveGrid`
 
 ### OptionRows
 
-- File: `apps/mobile/src/components/option-rows.tsx`
+- File: `packages/ui/src/option-rows.tsx`
 - Category: Shared UI
 - Exports: `OptionRows` (component)
 - Live preview in the app: `OptionRows`
-- Usages: 9 references in 4 files
+- Usages: 9 references in 5 files
 
-- `apps/mobile/app/(tabs)/ilias.tsx`: 9 import `OptionRows`; 98 render `OptionRows`
-- `apps/mobile/app/(tabs)/mail.tsx`: 15 import `OptionRows`; 88 render `OptionRows`; 101 render `OptionRows`; 112 render `OptionRows`; 114 render `OptionRows`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 250 render `OptionRows`; 269 render `OptionRows`; 392 render `OptionRows`
-- `apps/mobile/src/components/dropdown-picker.tsx`: 8 import `OptionRows`; 44 render `OptionRows`
+- `apps/mobile/app/(tabs)/ilias.tsx`: 9 import `OptionRows`; 97 render `OptionRows`
+- `apps/mobile/app/(tabs)/mail.tsx`: 9 import `OptionRows`; 86 render `OptionRows`; 99 render `OptionRows`; 110 render `OptionRows`; 112 render `OptionRows`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 249 render `OptionRows`; 268 render `OptionRows`; 391 render `OptionRows`
+- `packages/ui/src/dropdown-picker.tsx`: 8 import `OptionRows`; 44 render `OptionRows`
+- `packages/ui/src/index.ts`: 5 re-export `OptionRows`
 
 ### toast
 
-- File: `apps/mobile/src/components/toast.tsx`
+- File: `packages/ui/src/toast.tsx`
 - Category: Shared UI
 - Exports: `ToastHost` (component), `showToast` (helper)
 - Live preview in the app: `showToast`
-- Usages: 6 references in 6 files
+- Usages: 6 references in 7 files
 
-- `apps/mobile/app/_layout.tsx`: 13 import `ToastHost`; 52 render `ToastHost`
+- `apps/mobile/app/_layout.tsx`: 13 import `ToastHost`; 51 render `ToastHost`
 - `apps/mobile/app/ilias/[refId].tsx`: 7 import `showToast`; 155 call `showToast`
 - `apps/mobile/app/ilias/datei.tsx`: 6 import `showToast`; 54 call `showToast`
-- `apps/mobile/app/kurse.tsx`: 13 import `showToast`; 101 call `showToast`
+- `apps/mobile/app/kurse.tsx`: 10 import `showToast`; 100 call `showToast`
 - `apps/mobile/app/mail-verfassen.tsx`: 7 import `showToast`; 255 call `showToast`
 - `apps/mobile/app/onboarding.tsx`: 12 import `showToast`; 69 call `showToast`
+- `packages/ui/src/index.ts`: 8 re-export `showToast`; 8 re-export `ToastHost`
 
 ### AmbientBackground
 
@@ -258,36 +262,38 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AmbientBackground` (component)
 - Usages: 5 references in 5 files
 
-- `apps/mobile/app/(tabs)/chat.tsx`: 10 import `AmbientBackground`; 88 render `AmbientBackground`
-- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `AmbientBackground`; 106 render `AmbientBackground`
+- `apps/mobile/app/(tabs)/chat.tsx`: 10 import `AmbientBackground`; 87 render `AmbientBackground`
+- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `AmbientBackground`; 104 render `AmbientBackground`
 - `apps/mobile/app/+not-found.tsx`: 4 import `AmbientBackground`; 12 render `AmbientBackground`
 - `apps/mobile/app/onboarding.tsx`: 9 import `AmbientBackground`; 258 render `AmbientBackground`
-- `apps/mobile/src/components/ui.tsx`: 6 import `AmbientBackground`; 126 render `AmbientBackground`
+- `apps/mobile/src/components/ui.tsx`: 6 import `AmbientBackground`; 125 render `AmbientBackground`
 
 ### DrawerPanel
 
-- File: `apps/mobile/src/components/drawer-panel.tsx`
+- File: `packages/ui/src/drawer-panel.tsx`
 - Category: Shared UI
 - Exports: `DrawerPanel` (component)
 - Live preview in the app: `DrawerPanel`
-- Usages: 5 references in 3 files
+- Usages: 5 references in 4 files
 
-- `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `DrawerPanel`; 195 render `DrawerPanel`
-- `apps/mobile/app/(tabs)/mail.tsx`: 9 import `DrawerPanel`; 84 render `DrawerPanel`; 100 render `DrawerPanel`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 422 render `DrawerPanel`; 440 render `DrawerPanel`
+- `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `DrawerPanel`; 194 render `DrawerPanel`
+- `apps/mobile/app/(tabs)/mail.tsx`: 9 import `DrawerPanel`; 82 render `DrawerPanel`; 98 render `DrawerPanel`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 421 render `DrawerPanel`; 439 render `DrawerPanel`
+- `packages/ui/src/index.ts`: 2 re-export `DrawerPanel`
 
 ### JsonTree
 
-- File: `apps/mobile/src/components/json-tree.tsx`
+- File: `packages/ui/src/json-tree.tsx`
 - Category: Shared UI
 - Exports: `JsonTree` (component)
 - Live preview in the app: `JsonTree`
-- Usages: 5 references in 4 files
+- Usages: 5 references in 5 files
 
 - `apps/mobile/app/dev/nfc.tsx`: 5 import `JsonTree`; 119 render `JsonTree`
 - `apps/mobile/app/dev/onboarding.tsx`: 5 import `JsonTree`; 127 render `JsonTree`
 - `apps/mobile/app/dev/state.tsx`: 6 import `JsonTree`; 79 render `JsonTree`
 - `apps/mobile/src/components/api-entry-detail.tsx`: 6 import `JsonTree`; 74 render `JsonTree`; 84 render `JsonTree`
+- `packages/ui/src/index.ts`: 4 re-export `JsonTree`
 
 ### SigningIn
 
@@ -309,8 +315,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `StudySelector` (component)
 - Usages: 3 references in 3 files
 
-- `apps/mobile/app/(tabs)/mehr.tsx`: 13 import `StudySelector`; 281 render `StudySelector`
-- `apps/mobile/app/kurse.tsx`: 14 import `StudySelector`; 175 render `StudySelector`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 12 import `StudySelector`; 279 render `StudySelector`
+- `apps/mobile/app/kurse.tsx`: 13 import `StudySelector`; 174 render `StudySelector`
 - `apps/mobile/src/components/campus-info-view.tsx`: 14 import `StudySelector`; 170 render `StudySelector`
 
 ### CampusBrowserModal
@@ -355,13 +361,14 @@ Every component under `src/` with its exports, platform files, and every place i
 
 ### pane-mode
 
-- File: `apps/mobile/src/components/pane-mode.tsx`
+- File: `packages/ui/src/pane-mode.tsx`
 - Category: Shared UI
 - Exports: `PaneModeProvider` (component), `usePaneMode` (hook)
-- Usages: 2 references in 2 files
+- Usages: 2 references in 3 files
 
-- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `PaneModeProvider`; 379 render `PaneModeProvider`
-- `apps/mobile/src/components/ui.tsx`: 7 import `usePaneMode`; 100 call `usePaneMode`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `PaneModeProvider`; 377 render `PaneModeProvider`
+- `apps/mobile/src/components/ui.tsx`: 7 import `usePaneMode`; 99 call `usePaneMode`
+- `packages/ui/src/index.ts`: 6 re-export `PaneModeProvider`; 6 re-export `usePaneMode`
 
 ### structure-row
 
@@ -398,7 +405,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AppLock` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 12 import `AppLock`; 226 render `AppLock`
+- `apps/mobile/app/_layout.tsx`: 12 import `AppLock`; 225 render `AppLock`
 
 ### CalendarHero
 
@@ -450,13 +457,14 @@ Every component under `src/` with its exports, platform files, and every place i
 
 ### DropdownPicker
 
-- File: `apps/mobile/src/components/dropdown-picker.tsx`
+- File: `packages/ui/src/dropdown-picker.tsx`
 - Category: Shared UI
 - Exports: `DropdownPicker` (component)
 - Live preview in the app: `DropdownPicker`
-- Usages: 1 reference in 1 file
+- Usages: 1 reference in 2 files
 
-- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 10 import `DropdownPicker`; 77 render `DropdownPicker`
+- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 9 import `DropdownPicker`; 76 render `DropdownPicker`
+- `packages/ui/src/index.ts`: 3 re-export `DropdownPicker`
 
 ### LecturersList
 
@@ -523,7 +531,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `WebHead` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 14 import `WebHead`; 199 render `WebHead`
+- `apps/mobile/app/_layout.tsx`: 14 import `WebHead`; 198 render `WebHead`
 
 ### WebSidebar
 
@@ -532,7 +540,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `WebSidebar` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 15 import `WebSidebar`; 202 render `WebSidebar`
+- `apps/mobile/app/_layout.tsx`: 15 import `WebSidebar`; 201 render `WebSidebar`
 
 ## Feature components
 
@@ -592,8 +600,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `MailListSkeleton`, `ToolbarSkeleton`
 - Usages: 4 references in 2 files
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 13 import `MailReveal`; 128 render `MailReveal`; 197 render `MailReveal`
-- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 11 import `ToolbarReveal`; 11 import `ToolbarSkeleton`; 57 render `ToolbarSkeleton`; 59 render `ToolbarReveal`
+- `apps/mobile/app/(tabs)/mail.tsx`: 13 import `MailReveal`; 126 render `MailReveal`; 195 render `MailReveal`
+- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 10 import `ToolbarReveal`; 10 import `ToolbarSkeleton`; 56 render `ToolbarSkeleton`; 58 render `ToolbarReveal`
 
 ### OptionRow
 
@@ -656,7 +664,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `IliasDashboardView` (component), `iliasFilterLabel` (helper)
 - Usages: 2 references in 1 file
 
-- `apps/mobile/app/(tabs)/ilias.tsx`: 12 import `IliasDashboardView`; 12 import `iliasFilterLabel`; 59 call `iliasFilterLabel`; 134 render `IliasDashboardView`
+- `apps/mobile/app/(tabs)/ilias.tsx`: 11 import `IliasDashboardView`; 11 import `iliasFilterLabel`; 58 call `iliasFilterLabel`; 133 render `IliasDashboardView`
 
 ### MailMessageList
 
@@ -665,7 +673,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailMessageList` (component)
 - Usages: 2 references in 1 file
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 11 import `MailMessageList`; 131 render `MailMessageList`; 200 render `MailMessageList`
+- `apps/mobile/app/(tabs)/mail.tsx`: 11 import `MailMessageList`; 129 render `MailMessageList`; 198 render `MailMessageList`
 
 ### MailReader
 
@@ -674,7 +682,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailReader` (component)
 - Usages: 2 references in 2 files
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 12 import `MailReader`; 148 render `MailReader`
+- `apps/mobile/app/(tabs)/mail.tsx`: 12 import `MailReader`; 146 render `MailReader`
 - `apps/mobile/app/mail-nachricht.tsx`: 4 import `MailReader`; 23 render `MailReader`
 
 ### MemberAvatar
@@ -774,7 +782,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `IliasToolbar` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/(tabs)/ilias.tsx`: 13 import `IliasToolbar`; 68 render `IliasToolbar`
+- `apps/mobile/app/(tabs)/ilias.tsx`: 12 import `IliasToolbar`; 67 render `IliasToolbar`
 
 ### MailComposeActions
 
@@ -792,7 +800,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailConnectionPanel` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 10 import `MailConnectionPanel`; 183 render `MailConnectionPanel`
+- `apps/mobile/app/(tabs)/mail.tsx`: 10 import `MailConnectionPanel`; 181 render `MailConnectionPanel`
 
 ### MailRow
 
@@ -811,7 +819,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailToolbar` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 14 import `MailToolbar`; 57 render `MailToolbar`
+- `apps/mobile/app/(tabs)/mail.tsx`: 14 import `MailToolbar`; 55 render `MailToolbar`
 
 ### MapView
 
@@ -876,7 +884,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `QuizToolbar`
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/(tabs)/quiz.tsx`: 21 import `QuizToolbar`; 236 render `QuizToolbar`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 20 import `QuizToolbar`; 235 render `QuizToolbar`
 
 ### SingleChoiceView
 
@@ -927,7 +935,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `OnboardingProvider` (component), `useOnboarding` (hook), `ONBOARDING_STORAGE_KEY` (constant), `readStoredOnboardingPreferences` (helper)
 - Usages: 8 references in 5 files
 
-- `apps/mobile/app/_layout.tsx`: 20 import `OnboardingProvider`; 20 import `useOnboarding`; 44 render `OnboardingProvider`; 76 call `useOnboarding`
+- `apps/mobile/app/_layout.tsx`: 19 import `OnboardingProvider`; 19 import `useOnboarding`; 43 render `OnboardingProvider`; 75 call `useOnboarding`
 - `apps/mobile/app/dev/onboarding.tsx`: 10 import `ONBOARDING_STORAGE_KEY`; 11 import `readStoredOnboardingPreferences`; 12 import `useOnboarding`; 39 call `useOnboarding`; 44 call `readStoredOnboardingPreferences`; 98 reference `ONBOARDING_STORAGE_KEY`
 - `apps/mobile/app/geraet-verknuepfen.tsx`: 16 import `useOnboarding`; 54 call `useOnboarding`
 - `apps/mobile/app/onboarding.tsx`: 14 import `useOnboarding`; 43 call `useOnboarding`
@@ -940,8 +948,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `QuizProgressProvider` (component), `useQuizProgress` (hook), `QUIZ_PROGRESS_STORAGE_KEY` (constant)
 - Usages: 6 references in 5 files
 
-- `apps/mobile/app/_layout.tsx`: 22 import `QuizProgressProvider`; 47 render `QuizProgressProvider`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 23 import `useQuizProgress`; 108 call `useQuizProgress`
+- `apps/mobile/app/_layout.tsx`: 21 import `QuizProgressProvider`; 46 render `QuizProgressProvider`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 22 import `useQuizProgress`; 107 call `useQuizProgress`
 - `apps/mobile/app/quiz/[topic]/index.tsx`: 13 import `useQuizProgress`; 29 call `useQuizProgress`
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 15 import `useQuizProgress`; 54 call `useQuizProgress`; 106 call `useQuizProgress`
 - `apps/mobile/app/quiz/modul/[id].tsx`: 8 import `useQuizProgress`; 24 call `useQuizProgress`
@@ -953,7 +961,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AppStateProvider` (component)
 - Usages: 1 reference in 2 files
 
-- `apps/mobile/app/_layout.tsx`: 24 import `AppStateProvider`; 40 render `AppStateProvider`
+- `apps/mobile/app/_layout.tsx`: 23 import `AppStateProvider`; 39 render `AppStateProvider`
 - `apps/mobile/src/state/AppState.tsx`: 6 re-export `AppStateProvider`
 
 ### IliasAutoConnect
@@ -963,7 +971,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `IliasAutoConnect` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 18 import `IliasAutoConnect`; 43 render `IliasAutoConnect`
+- `apps/mobile/app/_layout.tsx`: 17 import `IliasAutoConnect`; 42 render `IliasAutoConnect`
 
 ### IliasHeadlessProvider
 
@@ -972,7 +980,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `IliasHeadlessProvider` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 19 import `IliasHeadlessProvider`; 41 render `IliasHeadlessProvider`
+- `apps/mobile/app/_layout.tsx`: 18 import `IliasHeadlessProvider`; 40 render `IliasHeadlessProvider`
 
 ### QueryProvider
 
@@ -981,7 +989,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `QueryProvider` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 23 import `QueryProvider`; 45 render `QueryProvider`
+- `apps/mobile/app/_layout.tsx`: 22 import `QueryProvider`; 44 render `QueryProvider`
 
 ### QuizCatalogProvider
 
@@ -990,7 +998,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `QuizCatalogProvider` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 21 import `QuizCatalogProvider`; 48 render `QuizCatalogProvider`
+- `apps/mobile/app/_layout.tsx`: 20 import `QuizCatalogProvider`; 47 render `QuizCatalogProvider`
 
 ### SessionRefresh
 
@@ -999,5 +1007,5 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `SessionRefresh` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/_layout.tsx`: 10 import `SessionRefresh`; 42 render `SessionRefresh`
+- `apps/mobile/app/_layout.tsx`: 10 import `SessionRefresh`; 41 render `SessionRefresh`
 

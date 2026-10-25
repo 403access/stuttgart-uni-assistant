@@ -3,7 +3,7 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import { Platform, Pressable } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from './theme';
 
 /** One icon, SF Symbols on iOS and Material Icons everywhere else. */
 export function ControlIcon({

@@ -4,10 +4,9 @@ import { useState } from 'react';
 import { Platform, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
-import { DrawerPanel } from '@/src/components/drawer-panel';
-import { OptionRows, type DropdownOption } from '@/src/components/option-rows';
+import { DrawerPanel , useResponsive } from '@ua/ui';
+import { OptionRows, type DropdownOption } from '@ua/ui';
 import { Card, Meter, Screen, Section } from '@/src/components/ui';
-import { useResponsive } from '@/src/hooks/use-responsive';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import {
   findQuizStudy,

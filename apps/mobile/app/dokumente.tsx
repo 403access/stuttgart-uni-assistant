@@ -2,7 +2,7 @@ import { Stack, router } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput } from 'react-native';
 
-import { ResponsiveGrid } from '@/src/components/responsive-grid';
+import { ResponsiveGrid } from '@ua/ui';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
 import { documents } from '@/src/data';
 import { pickStudyFile } from '@/src/documents/io';

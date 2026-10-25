@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 
-import { ControlIcon } from '@/src/components/control-icon';
+import { ControlIcon } from '@ua/ui';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale, MailAttachment } from '@/src/types';

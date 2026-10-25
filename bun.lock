@@ -42,6 +42,7 @@
         "@ua/core": "workspace:*",
         "@ua/design-tokens": "workspace:*",
         "@ua/format": "workspace:*",
+        "@ua/ui": "workspace:*",
         "docx-preview": "^0.4.1",
         "expo": "^58.0.0",
         "expo-auth-session": "~58.0.13",
@@ -131,6 +132,22 @@
     "packages/server-kit": {
       "name": "@ua/server-kit",
       "version": "0.0.0",
+    },
+    "packages/ui": {
+      "name": "@ua/ui",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ua/core": "workspace:*",
+        "@ua/design-tokens": "workspace:*",
+        "@ua/format": "workspace:*",
+      },
+      "peerDependencies": {
+        "@expo/vector-icons": "^15.0.2",
+        "expo-symbols": "~58.0.4",
+        "react": "19.3.0",
+        "react-native": "0.88.0",
+        "react-native-safe-area-context": "~5.10.1",
+      },
     },
     "tools": {
       "name": "@ua/tools",
@@ -709,6 +726,8 @@
     "@ua/site": ["@ua/site@workspace:apps/site"],
 
     "@ua/tools": ["@ua/tools@workspace:tools"],
+
+    "@ua/ui": ["@ua/ui@workspace:packages/ui"],
 
     "@ungap/structured-clone": ["@ungap/structured-clone@1.4.0", "", {}, "sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ=="],
 

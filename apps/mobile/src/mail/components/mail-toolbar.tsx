@@ -6,8 +6,7 @@ import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';
 
 import type { DropdownOption } from '../types';
-import { ControlIcon, ToolButton } from '@/src/components/control-icon';
-import { DropdownPicker } from '@/src/components/dropdown-picker';
+import { ControlIcon, ToolButton , DropdownPicker } from '@ua/ui';
 import { ToolbarReveal, ToolbarSkeleton } from './mail-skeletons';
 
 /**

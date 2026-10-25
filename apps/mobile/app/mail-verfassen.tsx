@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { fetchMailBody, folderKind, getMailSnapshot, mailDetail, mailMessage, sendMail } from '@/src/auth/mail';
-import { showToast } from '@/src/components/toast';
+import { showToast } from '@ua/ui';
 import { Button, Card, Pill, Screen } from '@/src/components/ui';
 import { people } from '@/src/data/people';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';

@@ -9,7 +9,7 @@ import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
 import { AmbientBackground } from '@/src/components/ambient-background';
 import { ChoiceCard } from '@/src/components/choice-card';
 import { Button, Mark, Pill } from '@/src/components/ui';
-import { showToast } from '@/src/components/toast';
+import { showToast } from '@ua/ui';
 import type { IliasTutorial, IliasTutorialFile } from '@/src/ilias/tutorials';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';

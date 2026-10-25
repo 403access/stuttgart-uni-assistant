@@ -9,7 +9,7 @@ import { LanguagePicker } from '@/src/components/login-blocks';
 import { Button, Mark } from '@/src/components/ui';
 import { useCountdown } from '@/src/hooks/use-countdown';
 import { usePolling } from '@/src/hooks/use-polling';
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { useResponsive } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';

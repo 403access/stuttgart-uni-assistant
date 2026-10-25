@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 import { getActiveAuthToken } from '@/src/auth/session';
 import { storedLoginHint } from '@/src/auth/vault';
-import { showToast } from '@/src/components/toast';
+import { showToast } from '@ua/ui';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
 import { iliasAccountFrom } from '@/src/ilias/account';
 import { disconnectIlias, fetchIliasStatus, IliasError, loadIliasDashboard } from '@/src/ilias/api';

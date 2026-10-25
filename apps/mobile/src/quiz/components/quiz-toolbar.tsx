@@ -1,6 +1,6 @@
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { ControlIcon, ToolButton } from '@/src/components/control-icon';
+import { ControlIcon, ToolButton } from '@ua/ui';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 import type { Locale } from '@/src/types';

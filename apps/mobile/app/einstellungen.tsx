@@ -6,7 +6,7 @@ import { Pressable, Text, View } from 'react-native';
 import { universityUrls } from '@/src/auth/oidc';
 import { assistantUrl } from '@/src/assistant/remote';
 import { Button, Card, InfoRow, Screen, Section } from '@/src/components/ui';
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { useResponsive } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';

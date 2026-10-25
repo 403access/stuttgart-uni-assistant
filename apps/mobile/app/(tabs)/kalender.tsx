@@ -7,7 +7,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { studyCourseKey, useCoursesForStudies, type StudyCourse } from '@/src/campus/use-courses';
 import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
-import { useResponsive } from '@/src/hooks/use-responsive';
+import { useResponsive } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle, themedStyles } from '@/src/theme';
 import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@/src/text';

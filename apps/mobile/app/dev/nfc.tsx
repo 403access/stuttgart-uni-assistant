@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 
-import { JsonTree } from '@/src/components/json-tree';
+import { JsonTree } from '@ua/ui';
 import { Button, Card, Screen, Section } from '@/src/components/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { cancelCardScan, isNfcSupported, readStudentCard } from '@/src/nfc/card';

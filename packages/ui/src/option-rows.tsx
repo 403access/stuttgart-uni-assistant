@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, themedStyles } from '@/src/theme';
+import { colors, themedStyles } from './theme';
 
 import { ControlIcon } from './control-icon';
 

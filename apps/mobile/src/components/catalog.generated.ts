@@ -80,9 +80,9 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
   "stats": {
     "components": 77,
     "exports": 113,
-    "occurrences": 1262,
+    "occurrences": 1273,
     "usageCount": 816,
-    "files": 102,
+    "files": 103,
     "unused": 0,
     "onlyImported": 0,
     "platformVariants": 4,
@@ -228,42 +228,42 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 165,
+          "line": 164,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 172,
+          "line": 171,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 202,
+          "line": 201,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 223,
+          "line": 222,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 226,
+          "line": 225,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 227,
+          "line": 226,
           "kind": "render",
           "exportName": "Button",
           "count": 1
@@ -648,112 +648,112 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 167,
+          "line": 165,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "InfoRow",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "listPosition",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 225,
+          "line": 223,
           "kind": "render",
           "exportName": "InfoRow",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 230,
+          "line": 228,
           "kind": "call",
           "exportName": "listPosition",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 239,
+          "line": 237,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 246,
+          "line": 244,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 282,
+          "line": 280,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 313,
+          "line": 311,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 385,
+          "line": 383,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 389,
+          "line": 387,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 395,
+          "line": 393,
           "kind": "render",
           "exportName": "Button",
           "count": 1
@@ -784,81 +784,81 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "line": 9,
           "kind": "import",
           "exportName": "Section",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/(tabs)/quiz.tsx",
+          "line": 123,
+          "kind": "render",
+          "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
           "line": 124,
           "kind": "render",
-          "exportName": "Screen",
+          "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 125,
+          "line": 286,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 287,
-          "kind": "render",
-          "exportName": "Card",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 301,
+          "line": 300,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 330,
+          "line": 329,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 353,
+          "line": 352,
           "kind": "render",
           "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/(tabs)/quiz.tsx",
+          "line": 362,
+          "kind": "render",
+          "exportName": "Section",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
           "line": 363,
           "kind": "render",
-          "exportName": "Section",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 364,
-          "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 388,
+          "line": 387,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 449,
+          "line": 448,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 559,
+          "line": 558,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
@@ -3231,105 +3231,105 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 167,
+          "line": 166,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
+          "line": 176,
+          "kind": "render",
+          "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/kurse.tsx",
           "line": 177,
           "kind": "render",
-          "exportName": "Card",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/kurse.tsx",
-          "line": 178,
-          "kind": "render",
           "exportName": "Muted",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 184,
+          "line": 183,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 193,
+          "line": 192,
           "kind": "render",
           "exportName": "Muted",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 197,
+          "line": 196,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 199,
+          "line": 198,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 234,
+          "line": 233,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 236,
+          "line": 235,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 242,
+          "line": 241,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 257,
+          "line": 256,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 261,
+          "line": 260,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 268,
+          "line": 267,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 275,
+          "line": 274,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 278,
+          "line": 277,
           "kind": "render",
           "exportName": "InfoRow",
           "count": 1
@@ -6933,14 +6933,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/control-icon",
+      "id": "packages/ui/src/control-icon",
       "name": "control-icon",
       "category": "shared",
-      "file": "apps/mobile/src/components/control-icon.tsx",
+      "file": "packages/ui/src/control-icon.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/control-icon.tsx"
+          "file": "packages/ui/src/control-icon.tsx"
         }
       ],
       "platforms": [
@@ -6968,48 +6968,6 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       ],
       "defaultExport": null,
       "occurrences": [
-        {
-          "file": "apps/mobile/src/components/drawer-panel.tsx",
-          "line": 7,
-          "kind": "import",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/components/drawer-panel.tsx",
-          "line": 23,
-          "kind": "render",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/components/dropdown-picker.tsx",
-          "line": 7,
-          "kind": "import",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/components/dropdown-picker.tsx",
-          "line": 34,
-          "kind": "render",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/components/option-rows.tsx",
-          "line": 6,
-          "kind": "import",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/components/option-rows.tsx",
-          "line": 45,
-          "kind": "render",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
         {
           "file": "apps/mobile/src/ilias/components/ilias-toolbar.tsx",
           "line": 3,
@@ -7068,28 +7026,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 53,
+          "line": 52,
           "kind": "render",
           "exportName": "ToolButton",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 55,
+          "line": 54,
           "kind": "render",
           "exportName": "ToolButton",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 61,
+          "line": 60,
           "kind": "render",
           "exportName": "ControlIcon",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 79,
+          "line": 78,
           "kind": "render",
           "exportName": "ToolButton",
           "count": 1
@@ -7142,17 +7100,74 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "render",
           "exportName": "ToolButton",
           "count": 1
+        },
+        {
+          "file": "packages/ui/src/drawer-panel.tsx",
+          "line": 7,
+          "kind": "import",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/drawer-panel.tsx",
+          "line": 23,
+          "kind": "render",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/dropdown-picker.tsx",
+          "line": 7,
+          "kind": "import",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/dropdown-picker.tsx",
+          "line": 34,
+          "kind": "render",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 1,
+          "kind": "re-export",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 1,
+          "kind": "re-export",
+          "exportName": "ToolButton",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/option-rows.tsx",
+          "line": 6,
+          "kind": "import",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/option-rows.tsx",
+          "line": 45,
+          "kind": "render",
+          "exportName": "ControlIcon",
+          "count": 1
         }
       ],
       "usedBy": [
-        "apps/mobile/src/components/drawer-panel.tsx",
-        "apps/mobile/src/components/dropdown-picker.tsx",
-        "apps/mobile/src/components/option-rows.tsx",
         "apps/mobile/src/ilias/components/ilias-toolbar.tsx",
         "apps/mobile/src/mail/components/attachment-list.tsx",
         "apps/mobile/src/mail/components/mail-toolbar.tsx",
         "apps/mobile/src/mail/components/template-sheet.tsx",
-        "apps/mobile/src/quiz/components/quiz-toolbar.tsx"
+        "apps/mobile/src/quiz/components/quiz-toolbar.tsx",
+        "packages/ui/src/drawer-panel.tsx",
+        "packages/ui/src/dropdown-picker.tsx",
+        "packages/ui/src/index.ts",
+        "packages/ui/src/option-rows.tsx"
       ],
       "usageCount": 14,
       "importCount": 11,
@@ -7297,14 +7312,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/responsive-grid",
+      "id": "packages/ui/src/responsive-grid",
       "name": "ResponsiveGrid",
       "category": "shared",
-      "file": "apps/mobile/src/components/responsive-grid.tsx",
+      "file": "packages/ui/src/responsive-grid.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/responsive-grid.tsx"
+          "file": "packages/ui/src/responsive-grid.tsx"
         }
       ],
       "platforms": [
@@ -7334,21 +7349,21 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/chat.tsx",
-          "line": 111,
+          "line": 110,
           "kind": "render",
           "exportName": "ResponsiveGrid",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 10,
+          "line": 9,
           "kind": "import",
           "exportName": "ResponsiveGrid",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 408,
+          "line": 406,
           "kind": "render",
           "exportName": "ResponsiveGrid",
           "count": 1
@@ -7432,7 +7447,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 276,
+          "line": 275,
           "kind": "render",
           "exportName": "ResponsiveGrid",
           "count": 1
@@ -7450,6 +7465,13 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "render",
           "exportName": "ResponsiveGrid",
           "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 7,
+          "kind": "re-export",
+          "exportName": "ResponsiveGrid",
+          "count": 1
         }
       ],
       "usedBy": [
@@ -7460,7 +7482,8 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         "apps/mobile/app/fristen.tsx",
         "apps/mobile/app/kommilitonen.tsx",
         "apps/mobile/app/kurse.tsx",
-        "apps/mobile/src/ilias/components/ilias-dashboard.tsx"
+        "apps/mobile/src/ilias/components/ilias-dashboard.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 10,
       "importCount": 8,
@@ -7471,14 +7494,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/option-rows",
+      "id": "packages/ui/src/option-rows",
       "name": "OptionRows",
       "category": "shared",
-      "file": "apps/mobile/src/components/option-rows.tsx",
+      "file": "packages/ui/src/option-rows.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/option-rows.tsx"
+          "file": "packages/ui/src/option-rows.tsx"
         }
       ],
       "platforms": [
@@ -7508,28 +7531,35 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 98,
+          "line": 97,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 15,
+          "line": 9,
           "kind": "import",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 88,
+          "line": 86,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 101,
+          "line": 99,
+          "kind": "render",
+          "exportName": "OptionRows",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/(tabs)/mail.tsx",
+          "line": 110,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
@@ -7542,13 +7572,6 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "count": 1
         },
         {
-          "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 114,
-          "kind": "render",
-          "exportName": "OptionRows",
-          "count": 1
-        },
-        {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
           "line": 8,
           "kind": "import",
@@ -7557,36 +7580,43 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 250,
+          "line": 249,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 269,
+          "line": 268,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 392,
+          "line": 391,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/components/dropdown-picker.tsx",
+          "file": "packages/ui/src/dropdown-picker.tsx",
           "line": 8,
           "kind": "import",
           "exportName": "OptionRows",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/components/dropdown-picker.tsx",
+          "file": "packages/ui/src/dropdown-picker.tsx",
           "line": 44,
           "kind": "render",
+          "exportName": "OptionRows",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 5,
+          "kind": "re-export",
           "exportName": "OptionRows",
           "count": 1
         }
@@ -7595,7 +7625,8 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         "apps/mobile/app/(tabs)/ilias.tsx",
         "apps/mobile/app/(tabs)/mail.tsx",
         "apps/mobile/app/(tabs)/quiz.tsx",
-        "apps/mobile/src/components/dropdown-picker.tsx"
+        "packages/ui/src/dropdown-picker.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 9,
       "importCount": 4,
@@ -7606,14 +7637,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/toast",
+      "id": "packages/ui/src/toast",
       "name": "toast",
       "category": "shared",
-      "file": "apps/mobile/src/components/toast.tsx",
+      "file": "packages/ui/src/toast.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/toast.tsx"
+          "file": "packages/ui/src/toast.tsx"
         }
       ],
       "platforms": [
@@ -7649,7 +7680,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 52,
+          "line": 51,
           "kind": "render",
           "exportName": "ToastHost",
           "count": 1
@@ -7684,14 +7715,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 13,
+          "line": 10,
           "kind": "import",
           "exportName": "showToast",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 101,
+          "line": 100,
           "kind": "call",
           "exportName": "showToast",
           "count": 1
@@ -7723,6 +7754,20 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "call",
           "exportName": "showToast",
           "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 8,
+          "kind": "re-export",
+          "exportName": "showToast",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 8,
+          "kind": "re-export",
+          "exportName": "ToastHost",
+          "count": 1
         }
       ],
       "usedBy": [
@@ -7731,7 +7776,8 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         "apps/mobile/app/ilias/datei.tsx",
         "apps/mobile/app/kurse.tsx",
         "apps/mobile/app/mail-verfassen.tsx",
-        "apps/mobile/app/onboarding.tsx"
+        "apps/mobile/app/onboarding.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 6,
       "importCount": 6,
@@ -7777,7 +7823,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/chat.tsx",
-          "line": 88,
+          "line": 87,
           "kind": "render",
           "exportName": "AmbientBackground",
           "count": 1
@@ -7791,7 +7837,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 106,
+          "line": 104,
           "kind": "render",
           "exportName": "AmbientBackground",
           "count": 1
@@ -7833,7 +7879,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/src/components/ui.tsx",
-          "line": 126,
+          "line": 125,
           "kind": "render",
           "exportName": "AmbientBackground",
           "count": 1
@@ -7855,14 +7901,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/drawer-panel",
+      "id": "packages/ui/src/drawer-panel",
       "name": "DrawerPanel",
       "category": "shared",
-      "file": "apps/mobile/src/components/drawer-panel.tsx",
+      "file": "packages/ui/src/drawer-panel.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/drawer-panel.tsx"
+          "file": "packages/ui/src/drawer-panel.tsx"
         }
       ],
       "platforms": [
@@ -7892,7 +7938,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 195,
+          "line": 194,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
@@ -7906,14 +7952,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 84,
+          "line": 82,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 100,
+          "line": 98,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
@@ -7927,15 +7973,22 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 422,
+          "line": 421,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 440,
+          "line": 439,
           "kind": "render",
+          "exportName": "DrawerPanel",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 2,
+          "kind": "re-export",
           "exportName": "DrawerPanel",
           "count": 1
         }
@@ -7943,7 +7996,8 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "usedBy": [
         "apps/mobile/app/(tabs)/ilias.tsx",
         "apps/mobile/app/(tabs)/mail.tsx",
-        "apps/mobile/app/(tabs)/quiz.tsx"
+        "apps/mobile/app/(tabs)/quiz.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 5,
       "importCount": 3,
@@ -7954,14 +8008,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/json-tree",
+      "id": "packages/ui/src/json-tree",
       "name": "JsonTree",
       "category": "shared",
-      "file": "apps/mobile/src/components/json-tree.tsx",
+      "file": "packages/ui/src/json-tree.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/json-tree.tsx"
+          "file": "packages/ui/src/json-tree.tsx"
         }
       ],
       "platforms": [
@@ -8044,13 +8098,21 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "render",
           "exportName": "JsonTree",
           "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 4,
+          "kind": "re-export",
+          "exportName": "JsonTree",
+          "count": 1
         }
       ],
       "usedBy": [
         "apps/mobile/app/dev/nfc.tsx",
         "apps/mobile/app/dev/onboarding.tsx",
         "apps/mobile/app/dev/state.tsx",
-        "apps/mobile/src/components/api-entry-detail.tsx"
+        "apps/mobile/src/components/api-entry-detail.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 5,
       "importCount": 4,
@@ -8196,28 +8258,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 13,
+          "line": 12,
           "kind": "import",
           "exportName": "StudySelector",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 281,
+          "line": 279,
           "kind": "render",
           "exportName": "StudySelector",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 14,
+          "line": 13,
           "kind": "import",
           "exportName": "StudySelector",
           "count": 1
         },
         {
           "file": "apps/mobile/app/kurse.tsx",
-          "line": 175,
+          "line": 174,
           "kind": "render",
           "exportName": "StudySelector",
           "count": 1
@@ -8523,14 +8585,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/pane-mode",
+      "id": "packages/ui/src/pane-mode",
       "name": "pane-mode",
       "category": "shared",
-      "file": "apps/mobile/src/components/pane-mode.tsx",
+      "file": "packages/ui/src/pane-mode.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/pane-mode.tsx"
+          "file": "packages/ui/src/pane-mode.tsx"
         }
       ],
       "platforms": [
@@ -8564,7 +8626,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mehr.tsx",
-          "line": 379,
+          "line": 377,
           "kind": "render",
           "exportName": "PaneModeProvider",
           "count": 1
@@ -8578,15 +8640,30 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/src/components/ui.tsx",
-          "line": 100,
+          "line": 99,
           "kind": "call",
+          "exportName": "usePaneMode",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 6,
+          "kind": "re-export",
+          "exportName": "PaneModeProvider",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 6,
+          "kind": "re-export",
           "exportName": "usePaneMode",
           "count": 1
         }
       ],
       "usedBy": [
         "apps/mobile/app/(tabs)/mehr.tsx",
-        "apps/mobile/src/components/ui.tsx"
+        "apps/mobile/src/components/ui.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 2,
       "importCount": 2,
@@ -8814,7 +8891,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 226,
+          "line": 225,
           "kind": "render",
           "exportName": "AppLock",
           "count": 1
@@ -9105,14 +9182,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/components/dropdown-picker",
+      "id": "packages/ui/src/dropdown-picker",
       "name": "DropdownPicker",
       "category": "shared",
-      "file": "apps/mobile/src/components/dropdown-picker.tsx",
+      "file": "packages/ui/src/dropdown-picker.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/components/dropdown-picker.tsx"
+          "file": "packages/ui/src/dropdown-picker.tsx"
         }
       ],
       "platforms": [
@@ -9135,21 +9212,29 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 10,
+          "line": 9,
           "kind": "import",
           "exportName": "DropdownPicker",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 77,
+          "line": 76,
           "kind": "render",
+          "exportName": "DropdownPicker",
+          "count": 1
+        },
+        {
+          "file": "packages/ui/src/index.ts",
+          "line": 3,
+          "kind": "re-export",
           "exportName": "DropdownPicker",
           "count": 1
         }
       ],
       "usedBy": [
-        "apps/mobile/src/mail/components/mail-toolbar.tsx"
+        "apps/mobile/src/mail/components/mail-toolbar.tsx",
+        "packages/ui/src/index.ts"
       ],
       "usageCount": 1,
       "importCount": 1,
@@ -9529,7 +9614,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 199,
+          "line": 198,
           "kind": "render",
           "exportName": "WebHead",
           "count": 1
@@ -9582,7 +9667,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 202,
+          "line": 201,
           "kind": "render",
           "exportName": "WebSidebar",
           "count": 1
@@ -9768,42 +9853,42 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 128,
+          "line": 126,
           "kind": "render",
           "exportName": "MailReveal",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 197,
+          "line": 195,
           "kind": "render",
           "exportName": "MailReveal",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "ToolbarReveal",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 11,
+          "line": 10,
           "kind": "import",
           "exportName": "ToolbarSkeleton",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 57,
+          "line": 56,
           "kind": "render",
           "exportName": "ToolbarSkeleton",
           "count": 1
         },
         {
           "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 59,
+          "line": 58,
           "kind": "render",
           "exportName": "ToolbarReveal",
           "count": 1
@@ -10271,28 +10356,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 12,
+          "line": 11,
           "kind": "import",
           "exportName": "IliasDashboardView",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 12,
+          "line": 11,
           "kind": "import",
           "exportName": "iliasFilterLabel",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 59,
+          "line": 58,
           "kind": "call",
           "exportName": "iliasFilterLabel",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 134,
+          "line": 133,
           "kind": "render",
           "exportName": "IliasDashboardView",
           "count": 1
@@ -10345,14 +10430,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 131,
+          "line": 129,
           "kind": "render",
           "exportName": "MailMessageList",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 200,
+          "line": 198,
           "kind": "render",
           "exportName": "MailMessageList",
           "count": 1
@@ -10405,7 +10490,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 148,
+          "line": 146,
           "kind": "render",
           "exportName": "MailReader",
           "count": 1
@@ -10991,14 +11076,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 13,
+          "line": 12,
           "kind": "import",
           "exportName": "IliasToolbar",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/ilias.tsx",
-          "line": 68,
+          "line": 67,
           "kind": "render",
           "exportName": "IliasToolbar",
           "count": 1
@@ -11104,7 +11189,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 183,
+          "line": 181,
           "kind": "render",
           "exportName": "MailConnectionPanel",
           "count": 1
@@ -11212,7 +11297,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 57,
+          "line": 55,
           "kind": "render",
           "exportName": "MailToolbar",
           "count": 1
@@ -11580,14 +11665,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 21,
+          "line": 20,
           "kind": "import",
           "exportName": "QuizToolbar",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 236,
+          "line": 235,
           "kind": "render",
           "exportName": "QuizToolbar",
           "count": 1
@@ -11814,28 +11899,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 20,
+          "line": 19,
           "kind": "import",
           "exportName": "OnboardingProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 20,
+          "line": 19,
           "kind": "import",
           "exportName": "useOnboarding",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 44,
+          "line": 43,
           "kind": "render",
           "exportName": "OnboardingProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 76,
+          "line": 75,
           "kind": "call",
           "exportName": "useOnboarding",
           "count": 1
@@ -11981,28 +12066,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 22,
+          "line": 21,
           "kind": "import",
           "exportName": "QuizProgressProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 47,
+          "line": 46,
           "kind": "render",
           "exportName": "QuizProgressProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 23,
+          "line": 22,
           "kind": "import",
           "exportName": "useQuizProgress",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/quiz.tsx",
-          "line": 108,
+          "line": 107,
           "kind": "call",
           "exportName": "useQuizProgress",
           "count": 1
@@ -12101,14 +12186,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 24,
+          "line": 23,
           "kind": "import",
           "exportName": "AppStateProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 40,
+          "line": 39,
           "kind": "render",
           "exportName": "AppStateProvider",
           "count": 1
@@ -12162,14 +12247,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 18,
+          "line": 17,
           "kind": "import",
           "exportName": "IliasAutoConnect",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 43,
+          "line": 42,
           "kind": "render",
           "exportName": "IliasAutoConnect",
           "count": 1
@@ -12215,14 +12300,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 19,
+          "line": 18,
           "kind": "import",
           "exportName": "IliasHeadlessProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 41,
+          "line": 40,
           "kind": "render",
           "exportName": "IliasHeadlessProvider",
           "count": 1
@@ -12268,14 +12353,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 23,
+          "line": 22,
           "kind": "import",
           "exportName": "QueryProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 45,
+          "line": 44,
           "kind": "render",
           "exportName": "QueryProvider",
           "count": 1
@@ -12321,14 +12406,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 21,
+          "line": 20,
           "kind": "import",
           "exportName": "QuizCatalogProvider",
           "count": 1
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 48,
+          "line": 47,
           "kind": "render",
           "exportName": "QuizCatalogProvider",
           "count": 1
@@ -12381,7 +12466,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/_layout.tsx",
-          "line": 42,
+          "line": 41,
           "kind": "render",
           "exportName": "SessionRefresh",
           "count": 1

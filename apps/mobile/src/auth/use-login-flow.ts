@@ -10,7 +10,7 @@ import { useCampusBrowserLogin } from '@/src/auth/use-campus-browser-login';
 import { useCampusHeadlessLogin } from '@/src/auth/use-campus-headless-login';
 import { saveCampusHarvest } from '@/src/auth/vault';
 import { showFetchAlert } from '@/src/components/fetch-alert';
-import { showToast } from '@/src/components/toast';
+import { showToast } from '@ua/ui';
 import { ensureIliasSession } from '@/src/ilias/auto-connect';
 import { keys } from '@/src/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';

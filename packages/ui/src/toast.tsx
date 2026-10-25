@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { themedStyle, themedStyles } from '@/src/theme';
+import { themedStyle, themedStyles } from './theme';
 
 export type ToastTone = 'error' | 'info' | 'success';
 

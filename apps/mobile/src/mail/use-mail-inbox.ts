@@ -13,7 +13,7 @@ import {
   submitMailCredentials,
   subscribeMailSnapshot,
 } from '@/src/auth/mail';
-import { showToast } from '@/src/components/toast';
+import { showToast } from '@ua/ui';
 import { useInterval } from '@/src/hooks/use-interval';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { useAppSelector, appActions } from '@/src/state/AppState';
