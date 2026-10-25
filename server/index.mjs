@@ -22,6 +22,8 @@ import { handleIlias } from './routes/ilias.mjs';
 import { handleMail } from './routes/mail.mjs';
 import { handleNews } from './routes/news.mjs';
 import { handleOidc } from './routes/oidc.mjs';
+import { handleQuiz } from './routes/quiz.mjs';
+import { seedQuizCatalog } from './quiz/seed.mjs';
 import { logService } from './service-log.mjs';
 
 function serviceForPath(pathname) {
@@ -31,6 +33,7 @@ function serviceForPath(pathname) {
   if (pathname.startsWith('/v1/mail')) return 'mail';
   if (pathname.startsWith('/v1/oidc')) return 'oidc';
   if (pathname.startsWith('/v1/auth')) return 'auth';
+  if (pathname.startsWith('/v1/quiz')) return 'quiz';
   if (pathname.startsWith('/v1/assist')) return 'assistant';
   return 'http';
 }
@@ -43,7 +46,7 @@ const port = Number(process.env.PORT || 8787);
 // Order matters only where paths overlap: admin owns /admin, health owns the
 // two unauthenticated status routes, news owns the public /v1/news reads, and
 // the assistant is the final fallback.
-const handlers = [handleAdmin, handleHealth, handleNews, handleAuth, handleMail, handleCampus, handleIlias, handleOidc, handleAssist];
+const handlers = [handleAdmin, handleHealth, handleNews, handleAuth, handleMail, handleCampus, handleIlias, handleOidc, handleQuiz, handleAssist];
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? '/', 'http://127.0.0.1');
@@ -66,6 +69,13 @@ const server = createServer(async (request, response) => {
 });
 
 startCampusTokenRefresh();
+
+try {
+  const seeded = seedQuizCatalog();
+  logService('quiz', 'info', `catalog ${seeded.seeded ? 'seeded' : 'present'} topics=${seeded.topics} questions=${seeded.questions}`);
+} catch (error) {
+  logService('quiz', 'error', `catalog seed failed: ${error?.message ?? error}`);
+}
 
 server.listen(port, '0.0.0.0', () => {
   logService('server', 'info', `assistant server on http://127.0.0.1:${port}`);

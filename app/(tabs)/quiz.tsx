@@ -19,6 +19,7 @@ import {
   quizStudies,
 } from '@/src/quiz/content';
 import { QuizToolbar } from '@/src/quiz/components/quiz-toolbar';
+import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@/src/quiz/session';
 import type { QuestionProgress, QuizMode, QuizModule, QuizStudy, QuizTopic } from '@/src/quiz/types';
@@ -103,6 +104,7 @@ function matchesSearch(module: QuizModule, study: QuizStudy, needle: string): bo
 
 export default function QuizScreen() {
   const locale = useAppSelector((state) => state.locale);
+  useQuizCatalogVersion();
   const { ready, attempts, sessions, resetProgress } = useQuizProgress();
   const [studyFilter, setStudyFilter] = useState<string>(ALL_STUDIES);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');

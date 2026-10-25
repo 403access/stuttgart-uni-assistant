@@ -20,7 +20,7 @@ export function adminGate(request, response, configured, authorized) {
 
 export function fail(response, error) {
   const status = Number(error?.status) || 400;
-  send(response, status, { error: error?.message || 'admin_failed' });
+  send(response, status, { error: error?.message || 'admin_failed', detail: error?.detail });
 }
 
 export function decode(value) {

@@ -59,6 +59,7 @@ function renderUserShell(detail) {
     ['data', 'Studiengänge', detail.studies.length],
     ['calendar', 'Kalender', detail.counts.events],
     ['calls', 'Aufrufe', detail.counts.calls],
+    ['quiz', 'Lernquiz'],
     ['audit', 'Aktivität'],
   ];
   const tabBar = h('nav', { className: 'tabs', role: 'tablist', 'aria-label': 'Kontobereiche' },
@@ -113,6 +114,7 @@ function renderUserTab(detail) {
   else if (tab === 'data') renderDataTab(container, detail);
   else if (tab === 'calendar') renderCalendarTab(container, detail);
   else if (tab === 'calls') renderCallsTab(container, detail);
+  else if (tab === 'quiz') renderUserQuizTab(container, detail);
   else if (tab === 'audit') renderUserAuditTab(container, detail);
   else renderOverviewTab(container, detail);
 }
@@ -1028,6 +1030,76 @@ function callsPager(data, detail) {
       h('button', { className: 'btn secondary small', type: 'button', disabled: data.offset + data.limit >= data.total, onClick: () => { control.offset += control.limit; loadUserCalls(detail); } }, 'Weiter', icon('chevron-right')),
     ),
   );
+}
+
+function truncate(value, length) {
+  const text = String(value ?? '');
+  return text.length > length ? text.slice(0, length - 1) + '…' : text;
+}
+
+async function renderUserQuizTab(container, detail) {
+  container.replaceChildren(loading('Quiz-Antworten werden geladen …'));
+  try {
+    const data = await api('/v1/admin/quiz/users/' + encodeURIComponent(detail.user.id));
+    const stats = data.stats || {};
+    const kpis = h('div', { className: 'kpi-grid' },
+      h('div', { className: 'kpi' }, h('div', { className: 'value', text: number(stats.total || 0) }), h('div', { className: 'label', text: 'Antworten' }), h('div', { className: 'sub', text: stats.lastAt ? 'zuletzt ' + relative(stats.lastAt) : 'noch keine' })),
+      h('div', { className: 'kpi green' }, h('div', { className: 'value', text: (stats.accuracy || 0) + '%' }), h('div', { className: 'label', text: 'Trefferquote' }), h('div', { className: 'sub', text: number(stats.correct || 0) + ' richtig' })),
+      h('div', { className: 'kpi amber' }, h('div', { className: 'value', text: number((data.sessions || []).length) }), h('div', { className: 'label', text: 'Runden' }), h('div', { className: 'sub', text: 'gespeichert' })),
+    );
+    const topicRows = data.byTopic?.length
+      ? data.byTopic.map((topic) => h('tr', null,
+          h('td', null, h('strong', { text: topic.topicTitle.de }), h('div', { className: 'hint', text: topic.topicId })),
+          h('td', null, number(topic.total)),
+          h('td', null, badge(topic.accuracy + '%', topic.accuracy >= 70 ? 'ok' : 'warn')),
+        ))
+      : [h('tr', null, h('td', { colspan: '3' }, emptyState('list', 'Noch keine Themen', 'Sobald der Nutzer Quizfragen beantwortet, erscheint hier die Auswertung.')))];
+    const attemptRows = data.attempts?.length
+      ? data.attempts.slice(0, 20).map((attempt) => h('tr', null,
+          h('td', { style: { whiteSpace: 'nowrap' } }, h('span', { className: 'tiny', text: date(attempt.answeredAt) })),
+          h('td', null, h('div', { text: truncate(attempt.topicTitle.de, 40) }), h('div', { className: 'hint', text: attempt.kind })),
+          h('td', { style: { maxWidth: '360px', whiteSpace: 'pre-wrap' } }, attempt.prompt.de),
+          h('td', { style: { maxWidth: '300px', whiteSpace: 'pre-wrap' } }, attempt.answerText || JSON.stringify(attempt.answer)),
+          h('td', null, attempt.correct ? badge('richtig', 'ok') : badge('falsch', 'danger')),
+        ))
+      : [h('tr', null, h('td', { colspan: '5' }, emptyState('inbox', 'Noch keine Antworten', 'Für dieses Konto wurden noch keine Quizantworten synchronisiert.')))];
+    const sessionRows = data.sessions?.length
+      ? data.sessions.map((session) => h('tr', null,
+          h('td', { style: { whiteSpace: 'nowrap' } }, h('span', { className: 'tiny', text: date(session.finishedAt) })),
+          h('td', null, session.topicTitle.de),
+          h('td', null, badge(session.mode, 'blue')),
+          h('td', null, h('strong', { text: session.correct + ' / ' + session.total }), h('span', { className: 'hint', text: ' · ' + session.accuracy + '%' })),
+        ))
+      : [h('tr', null, h('td', { colspan: '4' }, emptyState('activity', 'Noch keine Runden', 'Abgeschlossene Quizrunden erscheinen hier.')))];
+    container.replaceChildren(
+      kpis,
+      h('div', { className: 'view-stack' },
+        h('section', { className: 'card' },
+          sectionHead('Nach Thema', 'Trefferquote je Thema im Katalog.'),
+          h('div', { className: 'table-wrap' }, h('table', { className: 'data' },
+            h('thead', null, h('tr', null, h('th', null, 'Thema'), h('th', null, 'Antworten'), h('th', null, 'Treffer'))),
+            h('tbody', null, ...topicRows),
+          )),
+        ),
+        h('section', { className: 'card' },
+          sectionHead('Letzte Antworten', 'Die jüngsten 20 Antworten dieses Kontos.'),
+          h('div', { className: 'table-wrap' }, h('table', { className: 'data' },
+            h('thead', null, h('tr', null, h('th', null, 'Zeit'), h('th', null, 'Thema'), h('th', null, 'Frage'), h('th', null, 'Antwort'), h('th', null, 'Ergebnis'))),
+            h('tbody', null, ...attemptRows),
+          )),
+        ),
+        h('section', { className: 'card' },
+          sectionHead('Runden', 'Abgeschlossene Quizrunden dieses Kontos.'),
+          h('div', { className: 'table-wrap' }, h('table', { className: 'data' },
+            h('thead', null, h('tr', null, h('th', null, 'Zeit'), h('th', null, 'Thema'), h('th', null, 'Modus'), h('th', null, 'Score'))),
+            h('tbody', null, ...sessionRows),
+          )),
+        ),
+      ),
+    );
+  } catch (error) {
+    container.replaceChildren(emptyState('alert', 'Lernquiz konnte nicht geladen werden', errorText(error)));
+  }
 }
 
 function renderUserAuditTab(container, detail) {

@@ -7,10 +7,10 @@
 export const COMPONENT_CATALOG = {
   "generatedBy": "scripts/generate-component-catalog.mjs",
   "stats": {
-    "components": 76,
-    "exports": 112,
-    "occurrences": 1260,
-    "usageCount": 815,
+    "components": 77,
+    "exports": 113,
+    "occurrences": 1262,
+    "usageCount": 816,
     "files": 102,
     "unused": 0,
     "onlyImported": 0,
@@ -19,7 +19,7 @@ export const COMPONENT_CATALOG = {
     "categories": {
       "shared": 35,
       "feature": 34,
-      "provider": 7
+      "provider": 8
     }
   },
   "entries": [
@@ -717,77 +717,77 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 122,
+          "line": 124,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 123,
+          "line": 125,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 285,
+          "line": 287,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 299,
+          "line": 301,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 328,
+          "line": 330,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 351,
+          "line": 353,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 361,
+          "line": 363,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 362,
+          "line": 364,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 386,
+          "line": 388,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 447,
+          "line": 449,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 557,
+          "line": 559,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
@@ -4217,84 +4217,84 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 33,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
           "line": 35,
           "kind": "render",
-          "exportName": "Card",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 44,
-          "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 118,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 124,
+          "line": 37,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 138,
+          "line": 46,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 120,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 126,
+          "kind": "render",
+          "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 140,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 144,
+          "line": 146,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 166,
+          "line": 168,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 187,
+          "line": 189,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 188,
+          "line": 190,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 235,
+          "line": 237,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 236,
+          "line": 238,
           "kind": "render",
           "exportName": "Card",
           "count": 1
@@ -4324,13 +4324,6 @@ export const COMPONENT_CATALOG = {
           "file": "app/quiz/[topic]/run.tsx",
           "line": 6,
           "kind": "import",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 60,
-          "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
@@ -4338,173 +4331,180 @@ export const COMPONENT_CATALOG = {
           "file": "app/quiz/[topic]/run.tsx",
           "line": 62,
           "kind": "render",
-          "exportName": "Card",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 71,
-          "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 189,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 280,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 286,
-          "kind": "render",
-          "exportName": "Meter",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 288,
-          "kind": "render",
-          "exportName": "Pill",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 289,
-          "kind": "render",
-          "exportName": "Pill",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 342,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 353,
+          "line": 64,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 366,
-          "kind": "render",
-          "exportName": "Meter",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 5,
-          "kind": "import",
-          "exportName": "Card",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 5,
-          "kind": "import",
-          "exportName": "Meter",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 5,
-          "kind": "import",
-          "exportName": "Pill",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 5,
-          "kind": "import",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 5,
-          "kind": "import",
-          "exportName": "Section",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 27,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 29,
-          "kind": "render",
-          "exportName": "Card",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 38,
-          "kind": "render",
-          "exportName": "Screen",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/modul/[id].tsx",
           "line": 73,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 76,
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 191,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 309,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 315,
+          "kind": "render",
+          "exportName": "Meter",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 317,
+          "kind": "render",
+          "exportName": "Pill",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 318,
+          "kind": "render",
+          "exportName": "Pill",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 371,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 382,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
-          "file": "app/quiz/modul/[id].tsx",
-          "line": 90,
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 395,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
         },
         {
           "file": "app/quiz/modul/[id].tsx",
-          "line": 102,
+          "line": 5,
+          "kind": "import",
+          "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 5,
+          "kind": "import",
+          "exportName": "Meter",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 5,
+          "kind": "import",
+          "exportName": "Pill",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 5,
+          "kind": "import",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 5,
+          "kind": "import",
+          "exportName": "Section",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 29,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 31,
+          "kind": "render",
+          "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 40,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 75,
+          "kind": "render",
+          "exportName": "Screen",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 78,
+          "kind": "render",
+          "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 92,
+          "kind": "render",
+          "exportName": "Meter",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/modul/[id].tsx",
+          "line": 104,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "app/quiz/modul/[id].tsx",
-          "line": 129,
+          "line": 131,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "app/quiz/modul/[id].tsx",
-          "line": 147,
+          "line": 149,
           "kind": "render",
           "exportName": "Meter",
           "count": 1
         },
         {
           "file": "app/quiz/modul/[id].tsx",
-          "line": 162,
+          "line": 164,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
@@ -7486,21 +7486,21 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 248,
+          "line": 250,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 267,
+          "line": 269,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 390,
+          "line": 392,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
@@ -7578,7 +7578,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 49,
+          "line": 52,
           "kind": "render",
           "exportName": "ToastHost",
           "count": 1
@@ -7856,14 +7856,14 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 420,
+          "line": 422,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 438,
+          "line": 440,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
@@ -8743,7 +8743,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 223,
+          "line": 226,
           "kind": "render",
           "exportName": "AppLock",
           "count": 1
@@ -9458,7 +9458,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 196,
+          "line": 199,
           "kind": "render",
           "exportName": "WebHead",
           "count": 1
@@ -9511,7 +9511,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 199,
+          "line": 202,
           "kind": "render",
           "exportName": "WebSidebar",
           "count": 1
@@ -9559,70 +9559,70 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 10,
-          "kind": "import",
-          "exportName": "QuizButton",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 172,
-          "kind": "render",
-          "exportName": "QuizButton",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 176,
-          "kind": "render",
-          "exportName": "QuizButton",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 226,
-          "kind": "render",
-          "exportName": "QuizButton",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
           "line": 11,
           "kind": "import",
           "exportName": "QuizButton",
           "count": 1
         },
         {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 194,
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 174,
+          "kind": "render",
+          "exportName": "QuizButton",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 178,
+          "kind": "render",
+          "exportName": "QuizButton",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 228,
           "kind": "render",
           "exportName": "QuizButton",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 268,
+          "line": 12,
+          "kind": "import",
+          "exportName": "QuizButton",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 196,
           "kind": "render",
           "exportName": "QuizButton",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 275,
+          "line": 297,
           "kind": "render",
           "exportName": "QuizButton",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 348,
+          "line": 304,
           "kind": "render",
           "exportName": "QuizButton",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 349,
+          "line": 377,
+          "kind": "render",
+          "exportName": "QuizButton",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 378,
           "kind": "render",
           "exportName": "QuizButton",
           "count": 1
@@ -10645,14 +10645,14 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 9,
+          "line": 10,
           "kind": "import",
           "exportName": "DiagramFigureCard",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/index.tsx",
-          "line": 185,
+          "line": 187,
           "kind": "render",
           "exportName": "DiagramFigureCard",
           "count": 1
@@ -11401,14 +11401,14 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 9,
+          "line": 10,
           "kind": "import",
           "exportName": "QuestionFeedback",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 310,
+          "line": 339,
           "kind": "render",
           "exportName": "QuestionFeedback",
           "count": 1
@@ -11454,14 +11454,14 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 10,
+          "line": 11,
           "kind": "import",
           "exportName": "QuestionView",
           "count": 1
         },
         {
           "file": "app/quiz/[topic]/run.tsx",
-          "line": 301,
+          "line": 330,
           "kind": "render",
           "exportName": "QuestionView",
           "count": 1
@@ -11516,7 +11516,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 234,
+          "line": 236,
           "kind": "render",
           "exportName": "QuizToolbar",
           "count": 1
@@ -11757,14 +11757,14 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 43,
+          "line": 44,
           "kind": "render",
           "exportName": "OnboardingProvider",
           "count": 1
         },
         {
           "file": "app/_layout.tsx",
-          "line": 73,
+          "line": 76,
           "kind": "call",
           "exportName": "useOnboarding",
           "count": 1
@@ -11910,77 +11910,77 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/_layout.tsx",
-          "line": 21,
+          "line": 22,
           "kind": "import",
           "exportName": "QuizProgressProvider",
           "count": 1
         },
         {
           "file": "app/_layout.tsx",
-          "line": 46,
+          "line": 47,
           "kind": "render",
           "exportName": "QuizProgressProvider",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
-          "line": 22,
+          "line": 23,
           "kind": "import",
           "exportName": "useQuizProgress",
           "count": 1
         },
         {
           "file": "app/(tabs)/quiz.tsx",
+          "line": 108,
+          "kind": "call",
+          "exportName": "useQuizProgress",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 13,
+          "kind": "import",
+          "exportName": "useQuizProgress",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/index.tsx",
+          "line": 29,
+          "kind": "call",
+          "exportName": "useQuizProgress",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 15,
+          "kind": "import",
+          "exportName": "useQuizProgress",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
+          "line": 54,
+          "kind": "call",
+          "exportName": "useQuizProgress",
+          "count": 1
+        },
+        {
+          "file": "app/quiz/[topic]/run.tsx",
           "line": 106,
           "kind": "call",
           "exportName": "useQuizProgress",
           "count": 1
         },
         {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 12,
-          "kind": "import",
-          "exportName": "useQuizProgress",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/index.tsx",
-          "line": 27,
-          "kind": "call",
-          "exportName": "useQuizProgress",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 14,
-          "kind": "import",
-          "exportName": "useQuizProgress",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 52,
-          "kind": "call",
-          "exportName": "useQuizProgress",
-          "count": 1
-        },
-        {
-          "file": "app/quiz/[topic]/run.tsx",
-          "line": 104,
-          "kind": "call",
-          "exportName": "useQuizProgress",
-          "count": 1
-        },
-        {
           "file": "app/quiz/modul/[id].tsx",
-          "line": 7,
+          "line": 8,
           "kind": "import",
           "exportName": "useQuizProgress",
           "count": 1
         },
         {
           "file": "app/quiz/modul/[id].tsx",
-          "line": 22,
+          "line": 24,
           "kind": "call",
           "exportName": "useQuizProgress",
           "count": 1
@@ -12030,14 +12030,14 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/_layout.tsx",
-          "line": 23,
+          "line": 24,
           "kind": "import",
           "exportName": "AppStateProvider",
           "count": 1
         },
         {
           "file": "app/_layout.tsx",
-          "line": 39,
+          "line": 40,
           "kind": "render",
           "exportName": "AppStateProvider",
           "count": 1
@@ -12098,7 +12098,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 42,
+          "line": 43,
           "kind": "render",
           "exportName": "IliasAutoConnect",
           "count": 1
@@ -12151,7 +12151,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 40,
+          "line": 41,
           "kind": "render",
           "exportName": "IliasHeadlessProvider",
           "count": 1
@@ -12197,16 +12197,69 @@ export const COMPONENT_CATALOG = {
       "occurrences": [
         {
           "file": "app/_layout.tsx",
-          "line": 22,
+          "line": 23,
           "kind": "import",
           "exportName": "QueryProvider",
           "count": 1
         },
         {
           "file": "app/_layout.tsx",
-          "line": 44,
+          "line": 45,
           "kind": "render",
           "exportName": "QueryProvider",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "app/_layout.tsx"
+      ],
+      "usageCount": 1,
+      "importCount": 1,
+      "renderCount": 1,
+      "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
+      "id": "src/quiz/catalog-provider",
+      "name": "QuizCatalogProvider",
+      "category": "provider",
+      "file": "src/quiz/catalog-provider.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "src/quiz/catalog-provider.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "QuizCatalogProvider",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "app/_layout.tsx",
+          "line": 21,
+          "kind": "import",
+          "exportName": "QuizCatalogProvider",
+          "count": 1
+        },
+        {
+          "file": "app/_layout.tsx",
+          "line": 48,
+          "kind": "render",
+          "exportName": "QuizCatalogProvider",
           "count": 1
         }
       ],
@@ -12257,7 +12310,7 @@ export const COMPONENT_CATALOG = {
         },
         {
           "file": "app/_layout.tsx",
-          "line": 41,
+          "line": 42,
           "kind": "render",
           "exportName": "SessionRefresh",
           "count": 1

@@ -5,11 +5,12 @@ import { Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen } from '@/src/components/ui';
 import { initialAnswer } from '@/src/quiz/answer';
-import { findQuizQuestion, findQuizTopic, isMixedTopic } from '@/src/quiz/content';
+import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
+import { findQuizQuestion, findQuizTopic, findQuizTopicForQuestion, isMixedTopic } from '@/src/quiz/content';
 import { QuestionFeedback } from '@/src/quiz/components/question-feedback';
 import { QuestionView } from '@/src/quiz/components/question-view';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
-import { evaluateAnswer, isAnswerComplete } from '@/src/quiz/evaluate';
+import { describeGivenAnswer, evaluateAnswer, isAnswerComplete } from '@/src/quiz/evaluate';
 import { difficultyLabel, questionKindLabel } from '@/src/quiz/labels';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { questionsForMode } from '@/src/quiz/session';
@@ -48,6 +49,7 @@ function hasDraft(value: QuizAnswer | undefined): boolean {
 
 export default function QuizRunScreen() {
   const locale = useAppSelector((state) => state.locale);
+  useQuizCatalogVersion();
   const params = useLocalSearchParams<{ topic: string; mode?: string; fresh?: string }>();
   const { ready, activeSessions } = useQuizProgress();
   const topicId = firstParam(params.topic);
@@ -224,22 +226,40 @@ function QuizRound({
 
   const submit = () => {
     if (checked !== null || !isAnswerComplete(question, value)) return;
+    const attemptTopic = findQuizTopicForQuestion(question.id) ?? topic;
     const correct = evaluateAnswer(question, value);
     const nextResults = [...results, { questionId: question.id, correct }];
     setChecked(correct);
     setResults(nextResults);
-    recordAnswer(question.id, correct);
+    recordAnswer(question.id, correct, {
+      topicId: attemptTopic.id,
+      topicTitle: attemptTopic.title,
+      kind: question.kind,
+      prompt: question.prompt,
+      answer: value as QuizAnswer,
+      answerText: describeGivenAnswer(question, value, locale),
+      roundId: `${topic.id}:${new Date(startedAt).toISOString()}`,
+    });
     saveActiveSession(makeSession({ checked: correct, results: nextResults }));
   };
 
   const selfAssess = (correct: boolean) => {
     if (checked !== null || question.kind !== 'flashcard') return;
+    const attemptTopic = findQuizTopicForQuestion(question.id) ?? topic;
     const nextValue = correct ? ('known' as const) : ('unknown' as const);
     const nextResults = [...results, { questionId: question.id, correct }];
     setValue(nextValue);
     setChecked(correct);
     setResults(nextResults);
-    recordAnswer(question.id, correct);
+    recordAnswer(question.id, correct, {
+      topicId: attemptTopic.id,
+      topicTitle: attemptTopic.title,
+      kind: question.kind,
+      prompt: question.prompt,
+      answer: nextValue,
+      answerText: describeGivenAnswer(question, nextValue, locale),
+      roundId: `${topic.id}:${new Date(startedAt).toISOString()}`,
+    });
     saveActiveSession(makeSession({ value: nextValue, checked: correct, results: nextResults }));
   };
 
@@ -247,9 +267,18 @@ function QuizRound({
     if (checked === null) return;
     if (index + 1 >= questions.length) {
       const correctCount = results.filter((entry) => entry.correct).length;
-      recordSession({ topicId: topic.id, mode: activeMode, correct: correctCount, total: questions.length });
+      const duration = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+      recordSession({
+        topicId: topic.id,
+        topicTitle: topic.title,
+        mode: activeMode,
+        correct: correctCount,
+        total: questions.length,
+        durationSeconds: duration,
+        startedAt: new Date(startedAt).toISOString(),
+      });
       clearActiveSession(topic.id);
-      setDurationSeconds(Math.max(1, Math.round((Date.now() - startedAt) / 1000)));
+      setDurationSeconds(duration);
       setFinished(true);
       return;
     }

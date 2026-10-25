@@ -69,11 +69,12 @@ export function attachmentDisposition(filename) {
 }
 
 /** Static dashboard modules. The HTML shell carries the CSP; assets are inert. */
-export function sendAsset(response, body, contentType) {
+export function sendAsset(response, body, contentType, headers = {}) {
   response.writeHead(200, {
     'Content-Type': contentType,
     'Cache-Control': 'no-cache',
     'X-Content-Type-Options': 'nosniff',
+    ...headers,
   });
   response.end(body);
 }

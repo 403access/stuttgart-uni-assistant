@@ -18,9 +18,9 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Metric | Value |
 | --- | ---: |
-| Components | 76 |
-| Exports | 112 |
-| Usage references | 815 |
+| Components | 77 |
+| Exports | 113 |
+| Usage references | 816 |
 | Files with occurrences | 102 |
 | Unused components | 0 |
 | Imported but never used | 0 |
@@ -28,7 +28,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | Components with live previews | 32 |
 | Shared UI | 35 |
 | Feature components | 34 |
-| App-wide providers | 7 |
+| App-wide providers | 8 |
 
 ## Shared UI
 
@@ -83,7 +83,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `app/(tabs)/kalender.tsx`: 9 import `Button`; 9 import `Card`; 9 import `Muted`; 9 import `Pill`; 9 import `Screen`; 9 import `Section`; 125 render `Screen`; 127 render `Card`; 128 render `Muted`; 133 render `Card`; 134 render `Muted`; 137 render `Button`; 223 render `Section`; 224 render `Card`; 225 render `Muted`; 286 render `Pill`; 290 render `Pill`; 297 render `Pill`; 300 render `Pill`; 316 render `Pill`; 320 render `Pill`; 335 render `Pill`; 339 render `Pill`; 355 render `Pill`; 434 render `Muted`; 500 render `Muted`; 509 render `Pill`; 512 render `Pill`; 515 render `Pill`; 540 render `Muted`; 624 render `Pill`; 627 render `Pill`; 630 render `Pill`; 837 render `Section`; 842 render `Card`; 859 render `Button`; 861 render `Button`
 - `app/(tabs)/mail.tsx`: 8 import `Screen`; 167 render `Screen`
 - `app/(tabs)/mehr.tsx`: 11 import `Button`; 11 import `Card`; 11 import `InfoRow`; 11 import `listPosition`; 11 import `Screen`; 11 import `Section`; 225 render `InfoRow`; 230 call `listPosition`; 239 render `Section`; 246 render `Screen`; 282 render `Card`; 313 render `Card`; 385 render `Card`; 389 render `Button`; 395 render `Button`
-- `app/(tabs)/quiz.tsx`: 9 import `Card`; 9 import `Meter`; 9 import `Screen`; 9 import `Section`; 122 render `Screen`; 123 render `Card`; 285 render `Card`; 299 render `Meter`; 328 render `Section`; 351 render `Card`; 361 render `Section`; 362 render `Card`; 386 render `Screen`; 447 render `Screen`; 557 render `Meter`
+- `app/(tabs)/quiz.tsx`: 9 import `Card`; 9 import `Meter`; 9 import `Screen`; 9 import `Section`; 124 render `Screen`; 125 render `Card`; 287 render `Card`; 301 render `Meter`; 330 render `Section`; 353 render `Card`; 363 render `Section`; 364 render `Card`; 388 render `Screen`; 449 render `Screen`; 559 render `Meter`
 - `app/altklausuren.tsx`: 3 import `InfoRow`; 3 import `Screen`; 11 render `Screen`; 19 render `InfoRow`
 - `app/anforderungen.tsx`: 3 import `Card`; 3 import `Meter`; 3 import `Screen`; 18 render `Screen`; 23 render `Card`; 39 render `Card`; 45 render `Meter`
 - `app/anrechnung.tsx`: 5 import `Button`; 5 import `Card`; 5 import `InfoRow`; 5 import `Pill`; 5 import `Screen`; 60 render `Screen`; 67 render `Pill`; 70 render `Pill`; 84 render `Pill`; 89 render `Card`; 101 render `Card`; 108 render `Button`; 110 render `InfoRow`
@@ -124,9 +124,9 @@ Every component under `src/` with its exports, platform files, and every place i
 - `app/profil/index.tsx`: 4 import `Button`; 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 4 import `Section`; 23 render `Screen`; 28 render `Card`; 29 render `Button`; 33 render `Section`; 35 render `InfoRow`; 41 render `InfoRow`; 47 render `InfoRow`
 - `app/profil/sichtbarkeit.tsx`: 5 import `Button`; 5 import `Card`; 5 import `Screen`; 5 import `Section`; 29 render `Screen`; 34 render `Card`; 35 render `Button`; 40 render `Section`; 44 render `Card`; 88 render `Section`
 - `app/pruefung/[id].tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 16 render `Screen`; 23 render `Screen`; 25 render `Card`; 34 render `InfoRow`
-- `app/quiz/[topic]/index.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 33 render `Screen`; 35 render `Card`; 44 render `Screen`; 118 render `Screen`; 124 render `Card`; 138 render `Meter`; 144 render `Pill`; 166 render `Meter`; 187 render `Section`; 188 render `Card`; 235 render `Section`; 236 render `Card`
-- `app/quiz/[topic]/run.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 60 render `Screen`; 62 render `Card`; 71 render `Screen`; 189 render `Screen`; 280 render `Screen`; 286 render `Meter`; 288 render `Pill`; 289 render `Pill`; 342 render `Screen`; 353 render `Card`; 366 render `Meter`
-- `app/quiz/modul/[id].tsx`: 5 import `Card`; 5 import `Meter`; 5 import `Pill`; 5 import `Screen`; 5 import `Section`; 27 render `Screen`; 29 render `Card`; 38 render `Screen`; 73 render `Screen`; 76 render `Card`; 90 render `Meter`; 102 render `Section`; 129 render `Card`; 147 render `Meter`; 162 render `Pill`
+- `app/quiz/[topic]/index.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 35 render `Screen`; 37 render `Card`; 46 render `Screen`; 120 render `Screen`; 126 render `Card`; 140 render `Meter`; 146 render `Pill`; 168 render `Meter`; 189 render `Section`; 190 render `Card`; 237 render `Section`; 238 render `Card`
+- `app/quiz/[topic]/run.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 62 render `Screen`; 64 render `Card`; 73 render `Screen`; 191 render `Screen`; 309 render `Screen`; 315 render `Meter`; 317 render `Pill`; 318 render `Pill`; 371 render `Screen`; 382 render `Card`; 395 render `Meter`
+- `app/quiz/modul/[id].tsx`: 5 import `Card`; 5 import `Meter`; 5 import `Pill`; 5 import `Screen`; 5 import `Section`; 29 render `Screen`; 31 render `Card`; 40 render `Screen`; 75 render `Screen`; 78 render `Card`; 92 render `Meter`; 104 render `Section`; 131 render `Card`; 149 render `Meter`; 164 render `Pill`
 - `app/raum/[id].tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 17 render `Screen`; 26 render `Screen`; 28 render `Card`; 38 render `InfoRow`
 - `app/reihenfolge.tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 4 import `Section`; 17 render `Screen`; 22 render `Card`; 32 render `Section`; 36 render `InfoRow`; 49 render `Card`
 - `app/sicherheit.tsx`: 8 import `Button`; 8 import `Card`; 112 render `Card`; 130 render `Button`; 142 render `Button`
@@ -233,7 +233,7 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - `app/(tabs)/ilias.tsx`: 9 import `OptionRows`; 98 render `OptionRows`
 - `app/(tabs)/mail.tsx`: 15 import `OptionRows`; 88 render `OptionRows`; 101 render `OptionRows`; 112 render `OptionRows`; 114 render `OptionRows`
-- `app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 248 render `OptionRows`; 267 render `OptionRows`; 390 render `OptionRows`
+- `app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 250 render `OptionRows`; 269 render `OptionRows`; 392 render `OptionRows`
 - `src/components/dropdown-picker.tsx`: 8 import `OptionRows`; 44 render `OptionRows`
 
 ### toast
@@ -244,7 +244,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `showToast`
 - Usages: 6 references in 6 files
 
-- `app/_layout.tsx`: 13 import `ToastHost`; 49 render `ToastHost`
+- `app/_layout.tsx`: 13 import `ToastHost`; 52 render `ToastHost`
 - `app/ilias/[refId].tsx`: 7 import `showToast`; 155 call `showToast`
 - `app/ilias/datei.tsx`: 6 import `showToast`; 54 call `showToast`
 - `app/kurse.tsx`: 13 import `showToast`; 101 call `showToast`
@@ -274,7 +274,7 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - `app/(tabs)/ilias.tsx`: 8 import `DrawerPanel`; 195 render `DrawerPanel`
 - `app/(tabs)/mail.tsx`: 9 import `DrawerPanel`; 84 render `DrawerPanel`; 100 render `DrawerPanel`
-- `app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 420 render `DrawerPanel`; 438 render `DrawerPanel`
+- `app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 422 render `DrawerPanel`; 440 render `DrawerPanel`
 
 ### JsonTree
 
@@ -398,7 +398,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AppLock` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 12 import `AppLock`; 223 render `AppLock`
+- `app/_layout.tsx`: 12 import `AppLock`; 226 render `AppLock`
 
 ### CalendarHero
 
@@ -523,7 +523,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `WebHead` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 14 import `WebHead`; 196 render `WebHead`
+- `app/_layout.tsx`: 14 import `WebHead`; 199 render `WebHead`
 
 ### WebSidebar
 
@@ -532,7 +532,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `WebSidebar` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 15 import `WebSidebar`; 199 render `WebSidebar`
+- `app/_layout.tsx`: 15 import `WebSidebar`; 202 render `WebSidebar`
 
 ## Feature components
 
@@ -581,8 +581,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `QuizButton`
 - Usages: 8 references in 2 files
 
-- `app/quiz/[topic]/index.tsx`: 10 import `QuizButton`; 172 render `QuizButton`; 176 render `QuizButton`; 226 render `QuizButton`
-- `app/quiz/[topic]/run.tsx`: 11 import `QuizButton`; 194 render `QuizButton`; 268 render `QuizButton`; 275 render `QuizButton`; 348 render `QuizButton`; 349 render `QuizButton`
+- `app/quiz/[topic]/index.tsx`: 11 import `QuizButton`; 174 render `QuizButton`; 178 render `QuizButton`; 228 render `QuizButton`
+- `app/quiz/[topic]/run.tsx`: 12 import `QuizButton`; 196 render `QuizButton`; 297 render `QuizButton`; 304 render `QuizButton`; 377 render `QuizButton`; 378 render `QuizButton`
 
 ### mail-skeletons
 
@@ -726,7 +726,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `DiagramFigureCard` (component)
 - Usages: 1 reference in 1 file
 
-- `app/quiz/[topic]/index.tsx`: 9 import `DiagramFigureCard`; 185 render `DiagramFigureCard`
+- `app/quiz/[topic]/index.tsx`: 10 import `DiagramFigureCard`; 187 render `DiagramFigureCard`
 
 ### FlashcardView
 
@@ -857,7 +857,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `QuestionFeedback`
 - Usages: 1 reference in 1 file
 
-- `app/quiz/[topic]/run.tsx`: 9 import `QuestionFeedback`; 310 render `QuestionFeedback`
+- `app/quiz/[topic]/run.tsx`: 10 import `QuestionFeedback`; 339 render `QuestionFeedback`
 
 ### QuestionView
 
@@ -866,7 +866,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `QuestionView` (component)
 - Usages: 1 reference in 1 file
 
-- `app/quiz/[topic]/run.tsx`: 10 import `QuestionView`; 301 render `QuestionView`
+- `app/quiz/[topic]/run.tsx`: 11 import `QuestionView`; 330 render `QuestionView`
 
 ### QuizToolbar
 
@@ -876,7 +876,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `QuizToolbar`
 - Usages: 1 reference in 1 file
 
-- `app/(tabs)/quiz.tsx`: 21 import `QuizToolbar`; 234 render `QuizToolbar`
+- `app/(tabs)/quiz.tsx`: 21 import `QuizToolbar`; 236 render `QuizToolbar`
 
 ### SingleChoiceView
 
@@ -917,6 +917,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | `IliasAutoConnect` | `src/ilias/ilias-auto-connect.tsx` | Native + Web | – | IliasAutoConnect | 1 | 1 |
 | `IliasHeadlessProvider` | `src/ilias/ilias-headless-provider.tsx` | Native + Web | – | IliasHeadlessProvider | 1 | 1 |
 | `QueryProvider` | `src/query/client.tsx` | Native + Web | – | QueryProvider | 1 | 1 |
+| `QuizCatalogProvider` | `src/quiz/catalog-provider.tsx` | Native + Web | – | QuizCatalogProvider | 1 | 1 |
 | `SessionRefresh` | `src/auth/session-refresh.tsx` | Native + Web | – | SessionRefresh | 1 | 1 |
 
 ### OnboardingState
@@ -926,7 +927,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `OnboardingProvider` (component), `useOnboarding` (hook), `ONBOARDING_STORAGE_KEY` (constant), `readStoredOnboardingPreferences` (helper)
 - Usages: 8 references in 5 files
 
-- `app/_layout.tsx`: 20 import `OnboardingProvider`; 20 import `useOnboarding`; 43 render `OnboardingProvider`; 73 call `useOnboarding`
+- `app/_layout.tsx`: 20 import `OnboardingProvider`; 20 import `useOnboarding`; 44 render `OnboardingProvider`; 76 call `useOnboarding`
 - `app/dev/onboarding.tsx`: 10 import `ONBOARDING_STORAGE_KEY`; 11 import `readStoredOnboardingPreferences`; 12 import `useOnboarding`; 39 call `useOnboarding`; 44 call `readStoredOnboardingPreferences`; 98 reference `ONBOARDING_STORAGE_KEY`
 - `app/geraet-verknuepfen.tsx`: 16 import `useOnboarding`; 54 call `useOnboarding`
 - `app/onboarding.tsx`: 14 import `useOnboarding`; 43 call `useOnboarding`
@@ -939,11 +940,11 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `QuizProgressProvider` (component), `useQuizProgress` (hook), `QUIZ_PROGRESS_STORAGE_KEY` (constant)
 - Usages: 6 references in 5 files
 
-- `app/_layout.tsx`: 21 import `QuizProgressProvider`; 46 render `QuizProgressProvider`
-- `app/(tabs)/quiz.tsx`: 22 import `useQuizProgress`; 106 call `useQuizProgress`
-- `app/quiz/[topic]/index.tsx`: 12 import `useQuizProgress`; 27 call `useQuizProgress`
-- `app/quiz/[topic]/run.tsx`: 14 import `useQuizProgress`; 52 call `useQuizProgress`; 104 call `useQuizProgress`
-- `app/quiz/modul/[id].tsx`: 7 import `useQuizProgress`; 22 call `useQuizProgress`
+- `app/_layout.tsx`: 22 import `QuizProgressProvider`; 47 render `QuizProgressProvider`
+- `app/(tabs)/quiz.tsx`: 23 import `useQuizProgress`; 108 call `useQuizProgress`
+- `app/quiz/[topic]/index.tsx`: 13 import `useQuizProgress`; 29 call `useQuizProgress`
+- `app/quiz/[topic]/run.tsx`: 15 import `useQuizProgress`; 54 call `useQuizProgress`; 106 call `useQuizProgress`
+- `app/quiz/modul/[id].tsx`: 8 import `useQuizProgress`; 24 call `useQuizProgress`
 
 ### AppStateProvider
 
@@ -952,7 +953,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AppStateProvider` (component)
 - Usages: 1 reference in 2 files
 
-- `app/_layout.tsx`: 23 import `AppStateProvider`; 39 render `AppStateProvider`
+- `app/_layout.tsx`: 24 import `AppStateProvider`; 40 render `AppStateProvider`
 - `src/state/AppState.tsx`: 6 re-export `AppStateProvider`
 
 ### IliasAutoConnect
@@ -962,7 +963,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `IliasAutoConnect` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 18 import `IliasAutoConnect`; 42 render `IliasAutoConnect`
+- `app/_layout.tsx`: 18 import `IliasAutoConnect`; 43 render `IliasAutoConnect`
 
 ### IliasHeadlessProvider
 
@@ -971,7 +972,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `IliasHeadlessProvider` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 19 import `IliasHeadlessProvider`; 40 render `IliasHeadlessProvider`
+- `app/_layout.tsx`: 19 import `IliasHeadlessProvider`; 41 render `IliasHeadlessProvider`
 
 ### QueryProvider
 
@@ -980,7 +981,16 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `QueryProvider` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 22 import `QueryProvider`; 44 render `QueryProvider`
+- `app/_layout.tsx`: 23 import `QueryProvider`; 45 render `QueryProvider`
+
+### QuizCatalogProvider
+
+- File: `src/quiz/catalog-provider.tsx`
+- Category: App-wide providers
+- Exports: `QuizCatalogProvider` (component)
+- Usages: 1 reference in 1 file
+
+- `app/_layout.tsx`: 21 import `QuizCatalogProvider`; 48 render `QuizCatalogProvider`
 
 ### SessionRefresh
 
@@ -989,5 +999,5 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `SessionRefresh` (component)
 - Usages: 1 reference in 1 file
 
-- `app/_layout.tsx`: 10 import `SessionRefresh`; 41 render `SessionRefresh`
+- `app/_layout.tsx`: 10 import `SessionRefresh`; 42 render `SessionRefresh`
 

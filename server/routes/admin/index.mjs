@@ -11,6 +11,7 @@ import { dashboardAsset, dashboardPage } from './assets.mjs';
 import { handleAudit } from './audit.mjs';
 import { handleDevices } from './devices.mjs';
 import { handleLogs } from './logs.mjs';
+import { handleAdminQuiz } from './quiz.mjs';
 import { handleNews } from './news.mjs';
 import { handleSession } from './session.mjs';
 import { adminGate } from './shared.mjs';
@@ -36,6 +37,7 @@ export async function handleAdmin(request, response, url) {
   if (await handleUsers(request, response, url)) return true;
   if (handleLogs(request, response, url)) return true;
   if (await handleNews(request, response, url)) return true;
+  if (await handleAdminQuiz(request, response, url)) return true;
   if (handleDevices(request, response, url)) return true;
   if (handleAudit(request, response, url)) return true;
   if (handleSystem(request, response, url)) return true;

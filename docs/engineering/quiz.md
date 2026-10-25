@@ -1,11 +1,15 @@
 # Learning quiz
 
-The **Quiz** tab turns module content into practice questions. It is local-only:
-answers, streaks, and session history never leave the device.
+The **Quiz** tab turns module content into practice questions. It keeps working
+offline with the bundled catalog and a local progress store. When a user is
+signed in, checked answers and completed rounds are also synced to that account;
+the operator dashboard shows every answer across all users.
 
 Status: implemented. The tab is `app/(tabs)/quiz.tsx`, the topic overview is
 `app/quiz/[topic]/index.tsx`, a round is `app/quiz/[topic]/run.tsx`, and the
-reusable question views live in `src/quiz/components/`.
+reusable question views live in `src/quiz/components/`. The server catalog and
+analytics live in `server/quiz/`; the admin screens are
+`server/dashboard/pages/quiz.mjs`.
 
 ## Question kinds
 
@@ -76,6 +80,10 @@ Registered modules:
 
 - `ling` — Einführung in die Linguistik, three topics from the first session
   (56 questions).
+- `bpp` — Basic Phonetics and Phonology, three topics from the first session on
+  15 October 2026 (66 questions): the sagittal head with 14 labelled parts and
+  hotspot questions, phonetics/phonology basics, and IPA/transcription with the
+  vowel chart. The tab shows `Dr. Yulia Zuban · yulia.zuban@ling.uni-stuttgart.de`.
 - `phil` — Einführung in die Geschichte der Philosophie, three topics from the
   first lecture on 19 October 2026 (93 questions). The tab shows
   `Prof. Dr. Christian Martin · christian.martin@philo.uni-stuttgart.de`.
@@ -132,7 +140,9 @@ Generated quizzes are still content: review the questions and explanations
 before committing them. Only process material you are allowed to use, and do
 not commit generated questions from copyrighted lecture material without
 permission. They are committed source, not runtime data, so the app keeps
-working offline.
+working offline. After a content change, run `bun run quiz:export-catalog` and
+re-import the catalog in the dashboard if the server should pick it up before
+the next first-start seed.
 
 ### Free text checking
 
@@ -154,6 +164,41 @@ keywords: [
 ]
 ```
 
+## Server catalog and answer sync
+
+The app bundle stays the offline fallback; the running assistant server owns
+the live catalog:
+
+- `bun run quiz:export-catalog` writes `server/quiz/catalog.json` from the
+  bundled TypeScript content.
+- On startup, `seedQuizCatalog()` (`server/quiz/seed.mjs`) fills the quiz tables
+  only when they are empty. **Katalog neu importieren** on the dashboard's
+  Lernquiz page replaces the catalog from the snapshot; answers and rounds are
+  never deleted by an import.
+- `GET /v1/quiz/catalog` returns published modules, topics, and questions. The
+  app caches the response under `university-assistant/quiz-catalog/v1` and
+  installs it through `installQuizCatalog()`; a cached copy is used before the
+  network request, so the quiz still opens offline.
+- `POST /v1/quiz/sync` takes a bounded batch of checked answers and completed
+  rounds. The app queues them under `university-assistant/quiz-sync/v1` and
+  retries after sign-in, so an offline round is not lost. `clientId` makes the
+  upload idempotent.
+- Attempt rows snapshot the topic title, prompt, kind, raw answer JSON, and a
+  human-readable answer text. Editing or deleting a question therefore never
+  rewrites the answer history.
+
+The admin side exposes `GET /v1/admin/quiz/overview`, list/detail endpoints for
+topics and questions, `POST`/`DELETE` catalog mutations, `POST
+/v1/admin/quiz/seed`, and `GET /v1/admin/quiz/attempts` (with topic, user,
+correctness, and text filters plus `attempts/export.csv`). Rounds are under
+`/v1/admin/quiz/sessions`; a single account's history is available at
+`/v1/admin/quiz/users/:id`.
+
+Question-specific fields are edited as JSON on the dashboard. The server
+validates the shape for every kind before writing, so an invalid payload cannot
+reach the app. The bundled snapshot and the server catalog are checked for
+drift by `scripts/check-quiz.ts`.
+
 ## Rounds and progress
 
 `src/quiz/session.ts` builds a round:
@@ -167,7 +212,10 @@ Progress is stored separately from the app store under
 `university-assistant/quiz/v1` (`src/quiz/progress.tsx`). It keeps per-question
 attempts, correct counts, the last result, the latest 60 sessions, and one
 **active session per topic**. Keeping it separate means an older persisted app
-state still loads without migration.
+state still loads without migration. This local store remains the UI source of
+truth; the server copy is for the account history and the operator dashboard.
+Answers are queued only while a session token is active, and sign-out clears
+the queue.
 
 ## Interrupted rounds
 

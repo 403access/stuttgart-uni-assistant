@@ -15,7 +15,7 @@ import { syntaxModule } from './syntax';
  * modules so a module can never appear without a study: the quiz hub groups
  * modules by these entries and shows the study on every module screen.
  */
-export const quizStudies: QuizStudy[] = [
+const bundledStudies: QuizStudy[] = [
   {
     id: 'linguistik',
     title: l('Linguistik', 'Linguistics'),
@@ -42,7 +42,7 @@ function attachGenerated(module: QuizModule): QuizModule {
   return { ...module, topics: [...module.topics, ...generated] };
 }
 
-export const quizModules: QuizModule[] = [
+const bundledModules: QuizModule[] = [
   {
     id: 'ling',
     studyId: 'linguistik',
@@ -63,48 +63,81 @@ export const quizModules: QuizModule[] = [
   syntaxModule,
 ].map(attachGenerated);
 
-const allQuestions = quizModules.flatMap((module) =>
-  module.topics.flatMap((topic) => topic.questions),
-);
-
-/** Synthetic topic that pulls every question from every module into one shuffled round. */
-export const mixedTopic: QuizTopic = {
+/**
+ * The catalog is a live binding rather than a constant: the app starts with the
+ * bundled content, then the catalog provider swaps in the server version when
+ * it is reachable. Screens subscribe to `useQuizCatalogVersion()` so importing
+ * modules see the rebuilt arrays after an install.
+ */
+export let quizStudies: QuizStudy[] = bundledStudies;
+export let quizModules: QuizModule[] = bundledModules;
+export let studyMixedTopics: { study: QuizStudy; topic: QuizTopic }[] = [];
+export let mixedTopic: QuizTopic = {
   id: 'quiz-mixed',
   title: l('Gemischte Wiederholung', 'Mixed review'),
-  summary: l(
-    'Alle Themen aus allen Studiengängen in einer zufälligen Runde. Ideal, wenn die einzelnen Themen schon sitzen.',
-    'All topics from every degree program in one random round. Ideal once the individual topics feel familiar.',
-  ),
-  source: l('Alle Studiengänge · zufällige Auswahl', 'All degree programs · random selection'),
-  questions: allQuestions,
+  summary: l('', ''),
+  questions: [],
 };
+export let quizTopics: QuizTopic[] = [];
+
+function allQuestions(): QuizQuestion[] {
+  return quizModules.flatMap((module) => module.topics.flatMap((topic) => topic.questions));
+}
+
+function rebuildDerived(): void {
+  const questions = allQuestions();
+
+  /** Synthetic topic that pulls every question from every module into one shuffled round. */
+  mixedTopic = {
+    id: 'quiz-mixed',
+    title: l('Gemischte Wiederholung', 'Mixed review'),
+    summary: l(
+      'Alle Themen aus allen Studiengängen in einer zufälligen Runde. Ideal, wenn die einzelnen Themen schon sitzen.',
+      'All topics from every degree program in one random round. Ideal once the individual topics feel familiar.',
+    ),
+    source: l('Alle Studiengänge · zufällige Auswahl', 'All degree programs · random selection'),
+    questions,
+  };
+
+  /**
+   * One mixed round per study, so the study filter on the quiz hub also scopes
+   * the practice round instead of silently pulling in questions from elsewhere.
+   */
+  studyMixedTopics = quizStudies.map((study) => {
+    const modules = quizModulesForStudy(study.id);
+    return {
+      study,
+      topic: {
+        id: `quiz-mixed-${study.id}`,
+        title: l('Gemischte Wiederholung', 'Mixed review'),
+        summary: l(
+          `Alle Themen aus ${study.title.de} in einer zufälligen Runde. Ideal, wenn die einzelnen Themen schon sitzen.`,
+          `All topics from ${study.title.en} in one random round. Ideal once the individual topics feel familiar.`,
+        ),
+        source: l('Studiengang · zufällige Auswahl', 'Degree program · random selection'),
+        questions: modules.flatMap((module) => module.topics.flatMap((topic) => topic.questions)),
+      },
+    };
+  });
+
+  quizTopics = [
+    ...quizModules.flatMap((module) => module.topics),
+    ...studyMixedTopics.map((entry) => entry.topic),
+    mixedTopic,
+  ];
+}
+
+rebuildDerived();
 
 /**
- * One mixed round per study, so the study filter on the quiz hub also scopes
- * the practice round instead of silently pulling in questions from elsewhere.
+ * Installs a catalog fetched from the server (or from the offline cache).
+ * Passing the bundled arrays restores the fallback.
  */
-export const studyMixedTopics: { study: QuizStudy; topic: QuizTopic }[] = quizStudies.map((study) => {
-  const modules = quizModulesForStudy(study.id);
-  return {
-    study,
-    topic: {
-      id: `quiz-mixed-${study.id}`,
-      title: l('Gemischte Wiederholung', 'Mixed review'),
-      summary: l(
-        `Alle Themen aus ${study.title.de} in einer zufälligen Runde. Ideal, wenn die einzelnen Themen schon sitzen.`,
-        `All topics from ${study.title.en} in one random round. Ideal once the individual topics feel familiar.`,
-      ),
-      source: l('Studiengang · zufällige Auswahl', 'Degree program · random selection'),
-      questions: modules.flatMap((module) => module.topics.flatMap((topic) => topic.questions)),
-    },
-  };
-});
-
-export const quizTopics: QuizTopic[] = [
-  ...quizModules.flatMap((module) => module.topics),
-  ...studyMixedTopics.map((entry) => entry.topic),
-  mixedTopic,
-];
+export function installQuizCatalog(studies: QuizStudy[], modules: QuizModule[]): void {
+  quizStudies = studies;
+  quizModules = modules;
+  rebuildDerived();
+}
 
 /** Whether a topic is one of the synthetic mixed rounds (all studies or one study). */
 export function isMixedTopic(topicId: string | undefined): boolean {
@@ -140,5 +173,15 @@ export function quizModulesForStudy(studyId: string): QuizModule[] {
 }
 
 export function findQuizQuestion(questionId: string): QuizQuestion | undefined {
-  return allQuestions.find((question) => question.id === questionId);
+  return allQuestions().find((question) => question.id === questionId);
+}
+
+/** The real topic a question belongs to, even when it was answered in a mixed round. */
+export function findQuizTopicForQuestion(questionId: string): QuizTopic | undefined {
+  for (const module of quizModules) {
+    for (const topic of module.topics) {
+      if (topic.questions.some((question) => question.id === questionId)) return topic;
+    }
+  }
+  return undefined;
 }

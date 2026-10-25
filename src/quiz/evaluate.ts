@@ -198,3 +198,77 @@ export function describeCorrectAnswer(question: QuizQuestion, locale: Locale): s
       return pick(question.back, locale);
   }
 }
+
+/**
+ * Human-readable version of what the learner actually answered. The run screen
+ * sends this with the synced attempt so the admin dashboard can show an answer
+ * without re-implementing every question kind.
+ */
+export function describeGivenAnswer(
+  question: QuizQuestion,
+  answer: QuizAnswer | undefined,
+  locale: Locale,
+): string {
+  if (answer === undefined || answer === null || answer === '') return '';
+  switch (question.kind) {
+    case 'single': {
+      const option = question.options.find((entry) => entry.id === answer);
+      return option ? pick(option.label, locale) : String(answer);
+    }
+    case 'multiple': {
+      if (!Array.isArray(answer)) return '';
+      return question.options
+        .filter((option) => answer.includes(option.id))
+        .map((option) => pick(option.label, locale))
+        .join(', ');
+    }
+    case 'true-false':
+      return answer === true ? tx(locale, 'quiz.true') : tx(locale, 'quiz.false');
+    case 'free-text':
+      return typeof answer === 'string' ? answer : '';
+    case 'matching': {
+      if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return '';
+      return question.pairs
+        .flatMap((pair) => {
+          const rightId = (answer as Record<string, string>)[pair.id];
+          const right = question.pairs.find((entry) => entry.id === rightId);
+          return right ? [`${pick(pair.left, locale)} → ${pick(right.right, locale)}`] : [];
+        })
+        .join(' · ');
+    }
+    case 'ordering': {
+      if (!Array.isArray(answer)) return '';
+      return answer
+        .flatMap((id) => {
+          const item = question.items.find((entry) => entry.id === id);
+          return item ? [pick(item.label, locale)] : [];
+        })
+        .join(' → ');
+    }
+    case 'cloze': {
+      if (!Array.isArray(answer)) return '';
+      return answer
+        .map((value, index) => `${index + 1}: ${value || '–'}`)
+        .join(' · ');
+    }
+    case 'map': {
+      if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return '';
+      const assignments = answer as Record<string, string>;
+      return question.regions
+        .flatMap((region) => {
+          const zone = question.zones.find((entry) => entry.id === assignments[region.id]);
+          return zone ? [`${pick(region.label, locale)} → ${pick(zone.label, locale)}`] : [];
+        })
+        .join(' · ');
+    }
+    case 'diagram': {
+      if (!Array.isArray(answer)) return '';
+      return question.regions
+        .filter((region) => answer.includes(region.id))
+        .map((region) => pick(region.label, locale))
+        .join(', ');
+    }
+    case 'flashcard':
+      return tx(locale, answer === 'known' ? 'quiz.flashcard_known' : 'quiz.flashcard_again');
+  }
+}

@@ -11,6 +11,7 @@ import {
   type AuthSession,
 } from '@/src/auth/session';
 import { clearCampusHarvest } from '@/src/auth/vault';
+import { clearQuizSyncQueue } from '@/src/quiz/remote';
 import { getAppState, patchApp } from '@/src/state/app-store';
 import { sessionFields } from '@/src/state/persisted';
 import type { PersistedState, UserAccount } from '@/src/types';
@@ -54,6 +55,7 @@ export function adoptAuthSession(token: string, user: UserAccount, sessionId: st
 /** Drop this device's session after the server rejected it and no re-login worked. */
 export async function clearLocalSession(): Promise<void> {
   await clearAuthSession();
+  await clearQuizSyncQueue();
   void clearMailCache();
   setActiveAuthToken(null);
   patchApp({ ...signedOutFields, authToken: null, authSessionId: null });
@@ -65,6 +67,7 @@ export function signOut(): void {
   void clearAuthSession();
   void clearCampusHarvest();
   void clearMailCache();
+  void clearQuizSyncQueue();
   setActiveAuthToken(null);
   patchApp({
     ...signedOutFields,

@@ -95,6 +95,7 @@ Implementation details are in [onboarding.md](onboarding.md).
 | Reviews and recognition drafts | Stay in Async Storage unless a later feature adds them to the fact sheet |
 | Mail rows, body text and attachments | Travel between the app and the assistant server over the configured assistant URL; the server talks IMAP/SMTP. Attachments are only held in memory during submission |
 | Mail drafts and recipient history | Stay in Async Storage on the device and are cleared on sign-out; large attachments are not stored in drafts |
+| Quiz answers, correctness, topic/question snapshots, and completed rounds | Sent to the assistant server when signed in (`POST /v1/quiz/sync`) and stored under the account for the operator dashboard. Prepared offline answers sit in a device queue and are cleared on sign-out |
 
 The fact sheet is capped at 24,000 characters. The assistant request body is capped at 200 KB; the mail send route separately accepts up to 12 MB so attachments fit as base64.
 
@@ -105,6 +106,8 @@ Without a key the server answers `/v1/assist` with 503 and the client keeps the 
 ## What stays on the device
 
 Async Storage key `university-assistant/v1` holds language, session account, the server user record and its platform links, the mapped C@MPUS curriculum nodes, the mapped C@MPUS study list, sync timestamps, download ids, imports (including note text), reviews, recognition drafts, chat, and planned module ids. The nodes and the study list are names and ids from one response each, not the bearer token.
+
+Quiz data uses separate keys: `university-assistant/quiz/v1` for local progress, active rounds, and session history; `university-assistant/quiz-catalog/v1` for the cached server catalog; and `university-assistant/quiz-sync/v1` for answers waiting to be uploaded. The catalog cache is public content. The sync queue is cleared on sign-out so a previous account's free-text answers cannot be attributed to the next sign-in.
 
 Async Storage key `university-assistant/onboarding.v2` holds the one-time onboarding timestamp and the App Lock boolean. It is device-level rather than account-level, survives sign-out and a local reset, and contains no biometric data.
 
@@ -126,7 +129,7 @@ Peer sharing sets `shared: true` on the local import. It does not upload. A futu
 
 ## Network surface of the proxy
 
-The server listens on `0.0.0.0` so a phone on the same LAN can connect. CORS allows any origin. That matches Expo web on a different port during development. A public host should restrict the origin, terminate TLS, and not leave the process open on a raw port without authentication. The demo server has no auth on `/v1/assist`. It also has no auth on `POST /v1/auth/session`, which creates a `demo` or `local` user; campus and OIDC users are only created by their verified routes. Every other campus route requires the app bearer token and reads only that user's rows. Anyone who can reach the server and who has placed a key in the environment can spend that key. The operator dashboard is gated by `DASHBOARD_TOKEN`; leave it unset to keep the dashboard disabled, and do not expose `/admin` or `/v1/admin/*` on a public host without TLS. Run it on localhost unless you intend the LAN demo.
+The server listens on `0.0.0.0` so a phone on the same LAN can connect. CORS allows any origin. That matches Expo web on a different port during development. A public host should restrict the origin, terminate TLS, and not leave the process open on a raw port without authentication. The demo server has no auth on `/v1/assist`. It also has no auth on `POST /v1/auth/session`, which creates a `demo` or `local` user; campus and OIDC users are only created by their verified routes. `GET /v1/quiz/catalog` is a public read-only quiz catalog; `POST /v1/quiz/sync` requires the app bearer token and writes only that user's answers. Every other campus route requires the app bearer token and reads only that user's rows. Anyone who can reach the server and who has placed a key in the environment can spend that key. The operator dashboard is gated by `DASHBOARD_TOKEN`; leave it unset to keep the dashboard disabled, and do not expose `/admin` or `/v1/admin/*` on a public host without TLS. Run it on localhost unless you intend the LAN demo.
 
 ## Identity of the binary
 

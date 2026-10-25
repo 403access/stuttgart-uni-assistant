@@ -72,11 +72,26 @@ const ERROR_TEXT = {
   bad_news_date: 'Ungültiges Datum.',
   bad_news_state: 'Ungültiger Veröffentlichungsstatus.',
   unknown_news: 'Die Meldung existiert nicht mehr.',
+  quiz_topic_exists: 'Ein Thema mit dieser ID existiert bereits.',
+  quiz_question_exists: 'Eine Frage mit dieser ID existiert bereits.',
+  quiz_id_taken: 'Diese ID ist bereits vergeben.',
+  quiz_id_invalid: 'Die ID darf nur Buchstaben, Zahlen, Bindestriche und Unterstriche enthalten.',
+  quiz_module_unknown: 'Das ausgewählte Modul existiert nicht.',
+  quiz_topic_unknown: 'Das Thema existiert nicht mehr.',
+  quiz_question_unknown: 'Die Frage existiert nicht mehr.',
+  quiz_kind_invalid: 'Unbekannter Fragetyp.',
+  quiz_payload_invalid: 'Die Antwort-JSON ist ungültig.',
+  quiz_text_missing: 'Titel und Zusammenfassung sind erforderlich.',
+  quiz_figure_invalid: 'Das Schaubild-JSON ist ungültig.',
 };
 
 export function errorText(error) {
   if (!error) return 'Unbekannter Fehler.';
-  if (error.code && ERROR_TEXT[error.code]) return ERROR_TEXT[error.code];
+  if (error.code && ERROR_TEXT[error.code]) {
+    return error.detail && String(error.code).startsWith('quiz_')
+      ? ERROR_TEXT[error.code] + ' (' + error.detail + ')'
+      : ERROR_TEXT[error.code];
+  }
   if (error.detail) return error.detail;
   if (error.message && error.message !== 'undefined') return error.message;
   return 'Aktion fehlgeschlagen.';

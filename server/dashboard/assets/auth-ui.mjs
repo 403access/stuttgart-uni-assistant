@@ -21,6 +21,7 @@ export function setPage(title, subtitle) {
 export function navFor(name) {
   if (name === 'user') return 'users';
   if (name === 'device') return 'devices';
+  if (name.startsWith('quiz')) return 'quiz';
   return name;
 }
 

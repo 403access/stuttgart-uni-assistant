@@ -15,6 +15,7 @@ export const SERVICE_NAMES = {
   admin: 'Verwaltung',
   http: 'HTTP',
   server: 'Server',
+  quiz: 'Lernquiz',
 };
 export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'];
 export const LOG_LEVEL_NAMES = { debug: 'Debug', info: 'Info', warn: 'Warnung', error: 'Fehler' };
@@ -55,6 +56,14 @@ export const AUDIT_LABELS = {
   'news.create': 'Meldung angelegt',
   'news.update': 'Meldung geändert',
   'news.delete': 'Meldung gelöscht',
+  'quiz.topic.create': 'Quiz-Thema angelegt',
+  'quiz.topic.update': 'Quiz-Thema geändert',
+  'quiz.topic.delete': 'Quiz-Thema gelöscht',
+  'quiz.question.create': 'Quiz-Frage angelegt',
+  'quiz.question.update': 'Quiz-Frage geändert',
+  'quiz.question.delete': 'Quiz-Frage gelöscht',
+  'quiz.module.update': 'Quiz-Modul geändert',
+  'quiz.catalog.seed': 'Quiz-Katalog importiert',
 };
-export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect', 'news.delete', 'logs.clear']);
+export const DANGEROUS_ACTIONS = new Set(['user.delete', 'portal.clear_all', 'portal.clear_study', 'calendar.clear', 'calls.clear', 'session.revoke_all', 'device.revoke', 'campus.disconnect', 'ilias.disconnect', 'mail.disconnect', 'news.delete', 'quiz.topic.delete', 'quiz.question.delete', 'quiz.catalog.seed', 'logs.clear']);
 

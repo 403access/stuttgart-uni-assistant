@@ -36,6 +36,23 @@ export {
 } from './mutations.mjs';
 export { adminStats } from './overview.mjs';
 export {
+  adminQuizModules,
+  adminQuizOverview,
+  adminUserQuiz,
+  createAdminQuizQuestion,
+  createAdminQuizTopic,
+  deleteAdminQuizQuestion,
+  deleteAdminQuizTopic,
+  getAdminQuizTopic,
+  listAdminQuizAttempts,
+  listAdminQuizSessions,
+  listAdminQuizTopics,
+  quizAttemptsCsv,
+  updateAdminQuizModule,
+  updateAdminQuizQuestion,
+  updateAdminQuizTopic,
+} from '../quiz/catalog.mjs';
+export {
   ADMIN_COOKIE,
   adminAuthorized,
   adminConfigured,

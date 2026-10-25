@@ -300,6 +300,120 @@ export function getDb() {
       updated_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS news_items_state ON news_items(published, date DESC);
+    /* Quiz catalog. Seeded from server/quiz/catalog.json on server start, then
+       owned by the admin dashboard. The bundled TypeScript content remains the
+       app's offline fallback. Attempts and sessions are never deleted with the
+       catalog: they keep the prompt/title snapshot an operator needs. */
+    CREATE TABLE IF NOT EXISTS quiz_studies (
+      id TEXT PRIMARY KEY,
+      title_de TEXT NOT NULL DEFAULT '',
+      title_en TEXT NOT NULL DEFAULT '',
+      degree_de TEXT NOT NULL DEFAULT '',
+      degree_en TEXT NOT NULL DEFAULT '',
+      color TEXT NOT NULL DEFAULT '',
+      sort_order INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS quiz_modules (
+      id TEXT PRIMARY KEY,
+      study_id TEXT NOT NULL,
+      semester INTEGER NOT NULL DEFAULT 1,
+      title_de TEXT NOT NULL DEFAULT '',
+      title_en TEXT NOT NULL DEFAULT '',
+      subtitle_de TEXT NOT NULL DEFAULT '',
+      subtitle_en TEXT NOT NULL DEFAULT '',
+      lecturer TEXT,
+      email TEXT,
+      published INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (study_id) REFERENCES quiz_studies(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS quiz_modules_study ON quiz_modules(study_id, sort_order);
+    CREATE TABLE IF NOT EXISTS quiz_topics (
+      id TEXT PRIMARY KEY,
+      module_id TEXT NOT NULL,
+      title_de TEXT NOT NULL DEFAULT '',
+      title_en TEXT NOT NULL DEFAULT '',
+      summary_de TEXT NOT NULL DEFAULT '',
+      summary_en TEXT NOT NULL DEFAULT '',
+      meeting_de TEXT NOT NULL DEFAULT '',
+      meeting_en TEXT NOT NULL DEFAULT '',
+      source_de TEXT NOT NULL DEFAULT '',
+      source_en TEXT NOT NULL DEFAULT '',
+      figure TEXT,
+      published INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (module_id) REFERENCES quiz_modules(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS quiz_topics_module ON quiz_topics(module_id, sort_order);
+    CREATE INDEX IF NOT EXISTS quiz_topics_state ON quiz_topics(published, module_id);
+    CREATE TABLE IF NOT EXISTS quiz_questions (
+      id TEXT PRIMARY KEY,
+      topic_id TEXT NOT NULL,
+      kind TEXT NOT NULL DEFAULT 'single',
+      difficulty INTEGER NOT NULL DEFAULT 2,
+      prompt_de TEXT NOT NULL DEFAULT '',
+      prompt_en TEXT NOT NULL DEFAULT '',
+      hint_de TEXT NOT NULL DEFAULT '',
+      hint_en TEXT NOT NULL DEFAULT '',
+      explanation_de TEXT NOT NULL DEFAULT '',
+      explanation_en TEXT NOT NULL DEFAULT '',
+      payload TEXT NOT NULL DEFAULT '{}',
+      published INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (topic_id) REFERENCES quiz_topics(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS quiz_questions_topic ON quiz_questions(topic_id, sort_order);
+    CREATE INDEX IF NOT EXISTS quiz_questions_state ON quiz_questions(published, topic_id);
+    /* One row per checked answer. client_id makes the offline queue
+       idempotent; the prompt and topic title are snapshots so deleting or
+       editing a question never rewrites the answer history. */
+    CREATE TABLE IF NOT EXISTS quiz_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id TEXT NOT NULL,
+      user_id TEXT,
+      topic_id TEXT NOT NULL,
+      topic_title_de TEXT NOT NULL DEFAULT '',
+      topic_title_en TEXT NOT NULL DEFAULT '',
+      question_id TEXT NOT NULL,
+      kind TEXT NOT NULL DEFAULT '',
+      prompt_de TEXT NOT NULL DEFAULT '',
+      prompt_en TEXT NOT NULL DEFAULT '',
+      answer_json TEXT NOT NULL DEFAULT 'null',
+      answer_text TEXT NOT NULL DEFAULT '',
+      correct INTEGER NOT NULL DEFAULT 0,
+      answered_at TEXT NOT NULL,
+      round_id TEXT,
+      received_at TEXT NOT NULL,
+      UNIQUE (user_id, client_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS quiz_attempts_user ON quiz_attempts(user_id, id DESC);
+    CREATE INDEX IF NOT EXISTS quiz_attempts_topic ON quiz_attempts(topic_id, id DESC);
+    CREATE INDEX IF NOT EXISTS quiz_attempts_question ON quiz_attempts(question_id, id DESC);
+    CREATE INDEX IF NOT EXISTS quiz_attempts_time ON quiz_attempts(answered_at DESC, id DESC);
+    CREATE TABLE IF NOT EXISTS quiz_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      topic_id TEXT NOT NULL,
+      topic_title_de TEXT NOT NULL DEFAULT '',
+      topic_title_en TEXT NOT NULL DEFAULT '',
+      mode TEXT NOT NULL DEFAULT '',
+      correct INTEGER NOT NULL DEFAULT 0,
+      total INTEGER NOT NULL DEFAULT 0,
+      duration_seconds INTEGER,
+      started_at TEXT NOT NULL,
+      finished_at TEXT NOT NULL,
+      received_at TEXT NOT NULL,
+      UNIQUE (user_id, client_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS quiz_sessions_user ON quiz_sessions(user_id, id DESC);
+    CREATE INDEX IF NOT EXISTS quiz_sessions_topic ON quiz_sessions(topic_id, id DESC);
+    CREATE INDEX IF NOT EXISTS quiz_sessions_time ON quiz_sessions(finished_at DESC, id DESC);
     /* Every operator mutation. No foreign key on purpose: the row survives a
        deleted account and keeps the account name it had at the time. */
     CREATE TABLE IF NOT EXISTS admin_audit (

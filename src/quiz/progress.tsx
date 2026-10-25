@@ -4,8 +4,17 @@ import { useSelector } from '@tanstack/react-store';
 import { useEffect, type ReactNode } from 'react';
 
 import { uid } from '@/src/text';
+import type { Localized } from '@/src/types';
 
-import type { ActiveQuizSession, QuestionProgress, QuizMode, QuizSessionRecord } from './types';
+import { enqueueQuizAttempt, enqueueQuizSession } from './remote';
+import type {
+  ActiveQuizSession,
+  QuestionProgress,
+  QuizAnswer,
+  QuizMode,
+  QuizQuestionKind,
+  QuizSessionRecord,
+} from './types';
 
 export const QUIZ_PROGRESS_STORAGE_KEY = 'university-assistant/quiz/v1';
 const MAX_SESSIONS = 60;
@@ -21,9 +30,25 @@ interface QuizProgressState extends StoredProgress {
   ready: boolean;
 }
 
+interface AnswerDetails {
+  topicId: string;
+  topicTitle: Localized;
+  kind: QuizQuestionKind;
+  prompt: Localized;
+  answer: QuizAnswer;
+  answerText: string;
+  roundId?: string;
+}
+
+interface SessionDetails extends Omit<QuizSessionRecord, 'id' | 'at'> {
+  durationSeconds?: number;
+  startedAt?: string;
+  topicTitle?: Localized;
+}
+
 interface QuizProgressValue extends QuizProgressState {
-  recordAnswer: (questionId: string, correct: boolean) => void;
-  recordSession: (session: Omit<QuizSessionRecord, 'id' | 'at'>) => void;
+  recordAnswer: (questionId: string, correct: boolean, details?: AnswerDetails) => void;
+  recordSession: (session: SessionDetails) => void;
   saveActiveSession: (session: ActiveQuizSession) => void;
   clearActiveSession: (topicId: string) => void;
   resetProgress: () => void;
@@ -84,7 +109,7 @@ function parseStored(raw: string | null): StoredProgress {
 
 /** Stable action handles; usable from components and plain modules alike. */
 export const quizProgressActions = {
-  recordAnswer(questionId: string, correct: boolean) {
+  recordAnswer(questionId: string, correct: boolean, details?: AnswerDetails) {
     const at = new Date().toISOString();
     quizProgressStore.setState((current) => {
       const previous = current.attempts[questionId];
@@ -101,12 +126,43 @@ export const quizProgressActions = {
         },
       };
     });
+    if (details) {
+      void enqueueQuizAttempt({
+        clientId: uid('quiz-a'),
+        topicId: details.topicId,
+        topicTitle: details.topicTitle,
+        questionId,
+        kind: details.kind,
+        prompt: details.prompt,
+        answer: details.answer,
+        answerText: details.answerText,
+        correct,
+        answeredAt: at,
+        roundId: details.roundId,
+      });
+    }
   },
-  recordSession(session: Omit<QuizSessionRecord, 'id' | 'at'>) {
+  recordSession(session: SessionDetails) {
+    const at = new Date().toISOString();
+    const { durationSeconds, startedAt, topicTitle, ...record } = session;
+    const entry = { ...record, id: uid('quiz'), at };
     quizProgressStore.setState((current) => ({
       ...current,
-      sessions: [{ ...session, id: uid('quiz'), at: new Date().toISOString() }, ...current.sessions].slice(0, MAX_SESSIONS),
+      sessions: [entry, ...current.sessions].slice(0, MAX_SESSIONS),
     }));
+    if (topicTitle) {
+      void enqueueQuizSession({
+        clientId: entry.id,
+        topicId: entry.topicId,
+        topicTitle,
+        mode: entry.mode,
+        correct: entry.correct,
+        total: entry.total,
+        durationSeconds,
+        startedAt: startedAt ?? entry.at,
+        finishedAt: entry.at,
+      });
+    }
   },
   saveActiveSession(session: ActiveQuizSession) {
     quizProgressStore.setState((current) => ({

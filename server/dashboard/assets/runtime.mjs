@@ -12,6 +12,11 @@ export const state = {
   },
   devices: { query: '', state: '', limit: 50, offset: 0, list: [], total: 0, stats: null, seq: 0 },
   news: { query: '', state: '', limit: 50, offset: 0, list: [], total: 0 },
+  quiz: {
+    query: '', moduleId: '', published: '', limit: 50, offset: 0, list: [], total: 0, overview: null,
+    attempts: { query: '', topicId: '', correct: '', limit: 50, offset: 0, list: [], total: 0, stats: null },
+    sessions: { query: '', topicId: '', limit: 50, offset: 0, list: [], total: 0 },
+  },
   ilias: null,
   audit: { query: '', action: '', userId: '', limit: 50, offset: 0, list: [], total: 0, actions: [], seq: 0 },
   logs: { query: '', service: '', level: '', offset: 0, limit: 100, list: [], total: 0, services: [], levels: [], auto: false },

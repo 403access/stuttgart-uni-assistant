@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { initialAnswer } from '../src/quiz/answer';
 import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '../src/quiz/content';
 import { generatedTopics } from '../src/quiz/content/generated';
-import { evaluateAnswer, isAnswerComplete, matchesAccepted } from '../src/quiz/evaluate';
+import { describeGivenAnswer, evaluateAnswer, isAnswerComplete, matchesAccepted } from '../src/quiz/evaluate';
 import { questionKindLabel } from '../src/quiz/labels';
 import { questionsForMode, statsForQuestions } from '../src/quiz/session';
 import type { QuestionProgress, QuizAnswer, QuizQuestion, QuizQuestionKind } from '../src/quiz/types';
@@ -15,6 +18,10 @@ function expect(condition: boolean, message: string) {
   } else {
     console.log('ok', message);
   }
+}
+
+function pickLabel(option: { label: { de: string; en: string } }): string {
+  return option.label.de;
 }
 
 function blankCount(question: Extract<QuizQuestion, { kind: 'cloze' }>): number {
@@ -349,6 +356,43 @@ if (clozeQuestion?.kind === 'cloze') {
     answer.length === blankCount(clozeQuestion) && answer.every((entry) => entry === ''),
     'cloze starts with one empty field per blank',
   );
+}
+
+// The server seeds its database from this snapshot. A content change without a
+// fresh export would leave the admin-managed catalog behind the app bundle.
+const snapshot = JSON.parse(readFileSync(resolve('server/quiz/catalog.json'), 'utf8')) as {
+  studies: unknown;
+  modules: unknown;
+};
+expect(
+  JSON.stringify(snapshot.studies) === JSON.stringify(quizStudies),
+  'server quiz snapshot studies match the bundled content (run npm run quiz:export-catalog)',
+);
+expect(
+  JSON.stringify(snapshot.modules) === JSON.stringify(quizModules),
+  'server quiz snapshot modules match the bundled content (run npm run quiz:export-catalog)',
+);
+
+const diagramQuestion = allQuestions.find((question) => question.kind === 'diagram');
+if (diagramQuestion?.kind === 'diagram') {
+  const region = diagramQuestion.regions.find((entry) => diagramQuestion.correctIds.includes(entry.id));
+  expect(Boolean(region), 'diagram question has a correct region');
+  if (region) {
+    expect(
+      describeGivenAnswer(diagramQuestion, [region.id], 'de').includes(region.label.de),
+      'diagram answer description names the selected structure',
+    );
+  }
+}
+const singleQuestion = allQuestions.find((question) => question.kind === 'single');
+if (singleQuestion?.kind === 'single') {
+  const option = singleQuestion.options.find((entry) => entry.id === singleQuestion.correctId);
+  if (option) {
+    expect(
+      describeGivenAnswer(singleQuestion, singleQuestion.correctId, 'de') === pickLabel(option),
+      'single answer description uses the option label',
+    );
+  }
 }
 
 if (failures.length) {

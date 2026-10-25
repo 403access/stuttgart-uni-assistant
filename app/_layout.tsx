@@ -18,6 +18,7 @@ import { useResponsive } from '@/src/hooks/use-responsive';
 import { IliasAutoConnect } from '@/src/ilias/ilias-auto-connect';
 import { IliasHeadlessProvider } from '@/src/ilias/ilias-headless-provider';
 import { OnboardingProvider, useOnboarding } from '@/src/onboarding/OnboardingState';
+import { QuizCatalogProvider } from '@/src/quiz/catalog-provider';
 import { QuizProgressProvider } from '@/src/quiz/progress';
 import { QueryProvider } from '@/src/query/client';
 import { AppStateProvider, useAppSelector, appActions } from '@/src/state/AppState';
@@ -44,7 +45,9 @@ export default function RootLayout() {
           <QueryProvider>
             <KeyboardProvider>
               <QuizProgressProvider>
-                <Gate />
+                <QuizCatalogProvider>
+                  <Gate />
+                </QuizCatalogProvider>
               </QuizProgressProvider>
               <ToastHost />
             </KeyboardProvider>

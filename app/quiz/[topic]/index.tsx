@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
+import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { findQuizTopic, isMixedTopic } from '@/src/quiz/content';
 import { DiagramFigureCard } from '@/src/quiz/components/diagram-figure';
 import { QuizButton } from '@/src/quiz/components/quiz-button';
@@ -23,6 +24,7 @@ function parseMode(value: string | undefined): QuizMode {
 
 export default function QuizTopicOverviewScreen() {
   const locale = useAppSelector((state) => state.locale);
+  useQuizCatalogVersion();
   const params = useLocalSearchParams<{ topic: string; mode?: string }>();
   const { ready, attempts, sessions, activeSessions, clearActiveSession } = useQuizProgress();
   const topicId = firstParam(params.topic);

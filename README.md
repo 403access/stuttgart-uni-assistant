@@ -93,7 +93,7 @@ bun run quiz:from-pdf --module prag ./sitzung-2.pdf
 bun run quiz:from-pdf --module phil ./pdfs/ --questions 12 --dry-run
 ```
 
-Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--force` replaces an existing generated topic. The full options, validation rules, and review checklist are in [docs/engineering/quiz.md](docs/engineering/quiz.md).
+Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--force` replaces an existing generated topic. After changing quiz content, export the server snapshot with `bun run quiz:export-catalog`; the assistant seeds its quiz tables from it on first start, and the admin dashboard can re-import it under **Lernquiz**. The full options, validation rules, and review checklist are in [docs/engineering/quiz.md](docs/engineering/quiz.md).
 
 ## Where things live
 

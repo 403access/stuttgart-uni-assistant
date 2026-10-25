@@ -20,6 +20,12 @@ export function parseHash() {
   }
   if (segments[0] === 'devices') return { name: 'devices', params };
   if (segments[0] === 'news') return { name: 'news', params };
+  if (segments[0] === 'quiz' && segments[1] === 'topics' && segments[2]) {
+    return { name: 'quiz-topic', id: decodeURIComponent(segments[2]), params };
+  }
+  if (segments[0] === 'quiz' && segments[1] === 'attempts') return { name: 'quiz-attempts', params };
+  if (segments[0] === 'quiz' && segments[1] === 'sessions') return { name: 'quiz-sessions', params };
+  if (segments[0] === 'quiz') return { name: 'quiz', params };
   if (segments[0] === 'ilias') return { name: 'ilias', params };
   if (segments[0] === 'audit') return { name: 'audit', params };
   if (segments[0] === 'logs') return { name: 'logs', params };

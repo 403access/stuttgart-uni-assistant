@@ -3,6 +3,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
 import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
+import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { findQuizModuleById, studyForModule } from '@/src/quiz/content';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, topicStats } from '@/src/quiz/session';
@@ -18,6 +19,7 @@ function startTopic(topic: QuizTopic, mode: QuizMode) {
 
 export default function QuizModuleScreen() {
   const locale = useAppSelector((state) => state.locale);
+  useQuizCatalogVersion();
   const params = useLocalSearchParams<{ id: string }>();
   const { ready, attempts, activeSessions } = useQuizProgress();
   const module = findQuizModuleById(firstParam(params.id));

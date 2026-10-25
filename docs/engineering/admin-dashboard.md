@@ -39,6 +39,10 @@ that survives reloads and can be shared between operators:
 | --- | --- |
 | `#/overview` | KPI cards, distribution bars, recent accounts, recent audit actions, configuration health |
 | `#/news` | Operator-managed app news with drafts, publishing, editing, and deletion |
+| `#/quiz` | Learning-quiz catalog: modules, topics, question counts, accuracy, create/edit/delete |
+| `#/quiz/topics/<id>` | One topic, its questions, and its latest answers |
+| `#/quiz/attempts` | Every checked answer with user, topic, question, answer text, result, filters, and CSV |
+| `#/quiz/sessions` | Completed rounds with user, topic, mode, score, and duration |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
 | `#/devices` | QR-linked web browsers with form factor, OS, browser, IP address, account, state, timestamps, and revoke |
 | `#/devices/<id>` | One browser pairing: client details, IP addresses, account, session, timestamps, user agent, and revoke |
@@ -52,6 +56,7 @@ that survives reloads and can be shared between operators:
 | `#/users/<id>/data` | Curriculum nodes and courses per study, with search, state filter, and pagination |
 | `#/users/<id>/calendar` | Imported ICS events with search and pagination |
 | `#/users/<id>/calls` | Portal call log with failure filter and pagination |
+| `#/users/<id>/quiz` | That account's quiz answers, accuracy per topic, and completed rounds |
 | `#/users/<id>/audit` | Operator actions for this account |
 | `#/audit` | Cross-account audit log with search, action filter, and pagination |
 | `#/logs` | Persisted service diagnostics from C@MPUS, ILIAS, UniMail, SIAM/OIDC, sync, auth, admin, and the assistant, with search, service/level filters, and optional auto-refresh |
@@ -80,6 +85,19 @@ back to German in the app. Drafts stay visible in the console but are never
 returned by `GET /v1/news`. The search matches title, summary, and body; the
 status filter narrows to published items or drafts. Publishing and deleting are
 confirmed and recorded in the audit log.
+
+**Lernquiz:** the catalog comes from the app's bundled snapshot
+(`server/quiz/catalog.json`) and is owned by the server after the first start.
+The overview shows module, topic, question, answer, user, and accuracy KPIs,
+plus a module table and a searchable topic table. Operators can create, edit,
+publish, withdraw, and delete topics and questions; question-specific fields
+are edited as validated JSON. **Katalog neu importieren** replaces the catalog
+from the current app snapshot without touching answer history. The attempts
+page lists every checked answer across all users with user/topic/text filters,
+a raw-detail dialog, and a semicolon-separated CSV export; the sessions page
+lists completed rounds. Each account detail also has a **Lernquiz** tab with its
+own answers and per-topic accuracy. Catalog mutations are recorded in the audit
+log.
 
 **Components:** the generated catalog from `scripts/generate-component-catalog.mjs`,
 with search, category and platform filters, export lists, native/web file
@@ -236,6 +254,16 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/admin/users/<id>/nodes?studyId=&query=&state=&limit=&offset=` | Paginated curriculum nodes; `state` is `completed`, `in_progress`, or `open`. |
 | `GET /v1/admin/users/<id>/events?query=&limit=&offset=` | Paginated imported calendar events. |
 | `GET /v1/admin/users/<id>/calls?query=&failed=1&limit=&offset=` | Paginated portal call log. |
+| `GET /v1/admin/quiz/overview` | Quiz KPI counts, module table, and top topics. |
+| `GET /v1/admin/quiz/topics?query=&moduleId=&published=&limit=&offset=` | Searchable topic list with counts and accuracy. |
+| `POST /v1/admin/quiz/topics`, `POST/DELETE /v1/admin/quiz/topics/<id>` | Create, edit, publish, and delete a topic. |
+| `POST /v1/admin/quiz/questions`, `POST/DELETE /v1/admin/quiz/questions/<id>` | Create, edit, publish, and delete a question; the payload is validated per kind. |
+| `POST /v1/admin/quiz/modules/<id>` | Edit module title, subtitle, semester, lecturer, email, and visibility. |
+| `GET /v1/admin/quiz/attempts?...` | Every answer with user, topic, question, correctness, and text filters. |
+| `GET /v1/admin/quiz/attempts/export.csv?...` | Same filters, semicolon-separated CSV. |
+| `GET /v1/admin/quiz/sessions?...` | Completed rounds. |
+| `GET /v1/admin/quiz/users/<id>` | One account's quiz stats, per-topic accuracy, answers, and rounds. |
+| `POST /v1/admin/quiz/seed` | Replace the catalog from the bundled snapshot; answers are kept. |
 | `POST /v1/admin/users/<id>/sessions/revoke` | Revokes every session token. |
 | `DELETE /v1/admin/users/<id>/sessions/<sessionId>` | Revokes one token. |
 | `POST /v1/admin/users/<id>/platforms` | Links, updates, or promotes one platform. |
@@ -283,10 +311,11 @@ screen cannot replay them.
 | `server/news.mjs` | Published news read model and admin input validation. |
 | `server/routes/news.mjs` | Public `/v1/news` routes. |
 | `server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
-| `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, audit, logs, and system routes. |
+| `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, quiz, audit, logs, and system routes. |
+| `server/quiz/` | Seed from `catalog.json`, published projection, admin CRUD, answer analytics. |
 | `server/dashboard/index.html` | The page shell. |
 | `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `server/dashboard/pages/*.mjs` | Overview, news, users, user detail, device detail, ILIAS, audit, logs, and system views. |
+| `server/dashboard/pages/*.mjs` | Overview, news, quiz, users, user detail, device detail, ILIAS, audit, logs, and system views. |
 | `server/dashboard/assets/styles.css` | The dashboard styles. |
 | `server/db.mjs` | Schema, including the `admin_audit` and `service_logs` tables. |
 | `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
