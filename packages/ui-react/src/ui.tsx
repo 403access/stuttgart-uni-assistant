@@ -3,25 +3,39 @@ import {
   useCallback,
   useContext,
   useEffect,
+  isValidElement,
+  cloneElement,
   useMemo,
+  useRef,
   useState,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
+  type ReactElement,
   type ReactNode,
   type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
 } from 'react';
 
 import { Icon } from './icons';
-import styles from './ui.module.css';
 
-export type Tone = '' | 'ok' | 'warn' | 'danger' | 'blue';
+export type Tone = '' | 'ok' | 'warn' | 'danger' | 'blue' | 'purple' | 'info';
+
+const ShellContext = createContext<{ openMenu: () => void } | null>(null);
 
 export function AppShell({ sidebar, children }: { sidebar: ReactNode; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
+  const nav = isValidElement(sidebar)
+    ? cloneElement(sidebar as ReactElement<{ open?: boolean; onClose?: () => void }>, { open, onClose: close })
+    : sidebar;
   return (
-    <div className={styles.shell}>
-      {sidebar}
-      <div className={styles.workspace}>{children}</div>
-    </div>
+    <ShellContext.Provider value={{ openMenu: () => setOpen(true) }}>
+      <div className="app-shell">
+        <div className={`sidebar-backdrop${open ? ' show' : ''}`.trim()} onClick={close} />
+        {nav}
+        <div className="workspace">{children}</div>
+      </div>
+    </ShellContext.Provider>
   );
 }
 
@@ -37,110 +51,162 @@ export function Sidebar({
   items,
   footer,
   onNavigate,
+  open = false,
+  onClose,
 }: {
-  items: Array<SidebarItem | { label: string }>;
+  items: (SidebarItem | { label: string })[];
   footer?: ReactNode;
   onNavigate?: (href: string) => void;
+  open?: boolean;
+  onClose?: () => void;
 }) {
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.brand}>
-        <span className={styles.mark} />
-        <div>
-          <div className={styles.brandTitle}>Verwaltung</div>
-          <div className={styles.brandSub}>University Assistant</div>
-        </div>
+    <aside className={`sidebar${open ? ' open' : ''}`} aria-label="Seitenleiste">
+      <div className="brand">
+        <div className="brand-mark"><span /></div>
+        <div><h1>Verwaltung</h1><p>University Assistant</p></div>
       </div>
-      <nav className={styles.nav}>
+      <nav className="nav" aria-label="Hauptnavigation">
         {items.map((item, index) => (
           'href' in item ? (
             <a
               key={item.href}
               href={item.href}
-              className={`${styles.navItem} ${item.active ? styles.navItemActive : ''}`}
+              className={`nav-item${item.active ? ' active' : ''}`}
               onClick={(event) => {
                 if (!onNavigate) return;
                 event.preventDefault();
                 onNavigate(item.href);
+                onClose?.();
               }}
             >
-              {item.icon ? <Icon name={item.icon} size={16} /> : null}
+              {item.icon ? <Icon name={item.icon} /> : null}
               <span>{item.label}</span>
-              {item.badge !== undefined ? <span className={styles.navBadge}>{item.badge}</span> : null}
+              {item.badge !== undefined ? <span className="nav-badge">{item.badge}</span> : null}
             </a>
           ) : (
-            <div key={`label-${index}`} className={styles.navLabel}>{item.label}</div>
+            <p key={`label-${index}`} className="nav-label">{item.label}</p>
           )
         ))}
       </nav>
-      <div className={styles.sidebarFoot}>{footer}</div>
+      <div className="sidebar-foot">{footer}</div>
     </aside>
   );
 }
 
-export function Topbar({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function Topbar({
+  title,
+  subtitle,
+  actions,
+  onRefresh,
+}: {
+  title: string;
+  subtitle?: string;
+  actions?: ReactNode;
+  onRefresh?: () => void;
+}) {
+  const shell = useContext(ShellContext);
   return (
-    <header className={styles.topbar}>
-      <div>
-        <h1 className={styles.topbarTitle}>{title}</h1>
-        {subtitle ? <p className={styles.topbarSub}>{subtitle}</p> : null}
+    <header className="topbar">
+      <div className="topbar-left">
+        <button className="icon-btn mobile-only" type="button" aria-label="Navigation öffnen" onClick={shell?.openMenu}>
+          <Icon name="menu" />
+        </button>
+        <div>
+          <h1>{title}</h1>
+          {subtitle ? <p>{subtitle}</p> : null}
+        </div>
       </div>
-      <div className={styles.row}>{actions}</div>
+      <div className="topbar-actions">
+        {actions}
+        {onRefresh ? (
+          <button className="btn secondary small" type="button" onClick={onRefresh}>
+            <Icon name="refresh" />
+            <span>Aktualisieren</span>
+          </button>
+        ) : null}
+      </div>
     </header>
   );
 }
 
-export function Row({ children }: { children: ReactNode }) {
-  return <div className={styles.row}>{children}</div>;
-}
-
-export function Muted({ children }: { children: ReactNode }) {
-  return <span className={styles.muted}>{children}</span>;
-}
-
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
-  return (
-    <div className={styles.pageHeader}>
-      <div>
-        <h2 className={styles.pageTitle}>{title}</h2>
-        {subtitle ? <p className={styles.pageSub}>{subtitle}</p> : null}
-      </div>
-      <div className={styles.row}>{actions}</div>
-    </div>
-  );
+/** Pages use the topbar for the title; this only renders page-level actions. */
+export function PageHeader({ actions }: { title?: string; subtitle?: string; actions?: ReactNode }) {
+  return actions ? <div className="form-actions" style={{ justifyContent: 'flex-end', marginBottom: 12 }}>{actions}</div> : null;
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`${styles.card} ${className}`}>{children}</div>;
+  return <section className={`card section-card ${className}`}>{children}</section>;
 }
 
-export function Section({ title, children, actions }: { title?: string; children: ReactNode; actions?: ReactNode }) {
+export function Section({ title, subtitle, children, actions }: { title?: string; subtitle?: string; children: ReactNode; actions?: ReactNode }) {
   return (
-    <section className={styles.section}>
-      {title || actions ? <div className={styles.spread}>{title ? <h3 className={styles.sectionTitle}>{title}</h3> : null}{actions}</div> : null}
+    <section className="card section-card">
+      {title || actions ? (
+        <div className="section-head">
+          <div>
+            {title ? <h2>{title}</h2> : null}
+            {subtitle ? <p>{subtitle}</p> : null}
+          </div>
+          {actions ? <div className="actions">{actions}</div> : null}
+        </div>
+      ) : null}
       {children}
     </section>
   );
 }
 
-export function StatCard({ value, label, sub }: { value: ReactNode; label: string; sub?: string }) {
+export function KpiGrid({ children }: { children: ReactNode }) {
+  return <div className="kpi-grid">{children}</div>;
+}
+
+export function StatCard({
+  value,
+  label,
+  sub,
+  icon,
+  href,
+  tone = '',
+  onNavigate,
+}: {
+  value: ReactNode;
+  label: string;
+  sub?: string;
+  icon?: string;
+  href?: string;
+  tone?: string;
+  onNavigate?: (href: string) => void;
+}) {
+  const content = (
+    <>
+      <div className="kpi-top">
+        {icon ? <span className="kpi-icon"><Icon name={icon} /></span> : <span />}
+        {href ? <span className="kpi-arrow"><Icon name="arrow-right" /></span> : null}
+      </div>
+      <div className="value">{value}</div>
+      <div className="label">{label}</div>
+      {sub ? <div className="sub">{sub}</div> : null}
+    </>
+  );
+  const className = `kpi ${tone}`.trim();
+  if (!href) return <div className={className}>{content}</div>;
   return (
-    <div className={styles.kpi}>
-      <div className={styles.kpiValue}>{value}</div>
-      <div className={styles.kpiLabel}>{label}</div>
-      {sub ? <div className={styles.kpiSub}>{sub}</div> : null}
-    </div>
+    <a className={className} href={href} onClick={(event) => { if (!onNavigate) return; event.preventDefault(); onNavigate(href); }}>
+      {content}
+    </a>
   );
 }
 
 export function Badge({ children, tone = '' }: { children: ReactNode; tone?: Tone }) {
-  const map: Record<string, string> = { ok: styles.badgeOk, warn: styles.badgeWarn, danger: styles.badgeDanger, blue: styles.badgeBlue };
-  return <span className={`${styles.badge} ${map[tone] ?? ''}`}>{children}</span>;
+  return <span className={`badge ${tone}`.trim()}>{children}</span>;
 }
 
-export function Avatar({ name }: { name: string }) {
-  const initials = name.trim().split(/\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || '?';
-  return <span className={styles.avatar}>{initials}</span>;
+export function Avatar({ name, size = '' }: { name: string; size?: '' | 'sm' | 'lg' }) {
+  const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+  const letters = parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : (parts[0] ?? '?').slice(0, 2);
+  let hash = 0;
+  for (const char of String(name || '?')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return <span className={`avatar a${hash % 6} ${size}`.trim()} aria-hidden="true">{letters.toUpperCase()}</span>;
 }
 
 export function Button({
@@ -148,45 +214,72 @@ export function Button({
   size = 'normal',
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger'; size?: 'normal' | 'small' }) {
-  const variantClass = variant === 'secondary' ? styles.buttonSecondary : variant === 'danger' ? styles.buttonDanger : '';
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'secondary' | 'danger' | 'ghost'; size?: 'normal' | 'small' }) {
+  const variantClass = variant === 'secondary' ? 'secondary' : variant === 'danger' ? 'danger' : variant === 'ghost' ? 'ghost' : '';
   return (
-    <button className={`${styles.button} ${variantClass} ${size === 'small' ? styles.buttonSmall : ''}`} {...props}>
+    <button className={`btn ${variantClass} ${size === 'small' ? 'small' : ''}`.trim()} {...props}>
       {children}
     </button>
   );
 }
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
-  return <label className={styles.field}><span>{label}</span>{children}</label>;
+  return <label className="field stack-field compact"><span>{label}</span>{children}</label>;
 }
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={styles.input} {...props} />;
+  return <input {...props} />;
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={styles.select} {...props} />;
+  return <select {...props} />;
 }
 
-export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={styles.input} rows={4} {...props} />;
+export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} />;
 }
 
 export function Checkbox({ label, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
-  return <label className={styles.checkbox}><input type="checkbox" {...props} />{label}</label>;
+  return <label className="check-row"><input type="checkbox" className="checkbox" {...props} />{label}</label>;
 }
 
 export function EmptyState({ title, detail }: { title: string; detail?: string }) {
-  return <div className={styles.empty}><strong>{title}</strong>{detail ? <div>{detail}</div> : null}</div>;
+  return (
+    <div className="empty">
+      <span className="empty-icon"><Icon name="info" /></span>
+      <strong>{title}</strong>
+      {detail ? <p>{detail}</p> : null}
+    </div>
+  );
 }
 
 export function Spinner() {
-  return <span className={styles.spinner} aria-label="Lädt" />;
+  return <span className="spinner" aria-label="Lädt" />;
+}
+
+export function Callout({ children, tone = 'info' }: { children: ReactNode; tone?: 'info' | 'warn' }) {
+  return <div className={`callout ${tone === 'warn' ? 'warn' : ''}`.trim()}><Icon name={tone === 'warn' ? 'alert' : 'info'} /><div>{children}</div></div>;
+}
+
+export function BackLink({ href, children, onNavigate }: { href: string; children: ReactNode; onNavigate?: (href: string) => void }) {
+  return (
+    <a
+      className="back-link"
+      href={href}
+      onClick={(event) => {
+        if (!onNavigate) return;
+        event.preventDefault();
+        onNavigate(href);
+      }}
+    >
+      <Icon name="chevron-left" />
+      {children}
+    </a>
+  );
 }
 
 export function ErrorState({ message }: { message: string }) {
-  return <div className={styles.error} role="alert">{message}</div>;
+  return <div className="callout warn" role="alert">{message}</div>;
 }
 
 export function CopyButton({ value, label = 'Kopieren' }: { value: string; label?: string }) {
@@ -194,20 +287,24 @@ export function CopyButton({ value, label = 'Kopieren' }: { value: string; label
   return (
     <button
       type="button"
-      className={styles.copy}
+      className="copy-btn"
       title={label}
       aria-label={label}
       onClick={async () => {
-        try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1200); } catch { /* ignore */ }
+        try {
+          await navigator.clipboard.writeText(String(value ?? ''));
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        } catch { /* clipboard denied */ }
       }}
     >
-      <Icon name={copied ? 'check' : 'copy'} size={15} />
+      <Icon name={copied ? 'check' : 'copy'} />
     </button>
   );
 }
 
 export function Table({ children }: { children: ReactNode }) {
-  return <div className={styles.tableWrap}><table className={styles.table}>{children}</table></div>;
+  return <div className="card table-card"><div className="table-wrap"><table className="data">{children}</table></div></div>;
 }
 
 export interface Column<T> {
@@ -215,6 +312,7 @@ export interface Column<T> {
   header: ReactNode;
   render: (row: T) => ReactNode;
   sortable?: boolean;
+  className?: string;
 }
 
 export function DataTable<T>({
@@ -226,8 +324,12 @@ export function DataTable<T>({
   sortKey,
   sortDirection,
   onSort,
+  rowClassName,
+  footer,
+  plain = false,
+  onRowClick,
 }: {
-  columns: Array<Column<T>>;
+  columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string | number;
   empty?: string;
@@ -235,88 +337,183 @@ export function DataTable<T>({
   sortKey?: string;
   sortDirection?: 'asc' | 'desc';
   onSort?: (key: string) => void;
+  rowClassName?: (row: T) => string;
+  footer?: ReactNode;
+  plain?: boolean;
+  onRowClick?: (row: T) => void;
 }) {
-  if (loading) return <div className={styles.empty}><Spinner /></div>;
-  if (!rows.length) return <div className={styles.tableWrap}><EmptyState title={empty} /></div>;
+  const wrapperClass = plain ? 'table-card' : 'card table-card';
+  if (loading) return <div className={wrapperClass}><div className="loading"><Spinner /> Wird geladen …</div>{footer}</div>;
+  if (!rows.length) return <div className={wrapperClass}><EmptyState title={empty} />{footer}</div>;
   return (
-    <div className={styles.tableWrap}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key}>
-                {column.sortable && onSort ? (
-                  <button type="button" className={styles.copy} onClick={() => onSort(column.key)}>
-                    {column.header}{sortKey === column.key ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
-                  </button>
-                ) : column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={rowKey(row)}>
-              {columns.map((column) => <td key={column.key}>{column.render(row)}</td>)}
+    <div className={wrapperClass}>
+      <div className="table-wrap">
+        <table className="data">
+          <thead>
+            <tr>
+              {columns.map((column) => (
+                <th key={column.key} className={column.className}>
+                  {column.sortable && onSort ? (
+                    <button type="button" className="copy-btn" onClick={() => onSort(column.key)}>
+                      {column.header}{sortKey === column.key ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  ) : column.header}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={rowKey(row)}
+                className={rowClassName?.(row)}
+                style={onRowClick ? { cursor: 'pointer' } : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+              >
+                {columns.map((column) => <td key={column.key} className={column.className}>{column.render(row)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {footer}
     </div>
   );
 }
 
 export function Pagination({ page, pageSize, total, onPage }: { page: number; pageSize: number; total: number; onPage: (page: number) => void }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
+  const numbers = [];
+  const start = Math.max(1, Math.min(page - 2, pages - 4));
+  for (let value = start; value <= Math.min(pages, start + 4); value += 1) numbers.push(value);
   return (
-    <div className={styles.spread}>
-      <span className={styles.muted}>{total} Einträge · Seite {page} von {pages}</span>
-      <div className={styles.row}>
+    <div className="pager">
+      <span className="hint">{total} Einträge · Seite {page} von {pages}</span>
+      <div className="row">
         <Button variant="secondary" size="small" disabled={page <= 1} onClick={() => onPage(page - 1)}>Zurück</Button>
+        {numbers.map((value) => (
+          <button key={value} type="button" className={`page-num${value === page ? ' current' : ''}`} onClick={() => onPage(value)}>{value}</button>
+        ))}
         <Button variant="secondary" size="small" disabled={page >= pages} onClick={() => onPage(page + 1)}>Weiter</Button>
       </div>
     </div>
   );
 }
 
-export function Dialog({ open, title, children, actions, onClose }: { open: boolean; title: string; children?: ReactNode; actions?: ReactNode; onClose: () => void }) {
+export function Dialog({
+  open,
+  title,
+  children,
+  actions,
+  onClose,
+  wide = false,
+  width,
+}: {
+  open: boolean;
+  title: string;
+  children?: ReactNode;
+  actions?: ReactNode;
+  onClose: () => void;
+  wide?: boolean;
+  width?: number | string;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-  if (!open) return null;
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open]);
   return (
-    <div className={styles.dialogBackdrop} role="presentation" onClick={onClose}>
-      <div className={styles.dialog} role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
-        <h3 className={styles.dialogTitle}>{title}</h3>
+    <dialog
+      ref={ref}
+      className={`modal ${wide ? 'modal-wide' : ''}`.trim()}
+      style={width ? { width } : undefined}
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
+      onClose={onClose}
+    >
+      <div className="modal-body">
+        <div className="modal-head">
+          <div className="modal-icon warn"><Icon name="info" /></div>
+          <div><h2>{title}</h2></div>
+        </div>
         {children}
-        <div className={styles.dialogActions}>{actions}</div>
+        {actions ? <div className="modal-actions">{actions}</div> : null}
       </div>
-    </div>
+    </dialog>
   );
 }
 
-export function Tabs({ tabs, active, onChange }: { tabs: Array<{ id: string; label: string }>; active: string; onChange: (id: string) => void }) {
+export function Tabs({ tabs, active, onChange }: { tabs: { id: string; label: string; count?: number }[]; active: string; onChange: (id: string) => void }) {
   return (
-    <div className={styles.tabs}>
+    <div className="tabs" role="tablist">
       {tabs.map((tab) => (
-        <button key={tab.id} type="button" className={`${styles.tab} ${active === tab.id ? styles.tabActive : ''}`} onClick={() => onChange(tab.id)}>
+        <button key={tab.id} type="button" role="tab" aria-selected={active === tab.id} className="tab" onClick={() => onChange(tab.id)}>
           {tab.label}
+          {tab.count !== undefined ? <span className="tab-count">{tab.count}</span> : null}
         </button>
       ))}
     </div>
   );
 }
 
-interface ToastItem { id: number; message: string; tone: 'info' | 'error' }
-interface ToastContextValue { show: (message: string, tone?: 'info' | 'error') => void }
+export function BarList({ items }: { items: { label: string; count: number }[] }) {
+  const max = Math.max(1, ...items.map((item) => Number(item.count) || 0));
+  return (
+    <div className="bar-list">
+      {items.map((item) => (
+        <div key={item.label} className="bar-row">
+          <div className="bar-label"><strong>{item.label}</strong><span>{item.count}</span></div>
+          <div className="bar-track"><div className="bar-fill" style={{ width: `${Math.round((Number(item.count) || 0) / max * 100)}%` }} /></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function HealthStrip({ items }: { items: [string, boolean][] }) {
+  return (
+    <div className="health-strip">
+      {items.map(([label, ok]) => (
+        <span key={label} className={`health-chip ${ok ? 'ok' : 'warn'}`}><span className="dot" />{label}</span>
+      ))}
+    </div>
+  );
+}
+
+export function FieldBox({ label, value }: { label: string; value: ReactNode }) {
+  return <div className="field-box"><span className="k">{label}</span><span className="v">{value}</span></div>;
+}
+
+export function Timeline({ children }: { children: ReactNode }) {
+  return <div className="timeline">{children}</div>;
+}
+
+export function TimelineItem({ children, dot = '', time }: { children: ReactNode; dot?: string; time?: ReactNode }) {
+  return (
+    <div className="timeline-item">
+      <span className={`timeline-dot ${dot}`.trim()} />
+      <div className="timeline-body">{children}</div>
+      {time ? <span className="timeline-time">{time}</span> : null}
+    </div>
+  );
+}
+
+export function Row({ children }: { children: ReactNode }) {
+  return <div className="row">{children}</div>;
+}
+
+export function Muted({ children }: { children: ReactNode }) {
+  return <span className="muted">{children}</span>;
+}
+
+interface ToastItem { id: number; message: string; tone: 'info' | 'error' | 'ok' }
+interface ToastContextValue { show: (message: string, tone?: 'info' | 'error' | 'ok') => void }
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
-  const show = useCallback((message: string, tone: 'info' | 'error' = 'info') => {
+  const show = useCallback((message: string, tone: 'info' | 'error' | 'ok' = 'info') => {
     const id = Date.now() + Math.random();
     setItems((current) => [...current, { id, message, tone }]);
     setTimeout(() => setItems((current) => current.filter((item) => item.id !== id)), 4000);
@@ -325,8 +522,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className={styles.toastHost}>
-        {items.map((item) => <div key={item.id} className={`${styles.toast} ${item.tone === 'error' ? styles.toastError : ''}`}>{item.message}</div>)}
+      <div className="toast-stack" aria-live="polite">
+        {items.map((item) => (
+          <div key={item.id} className={`toast ${item.tone}`}><Icon name={item.tone === 'error' ? 'alert' : item.tone === 'ok' ? 'check-circle' : 'info'} /><span>{item.message}</span></div>
+        ))}
       </div>
     </ToastContext.Provider>
   );
@@ -338,4 +537,3 @@ export function useToast(): ToastContextValue {
   return value;
 }
 
-export { Icon };

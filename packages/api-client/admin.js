@@ -34,6 +34,7 @@ export function createAdminClient({ baseUrl = '', ...options } = {}) {
     userClearEvents: (userId) => client.post(`/v1/admin/users/${id(userId)}/portal/events/clear`, {}),
     userClearCalls: (userId) => client.post(`/v1/admin/users/${id(userId)}/portal/calls/clear`, {}),
     userSync: (userId, body) => client.post(`/v1/admin/users/${id(userId)}/sync`, body),
+    userQuiz: (userId) => client.get(`/v1/admin/quiz/users/${id(userId)}`),
     devices: (query) => client.get('/v1/admin/devices', { query }),
     device: (deviceId) => client.get(`/v1/admin/devices/${id(deviceId)}`),
     revokeDevice: (deviceId) => client.del(`/v1/admin/devices/${id(deviceId)}`),
@@ -60,6 +61,7 @@ export function createAdminClient({ baseUrl = '', ...options } = {}) {
     quizUpdateQuestion: (questionId, body) => client.post(`/v1/admin/quiz/questions/${id(questionId)}`, body),
     quizDeleteQuestion: (questionId) => client.del(`/v1/admin/quiz/questions/${id(questionId)}`),
     quizUpdateTopic: (topicId, body) => client.post(`/v1/admin/quiz/topics/${id(topicId)}`, body),
+    quizUpdateModule: (moduleId, body) => client.post(`/v1/admin/quiz/modules/${id(moduleId)}`, body),
     quizDeleteTopic: (topicId) => client.del(`/v1/admin/quiz/topics/${id(topicId)}`),
     quizSeed: () => client.post('/v1/admin/quiz/seed', {}),
   };

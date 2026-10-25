@@ -1,35 +1,37 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { ApiError } from '@ua/api-client';
-import { AppShell, Button, Icon, Sidebar, Spinner, Topbar, useTheme, useToast } from '@ua/ui-react';
+import { AppShell, Icon, Sidebar, Spinner, Topbar, useTheme, useToast } from '@ua/ui-react';
 
 import { api } from '../lib/api';
 import { LoginScreen } from './login';
 
 const sections = [
   { href: '/', label: 'Übersicht', icon: 'overview' },
-  { href: '/news', label: 'News', icon: 'news' },
+  { href: '/news', label: 'News', icon: 'inbox' },
+  { href: '/quiz', label: 'Lernquiz', icon: 'list' },
   { href: '/users', label: 'Nutzer', icon: 'users' },
-  { href: '/ilias', label: 'ILIAS', icon: 'ilias' },
-  { href: '/devices', label: 'Geräte', icon: 'devices' },
-  { href: '/audit', label: 'Aktivität', icon: 'audit' },
-  { href: '/logs', label: 'Logs', icon: 'logs' },
-  { href: '/components', label: 'Komponenten', icon: 'components' },
-  { href: '/system', label: 'System', icon: 'system' },
-  { href: '/quiz', label: 'Quiz', icon: 'quiz' },
+  { href: '/ilias', label: 'ILIAS', icon: 'grid' },
+  { href: '/devices', label: 'Geräte', icon: 'smartphone' },
+  { href: '/audit', label: 'Aktivität', icon: 'activity' },
 ];
 
-const titles: Record<string, string> = {
-  '/': 'Übersicht',
-  '/news': 'News',
-  '/users': 'Nutzer',
-  '/ilias': 'ILIAS',
-  '/devices': 'Geräte',
-  '/audit': 'Aktivität',
-  '/logs': 'Logs',
-  '/components': 'Komponenten',
-  '/system': 'System',
-  '/quiz': 'Quiz',
+const systemSections = [
+  { href: '/logs', label: 'Logs', icon: 'terminal' },
+  { href: '/components', label: 'Komponenten', icon: 'grid' },
+  { href: '/system', label: 'System', icon: 'server' },
+];
+
+const pages: Record<string, { title: string; subtitle: string }> = {
+  '/': { title: 'Übersicht', subtitle: 'Konten, Daten und Betrieb im Blick' },
+  '/news': { title: 'News', subtitle: 'Meldungen für die App verwalten und veröffentlichen' },
+  '/quiz': { title: 'Lernquiz', subtitle: 'Themen und Fragen verwalten, Antworten aller Nutzer einsehen' },
+  '/users': { title: 'Nutzer', subtitle: 'Konten, Sitzungen, Plattformen und C@MPUS-Daten' },
+  '/ilias': { title: 'ILIAS', subtitle: 'Sitzungen, Konten und gespeicherte Dashboards' },
+  '/devices': { title: 'Geräte', subtitle: 'Browser-Verknüpfungen und Geräte-Freigaben' },
+  '/audit': { title: 'Aktivität', subtitle: 'Audit-Protokoll des Operators' },
+  '/logs': { title: 'Logs', subtitle: 'Persistierte Service-Logs' },
+  '/components': { title: 'Komponenten', subtitle: 'Generierte Übersicht aller Komponenten' },
+  '/system': { title: 'System', subtitle: 'Konfiguration, Laufzeit und Sync-Jobs' },
 };
 
 export function Root() {
@@ -39,22 +41,36 @@ export function Root() {
   const { theme, toggle } = useTheme();
   const toast = useToast();
   const overview = useQuery({ queryKey: ['overview'], queryFn: () => api.overview(), retry: false });
+  const userMatch = pathname.match(/^\/users\/([^/]+)$/);
+  const userDetail = useQuery({
+    queryKey: ['user', userMatch?.[1]],
+    queryFn: () => api.user(userMatch![1]),
+    enabled: Boolean(userMatch) && !overview.error,
+  });
+  const detailUser = (userDetail.data as { user?: { name?: string | null; account?: string; mode?: string } } | undefined)?.user;
 
   if (overview.isLoading) {
-    return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}><Spinner /></div>;
+    return <div className="auth-screen"><div className="loading"><Spinner /> Verwaltung wird geladen …</div></div>;
   }
 
   if (overview.error) {
-    const code = overview.error instanceof ApiError ? overview.error.code : '';
-    if (code === 'unauthorized' || code === 'admin_unconfigured' || code === 'network') {
-      return <LoginScreen error={overview.error} onRetry={() => overview.refetch()} />;
-    }
     return <LoginScreen error={overview.error} onRetry={() => overview.refetch()} />;
   }
 
   const section = pathname === '/' ? '/' : `/${pathname.split('/').filter(Boolean)[0]}`;
-  const items = sections.map((item) => ({ ...item, active: item.href === section }));
+  const page = userMatch
+    ? {
+        title: detailUser?.name || detailUser?.account || 'Nutzerdetails',
+        subtitle: detailUser ? `${detailUser.account} · ${detailUser.mode}` : 'Konto und Daten werden geladen …',
+      }
+    : pages[section] ?? pages['/'];
   const stats = overview.data as Record<string, number> | undefined;
+  const isActive = (href: string) => href === section || (href !== '/' && section.startsWith(href));
+
+  const refresh = () => {
+    queryClient.invalidateQueries();
+    toast.show('Ansicht aktualisiert.', 'ok');
+  };
 
   return (
     <AppShell
@@ -62,20 +78,28 @@ export function Root() {
         <Sidebar
           items={[
             { label: 'Betrieb' },
-            ...items.slice(0, 6).map((item) => ({ ...item, badge: item.href === '/users' ? stats?.users : item.href === '/devices' ? stats?.devices : undefined })),
+            ...sections.map((item) => ({
+              ...item,
+              active: isActive(item.href),
+              badge: item.href === '/users' ? stats?.users : item.href === '/devices' ? stats?.devices : undefined,
+            })),
             { label: 'System' },
-            ...items.slice(6),
+            ...systemSections.map((item) => ({ ...item, active: isActive(item.href) })),
           ]}
           onNavigate={(href) => navigate({ to: href })}
           footer={(
             <>
-              <Button variant="secondary" size="small" onClick={toggle}>
-                <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={15} />
-                {theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}
-              </Button>
-              <Button
-                variant="secondary"
-                size="small"
+              <button className="nav-item" type="button" onClick={toggle}>
+                <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+                <span>{theme === 'dark' ? 'Helles Design' : 'Dunkles Design'}</span>
+              </button>
+              <div className="operator-card">
+                <span className="avatar a1">OP</span>
+                <div><strong>Operator</strong><span>Token-Sitzung · 12 h</span></div>
+              </div>
+              <button
+                className="nav-item"
+                type="button"
                 onClick={async () => {
                   try {
                     await api.logout();
@@ -86,16 +110,16 @@ export function Root() {
                   overview.refetch();
                 }}
               >
-                <Icon name="logout" size={15} />
-                Abmelden
-              </Button>
+                <Icon name="logout" />
+                <span>Abmelden</span>
+              </button>
             </>
           )}
         />
       )}
     >
-      <Topbar title={titles[section] ?? 'Verwaltung'} subtitle="University Assistant" />
-      <main style={{ padding: 24, width: '100%', maxWidth: 1400, margin: '0 auto' }}>
+      <Topbar title={page.title} subtitle={page.subtitle} onRefresh={refresh} />
+      <main className="main" tabIndex={-1}>
         <Outlet />
       </main>
     </AppShell>

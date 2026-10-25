@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatTimestamp } from '@ua/format';
-import { Badge, Button, DataTable, Dialog, ErrorState, Field, Input, Muted, PageHeader, Pagination, Select, useToast } from '@ua/ui-react';
+import { Badge, Button, DataTable, Dialog, ErrorState, Field, Input, Muted, Pagination, Select, useToast } from '@ua/ui-react';
 import { useState } from 'react';
 
 import { api } from '../lib/api';
@@ -37,17 +37,14 @@ export function LogsPage() {
   });
 
   return (
-    <>
-      <PageHeader
-        title="Logs"
-        subtitle="Persistierte Service-Logs mit Filter und Aufbewahrung"
-        actions={<><Button variant="secondary" onClick={() => setAuto((value) => !value)}>{auto ? 'Auto aus' : 'Auto an'}</Button><Button variant="danger" onClick={() => setConfirmClear(true)}>Gefilterte löschen</Button></>}
-      />
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+    <div className="view-stack">
+      <section className="card toolbar">
         <div style={{ flex: '1 1 240px' }}><Field label="Suche"><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Nachricht, Detail, Service" /></Field></div>
         <Field label="Service"><Select value={service} onChange={(event) => { setService(event.target.value); setPage(1); }}><option value="">Alle</option>{services.map((item: any) => <option key={item.service} value={item.service}>{item.service} ({item.count})</option>)}</Select></Field>
         <Field label="Level"><Select value={level} onChange={(event) => { setLevel(event.target.value); setPage(1); }}><option value="">Alle</option>{levels.map((item: any) => <option key={item.level} value={item.level}>{item.level} ({item.count})</option>)}</Select></Field>
-      </div>
+        <Button variant="secondary" onClick={() => setAuto((value) => !value)}>{auto ? 'Auto aus' : 'Auto an'}</Button>
+        <Button variant="danger" onClick={() => setConfirmClear(true)}>Gefilterte löschen</Button>
+      </section>
       {logs.error ? <ErrorState message={logs.error instanceof Error ? logs.error.message : 'Logs konnten nicht geladen werden.'} /> : (
         <DataTable
           rows={entries}
@@ -62,9 +59,9 @@ export function LogsPage() {
             { key: 'user', header: 'Konto', render: (entry: any) => entry.userId ? <Muted>{entry.userId}</Muted> : '—' },
             { key: 'detail', header: 'Detail', render: (entry: any) => entry.detail ? <Muted>{typeof entry.detail === 'string' ? entry.detail : JSON.stringify(entry.detail)}</Muted> : '—' },
           ]}
+          footer={<Pagination page={page} pageSize={PAGE_SIZE} total={data.total ?? 0} onPage={setPage} />}
         />
       )}
-      <div style={{ marginTop: 12 }}><Pagination page={page} pageSize={PAGE_SIZE} total={data.total ?? 0} onPage={setPage} /></div>
       <Dialog
         open={confirmClear}
         title="Gefilterte Logs löschen?"
@@ -73,6 +70,6 @@ export function LogsPage() {
       >
         <p>Es werden alle Zeilen mit den aktuellen Filtern gelöscht. Die Aktion wird auditiert.</p>
       </Dialog>
-    </>
+    </div>
   );
 }

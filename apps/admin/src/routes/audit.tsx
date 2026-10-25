@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatTimestamp } from '@ua/format';
-import { Badge, DataTable, ErrorState, Field, Input, Muted, PageHeader, Pagination, Select } from '@ua/ui-react';
+import { Badge, DataTable, ErrorState, Field, Input, Muted, Pagination, Select } from '@ua/ui-react';
 import { useState } from 'react';
 
 import { api } from '../lib/api';
@@ -21,13 +21,12 @@ export function AuditPage() {
   const actions = data.actions ?? [];
 
   return (
-    <>
-      <PageHeader title="Aktivität" subtitle="Operator-Mutationen und ihre Konten-Snapshots" />
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+    <div className="view-stack">
+      <section className="card toolbar">
         <div style={{ flex: '1 1 240px' }}><Field label="Suche"><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Aktion, Konto, Detail" /></Field></div>
         <Field label="Aktion"><Select value={action} onChange={(event) => { setAction(event.target.value); setPage(1); }}><option value="">Alle</option>{actions.map((item: any) => <option key={item.action} value={item.action}>{item.action} ({item.count})</option>)}</Select></Field>
         <Field label="Konto-ID"><Input value={userId} onChange={(event) => { setUserId(event.target.value); setPage(1); }} placeholder="usr_…" /></Field>
-      </div>
+      </section>
       {audit.error ? <ErrorState message={audit.error instanceof Error ? audit.error.message : 'Aktivität konnte nicht geladen werden.'} /> : (
         <DataTable
           rows={entries}
@@ -41,9 +40,9 @@ export function AuditPage() {
             { key: 'user', header: 'Konto-ID', render: (entry: any) => entry.userId ? <Muted>{entry.userId}</Muted> : '—' },
             { key: 'detail', header: 'Detail', render: (entry: any) => entry.detail ? <Muted>{typeof entry.detail === 'string' ? entry.detail : JSON.stringify(entry.detail)}</Muted> : '—' },
           ]}
+          footer={<Pagination page={page} pageSize={PAGE_SIZE} total={data.total ?? 0} onPage={setPage} />}
         />
       )}
-      <div style={{ marginTop: 12 }}><Pagination page={page} pageSize={PAGE_SIZE} total={data.total ?? 0} onPage={setPage} /></div>
-    </>
+    </div>
   );
 }

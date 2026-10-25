@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatDate } from '@ua/format';
-import { Badge, Button, Checkbox, DataTable, Dialog, ErrorState, Field, Input, Muted, PageHeader, Pagination, Select, TextArea, useToast } from '@ua/ui-react';
+import { Badge, Button, Checkbox, DataTable, Dialog, ErrorState, Field, Input, Muted, Pagination, Select, TextArea, useToast } from '@ua/ui-react';
 import { useState } from 'react';
 
 import { api } from '../lib/api';
@@ -65,12 +65,12 @@ export function NewsPage() {
   });
 
   return (
-    <>
-      <PageHeader title="News" subtitle="Meldungen für die App veröffentlichen und bearbeiten" actions={<Button onClick={() => edit()}>Neue Meldung</Button>} />
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+    <div className="view-stack">
+      <section className="card toolbar">
         <div style={{ flex: '1 1 240px' }}><Field label="Suche"><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Titel, Text" /></Field></div>
         <Field label="Status"><Select value={state} onChange={(event) => { setState(event.target.value); setPage(1); }}><option value="">Alle</option><option value="published">Veröffentlicht</option><option value="draft">Entwurf</option></Select></Field>
-      </div>
+        <Button onClick={() => edit()}>Neue Meldung</Button>
+      </section>
       {news.error ? <ErrorState message={news.error instanceof Error ? news.error.message : 'News konnten nicht geladen werden.'} /> : (
         <DataTable
           rows={items}
@@ -84,9 +84,9 @@ export function NewsPage() {
             { key: 'state', header: 'Status', render: (item) => <Badge tone={item.published ? 'ok' : 'warn'}>{item.published ? 'veröffentlicht' : 'Entwurf'}</Badge> },
             { key: 'actions', header: '', render: (item) => <div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" size="small" onClick={() => edit(item)}>Bearbeiten</Button><Button variant="danger" size="small" onClick={() => setDeleting(item)}>Löschen</Button></div> },
           ]}
+          footer={<Pagination page={page} pageSize={PAGE_SIZE} total={data.total ?? 0} onPage={setPage} />}
         />
       )}
-      <div style={{ marginTop: 12 }}><Pagination page={page} pageSize={PAGE_SIZE} total={data.total ?? 0} onPage={setPage} /></div>
 
       <Dialog open={open} title={editing ? 'Meldung bearbeiten' : 'Neue Meldung'} onClose={() => setOpen(false)} actions={<><Button variant="secondary" onClick={() => setOpen(false)}>Abbrechen</Button><Button disabled={!form.titleDe.trim() || !form.bodyDe.trim() || save.isPending} onClick={() => save.mutate()}>{save.isPending ? 'Speichern …' : 'Speichern'}</Button></>}>
         <div style={{ display: 'grid', gap: 10, maxHeight: '65vh', overflow: 'auto', paddingRight: 4 }}>
@@ -111,6 +111,6 @@ export function NewsPage() {
       <Dialog open={Boolean(deleting)} title="Meldung löschen?" onClose={() => setDeleting(null)} actions={<><Button variant="secondary" onClick={() => setDeleting(null)}>Abbrechen</Button><Button variant="danger" disabled={remove.isPending} onClick={() => deleting && remove.mutate(deleting.id)}>Löschen</Button></>}>
         <p>{deleting?.title.de}</p>
       </Dialog>
-    </>
+    </div>
   );
 }
