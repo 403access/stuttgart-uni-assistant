@@ -21,7 +21,7 @@
     "ios": "cd apps/mobile && expo run:ios",
     "tunnel": "cd apps/mobile && expo start --tunnel",
     "typecheck": "bun run check:types",
-    "check": "bun run check:types && bun run check:lint && bun run check:catalog && bun run check:components && bun run check:campus-db && bun run check:app-tests && bun run check:server-tests && bun run check:tooling-tests",
+    "check": "bun run check:types && bun run check:lint && bun run check:tokens && bun run check:catalog && bun run check:components && bun run check:campus-db && bun run check:packages && bun run check:app-tests && bun run check:server-tests && bun run check:tooling-tests",
     "check:types": "tsc -p apps/mobile/tsconfig.json --noEmit",
     "check:lint": "cd apps/mobile && expo lint src app && cd ../.. && eslint apps/server tools apps/admin/public apps/dist",
     "check:catalog": "tsx tools/check-assistant.ts && tsx tools/check-quiz.ts && tsx tools/check-quiz-pipeline.ts",
@@ -52,7 +52,10 @@
     "dist:publish": "node tools/publish-ipa.mjs",
     "dist:tunnel": "cloudflared --config apps/dist/tunnel.yml tunnel run",
     "ios:ipa": "node tools/build-ios-ipa.mjs",
-    "ios:accounts": "node tools/xcode-accounts.mjs"
+    "ios:accounts": "node tools/xcode-accounts.mjs",
+    "tokens": "node tools/generate-tokens.mjs",
+    "check:tokens": "node tools/generate-tokens.mjs --check",
+    "check:packages": "node --test packages/format/test/*.test.mjs packages/contracts/test/*.test.mjs"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

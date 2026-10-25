@@ -1,0 +1,77 @@
+/* GENERATED FILE — run `bun run tokens` after editing tokens.json. */
+:root {
+  --color-anthracite: #323232;
+  --color-blue: #004191;
+  --color-blue-soft: #E6EEF7;
+  --color-brand: #004191;
+  --color-light: #00BEFF;
+  --color-light-soft: #E5F8FF;
+  --color-paper: #FFFFFF;
+  --color-mist: #F3F6F8;
+  --color-line: #E1E5E8;
+  --color-ink-soft: #5E666E;
+  --color-mute: #8B939A;
+  --color-success: #1C6B45;
+  --color-success-soft: #E5F4EC;
+  --color-warning: #8A5A00;
+  --color-warning-soft: #FBF3E4;
+  --color-danger: #8E2F2F;
+  --color-danger-soft: #F8E8E8;
+  --color-toast-info: #004191;
+  --color-toast-success: #1C6B45;
+  --color-toast-error: #8E2F2F;
+  --color-inverse: #323232;
+  --color-ambient-glow: rgba(0, 190, 255, 0.22);
+  --color-ambient-glow-soft: rgba(0, 65, 145, 0.08);
+  --color-ambient-dot: rgba(0, 65, 145, 0.09);
+  --brand: var(--color-brand);
+  --brand-strong: var(--color-blue);
+  --brand-soft: var(--color-blue-soft);
+  --accent: var(--color-light);
+  --accent-soft: var(--color-light-soft);
+  --bg: var(--color-mist);
+  --surface: var(--color-paper);
+  --surface-2: var(--color-mist);
+  --surface-3: var(--color-line);
+  --text: var(--color-anthracite);
+  --text-muted: var(--color-ink-soft);
+  --text-subtle: var(--color-mute);
+  --line: var(--color-line);
+  --ok: var(--color-success);
+  --ok-bg: var(--color-success-soft);
+  --warn: var(--color-warning);
+  --warn-bg: var(--color-warning-soft);
+  --danger: var(--color-danger);
+  --danger-bg: var(--color-danger-soft);
+  --info: var(--color-blue);
+  --info-bg: var(--color-blue-soft);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --color-anthracite: #F1F4F7;
+  --color-blue: #6CB4FF;
+  --color-blue-soft: #152B42;
+  --color-brand: #1E5FA8;
+  --color-light: #38C6FF;
+  --color-light-soft: #0D2B36;
+  --color-paper: #171B21;
+  --color-mist: #0E1116;
+  --color-line: #2B323C;
+  --color-ink-soft: #A9B3BE;
+  --color-mute: #79828D;
+  --color-success: #5FD3A0;
+  --color-success-soft: #102A1F;
+  --color-warning: #F0C064;
+  --color-warning-soft: #2C2415;
+  --color-danger: #FF9B9B;
+  --color-danger-soft: #331A1C;
+  --color-toast-info: #1E5FA8;
+  --color-toast-success: #246B4C;
+  --color-toast-error: #7A2F35;
+  --color-inverse: #232A33;
+  --color-ambient-glow: rgba(56, 198, 255, 0.16);
+  --color-ambient-glow-soft: rgba(30, 95, 168, 0.2);
+  --color-ambient-dot: rgba(108, 180, 255, 0.14);
+  color-scheme: dark;
+}

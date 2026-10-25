@@ -1,9 +1,11 @@
 /**
  * The service's HTML and the iOS over-the-air install manifest.
  *
- * Plain template strings, no build step and no dependency: the whole site is two
- * pages, and a bundler would be more moving parts than the thing it builds.
+ * Plain template strings. The palette comes from the shared design tokens; the
+ * service is bundled before deployment, so the package is inlined.
  */
+
+import { tokensCss } from '@ua/design-tokens/css-string';
 
 /** Escape anything that came from a build's metadata before putting it in HTML. */
 export function escapeHtml(value) {
@@ -32,30 +34,31 @@ export function daysUntil(iso, now = new Date()) {
 }
 
 const style = `
-  :root { color-scheme: light; }
+${tokensCss}
+  * { box-sizing: border-box; }
   * { box-sizing: border-box; }
   body { margin: 0; font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-         color: #1b1b1f; background: #f6f7f9; }
-  header { background: #004191; color: #fff; padding: 20px 24px; }
-  header a { color: #fff; text-decoration: none; }
+         color: var(--text); background: var(--bg); }
+  header { background: var(--brand); color: var(--surface); padding: 20px 24px; }
+  header a { color: var(--surface); text-decoration: none; }
   header h1 { margin: 0; font-size: 20px; font-weight: 600; }
   main { max-width: 880px; margin: 0 auto; padding: 24px; }
-  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px;
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 10px;
           overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid #eceef1; }
-  th { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #5b6270; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
   tr:last-child td { border-bottom: 0; }
-  a { color: #004191; }
-  .muted { color: #5b6270; }
-  .install { display: inline-block; background: #004191; color: #fff; padding: 12px 20px;
+  a { color: var(--brand); }
+  .muted { color: var(--text-muted); }
+  .install { display: inline-block; background: var(--brand); color: var(--surface); padding: 12px 20px;
              border-radius: 10px; text-decoration: none; font-weight: 600; }
-  .card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .warn { background: #fff4e5; border-left: 4px solid #b26a00; padding: 12px 16px; border-radius: 6px; }
-  code { background: #eef0f3; padding: 1px 5px; border-radius: 4px; font-size: 14px; }
+  .card { background: var(--surface); border-radius: 10px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .warn { background: var(--warn-bg); border-left: 4px solid var(--warn); padding: 12px 16px; border-radius: 6px; }
+  code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 14px; }
   dl { display: grid; grid-template-columns: 150px 1fr; gap: 6px 16px; margin: 0; }
-  dt { color: #5b6270; }
+  dt { color: var(--text-muted); }
   dd { margin: 0; }
-  .empty { color: #5b6270; padding: 24px 0; }
+  .empty { color: var(--text-muted); padding: 24px 0; }
 `;
 
 function layout({ title, body }) {
