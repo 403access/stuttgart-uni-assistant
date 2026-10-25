@@ -50,6 +50,12 @@ Read these in order. Each file states the decision for this project, the artifac
 | Document | Contents |
 | --- | --- |
 | [engineering/architecture.md](engineering/architecture.md) | Client, local record, assistant server |
+| [engineering/modularization/README.md](engineering/modularization/README.md) | Target architecture, reuse map, and document index |
+| [engineering/modularization/05-adr-001-target-architecture.md](engineering/modularization/05-adr-001-target-architecture.md) | Accepted decision: modular monorepo, dual-renderer design system, React admin, feature packages |
+| [engineering/modularization/01-current-state.md](engineering/modularization/01-current-state.md) | The repository as it was before the move: surfaces, dependency graph, duplication, and constraints |
+| [engineering/modularization/02-target-modules.md](engineering/modularization/02-target-modules.md) | Package catalog, dependency matrix, admin architecture, and target tree |
+| [engineering/modularization/03-options-and-decision.md](engineering/modularization/03-options-and-decision.md) | The three directions, their scores, the decision record, and remaining defaults |
+| [engineering/modularization/04-migration-plan.md](engineering/modularization/04-migration-plan.md) | Phased move with exit criteria, risks, and script mapping |
 | [engineering/accounts.md](engineering/accounts.md) | Server-side users, bearer sessions, and the one account across C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail |
 | [engineering/admin-dashboard.md](engineering/admin-dashboard.md) | The token-protected `/admin` console for accounts, sessions, platform links, C@MPUS data, audit history, service logs, and system health |
 | [engineering/data-model.md](engineering/data-model.md) | Program, modules, places, and what is stored on the device |

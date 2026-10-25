@@ -73,6 +73,18 @@ const sidebars = {
         'engineering/design-system',
         'engineering/component-catalog',
         'engineering/i18n',
+        {
+          type: 'category',
+          label: 'Modularization',
+          link: { type: 'doc', id: 'engineering/modularization/README' },
+          items: [
+            'engineering/modularization/adr-001-target-architecture',
+            'engineering/modularization/current-state',
+            'engineering/modularization/target-modules',
+            'engineering/modularization/options-and-decision',
+            'engineering/modularization/migration-plan',
+          ],
+        },
       ],
     },
     {

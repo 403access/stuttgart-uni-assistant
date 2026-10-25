@@ -122,6 +122,8 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 
 Start with [docs/README.md](docs/README.md). The original product description is [docs/00-product-description.md](docs/00-product-description.md). The lifecycle, from initiation through maintenance, is under [docs/sdlc/](docs/sdlc/00-overview.md). Funding options, eligibility and an application plan are under [docs/funding/](docs/funding/README.md).
 
+The accepted target architecture — a modular monorepo with shared packages for the app, admin dashboard, distribution service, site, and server — is documented under [docs/engineering/modularization/](docs/engineering/modularization/README.md). The workspace skeleton is in place; shared package extraction is the next phase.
+
 ## Palette
 
 The interface uses the university's published corporate colors: anthracite `#323232`, mid blue `#004191`, and light blue `#00BEFF`, on a white and mist ground. The mark is an original pair of circles, not the university signet. The licensed Univers typeface is not embedded. The app uses the platform UI font.
