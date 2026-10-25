@@ -71,6 +71,7 @@ const sidebars = {
         'engineering/vpn-tunnel',
         'engineering/ios-distribution',
         'engineering/design-system',
+        'engineering/component-catalog',
         'engineering/i18n',
       ],
     },

@@ -37,6 +37,8 @@ you touched while iterating:
 npm run check:types        # tsc --noEmit
 npm run check:lint         # expo lint
 npm run check:catalog      # curriculum, quiz, and PDF-pipeline assertions
+npm run check:components   # generated component catalog, docs, and admin asset are current
+npm run catalog:components # regenerate the catalog after a component change
 npm run check:campus-db    # campus cache round-trips
 npm run check:app-tests    # app and script tests (jsdom, headless login, ...)
 npm run check:server-tests # assistant server tests

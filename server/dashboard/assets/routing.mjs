@@ -24,6 +24,7 @@ export function parseHash() {
   if (segments[0] === 'audit') return { name: 'audit', params };
   if (segments[0] === 'logs') return { name: 'logs', params };
   if (segments[0] === 'system') return { name: 'system', params };
+  if (segments[0] === 'components') return { name: 'components', params };
   return { name: 'overview', params };
 }
 

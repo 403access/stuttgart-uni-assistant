@@ -77,6 +77,7 @@ const SECTION_KEYS: Record<string, TranslationKey> = {
   login: 'common.anmeldung',
   oidc: 'common.anmeldung',
   api: 'common.schnittstelle',
+  dev: 'tabsMehr.dev',
 };
 
 function routeTitle(pathname: string, locale: Locale): string {

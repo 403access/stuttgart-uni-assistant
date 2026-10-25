@@ -18,7 +18,7 @@ import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { pick, tx } from '@/src/text';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/components' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -136,6 +136,12 @@ export default function MoreScreen() {
                 detail: tx(locale, 'dev.state.detail'),
                 href: '/dev/state' as CampusHref,
                 tags: ['dev', 'zustand', 'state', 'storage', 'asyncstorage', 'sitzung', 'session', 'debug', 'diagnose'],
+              },
+              {
+                title: tx(locale, 'dev.components.titel'),
+                detail: tx(locale, 'dev.components.detail'),
+                href: '/dev/components' as CampusHref,
+                tags: ['dev', 'komponenten', 'components', 'catalog', 'katalog', 'vorschau', 'preview', 'ui', 'styles', 'stil', 'verwendung', 'usages', 'fundstellen'],
               },
               {
                 title: tx(locale, 'dev.nfc.titel'),

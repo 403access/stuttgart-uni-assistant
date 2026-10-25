@@ -12,6 +12,7 @@ development builds. It contains:
 | --- | --- | --- |
 | **Onboarding** | `/dev/onboarding` | First-run values and a next-launch override |
 | **Lokaler Zustand** | `/dev/state` | Session summary, local counts, and the raw AsyncStorage payload |
+| **Komponenten** | `/dev/components` | Searchable component catalog with live previews and every usage |
 | **NFC-Karte** | `/dev/nfc` | Read the student ID card over NFC |
 | **Schnittstelle** | `/api` | The existing server-route replay screen |
 
@@ -86,6 +87,39 @@ A read-only snapshot for diagnosing the app record:
 The raw payload includes user-visible notes and the demonstration record, so the
 screen is development-only. It does not read `expo-secure-store` or print the
 bearer token.
+
+## Component catalog (`/dev/components`)
+
+The screen lists every React component under `src/` with its category, native
+and web files, exports, import count, and every place it is rendered, called,
+or passed as a value. The data is generated from the TypeScript AST, not typed
+by hand, so a moved component or a new usage shows up after regeneration:
+
+```bash
+bun run catalog:components   # rewrite the in-app data, docs page, and admin asset
+bun run check:components     # fail when any generated file is stale
+```
+
+The in-app data lives in `src/components/catalog.generated.ts`; the same
+inventory is written to [component-catalog.md](component-catalog.md) and to
+the admin dashboard at **Komponenten** (`/admin#/components`). The generator
+skips its own sources and the preview registry, so previews do not inflate the
+counts. The dashboard reads
+`server/dashboard/assets/component-catalog.mjs`; a reload after regeneration
+is enough, no assistant restart. The dashboard page module is
+`server/dashboard/pages/components.mjs`. Its **Vorschau** column and
+**Live-Vorschau öffnen** button link to the Expo web app on port 8081 with a
+`?q=<component>` filter; start it with `bun run web` and sign in there before
+following the link.
+
+Live previews come from `src/components/component-previews.tsx`, keyed by
+export name. The generator adds that key list to the catalog, so the in-app
+page, the admin **Vorschau** column, and the docs **Preview** column all show
+the same set. Add a preview there when a component is safe to render without a
+route, modal host, or live portal session. Components that need one show the
+file and occurrence list without a preview. Platform split: `DeviceQr`,
+`UniMapView`, `IliasPdfView`, and `IliasOfficeView` each list their native and
+web files separately.
 
 ## NFC card (`/dev/nfc`)
 

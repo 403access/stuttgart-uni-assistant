@@ -6,6 +6,7 @@ import { $, h } from './dom.mjs';
 import { number } from './format.mjs';
 import { icon, paintIcons } from './icons.mjs';
 import { renderAuditPage } from '../pages/audit.mjs';
+import { renderComponentsPage } from '../pages/components.mjs';
 import { renderDevicePage } from '../pages/device.mjs';
 import { renderDevicesPage } from '../pages/devices.mjs';
 import { renderIliasPage } from '../pages/ilias.mjs';
@@ -40,6 +41,7 @@ async function renderRoute() {
     else if (route.name === 'audit') await renderAuditPage(route);
     else if (route.name === 'logs') await renderLogsPage(route);
     else if (route.name === 'system') await renderSystemPage();
+    else if (route.name === 'components') await renderComponentsPage(route);
     else await renderOverview();
   } catch (error) {
     if (error.code === 'unauthorized' || error.code === 'admin_unconfigured') return;

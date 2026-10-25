@@ -55,6 +55,7 @@ that survives reloads and can be shared between operators:
 | `#/users/<id>/audit` | Operator actions for this account |
 | `#/audit` | Cross-account audit log with search, action filter, and pagination |
 | `#/logs` | Persisted service diagnostics from C@MPUS, ILIAS, UniMail, SIAM/OIDC, sync, auth, admin, and the assistant, with search, service/level filters, and optional auto-refresh |
+| `#/components` | Generated component inventory with platform files, exports, every usage, a preview column, and links to the live previews |
 | `#/system` | Runtime, host, environment variables, configuration, database counts, sync jobs, maintenance |
 
 The layout is responsive, keeps a light and a dark theme (stored in
@@ -79,6 +80,24 @@ back to German in the app. Drafts stay visible in the console but are never
 returned by `GET /v1/news`. The search matches title, summary, and body; the
 status filter narrows to published items or drafts. Publishing and deleting are
 confirmed and recorded in the audit log.
+
+**Components:** the generated catalog from `scripts/generate-component-catalog.mjs`,
+with search, category and platform filters, export lists, native/web file
+variants, and every import, render, call, reference, and re-export with its
+file and line. It is the same inventory as **Dev → Komponenten** in the app and
+[component-catalog.md](component-catalog.md). Opening a row expands its details
+in place. The page module is `server/dashboard/pages/components.mjs`; the
+generated data is served as `server/dashboard/assets/component-catalog.mjs`, so
+a dashboard reload picks up a regenerated catalog without restarting the
+assistant server.
+
+The previews are React components and cannot be rendered by the plain HTML
+console. A **Vorschau** column marks each component that has a live demo; the
+badge (and the **Live-Vorschau öffnen** button) opens the Expo web app at
+`http://<dashboard-host>:8081/dev/components`, prefilled with that component.
+The Expo web server must be running, and the browser must have an app session
+(or sign in on that page). On a phone, the same demos are under **Dev →
+Komponenten**.
 
 **Web devices:** every browser pairing carries the browser label and user
 agent, the parsed form factor (desktop, mobile, tablet, or bot), operating

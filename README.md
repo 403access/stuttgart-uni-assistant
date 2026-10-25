@@ -51,7 +51,7 @@ The app reads `EXPO_PUBLIC_ASSISTANT_URL`, which defaults to `http://127.0.0.1:8
 
 `GET /health` reports whether an xAI key is configured, whether the OIDC client is set, and whether `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` are set. It does not return either secret. `GET /v1/api` lists the implemented routes. Without an xAI key the server returns 503 for `/v1/assist` and the app keeps the local answer. The university password is not a variable in `.env`.
 
-The assistant server also hosts an operator dashboard at `http://127.0.0.1:8787/admin`. Set `DASHBOARD_TOKEN` in `.env` to enable it; without the token the page and every `/v1/admin/*` route stay disabled. The dashboard lists and explores users, sessions, browser device links, platform links, C@MPUS curriculum/course/calendar/call data, audit history, persisted service logs, and system health, and can create, edit, revoke, disconnect, clear, start or cancel syncs, export CSV, or delete. Details: [docs/engineering/admin-dashboard.md](docs/engineering/admin-dashboard.md).
+The assistant server also hosts an operator dashboard at `http://127.0.0.1:8787/admin`. Set `DASHBOARD_TOKEN` in `.env` to enable it; without the token the page and every `/v1/admin/*` route stay disabled. The dashboard lists and explores users, sessions, browser device links, platform links, C@MPUS curriculum/course/calendar/call data, the generated component catalog (including which components have live previews and links to them), audit history, persisted service logs, and system health, and can create, edit, revoke, disconnect, clear, start or cancel syncs, export CSV, or delete. Details: [docs/engineering/admin-dashboard.md](docs/engineering/admin-dashboard.md).
 
 When the phone is not on the local network, Expo's tunnel carries the bundle but not the assistant, so the assistant needs a tunnel of its own. Run the three processes in this order, because `EXPO_PUBLIC_*` is read at bundle time:
 
@@ -82,7 +82,7 @@ npm run typecheck
 npm run check
 ```
 
-`npm run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary). It also runs the server tests and the secrets CLI tests (`scripts/set-campus-secret.test.mjs`), which exercise the token and session updater against a throwaway `.env` copy and assert the real one is never touched.
+`npm run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary). It also verifies that the generated component catalog, docs page, and admin asset are current, runs the server tests, and runs the secrets CLI tests (`scripts/set-campus-secret.test.mjs`), which exercise the token and session updater against a throwaway `.env` copy and assert the real one is never touched.
 
 ## Generate quiz content from PDFs
 
@@ -103,6 +103,7 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 | `site/` | Static website for the app (plain HTML, CSS, JS; `npm run site`) |
 | `src/data/` | Demonstration curriculum, places, people, deadlines, documents |
 | `src/domain/plan.ts` | Credit totals, prerequisites, next-semester suggestion |
+| `src/components/catalog.generated.ts` | Generated component inventory for **Dev → Komponenten**, the admin dashboard's **Komponenten** view, and [the docs page](docs/engineering/component-catalog.md); regenerate with `bun run catalog:components` |
 | `src/assistant/` | Local answers, fact sheet, optional Grok call |
 | `src/state/AppState.tsx` | TanStack Store: session, language, curriculum selection, notes, and chat, stored on the device |
 | `src/onboarding/` | First-run completion and the biometric app-lock preference |
