@@ -6,7 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 import { sendAsset, sendHtml } from '../../http.mjs';
 
-const ROOT = fileURLToPath(new URL('../../../admin/public/', import.meta.url));
+const ROOT = process.env.ADMIN_DIST_DIR
+  ? resolve(process.env.ADMIN_DIST_DIR)
+  : fileURLToPath(new URL('../../../admin/public/', import.meta.url));
 const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
@@ -28,10 +30,14 @@ function assetFile(pathname) {
   return { file, type };
 }
 
+function dashboardIndex(response) {
+  // Read per request: a dashboard edit or a new Vite build does not need a restart.
+  sendHtml(response, readFileSync(resolve(ROOT, 'index.html'), 'utf8'));
+}
+
 export function dashboardPage(request, response, url) {
   if (request.method !== 'GET' || (url.pathname !== '/admin' && url.pathname !== '/admin/')) return false;
-  // Read per request: a dashboard edit does not need a server restart.
-  sendHtml(response, readFileSync(resolve(ROOT, 'index.html'), 'utf8'));
+  dashboardIndex(response);
   return true;
 }
 
@@ -44,7 +50,15 @@ export function dashboardAsset(request, response, url) {
     return false;
   }
   const asset = assetFile(pathname);
-  if (!asset) return false;
+  if (!asset) {
+    // A React route such as /admin/users has no extension; serve the shell so
+    // a browser reload reaches the client router. A missing asset still 404s.
+    if (!extname(pathname)) {
+      dashboardIndex(response);
+      return true;
+    }
+    return false;
+  }
   let body;
   try {
     body = readFileSync(asset.file);
