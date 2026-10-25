@@ -20,6 +20,7 @@ const UI_DIR = path.join(ROOT, 'packages', 'ui', 'src');
 const TS_OUT = path.join(SRC_DIR, 'components', 'catalog.generated.ts');
 const MD_OUT = path.join(ROOT, 'docs', 'engineering', 'component-catalog.md');
 const DASHBOARD_OUT = path.join(ROOT, 'apps', 'admin', 'public', 'assets', 'component-catalog.mjs');
+const ADMIN_JSON_OUT = path.join(ROOT, 'apps', 'admin', 'src', 'generated', 'component-catalog.json');
 const CHECK = process.argv.includes('--check');
 
 /** Sources that describe the catalog itself must not inflate the usage counts. */
@@ -877,6 +878,8 @@ function renderMarkdown() {
 
 const mdSource = renderMarkdown();
 
+const adminJson = `${JSON.stringify(catalog, null, 2)}\n`;
+
 const dashSource = `/**
  * GENERATED FILE — do not edit by hand.
  *
@@ -892,6 +895,7 @@ if (CHECK) {
     [TS_OUT, tsSource],
     [MD_OUT, mdSource],
     [DASHBOARD_OUT, dashSource],
+    [ADMIN_JSON_OUT, adminJson],
   ]) {
     const actual = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
     if (actual !== expected) problems.push(toRel(file));
@@ -908,12 +912,15 @@ if (CHECK) {
 fs.mkdirSync(path.dirname(TS_OUT), { recursive: true });
 fs.mkdirSync(path.dirname(MD_OUT), { recursive: true });
 fs.mkdirSync(path.dirname(DASHBOARD_OUT), { recursive: true });
+fs.mkdirSync(path.dirname(ADMIN_JSON_OUT), { recursive: true });
 fs.writeFileSync(TS_OUT, tsSource);
 fs.writeFileSync(MD_OUT, mdSource);
 fs.writeFileSync(DASHBOARD_OUT, dashSource);
+fs.writeFileSync(ADMIN_JSON_OUT, adminJson);
 console.log(
   `catalog: ${stats.components} components, ${stats.exports} exports, ${stats.usageCount} usage references`,
 );
 console.log(`wrote ${toRel(TS_OUT)}`);
 console.log(`wrote ${toRel(MD_OUT)}`);
 console.log(`wrote ${toRel(DASHBOARD_OUT)}`);
+console.log(`wrote ${toRel(ADMIN_JSON_OUT)}`);

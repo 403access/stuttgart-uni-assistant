@@ -169,6 +169,10 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select className={styles.select} {...props} />;
 }
 
+export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea className={styles.input} rows={4} {...props} />;
+}
+
 export function Checkbox({ label, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
   return <label className={styles.checkbox}><input type="checkbox" {...props} />{label}</label>;
 }

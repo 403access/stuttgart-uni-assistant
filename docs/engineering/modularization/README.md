@@ -2,7 +2,7 @@
 
 This folder analyses how the repository is structured today, proposes a module layout shared by the Expo app (iOS, Android, web), the operator dashboard, the distribution service, the marketing site, and the assistant server, and records the migration.
 
-The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–4 are in place and Phase 5 has started: the React admin shell, theme, login, and overview are built with Vite and `@ua/ui-react`. The remaining pages still use the vanilla dashboard until they are ported. Feature UI remains in the app until its services and primitives are decoupled.
+The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–4 are in place and Phase 5 is mostly ported: the React admin now covers overview, users, devices, news, audit, logs, system, ILIAS, and components. Quiz and the full user detail page remain, along with the cutover. Feature UI remains in the app until its services and primitives are decoupled.
 
 ## Target architecture
 
@@ -87,7 +87,7 @@ The detailed package catalog, dependency matrix, and target tree are in [target 
 | Decision | [ADR-001](05-adr-001-target-architecture.md) accepted |
 | Code moved | Phases 1–4 complete: workspace, kernel, design tokens, server kit, API client, shared UI, bundled dist service, and the feature cores. |
 | Files added | The workspace manifests, the shared packages, the generators, and these documents |
-| Next step | Phase 5: port the remaining admin pages, then switch `ADMIN_DIST_DIR` to the Vite build and remove `public/` |
+| Next step | Port the quiz and user-detail admin pages, then switch `ADMIN_DIST_DIR` to the Vite build and remove `public/` |
 
 The three questions from the first draft are answered:
 
