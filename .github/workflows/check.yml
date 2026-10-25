@@ -1,0 +1,39 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Check
+        run: bun run check
+
+      - name: Build the React admin
+        run: bun run admin:build
+
+      - name: Export the web app
+        working-directory: apps/mobile
+        run: bunx expo export --platform web
+
+      - name: Build the docs
+        working-directory: apps/docs
+        run: |
+          bun install --frozen-lockfile
+          bun run build

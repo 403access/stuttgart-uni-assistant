@@ -108,7 +108,7 @@ The live links are in [beta-forms.json](beta-forms.json).
 
 ### Create the forms from the command line
 
-`scripts/create-beta-forms.mjs` builds the German form, the English form, and the interview signup through the Tally API. It reads `TALLY_API_KEY` from the environment, `~/.config/tally/api_key`, or the git-ignored `.env`, and never prints it. The ids land in `docs/product/beta-forms.json`.
+`tools/create-beta-forms.mjs` builds the German form, the English form, and the interview signup through the Tally API. It reads `TALLY_API_KEY` from the environment, `~/.config/tally/api_key`, or the git-ignored `.env`, and never prints it. The ids land in `docs/product/beta-forms.json`.
 
 ```bash
 npm run beta:forms              # three drafts

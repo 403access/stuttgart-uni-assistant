@@ -9,26 +9,26 @@ Keep the demonstration true after the first build: the numbers, the disclaimer, 
 | Thing | How it drifts | What to do |
 | --- | --- | --- |
 | Expo SDK | A new SDK changes file-system, router, picker, and local-authentication APIs | Read the versioned docs for the SDK in `package.json` before editing those calls. Install with `npx expo install` |
-| The xAI model id | The quickstart names the current model | Before changing `server/index.mjs`, re-read the text-generation quickstart and copy the model id and the request shape |
+| The xAI model id | The quickstart names the current model | Before changing `apps/server/index.mjs`, re-read the text-generation quickstart and copy the model id and the request shape |
 | The curriculum story | A module added by hand breaks 180 ECTS | Run `npm run check`. Fix the catalog or the expectation in the same change |
-| Copy | A new screen forgets English or the demonstration label | German and English ship together in `src/i18n/de.ts` and `src/i18n/en.ts`. Add the key to both; English is typed against the German keys, so `npm run check` fails when one is missing ([i18n.md](../engineering/i18n.md)). Credit surfaces keep the word Demonstration |
+| Copy | A new screen forgets English or the demonstration label | German and English ship together in `apps/mobile/src/i18n/de.ts` and `apps/mobile/src/i18n/en.ts`. Add the key to both; English is typed against the German keys, so `npm run check` fails when one is missing ([i18n.md](../engineering/i18n.md)). Credit surfaces keep the word Demonstration |
 | Dependencies | `npm audit` reports issues in the Expo tree | Don't force-upgrade past the SDK pin. Take the Expo-compatible bump |
 
 ## Operating rules
 
-- Do not add a client-side call that posts the university password to a project server. The authorize redirect in `server/oidc.mjs` is the login for the SIAM path.
-- The C@MPUS automated sign-in is the one accepted exception that stores the university password: only in `expo-secure-store` via [vault.ts](../../src/auth/vault.ts), only after the user opts in, optionally behind biometrics, never in Async Storage, never in `.env`, never sent to the assistant server, and deleted on sign-out. Do not widen it — no logging, no copying to another store, no auto-retry with a second account.
+- Do not add a client-side call that posts the university password to a project server. The authorize redirect in `apps/server/oidc.mjs` is the login for the SIAM path.
+- The C@MPUS automated sign-in is the one accepted exception that stores the university password: only in `expo-secure-store` via [vault.ts](../../apps/mobile/src/auth/vault.ts), only after the user opts in, optionally behind biometrics, never in Async Storage, never in `.env`, never sent to the assistant server, and deleted on sign-out. Do not widen it — no logging, no copying to another store, no auto-retry with a second account.
 - The App Lock is a UI gate backed by `expo-local-authentication`. The OS performs the biometric match; the app stores only the boolean preference in AsyncStorage (`university-assistant/onboarding.v2`). Do not store biometric data, do not describe the lock as encrypting AsyncStorage, and keep the `expo-secure-store` session token and C@MPUS vault separate. Removing all enrolled biometrics must bypass the lock rather than trap the user.
 - Do not put `XAI_API_KEY` in `EXPO_PUBLIC_*` or in source.
 - Do not expose `/admin` or `/v1/admin/*` without TLS and a strong `DASHBOARD_TOKEN`. The dashboard reads across accounts; without the token it must stay disabled ([admin-dashboard.md](../engineering/admin-dashboard.md)).
 - Keep C@MPUS credentials per user. A browser harvest stays in server memory keyed by user id; the `.env` pair is bound to the account that signed in with it. Do not add a shared portal credential fallback for other accounts ([accounts.md](../engineering/accounts.md)).
-- Do not add exam PDFs to `src/data` or to the document hub.
+- Do not add exam PDFs to `apps/mobile/src/data` or to the document hub.
 - Do not replace the drawn mark with the university signet.
-- If a screen shows a grade, a room, or a deadline, it must be traceable to `src/data` or to something the user typed.
+- If a screen shows a grade, a room, or a deadline, it must be traceable to `apps/mobile/src/data` or to something the user typed.
 
 ## Changing the record
 
-The fictional student is a fixture, not a config file scattered through the UI. Change her semester, a grade, or a room in `src/data`, then update `scripts/check-assistant.ts` so the new fact is the one the answers assert. Screens should not need a parallel edit if they already read the catalog.
+The fictional student is a fixture, not a config file scattered through the UI. Change her semester, a grade, or a room in `apps/mobile/src/data`, then update `tools/check-assistant.ts` so the new fact is the one the answers assert. Screens should not need a parallel edit if they already read the catalog.
 
 ## Support posture
 

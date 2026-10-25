@@ -261,9 +261,9 @@ not equally strong.
 ## What the app does today
 
 `/vpn` offers both services, ZDI OpenVPN first. OpenVPN has an engine
-(`@aliakhgar1/react-native-openvpn`, wrapped in `src/vpn/engine-openvpn.ts`),
+(`@aliakhgar1/react-native-openvpn`, wrapped in `apps/mobile/src/vpn/engine-openvpn.ts`),
 Android manifest wiring and iOS entitlements from
-`plugins/withVpnTunnel.js`, and a tested `.ovpn` import
-(`src/vpn/openvpn-config.ts`, `scripts/vpn-profile.test.mjs`). TIK AnyConnect is
+`apps/mobile/plugins/withVpnTunnel.js`, and a tested `.ovpn` import
+(`apps/mobile/src/vpn/openvpn-config.ts`, `tools/vpn-profile.test.mjs`). TIK AnyConnect is
 guided setup. The remaining work is the iOS target and Apple's grant — see
 [vpn-tunnel.md](vpn-tunnel.md).

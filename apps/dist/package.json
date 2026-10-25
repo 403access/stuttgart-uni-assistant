@@ -1,0 +1,16 @@
+{
+  "name": "@ua/dist",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "bun build server.mjs --target=node --outfile=dist/server.mjs",
+    "typecheck": "echo 'plain node'",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@ua/design-tokens": "workspace:*",
+    "@ua/server-kit": "workspace:*"
+  }
+}

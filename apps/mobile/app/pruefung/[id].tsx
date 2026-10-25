@@ -1,0 +1,38 @@
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Text } from 'react-native';
+
+import { Card, InfoRow, Screen } from '@ua/ui';
+import { exams, modules } from '@ua/core/data';
+import { useAppSelector } from '@/src/state/AppState';
+import { colors } from '@ua/ui/theme';
+import { pick, tx } from '@ua/core/format';
+import { firstParam } from '@/src/router-params';
+
+export default function ExamScreen() {
+  const locale = useAppSelector((state) => state.locale);
+  const params = useLocalSearchParams<{ id: string }>();
+  const exam = exams.find((item) => item.id === firstParam(params.id));
+  if (!exam) {
+    return (
+      <Screen narrow kicker={tx(locale, 'pruefung.eintrag')} subtitle={tx(locale, 'common.eintrag')}>
+        <Stack.Screen options={{ title: tx(locale, 'pruefung.eintrag') }} />
+      </Screen>
+    );
+  }
+  const module = modules.find((item) => item.id === exam.moduleId);
+  return (
+    <Screen narrow kicker={exam.term}>
+      <Stack.Screen options={{ title: module ? pick(module.title, locale) : exam.moduleId }} />
+      <Card>
+        <Text style={{ color: colors.anthracite, fontWeight: '700' }}>{pick(exam.focus, locale)}</Text>
+        {exam.topics[locale].map((topic) => (
+          <Text key={topic} style={{ color: colors.inkSoft }}>
+            • {topic}
+          </Text>
+        ))}
+        <Text style={{ color: colors.anthracite, marginTop: 8 }}>{pick(exam.hint, locale)}</Text>
+      </Card>
+      {module ? <InfoRow title={pick(module.title, locale)} meta={module.code} onPress={() => router.push({ pathname: '/modul/[id]', params: { id: module.id } })} /> : null}
+    </Screen>
+  );
+}

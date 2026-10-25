@@ -8,8 +8,8 @@ with the number of active users.
 
 ## Code layout
 
-`server/ilias.mjs` is the stable public barrel. The implementation is split by
-concern in `server/ilias/`:
+`apps/server/ilias.mjs` is the stable public barrel. The implementation is split by
+concern in `apps/server/ilias/`:
 
 | File | Responsibility |
 | --- | --- |
@@ -28,7 +28,7 @@ concern in `server/ilias/`:
 | `session.mjs` | Per-user cookie registry, connect/disconnect, session-backed reads |
 
 Routes, the admin console, the terminal probe, and tests keep importing
-`server/ilias.mjs`, so the split is internal.
+`apps/server/ilias.mjs`, so the split is internal.
 
 ## Login
 
@@ -56,7 +56,7 @@ https://ilias3.uni-stuttgart.de/ilias.php?baseClass=ilDashboardGUI&cmd=jumpToSel
 ```
 
 The password is used once, in that login request. The resulting `PHPSESSID` is
-kept in a per-account `Map` in `server/ilias.mjs` (it disappears on restart),
+kept in a per-account `Map` in `apps/server/ilias.mjs` (it disappears on restart),
 and the login response also hands it to the authenticated app. The app seeds
 the cookie into its own WebView cookie store (`CookieManager`, WebKit store on
 iOS) and performs every later page read there. The server no longer fetches the
@@ -204,7 +204,7 @@ state names the reason and offers a retry; a biometric vault is only unlocked by
 that explicit action, never in the background.
 
 Page reads share one hidden WebView (`IliasHeadlessProvider`, mounted at the
-app root). The provider registers a `fetch` bridge; `src/ilias/api.ts` asks the
+app root). The provider registers a `fetch` bridge; `apps/mobile/src/ilias/api.ts` asks the
 server for the cache first, and on a miss or stale entry injects a same-origin
 `fetch` into the hidden page, posts the HTML to `/v1/ilias/ingest`, and renders
 the parsed response. Requests are serialized through one queue.

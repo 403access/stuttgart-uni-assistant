@@ -1,14 +1,14 @@
 # Data model
 
-The catalog is TypeScript in `src/data/`. Types live in `src/types.ts`. The device stores only what the student changes. Grades, rooms, and deadlines are not in Async Storage. They come from the bundle, so a reset cannot corrupt them.
+The catalog is TypeScript in `apps/mobile/src/data/`. Types live in `apps/mobile/src/types.ts`. The device stores only what the student changes. Grades, rooms, and deadlines are not in Async Storage. They come from the bundle, so a reset cannot corrupt them.
 
 This curriculum is a simplified fictional B.Sc. Informatik plan. It is not the legal Prüfungsordnung of the University of Stuttgart.
 
-Record content is bilingual with the `Localized` type (`{ de, en }`) and read with `pick(value, locale)`. That is deliberately separate from interface copy, which lives in the keyed catalogs in `src/i18n/` and is read with `tx(locale, key)` ([i18n.md](i18n.md)).
+Record content is bilingual with the `Localized` type (`{ de, en }`) and read with `pick(value, locale)`. That is deliberately separate from interface copy, which lives in the keyed catalogs in `apps/mobile/src/i18n/` and is read with `tx(locale, key)` ([i18n.md](i18n.md)).
 
 ## Program
 
-`src/data/program.ts`
+`apps/mobile/src/data/program.ts`
 
 | Field | Value |
 | --- | --- |
@@ -49,7 +49,7 @@ Expected pace after four completed semesters is 120 ECTS. She has earned 90, so 
 
 ## Modules
 
-`ModuleItem` in `src/data/modules.ts`. Twenty-nine modules.
+`ModuleItem` in `apps/mobile/src/data/modules.ts`. Twenty-nine modules.
 
 | Status | ECTS | Meaning |
 | --- | --- | --- |
@@ -73,15 +73,15 @@ Sessions use JavaScript weekday numbers, Monday = 1 through Friday = 5. The AI l
 2. Then fill by the largest remaining area gap. Ties follow `math`, `sq`, `project`, `elective`, `core`, `systems`, `practical`, `theory`, `thesis`. Inside an area, smaller ECTS, then code.
 3. Stop at 30 ECTS or when nothing unlocked fits.
 
-The result for this student is `num`, `hci`, `presentation`, `prakt`, `sec`, `ethics`. Machine Learning and the thesis are excluded because they are locked. `scripts/check-assistant.ts` asserts that list.
+The result for this student is `num`, `hci`, `presentation`, `prakt`, `sec`, `ethics`. Machine Learning and the thesis are excluded because they are locked. `tools/check-assistant.ts` asserts that list.
 
 `plannedIds` on the device is a separate set. The suggestion does not read it, and planning a module does not change `totals`.
 
 ## People and places
 
-People in `src/data/people.ts` are fictional. Emails use `@demo.uni-stuttgart.test`. There are no phone numbers. Each person points at a `roomId`.
+People in `apps/mobile/src/data/people.ts` are fictional. Emails use `@demo.uni-stuttgart.test`. There are no phone numbers. Each person points at a `roomId`.
 
-Places in `src/data/places.ts` have a campus, a building, a street address, schematic `x` and `y` (0–100), aliases, and a bilingual note. Examples:
+Places in `apps/mobile/src/data/places.ts` have a campus, a building, a street address, schematic `x` and `y` (0–100), aliases, and a bilingual note. Examples:
 
 | Id | Place | Address |
 | --- | --- | --- |
@@ -96,7 +96,7 @@ Room search scores a name or alias match above a campus match, so a question tha
 
 ## Activity
 
-`src/data/activity.ts` holds deadlines, news, documents, reviews, past exams, and tutorials.
+`apps/mobile/src/data/activity.ts` holds deadlines, news, documents, reviews, past exams, and tutorials.
 
 Deadlines run from an operating-systems sheet on 16 October 2026 through the exam-registration close on 16 November 2026, plus Rückmeldung on 15 January 2027 and the winter exams (AI on 18 February 2027, operating systems on 24 February 2027). The assistant lists deadlines on or after the current local date.
 

@@ -6,7 +6,7 @@ Provider: xAI, model `grok-4.7`, Responses API at `https://api.x.ai/v1/responses
 
 ## Campus engine
 
-`src/assistant/answer.ts` is a deterministic reader. It does not call a model and it does not invent grades, rooms, or dates.
+`apps/mobile/src/assistant/answer.ts` is a deterministic reader. It does not call a model and it does not invent grades, rooms, or dates.
 
 `hay()` folds ä, ö, ü, and ß so "Prüfungsanmeldung" and "prufungsanmeldung" match.
 
@@ -34,25 +34,25 @@ Room matches score a name or alias higher than the campus word, so "Wo ist die M
 
 Credit and deadline answers include a line that the text is a demonstration record, not a live C@MPUS extract.
 
-`src/assistant/context.ts` builds the input in the active language: student, totals, average, upcoming deadlines (`date >= today`), today's sessions, news, places, people, documents, reviews, exams, and the optional focused document. `renderFacts` flattens that input for the server. The client also slices facts to 24,000 characters before sending.
+`apps/mobile/src/assistant/context.ts` builds the input in the active language: student, totals, average, upcoming deadlines (`date >= today`), today's sessions, news, places, people, documents, reviews, exams, and the optional focused document. `renderFacts` flattens that input for the server. The client also slices facts to 24,000 characters before sending.
 
-Summaries of bundled pages use `src/assistant/summarize.ts`: split sentences, then `summarize` and `asBullets`. Bundled documents already contain both languages, so translation does not need the model.
+Summaries of bundled pages use `apps/mobile/src/assistant/summarize.ts`: split sentences, then `summarize` and `asBullets`. Bundled documents already contain both languages, so translation does not need the model.
 
 ## Remote engine
 
-`src/assistant/remote.ts`
+`apps/mobile/src/assistant/remote.ts`
 
-- URL: resolved by `src/assistant/endpoints.ts` (documented in [assistant-tunnel.md](assistant-tunnel.md)): `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` while a tunnel is up, otherwise an explicit non-loopback `EXPO_PUBLIC_ASSISTANT_URL`, otherwise the Metro dev-server host (`Constants.expoConfig.hostUri`) on port 8787, otherwise `http://127.0.0.1:8787`. The value `off` skips the call.
+- URL: resolved by `apps/mobile/src/assistant/endpoints.ts` (documented in [assistant-tunnel.md](assistant-tunnel.md)): `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` while a tunnel is up, otherwise an explicit non-loopback `EXPO_PUBLIC_ASSISTANT_URL`, otherwise the Metro dev-server host (`Constants.expoConfig.hostUri`) on port 8787, otherwise `http://127.0.0.1:8787`. The value `off` skips the call.
 - `POST /v1/assist` with `{ locale, question, facts, history }`. History is the last six turns.
 - Abort after 40 seconds.
 - Returns `null` on network failure, a non-OK status, or an empty `text`. The caller keeps the campus message.
 
-`server/index.mjs` and `server/routes/assist.mjs`
+`apps/server/index.mjs` and `apps/server/routes/assist.mjs`
 
 - Loads `../.env` without overriding existing environment variables.
 - `GET /health` → `{ ok: true, model: "grok-4.7", configured: boolean }`.
 - Missing key → `503 { error: "missing_key" }`.
-- System prompt, German or English: answer from the FACTS block only, invent no grades, rooms, deadlines, or ECTS, say when something is missing, do not pretend to be an official university system, stay short. The prompt is keyed in `server/i18n/` and read with `t(locale, 'assist.systemPrompt')` ([i18n.md](i18n.md)).
+- System prompt, German or English: answer from the FACTS block only, invent no grades, rooms, deadlines, or ECTS, say when something is missing, do not pretend to be an official university system, stay short. The prompt is keyed in `apps/server/i18n/` and read with `t(locale, 'assist.systemPrompt')` ([i18n.md](i18n.md)).
 - User turn: `FACTS:` then the sheet, then `QUESTION:`.
 - Request body: `{ model: "grok-4.7", store: false, input }`. Timeout 50 seconds.
 - The reply is `output_text`, or the `output_text` blocks inside `output` messages.

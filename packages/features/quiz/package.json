@@ -1,0 +1,26 @@
+{
+  "name": "@ua/feature-quiz",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./core": "./src/index.ts",
+    "./package.json": "./package.json",
+    "./ui": "./src/ui.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@ua/core": "workspace:*",
+    "@ua/quiz-content": "workspace:*"
+  },
+  "peerDependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-svg": "15.16.0"
+  }
+}

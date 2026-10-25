@@ -34,16 +34,16 @@ The two `.conf` files differ only in which address family carries the tunnel:
 
 | Layer | File | State |
 | --- | --- | --- |
-| Screens | `app/vpn.tsx`, `app/drucker.tsx` | Complete, in every build |
-| Provider model | `src/vpn/data.ts`, `src/vpn/types.ts` | Both providers, ZDI first |
-| Profile import | `src/vpn/profile.ts`, `src/vpn/openvpn-config.ts` | Complete; parser is pure and tested |
-| OpenVPN engine | `src/vpn/engine-openvpn.ts` | Wraps `@aliakhgar1/react-native-openvpn` |
-| Engine router | `src/vpn/native.ts` | Picks OpenVPN, else the AnyConnect stub, else nothing |
-| App service | `src/vpn/{use-vpn,use-vpn-profile,printer,labels,engine-config}.ts` | Complete; degrades honestly |
-| AnyConnect stub | `modules/university-vpn` | Status only — **no engine** |
-| Config plugin | `plugins/withVpnTunnel.js` | Android manifest + iOS entitlements for both engines |
+| Screens | `apps/mobile/app/vpn.tsx`, `apps/mobile/app/drucker.tsx` | Complete, in every build |
+| Provider model | `apps/mobile/src/vpn/data.ts`, `apps/mobile/src/vpn/types.ts` | Both providers, ZDI first |
+| Profile import | `apps/mobile/src/vpn/profile.ts`, `apps/mobile/src/vpn/openvpn-config.ts` | Complete; parser is pure and tested |
+| OpenVPN engine | `apps/mobile/src/vpn/engine-openvpn.ts` | Wraps `@aliakhgar1/react-native-openvpn` |
+| Engine router | `apps/mobile/src/vpn/native.ts` | Picks OpenVPN, else the AnyConnect stub, else nothing |
+| App service | `apps/mobile/src/vpn/{use-vpn,use-vpn-profile,printer,labels,engine-config}.ts` | Complete; degrades honestly |
+| AnyConnect stub | `apps/mobile/modules/university-vpn` | Status only — **no engine** |
+| Config plugin | `apps/mobile/plugins/withVpnTunnel.js` | Android manifest + iOS entitlements for both engines |
 
-The screen never lies. `src/vpn/native.ts` decides the engine **synchronously**
+The screen never lies. `apps/mobile/src/vpn/native.ts` decides the engine **synchronously**
 (`detectedEngine()`), so the first render is honest. On Expo Go, on web, and in
 a build without the engine the status reads `unavailable` and the screen falls
 back to the official clients. `connectVpn` throws `engine-missing` rather than
@@ -66,7 +66,7 @@ AGPL/MPL offers but **not** with the GPLv2-only parts, so the collision is real
 rather than resolved. OpenVPN 3's MPL-2.0 option is the escape hatch; see
 [vpn-comparison.md](vpn-comparison.md).
 
-`src/vpn/engine-openvpn.ts` wraps it and keeps the library out of every other
+`apps/mobile/src/vpn/engine-openvpn.ts` wraps it and keeps the library out of every other
 file:
 
 - **It is loaded lazily.** The library's spec uses
@@ -79,7 +79,7 @@ file:
 - **The target carries everything.** `connect` sends `address` (from the
   profile's `remote`), `username`, `password` and the full `openVPNConfig` text,
   plus the `iOSOptions` / `androidOptions` the library requires. The iOS bundle
-  identifier comes from `src/vpn/engine-config.ts`, derived from
+  identifier comes from `apps/mobile/src/vpn/engine-config.ts`, derived from
   `expo-constants` so it cannot drift from `app.json`.
 
 ### The RN 0.88 patch
@@ -106,7 +106,7 @@ silently applying nothing.
 ## Android setup
 
 The library ships an **empty** manifest template, so nothing merges in on its
-own. `plugins/withVpnTunnel.js` applies, on every `expo prebuild`:
+own. `apps/mobile/plugins/withVpnTunnel.js` applies, on every `expo prebuild`:
 
 - Permissions: `INTERNET`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`,
   `CHANGE_WIFI_STATE`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE`,
@@ -124,7 +124,7 @@ machine).
 ## iOS setup (manual, on purpose)
 
 A config plugin can set entitlements, but it cannot create an Xcode target or
-get Apple to grant the entitlement. `plugins/withVpnTunnel.js` writes the
+get Apple to grant the entitlement. `apps/mobile/plugins/withVpnTunnel.js` writes the
 `com.apple.developer.networking.networkextension` (`packet-tunnel-provider`)
 and `com.apple.security.application-groups` entitlements; the rest is Xcode
 work, per the library's installation guide:
@@ -158,12 +158,12 @@ refuses to archive an unsignable tree, are in
 
 ## What is verified
 
-- TypeScript, lint, and `scripts/vpn-profile.test.mjs` (the `.ovpn` parser and
+- TypeScript, lint, and `tools/vpn-profile.test.mjs` (the `.ovpn` parser and
   host/port extraction) pass.
 - The config plugin resolves under `expo config --type prebuild`, and its mods
   produce the entitlement, the app group, the permissions, the service and the
   receiver. `expo prebuild --platform android` writes them into
-  `android/app/src/main/AndroidManifest.xml`.
+  `apps/mobile/android/app/src/main/AndroidManifest.xml`.
 - **The Android debug build succeeds with the patch.**
   `./gradlew :app:assembleDebug` finishes in ~9 minutes with **zero Kotlin
   errors**. The resulting APK contains the engine — `libopenvpn.so` and

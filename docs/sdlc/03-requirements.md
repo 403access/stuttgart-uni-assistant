@@ -27,7 +27,7 @@ Requirements use three words on purpose:
 
 ## Degree
 
-- The record must sum to 180 ECTS, split into the areas in `src/data/program.ts`.
+- The record must sum to 180 ECTS, split into the areas in `apps/mobile/src/data/program.ts`.
 - Passed, enrolled, and open credits must be visible, with a weighted average of passed modules.
 - The requirements screen must show each area against its required ECTS, and the gap against 30 ECTS per completed semester.
 - A module must show its topics, lecturer, sessions, prerequisites, tutorials, documents, reviews, and past-exam topics when those exist.

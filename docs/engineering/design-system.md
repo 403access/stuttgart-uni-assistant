@@ -6,7 +6,7 @@ The interface follows the university's published corporate colors and an origina
 
 ## Color
 
-Defined in `src/theme.ts`.
+Defined in `packages/design-tokens/tokens.json` and generated into `packages/design-tokens/generated/theme.ts`; the app reads it through `@ua/ui/theme`.
 
 | Token | Hex | Use |
 | --- | --- | --- |
@@ -30,22 +30,22 @@ Official names stay official in both languages: C@MPUS, ILIAS, SIAM, SDG Campus,
 
 ## Mark
 
-`Mark` in `src/components/ui.tsx` draws two circles: a mid-blue disc and a smaller light-blue disc. It is the splash and header motif. Do not replace it with the university logo.
+`Mark` in `apps/mobile/src/components/ui.tsx` draws two circles: a mid-blue disc and a smaller light-blue disc. It is the splash and header motif. Do not replace it with the university logo.
 
-The icons under `assets/images/` are built from that same mark, not a template. `scripts/generate-icons.mjs` (`bun run icons`) renders them with no image library: the large disc in white and the small disc in `colors.light`, on the `colors.blue` ground, so the pair stays legible on the splash and the adaptive background. The Android foreground and the theme monochrome keep the mark inside the launcher safe zone. It is an original mark, not the signet.
+The icons under `assets/images/` are built from that same mark, not a template. `tools/generate-icons.mjs` (`bun run icons`) renders them with no image library: the large disc in white and the small disc in `colors.light`, on the `colors.blue` ground, so the pair stays legible on the splash and the adaptive background. The Android foreground and the theme monochrome keep the mark inside the launcher safe zone. It is an original mark, not the signet.
 
 ## Type
 
-System font. German copy uses the local conventions in `src/text.ts`:
+System font. German copy uses the local conventions in `apps/mobile/src/text.ts`:
 
 - Dates: `13.10.2026` in German, `13 Oct 2026` in English.
 - Grades: a comma in German (`1,9`), a point in English (`1.9`).
 
-Interface strings are requested by key through `tx(locale, key, values?)`, backed by the catalogs in `src/i18n/de.ts` and `src/i18n/en.ts` ([i18n.md](i18n.md)). Record content — module titles, place notes, document pages — stays a `Localized` `{ de, en }` object read with `pick`. The language toggle in Einstellungen and the biometrics switch in Sicherheit are the only switches. German is the default when storage is empty.
+Interface strings are requested by key through `tx(locale, key, values?)`, backed by the catalogs in `apps/mobile/src/i18n/de.ts` and `apps/mobile/src/i18n/en.ts` ([i18n.md](i18n.md)). Record content — module titles, place notes, document pages — stays a `Localized` `{ de, en }` object read with `pick`. The language toggle in Einstellungen and the biometrics switch in Sicherheit are the only switches. German is the default when storage is empty.
 
 ## Components
 
-`src/components/ui.tsx` is the set screens actually share. The full inventory — every component under `src/`, its native/web files, its exports, every import and usage, and which exports have live previews — is generated in [component-catalog.md](component-catalog.md), available in development builds at **Dev → Komponenten** (`/dev/components`), and mirrored in the operator console at **Komponenten** (`/admin#/components`). Live demos are defined in `src/components/component-previews.tsx`; the admin page links them to the Expo web app on port 8081.
+`apps/mobile/src/components/ui.tsx` holds the app-specific primitives; the generic primitives live in `@ua/ui`. Together they are the set screens actually share. The full inventory — every component under `apps/mobile/src/`, its native/web files, its exports, every import and usage, and which exports have live previews — is generated in [component-catalog.md](component-catalog.md), available in development builds at **Dev → Komponenten** (`/dev/components`), and mirrored in the operator console at **Komponenten** (`/admin#/components`). Live demos are defined in `apps/mobile/src/components/component-previews.tsx`; the admin page links them to the Expo web app on port 8081.
 
 | Piece | Role |
 | --- | --- |
@@ -58,7 +58,7 @@ Interface strings are requested by key through `tx(locale, key, values?)`, backe
 | `SearchField` | Bordered text field; `compact` trims the padding for a toolbar row |
 | `FieldLabel`, `Muted`, `Strong`, `InfoRow` | Form and definition-list text |
 
-Tab icons in `app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small geometric mark per tab. The five labels are Heute, Studium, Chat, Campus, and Mehr, translated with `tx`.
+Tab icons in `apps/mobile/app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small geometric mark per tab. The five labels are Heute, Studium, Chat, Campus, and Mehr, translated with `tx`.
 
 ## Screen patterns
 
@@ -70,13 +70,13 @@ Tab icons in `app/(tabs)/_layout.tsx` are drawn views, not an icon font: a small
 
 ## Sign-in screen
 
-`app/login.tsx` is the screen the gate shows once the splash screen lifts. It has two parts: a blue hero (the mark on a white tile, the brand, and three lines about what the app does) and a white sheet with the automated C@MPUS sign-in — account id, password, the biometrics switch, and the button. The other sign-in paths are not on this screen; they live on the deprecated `app/login-legacy.tsx`, which the start screen no longer links to.
+`apps/mobile/app/login.tsx` is the screen the gate shows once the splash screen lifts. It has two parts: a blue hero (the mark on a white tile, the brand, and three lines about what the app does) and a white sheet with the automated C@MPUS sign-in — account id, password, the biometrics switch, and the button. The other sign-in paths are not on this screen; they live on the deprecated `apps/mobile/app/login-legacy.tsx`, which the start screen no longer links to.
 
-The state and the mutations behind the screen live in `src/auth/use-login-flow.ts`, not in the screen itself. `app/login-legacy.tsx` is the superseded long form: it is marked `@deprecated`, keeps its own copy of the wiring, and carries the token, visible-browser, SIAM, account-id, and demonstration paths. New sign-in work goes into the start screen, not the legacy one.
+The state and the mutations behind the screen live in `apps/mobile/src/auth/use-login-flow.ts`, not in the screen itself. `apps/mobile/app/login-legacy.tsx` is the superseded long form: it is marked `@deprecated`, keeps its own copy of the wiring, and carries the token, visible-browser, SIAM, account-id, and demonstration paths. New sign-in work goes into the start screen, not the legacy one.
 
 ## Onboarding and App Lock
 
-`app/onboarding.tsx` reuses the login composition: a blue hero with the mark, the
+`apps/mobile/app/onboarding.tsx` reuses the login composition: a blue hero with the mark, the
 brand, and a setup pill, then a white sheet. The first page has one biometrics
 card, two checkmark points, a primary **Biometrie aktivieren**, and a secondary
 **Nicht jetzt**. Three import pages follow: calendar, messages, and timetable.
@@ -85,7 +85,7 @@ pipeline runs, then a two-stat card and a short list of the next entries. The
 flow has no header and disables the back gesture, because leaving it mid-flow
 would only send the gate to the same screen again.
 
-`src/components/app-lock.tsx` is the opaque counterpart shown over the
+`apps/mobile/src/components/app-lock.tsx` is the opaque counterpart shown over the
 navigator when the lock is armed. It keeps the same blue hero and white panel,
 with the fingerprint icon, a retry action, and a sign-out action. The underlying
 tabs stay mounted but covered, so unlocking does not rebuild the app state.
@@ -95,7 +95,7 @@ same `Mark`, `Button`, and color tokens as the rest of the app. They do not add
 a second visual language for security.
 
 The control itself lives in its own **Sicherheit / Security** screen
-(`app/sicherheit.tsx`) under the **App** group on the Campus tab, not inside the
+(`apps/mobile/app/sicherheit.tsx`) under the **App** group on the Campus tab, not inside the
 general Einstellungen screen. It leads with a centered status hero — icon, state
 pill, headline, and one sentence — and keeps the switch in a compact card below.
 The palette is the login palette: blue hero, a large white shield-check icon, a
@@ -107,14 +107,14 @@ Campus is not a map SDK. Dots are absolutely positioned from each place's `x` an
 
 ## Motion and splash
 
-The splash background is `#004191`. It hides only after storage has loaded and the route agrees with the session. Entrance animation is limited to the toast slide in `src/components/toast.tsx`, core `Animated` with `useNativeDriver`. Reanimated is a dependency of the Expo template and is not used for feature motion in this build.
+The splash background is `#004191`. It hides only after storage has loaded and the route agrees with the session. Entrance animation is limited to the toast slide in `apps/mobile/src/components/toast.tsx`, core `Animated` with `useNativeDriver`. Reanimated is a dependency of the Expo template and is not used for feature motion in this build.
 
 ## Waiting states
 
-A sign-in takes ten to thirty seconds when it runs in the hidden `WebView`, and a frozen screen reads as a broken app. `src/components/signing-in.tsx` covers that wait:
+A sign-in takes ten to thirty seconds when it runs in the hidden `WebView`, and a frozen screen reads as a broken app. `apps/mobile/src/components/signing-in.tsx` covers that wait:
 
 - The mark from `ui.tsx` is rebuilt as an orbiting pair: the light circle sweeps around the blue one, with a halo that expands and fades on the same 2.6 s cycle. It is the app's own mark, not a generic spinner.
-- Below it, the four phases from `src/auth/campus-progress.ts` — `connect`, `identify`, `adopt`, `profile` — fill in as the page script reports its steps. Completed phases take a check, the active one pulses. Seeing *what* is running is what reduces the perceived wait, so the component is fed the real steps and not a timer.
+- Below it, the four phases from `apps/mobile/src/auth/campus-progress.ts` — `connect`, `identify`, `adopt`, `profile` — fill in as the page script reports its steps. Completed phases take a check, the active one pulses. Seeing *what* is running is what reduces the perceived wait, so the component is fed the real steps and not a timer.
 - `accessibilityRole="progressbar"` with the phase as the label, `accessibilityLiveRegion="polite"` on the visible status text, and no motion at all when the platform reports reduced motion (`AccessibilityInfo.isReduceMotionEnabled`): the phases and their checks stay, the orbit and the pulse stop.
 - A `compact` variant sits inline under a button for the shorter waits (token sign-in, the SIAM redirect, the visible browser's harvest).
 - The status line under the phase is never empty: it starts as `signingIn.initialisierung` ("Initializing …") and is replaced with the host or step detail, so the block does not jump when the first value arrives. It sits directly under the phase label, as one unit.
@@ -124,8 +124,8 @@ A sign-in takes ten to thirty seconds when it runs in the hidden `WebView`, and 
   list spread down the sheet, with the action buttons in a footer. The active
   step carries a light-blue row, so the current phase is obvious at a glance.
 
-The phase mapping is pure and covered by `scripts/campus-progress.test.mjs`, which `bun run check` runs: a mis-mapped step would show a finished sign-in as still connecting, or move the progress backwards.
+The phase mapping is pure and covered by `tools/campus-progress.test.mjs`, which `bun run check` runs: a mis-mapped step would show a finished sign-in as still connecting, or move the progress backwards.
 
 ## Writing
 
-Short labels. German is the voice of the default interface: "Anforderungen", "Anrechnung", "Altklausuren", "Kommilitonen", "Fristen". English is a full second set of the same strings, not a partial overlay. Both sets live in the keyed catalogs in `src/i18n/` ([i18n.md](i18n.md)); no screen carries a German and an English sentence inline. The assistant answers in the active language in both engines.
+Short labels. German is the voice of the default interface: "Anforderungen", "Anrechnung", "Altklausuren", "Kommilitonen", "Fristen". English is a full second set of the same strings, not a partial overlay. Both sets live in the keyed catalogs in `apps/mobile/src/i18n/` ([i18n.md](i18n.md)); no screen carries a German and an English sentence inline. The assistant answers in the active language in both engines.

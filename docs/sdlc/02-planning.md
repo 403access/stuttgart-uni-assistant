@@ -22,7 +22,7 @@ The first release in this repository is a demonstration client. It includes ever
 
 1. Fix the record: program areas, modules, grades, sessions, rooms, deadlines. If this is wrong, every screen and every answer is wrong.
 2. Put pure functions on top of it: totals, average, locks, next-semester suggestion, local answers.
-3. Lock those functions with `scripts/check-assistant.ts` before the UI depends on them.
+3. Lock those functions with `tools/check-assistant.ts` before the UI depends on them.
 4. Build the shell: sign-in, tabs, device storage.
 5. Build the screens in the same order a student meets them: today, study, module, chat, campus, documents, peers.
 6. Add the server last, so the app is useful when the server is absent.

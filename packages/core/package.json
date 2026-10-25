@@ -1,0 +1,40 @@
+{
+  "name": "@ua/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./domain": "./src/domain/index.ts",
+    "./domain/*": "./src/domain/*.ts",
+    "./data": "./src/data/index.ts",
+    "./data/*": "./src/data/*.ts",
+    "./assistant": "./src/assistant/index.ts",
+    "./assistant/*": "./src/assistant/*.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./i18n/*": "./src/i18n/*.ts",
+    "./format": "./src/format.ts",
+    "./labels": "./src/labels.ts",
+    "./profile": "./src/profile/index.ts",
+    "./profile/*": "./src/profile/*.ts",
+    "./news": "./src/news/index.ts",
+    "./news/*": "./src/news/*.ts",
+    "./state": "./src/state/index.ts",
+    "./state/*": "./src/state/*.ts",
+    "./auth": "./src/auth/index.ts",
+    "./auth/*": "./src/auth/*.ts",
+    "./query": "./src/query/index.ts",
+    "./query/*": "./src/query/*.ts",
+    "./onboarding": "./src/onboarding/index.ts",
+    "./onboarding/*": "./src/onboarding/*.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@tanstack/store": "^0.11.2",
+    "@ua/format": "workspace:*"
+  }
+}

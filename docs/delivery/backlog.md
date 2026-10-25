@@ -7,8 +7,8 @@ Status of the prototype on 20 October 2026. "Done" means the screen or script ex
 - Expo SDK 57 app, Expo Router, TypeScript, German and English.
 - Five tabs and the stack screens for modules, people, rooms, documents, notices, exams, platforms, deadlines, feed, requirements, sequence, tutorials, peers, recognition, and settings.
 - Fictional 180 ECTS Informatik record for Lena Hartmann, with locks, a 30 ECTS suggestion, deadlines, news, tutorials, reviews, and topic-only past exams.
-- Local assistant and the checks in `scripts/check-assistant.ts`.
-- Optional Grok proxy (`server/index.mjs`, `grok-4.7`, `store: false`) with a campus fallback.
+- Local assistant and the checks in `tools/check-assistant.ts`.
+- Optional Grok proxy (`apps/server/index.mjs`, `grok-4.7`, `store: false`) with a campus fallback.
 - ILIAS-style local sync, text import, notes, on-device sharing, reader, extractive summary, export.
 - Schematic campus for Vaihingen and Stadtmitte.
 - SIAM sign-in through the TIK identity provider (authorization code, secret on the server). Demonstration profile remains. See [oidc-login.md](../engineering/oidc-login.md).
@@ -51,7 +51,7 @@ The order is the order a follow-up should use. Each item stays inside the demo b
 
 ## How to add a module without breaking the checks
 
-1. Edit `src/data/modules.ts` so passed + enrolled + open still equals 180.
+1. Edit `apps/mobile/src/data/modules.ts` so passed + enrolled + open still equals 180.
 2. Recompute the weighted average if the new row is passed.
 3. Run `npm run check`. If the suggestion changes, update the assertion and [data-model.md](../engineering/data-model.md) in the same change, and say why the planner moved.
 4. Run `npm run typecheck`.

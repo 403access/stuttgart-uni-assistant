@@ -1,7 +1,7 @@
 # Publish one GitHub Pages site from this repository:
 #
 #   /            the static landing page in `site/`
-#   /docs/       the Docusaurus build of `docs/` (see `docs-site/`)
+#   /docs/       the Docusaurus build of `docs/` (see `apps/docs/`)
 #
 # The two are composed into a single artifact, so the Pages source must be
 # "GitHub Actions" (Settings → Pages → Source), not a branch folder.
@@ -12,10 +12,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'site/**'
+      - 'apps/site/**'
       - 'docs/**'
-      - 'docs-site/**'
-      - 'scripts/merge-site-sitemap.mjs'
+      - 'apps/docs/**'
+      - 'tools/merge-site-sitemap.mjs'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -36,7 +36,7 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
-      # Docusaurus runs on Node; bun installs and drives it from `docs-site/`.
+      # Docusaurus runs on Node; bun installs and drives it from `apps/docs/`.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -46,7 +46,7 @@ jobs:
           bun-version: 1.4.3
 
       - name: Build the documentation
-        working-directory: docs-site
+        working-directory: apps/docs
         env:
           DOCS_URL: https://403access.github.io
           DOCS_BASE_URL: /stuttgart-uni-assistant/
@@ -59,15 +59,15 @@ jobs:
         run: |
           mkdir -p public
           # Docusaurus first: it writes the docs routes and its own assets/.
-          cp -R docs-site/build/. public/
+          cp -R apps/docs/build/. public/
           # The landing page then owns `/` — its index.html replaces Docusaurus's
           # redirect — and itself stays baseUrl-relative, so the two share assets/.
-          cp -R site/. public/
+          cp -R apps/site/. public/
           rm -f public/README.md
           touch public/.nojekyll
           # Docusaurus owns sitemap.xml; add the landing page and the two legal
           # pages, which live in `site/` and are copied after the docs build.
-          node scripts/merge-site-sitemap.mjs public/sitemap.xml "https://403access.github.io/stuttgart-uni-assistant/"
+          node tools/merge-site-sitemap.mjs public/sitemap.xml "https://403access.github.io/stuttgart-uni-assistant/"
 
       - uses: actions/upload-pages-artifact@v3
         with:
