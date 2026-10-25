@@ -3,8 +3,8 @@
 A code-base-wide review of logic that can move out of screens/components into
 general-purpose or domain-specific React hooks.
 
-Scope: `app/` and `src/` — 165 TS/TSX files, ≈25.7k lines, excluding
-`node_modules`, `docs-site`, `server`, `scripts` and `modules/`. Reviewed at
+Scope: `apps/mobile/app/` and `apps/mobile/src/` — 165 TS/TSX files, ≈25.7k lines, excluding
+`node_modules`, `docs-site`, `server`, `scripts` and `apps/mobile/modules/`. Reviewed at
 commit state of 2026-10-20.
 
 ---
@@ -20,13 +20,13 @@ Three findings dominate:
 
 | # | Finding | Where | Extracted hook | Est. saving |
 |---|---------|-------|----------------|-------------|
-| 1 | The C@MPUS sync + server-snapshot hydration pipeline is written four times | `app/kurse.tsx`, `app/strukturen.tsx`, `src/components/campus-info-view.tsx`, `src/onboarding/use-onboarding-import.ts` | `useCampusSync()` + `hydrateStudySnapshot()` | ~250 lines, 1 source of truth for a critical path |
+| 1 | The C@MPUS sync + server-snapshot hydration pipeline is written four times | `apps/mobile/app/kurse.tsx`, `apps/mobile/app/strukturen.tsx`, `apps/mobile/src/components/campus-info-view.tsx`, `apps/mobile/src/onboarding/use-onboarding-import.ts` | `useCampusSync()` + `hydrateStudySnapshot()` | ~250 lines, 1 source of truth for a critical path |
 | 2 | The AsyncStorage/page-lifecycle/async-effect scaffolding (`active` flag, `started` ref, `runId`, `mounted`, `publish`) is copy-pasted | 12 files | `useAsyncEffect`, `useOnce`, `useLatestRef`, `useRetryableRun` | ~120 lines, fewer stale-closure bugs |
 | 3 | Search + filter + sort + "merge device store with server snapshot" is re-derived per screen | `kurse`, `kalender`, `calendar-hero`, `api-history`, `mail`, `studium`, `onboarding` | `useActiveStudy`, `useCoursesForStudies`, `useListQuery`/`useCourseFilter` | ~150 lines, consistent behaviour |
 
 Charts of the shape of the problem:
 
-- `useState` appears on **188 lines** across `app/` and `src/components/`.
+- `useState` appears on **188 lines** across `apps/mobile/app/` and `apps/mobile/src/components/`.
 - 12 files hand-roll the `let active = true; … return () => { active = false }`
   effect guard.
 - 8 detail routes duplicate an identical `one(value)` search-param helper.
@@ -61,18 +61,18 @@ distance from the data layer.
 
 | Hook | File | Lines | Verdict |
 |------|------|-------|---------|
-| `useApp` | `src/state/AppState.tsx` | 549 (provider) | Cohesive but too broad (see §8) |
-| `useOnboarding` | `src/onboarding/OnboardingState.tsx` | 254 | Good; shares the persisted-state pattern with `useApp` |
-| `useReducedMotion` | `src/hooks/use-reduced-motion.ts` | 28 | Good; the only "general" hook today |
-| `useCampusLog` | `src/auth/campus-log.ts` | — | Backed by `campusLogStore` (TanStack Store) |
-| `useLoginFlow` | `src/auth/use-login-flow.ts` | 210 | Good domain hook; see note on declaration order |
-| `useCampusHeadlessLogin` | `src/auth/use-campus-headless-login.ts` | 297 | Complex but legitimately stateful; leave mostly as-is |
-| `useCampusBrowserLogin` | `src/auth/use-campus-browser-login.ts` | 87 | Good separation (state only, screen owns mutation) |
-| `useMailInbox` | `src/mail/use-mail-inbox.ts` | 268 | Good, but 11 `useState` + 4 refs; see §6.3 |
-| `useMailList` | `src/mail/use-mail-list.ts` | 77 | Good view-model hook; template for the rest |
-| `useCalendarImport` / `useMailImport` / `useTimetableImport` | `src/onboarding/use-onboarding-import.ts` | 489 | Correct behaviour, heavy duplication; split file + extract scaffolding |
-| `useVpn` | `src/vpn/use-vpn.ts` | 124 | Good |
-| `useVpnProfile` | `src/vpn/use-vpn-profile.ts` | 54 | Good, tiny |
+| `useApp` | `apps/mobile/src/state/AppState.tsx` | 549 (provider) | Cohesive but too broad (see §8) |
+| `useOnboarding` | `apps/mobile/src/onboarding/OnboardingState.tsx` | 254 | Good; shares the persisted-state pattern with `useApp` |
+| `useReducedMotion` | `apps/mobile/src/hooks/use-reduced-motion.ts` | 28 | Good; the only "general" hook today |
+| `useCampusLog` | `apps/mobile/src/auth/campus-log.ts` | — | Backed by `campusLogStore` (TanStack Store) |
+| `useLoginFlow` | `apps/mobile/src/auth/use-login-flow.ts` | 210 | Good domain hook; see note on declaration order |
+| `useCampusHeadlessLogin` | `apps/mobile/src/auth/use-campus-headless-login.ts` | 297 | Complex but legitimately stateful; leave mostly as-is |
+| `useCampusBrowserLogin` | `apps/mobile/src/auth/use-campus-browser-login.ts` | 87 | Good separation (state only, screen owns mutation) |
+| `useMailInbox` | `apps/mobile/src/mail/use-mail-inbox.ts` | 268 | Good, but 11 `useState` + 4 refs; see §6.3 |
+| `useMailList` | `apps/mobile/src/mail/use-mail-list.ts` | 77 | Good view-model hook; template for the rest |
+| `useCalendarImport` / `useMailImport` / `useTimetableImport` | `apps/mobile/src/onboarding/use-onboarding-import.ts` | 489 | Correct behaviour, heavy duplication; split file + extract scaffolding |
+| `useVpn` | `apps/mobile/src/vpn/use-vpn.ts` | 124 | Good |
+| `useVpnProfile` | `apps/mobile/src/vpn/use-vpn-profile.ts` | 54 | Good, tiny |
 
 **Takeaway:** the existing hooks are not the problem. The screens are.
 
@@ -85,37 +85,37 @@ removes copy-paste that hooks would otherwise have to import.
 
 | Helper | Duplicated in | Move to |
 |--------|---------------|---------|
-| `todayLocal(date)` | `app/(tabs)/kalender.tsx:258`, `app/onboarding.tsx:871`, `src/components/calendar-hero.tsx:23` | `src/text.ts` (or new `src/date.ts`) |
-| `monthShort(iso, locale)` | `app/(tabs)/kalender.tsx:253`, `app/onboarding.tsx:867`, `src/components/calendar-hero.tsx:18` | same |
+| `todayLocal(date)` | `apps/mobile/app/(tabs)/kalender.tsx:258`, `apps/mobile/app/onboarding.tsx:871`, `apps/mobile/src/components/calendar-hero.tsx:23` | `apps/mobile/src/text.ts` (or new `apps/mobile/src/date.ts`) |
+| `monthShort(iso, locale)` | `apps/mobile/app/(tabs)/kalender.tsx:253`, `apps/mobile/app/onboarding.tsx:867`, `apps/mobile/src/components/calendar-hero.tsx:18` | same |
 | `weekdayOf(iso, locale)` | `kalender.tsx:268`, `calendar-hero.tsx:27` | same |
 | `shiftDay(iso, delta)` | `kalender.tsx:262` only, but reusable | same |
-| `one(value)` search-param unwrap | `pruefung/[id]`, `chat`, `modul/[id]`, `kurs/[id]`, `raum/[id]`, `dozent/[id]`, `meldung/[id]`, `dokument/[id]` | `src/text.ts` as `firstParam()` |
-| `isAssigned(status)` (Fixplatz) | `kalender.tsx:28`, `calendar-hero.tsx:14` | `src/domain/courses.ts` |
-| `paletteFor(type)` | `kalender.tsx:33` only, but course-colour logic | `src/domain/courses.ts` |
-| `minutesOf(iso)` | `kalender.tsx:48` | `src/domain/courses.ts` |
-| `mergeCourses(stored, remote)` | `kurse.tsx:62-67`, `onboarding/use-onboarding-import.ts:268-272`, `calendar-hero.tsx:41-47`, `kalender.tsx:73-83` | `src/campus/merge.ts` as `mergeById()` |
-| `germanDate(date)` | `kalender-export.tsx:17`, `onboarding/use-onboarding-import.ts:63` | `src/date.ts` |
-| `formatStamp` / `importWhen` | `konto.tsx:45`, `kalender-export.tsx:27` | `src/date.ts` |
+| `one(value)` search-param unwrap | `pruefung/[id]`, `chat`, `modul/[id]`, `kurs/[id]`, `raum/[id]`, `dozent/[id]`, `meldung/[id]`, `dokument/[id]` | `apps/mobile/src/text.ts` as `firstParam()` |
+| `isAssigned(status)` (Fixplatz) | `kalender.tsx:28`, `calendar-hero.tsx:14` | `apps/mobile/src/domain/courses.ts` |
+| `paletteFor(type)` | `kalender.tsx:33` only, but course-colour logic | `apps/mobile/src/domain/courses.ts` |
+| `minutesOf(iso)` | `kalender.tsx:48` | `apps/mobile/src/domain/courses.ts` |
+| `mergeCourses(stored, remote)` | `kurse.tsx:62-67`, `onboarding/use-onboarding-import.ts:268-272`, `calendar-hero.tsx:41-47`, `kalender.tsx:73-83` | `apps/mobile/src/campus/merge.ts` as `mergeById()` |
+| `germanDate(date)` | `kalender-export.tsx:17`, `onboarding/use-onboarding-import.ts:63` | `apps/mobile/src/date.ts` |
+| `formatStamp` / `importWhen` | `konto.tsx:45`, `kalender-export.tsx:27` | `apps/mobile/src/date.ts` |
 
 > Rule of thumb: if a helper is pure, deterministic, and locale-aware, it belongs
-> in `src/text.ts` or a domain module — never in a hook.
+> in `apps/mobile/src/text.ts` or a domain module — never in a hook.
 
 ---
 
 ## 5. General-purpose hooks (Tier 1)
 
-These have no domain knowledge and can live in `src/hooks/`.
+These have no domain knowledge and can live in `apps/mobile/src/hooks/`.
 
 ### 5.1 `useLatestRef`
 
 **Problem.** Six files keep a ref mirror of a value so async callbacks see the
 current value without re-creating the callback:
 
-- `src/mail/use-mail-inbox.ts:50` (`messagesRef`), `:58` (`folderRef`)
-- `src/onboarding/use-onboarding-import.ts:80,178,325` (`session` refs)
-- `src/components/web-device-login.tsx:32` (`signInRef`)
-- `src/auth/use-campus-headless-login.ts:70` (`creds`)
-- `src/state/AppState.tsx:105` (`previousSession`, different purpose)
+- `apps/mobile/src/mail/use-mail-inbox.ts:50` (`messagesRef`), `:58` (`folderRef`)
+- `apps/mobile/src/onboarding/use-onboarding-import.ts:80,178,325` (`session` refs)
+- `apps/mobile/src/components/web-device-login.tsx:32` (`signInRef`)
+- `apps/mobile/src/auth/use-campus-headless-login.ts:70` (`creds`)
+- `apps/mobile/src/state/AppState.tsx:105` (`previousSession`, different purpose)
 
 **Proposal.**
 
@@ -147,8 +147,8 @@ useEffect(() => {
 }, []);
 ```
 
-Sites: `use-reduced-motion.ts:11-25`, `app/konto.tsx:56-66`,
-`app/mail-nachricht.tsx:37-53`, `curriculum-node-detail.tsx:36-54`,
+Sites: `use-reduced-motion.ts:11-25`, `apps/mobile/app/konto.tsx:56-66`,
+`apps/mobile/app/mail-nachricht.tsx:37-53`, `curriculum-node-detail.tsx:36-54`,
 `device-qr.web.tsx`, `web-device-login.tsx:50-93`, `use-mail-inbox.ts:76-86`,
 `OnboardingState.tsx:116-141`, `AppState.tsx:230-253, 263-288`,
 `use-vpn-profile.ts:26-34`, `use-vpn.ts:55-72`,
@@ -207,16 +207,16 @@ repeated in at least 10 places:
 
 | File | Action | Notes |
 |------|--------|-------|
-| `app/sicherheit.tsx:43-59` | `toggleBiometrics` | maps biometric error |
-| `app/onboarding.tsx:55-80` | `enable` | maps biometric error + toast |
-| `src/components/app-lock.tsx:25-42` | `unlock` | prompt-once ref |
-| `app/mail-verbindung.tsx:38-74` | `refreshInbox`, `disconnect` | two actions, shared flags |
-| `app/dev/onboarding.tsx:53-66` | `schedule` | |
-| `app/dev/nfc.tsx:36-57` | `scan` | |
-| `app/geraet-verknuepfen.tsx:33-54` | `approve` | uses `busy` ref |
+| `apps/mobile/app/sicherheit.tsx:43-59` | `toggleBiometrics` | maps biometric error |
+| `apps/mobile/app/onboarding.tsx:55-80` | `enable` | maps biometric error + toast |
+| `apps/mobile/src/components/app-lock.tsx:25-42` | `unlock` | prompt-once ref |
+| `apps/mobile/app/mail-verbindung.tsx:38-74` | `refreshInbox`, `disconnect` | two actions, shared flags |
+| `apps/mobile/app/dev/onboarding.tsx:53-66` | `schedule` | |
+| `apps/mobile/app/dev/nfc.tsx:36-57` | `scan` | |
+| `apps/mobile/app/geraet-verknuepfen.tsx:33-54` | `approve` | uses `busy` ref |
 | `curriculum-node-detail.tsx:56-71` | `loadNodeCourses` | |
 | `campus-info-view.tsx:40-94` | `loadRoot`, `loadChildren` | plus alert |
-| `src/vpn/use-vpn-profile.ts:36-46` | `importFromPicker` | result union, no errors |
+| `apps/mobile/src/vpn/use-vpn-profile.ts:36-46` | `importFromPicker` | result union, no errors |
 
 **Proposal.**
 
@@ -239,7 +239,7 @@ simple `busy/error/try/finally` shapes first (7 of the 10).
 
 **Impact.** ~70 lines removed and consistent error clearing. Low-medium risk.
 
-**Status (implemented).** `src/hooks/use-async-action.ts`; migrated `dev/nfc`,
+**Status (implemented).** `apps/mobile/src/hooks/use-async-action.ts`; migrated `dev/nfc`,
 `dev/onboarding`, `vpn` (probe + profile import) and the node-detail load.
 `mail-verbindung` keeps two explicit flags because refresh and disconnect guard
 each other.
@@ -301,11 +301,11 @@ Reusable later for device-link expiry elsewhere. Low risk.
 
 **Problem.** Boolean open/close state with a symmetrical toggle:
 
-- `app/(tabs)/mail.tsx:24-25` — `mailboxOpen`, `filterOpen`
-- `app/(tabs)/kalender.tsx:65` — `searchOpen`; `:297` — `filtersOpen` panel key
-- `app/(tabs)/mehr.tsx:23` — `searchOpen`
-- `app/campus.tsx:49` — `failed` (not a disclosure)
-- `app/vpn.tsx` — `providerId` selection (not a disclosure)
+- `apps/mobile/app/(tabs)/mail.tsx:24-25` — `mailboxOpen`, `filterOpen`
+- `apps/mobile/app/(tabs)/kalender.tsx:65` — `searchOpen`; `:297` — `filtersOpen` panel key
+- `apps/mobile/app/(tabs)/mehr.tsx:23` — `searchOpen`
+- `apps/mobile/app/campus.tsx:49` — `failed` (not a disclosure)
+- `apps/mobile/app/vpn.tsx` — `providerId` selection (not a disclosure)
 
 **Proposal.**
 
@@ -351,14 +351,14 @@ For `strukturen`, model it as a discriminated union:
 
 **Problem.** Every list screen re-implements the same filter/sort block:
 
-- `app/kurse.tsx:194-210` (type filter + query + 3 sort keys)
-- `app/(tabs)/kalender.tsx:89-118` (type + assignment + study + query + 2 sorts)
-- `src/components/api-history.tsx:44-64` (status + op + query + 3 sorts)
-- `src/mail/use-mail-list.ts:37-52` (already extracted — the reference design)
-- `app/studium.tsx:34-37` (query + status)
-- `app/campus.tsx:79-84` (query only)
-- `app/(tabs)/mehr.tsx:109-118` (query only, grouped)
-- `app/strukturen.tsx` delegates to `filterCurriculum` (good)
+- `apps/mobile/app/kurse.tsx:194-210` (type filter + query + 3 sort keys)
+- `apps/mobile/app/(tabs)/kalender.tsx:89-118` (type + assignment + study + query + 2 sorts)
+- `apps/mobile/src/components/api-history.tsx:44-64` (status + op + query + 3 sorts)
+- `apps/mobile/src/mail/use-mail-list.ts:37-52` (already extracted — the reference design)
+- `apps/mobile/app/studium.tsx:34-37` (query + status)
+- `apps/mobile/app/campus.tsx:79-84` (query only)
+- `apps/mobile/app/(tabs)/mehr.tsx:109-118` (query only, grouped)
+- `apps/mobile/app/strukturen.tsx` delegates to `filterCurriculum` (good)
 
 **Proposal — two layers, not one mega-hook:**
 
@@ -397,9 +397,9 @@ small hooks above.
 **Problem.** `useFocusEffect(useCallback(() => { void reload(); }, [reload]))`
 appears in:
 
-- `app/sicherheit.tsx:37-41` (refresh biometrics)
-- `app/dev/onboarding.tsx:46-51` (biometrics + stored prefs)
-- `app/dev/state.tsx:34-38` (AsyncStorage snapshot)
+- `apps/mobile/app/sicherheit.tsx:37-41` (refresh biometrics)
+- `apps/mobile/app/dev/onboarding.tsx:46-51` (biometrics + stored prefs)
+- `apps/mobile/app/dev/state.tsx:34-38` (AsyncStorage snapshot)
 
 **Proposal.**
 
@@ -416,9 +416,9 @@ focus-effect identity contract. Low risk.
 
 **Problem.** `AppState.addEventListener('change', …)` appears in:
 
-- `app/_layout.tsx:129-135` (clear unlocked key on background)
-- `src/onboarding/OnboardingState.tsx:168-174` (reset just-enabled + re-probe)
-- `src/query/client.tsx:41-48` (focusManager)
+- `apps/mobile/app/_layout.tsx:129-135` (clear unlocked key on background)
+- `apps/mobile/src/onboarding/OnboardingState.tsx:168-174` (reset just-enabled + re-probe)
+- `apps/mobile/src/query/client.tsx:41-48` (focusManager)
 
 **Proposal.**
 
@@ -462,7 +462,7 @@ const visibleCount = Math.max(0, Math.floor((listHeight - LIST_CAPTION_HEIGHT) /
 const visibleItems = items.slice(0, visibleCount);
 ```
 
-Sites: `app/onboarding.tsx:322-330` (calendar), `:432-442` (mail),
+Sites: `apps/mobile/app/onboarding.tsx:322-330` (calendar), `:432-442` (mail),
 `:534-538` (timetable), each with its own `onLayout` handler.
 
 **Proposal.**
@@ -486,11 +486,11 @@ the sheet metrics change. Very low risk.
 
 **Problem.** Multi-field forms repeat `useState` per field plus a manual reset:
 
-- `app/anrechnung.tsx:14-42` — 6 fields + `save()` + reset
-- `app/dokumente.tsx:14-16,41-57` — title/body + `saveNote()`
-- `app/vpn.tsx:39-41` — account/user/password
-- `app/modul/[id].tsx:22-57` — rating/workload/comment
-- `app/api.tsx:44-45` — elementId/courseId
+- `apps/mobile/app/anrechnung.tsx:14-42` — 6 fields + `save()` + reset
+- `apps/mobile/app/dokumente.tsx:14-16,41-57` — title/body + `saveNote()`
+- `apps/mobile/app/vpn.tsx:39-41` — account/user/password
+- `apps/mobile/app/modul/[id].tsx:22-57` — rating/workload/comment
+- `apps/mobile/app/api.tsx:44-45` — elementId/courseId
 
 **Proposal.**
 
@@ -540,7 +540,7 @@ owns "read once, write on change, expose `ready`".
 
 **Risk:** medium. `AppState` already handles a race (a slow load must not
 overwrite a user change — it does not, because actions only run after `ready`).
-Preserve that ordering and the test surface in `scripts/`.
+Preserve that ordering and the test surface in `tools/`.
 
 ---
 
@@ -550,7 +550,7 @@ Preserve that ordering and the test surface in `scripts/`.
 
 | Proposal | Replaces | Notes |
 |----------|----------|-------|
-| `useLeaveSession()` | `app/konto.tsx:68-72`, `app/(tabs)/mehr.tsx:26-30` | `endUniversitySession` (OIDC only) → `clearLogin()` → `signOut()`. Identical in both screens. Put it next to `useApp` (e.g. `src/auth/use-session-exit.ts`). |
+| `useLeaveSession()` | `apps/mobile/app/konto.tsx:68-72`, `apps/mobile/app/(tabs)/mehr.tsx:26-30` | `endUniversitySession` (OIDC only) → `clearLogin()` → `signOut()`. Identical in both screens. Put it next to `useApp` (e.g. `apps/mobile/src/auth/use-session-exit.ts`). |
 | `useServerStatus()` | `use-login-flow.ts:42-43`, `login-legacy.tsx:38-39` | Two `useQuery` probes (`oidcStatus`, `campusStatus`) that both resolve to `null` when offline. |
 | `useBiometricPrompt()` | `onboarding.tsx:55-80`, `sicherheit.tsx:43-59`, `app-lock.tsx:25-42` | Wraps `authenticateWithBiometrics` + `isBiometricCancel` + `biometricMessage`, owns `busy`/`error`. |
 | `useLoginMutations()` | `login-legacy.tsx:52-127` | **Do not do this.** The file is explicitly frozen; the duplication is documented and intentional (§9). |
@@ -761,15 +761,15 @@ export async function hydrateStudySnapshot(input: {
 hook stays usable from onboarding (which has no `setCurriculum` call).
 
 **Risk:** high. This is the critical data path. Cover it with the existing
-`scripts/check-campus-db.ts` run plus manual verification of:
+`tools/check-campus-db.ts` run plus manual verification of:
 - a full sync on a second device (server snapshot path),
 - cancelling mid-run,
 - switching study while a sync is in flight,
 - the "nothing new" note in `strukturen`,
 - the cache-clear buttons (which must also clear `deviceTrees`).
 
-**Status (implemented).** `src/campus/hydrate-study.ts` and
-`src/campus/use-campus-sync.ts` now exist. `kurse`, `strukturen` and
+**Status (implemented).** `apps/mobile/src/campus/hydrate-study.ts` and
+`apps/mobile/src/campus/use-campus-sync.ts` now exist. `kurse`, `strukturen` and
 `campus-info-view` use the hook; the duplicated mutation bodies and the
 `loadSeq`/`activeSeq` guard are gone (the hook's monotonic `seq` replaces it).
 
@@ -813,7 +813,7 @@ Trivial, but it removes three *inconsistent* variants:
 
 All five screens then share the same definition of "is a study selected".
 
-**Status (implemented).** `src/campus/use-active-study.ts`. Migrated `kurse`,
+**Status (implemented).** `apps/mobile/src/campus/use-active-study.ts`. Migrated `kurse`,
 `calendar-hero`, `mehr` and `campus-info-view`; `strukturen` keeps its own
 "browsed vs. active study" pair because it needs both.
 
@@ -825,7 +825,7 @@ export function useMailSnapshot() {
 }
 ```
 
-`mailStore` in `src/auth/mail.ts` is a TanStack Store, so the snapshot has a
+`mailStore` in `apps/mobile/src/auth/mail.ts` is a TanStack Store, so the snapshot has a
 stable object reference between writes and a subscription per consumer. Then:
 
 - `use-mail-inbox.ts:138-160` derives from the snapshot instead of manually
@@ -836,7 +836,7 @@ stable object reference between writes and a subscription per consumer. Then:
 changes (`sameMessageOrder`). Keep that logic in `useMailInbox`; the snapshot
 hook should not animate.
 
-**Status (implemented).** `src/mail/use-mail-snapshot.ts` reads `mailStore`.
+**Status (implemented).** `apps/mobile/src/mail/use-mail-snapshot.ts` reads `mailStore`.
 `mail-verbindung.tsx` consumes it; `use-mail-inbox.ts` keeps its own
 `messages`/`folder` mirrors for the optimistic folder switch and
 `LayoutAnimation`, and reads status/folders from the store.
@@ -873,9 +873,9 @@ it still reads the app store through selectors.
 
 | Candidate | Why not |
 |-----------|---------|
-| `app/login-legacy.tsx`'s duplicated login wiring | Explicitly frozen and documented (`:1-7`, `use-login-flow.ts:35-37`). Leave it. |
-| Pure helpers (`todayLocal`, `monthShort`, `paletteFor`, `formatCents`, `preview`, `summary`) | Move to `src/text.ts` / `src/domain/*`, not a hook. |
-| `one(params.id)` | A one-line utility, not state. Move to `src/text.ts` as `firstParam`. |
+| `apps/mobile/app/login-legacy.tsx`'s duplicated login wiring | Explicitly frozen and documented (`:1-7`, `use-login-flow.ts:35-37`). Leave it. |
+| Pure helpers (`todayLocal`, `monthShort`, `paletteFor`, `formatCents`, `preview`, `summary`) | Move to `apps/mobile/src/text.ts` / `apps/mobile/src/domain/*`, not a hook. |
+| `one(params.id)` | A one-line utility, not state. Move to `apps/mobile/src/text.ts` as `firstParam`. |
 | `Platform.OS === 'web'` | A module constant (`const IS_WEB = Platform.OS === 'web'`), not a hook. It never changes at runtime. |
 | `tx(locale, key)` | Pure lookup. Wrapping it in a hook hides a cheap call. |
 | Single `useState` pairs (`const [query, setQuery]`, `const [open, setOpen]`) | Replacing 2 lines with a custom hook adds indirection. Only group them when they move together (`useDisclosure`, `useForm` with ≥3 fields). |
@@ -892,40 +892,40 @@ it still reads the app store through selectors.
 
 ### Wave 1 — primitives (1–2 days, low risk)
 
-1. ✅ `src/hooks/use-latest-ref.ts`
-2. `src/hooks/use-async-effect.ts` + `use-mounted-ref.ts`
-3. `src/hooks/use-once.ts`
-4. ✅ `src/hooks/use-async-action.ts`
-5. ✅ `src/hooks/use-interval.ts`, `use-countdown.ts`, `use-polling.ts`
-6. ✅ `src/hooks/use-refresh-on-focus.ts` + `use-app-state-change.ts`
-7. `src/hooks/use-disclosure.ts`
+1. ✅ `apps/mobile/src/hooks/use-latest-ref.ts`
+2. `apps/mobile/src/hooks/use-async-effect.ts` + `use-mounted-ref.ts`
+3. `apps/mobile/src/hooks/use-once.ts`
+4. ✅ `apps/mobile/src/hooks/use-async-action.ts`
+5. ✅ `apps/mobile/src/hooks/use-interval.ts`, `use-countdown.ts`, `use-polling.ts`
+6. ✅ `apps/mobile/src/hooks/use-refresh-on-focus.ts` + `use-app-state-change.ts`
+7. `apps/mobile/src/hooks/use-disclosure.ts`
 8. ✅ Date/param helpers: `firstParam`, `localDay`, `monthShort`,
-   `weekdayOf`, `shiftDay` moved to `src/text.ts`; `formatStamp`/`germanDate`
+   `weekdayOf`, `shiftDay` moved to `apps/mobile/src/text.ts`; `formatStamp`/`germanDate`
    still open.
 
 Migrate the smallest sites first: `use-reduced-motion`, `use-vpn-profile`,
-`web-device-login`, `app/konto.tsx`, `mail-verbindung.tsx`.
+`web-device-login`, `apps/mobile/app/konto.tsx`, `mail-verbindung.tsx`.
 
 ### Wave 2 — data pipelines (3–5 days, high value, medium/high risk)
 
-1. ✅ `src/campus/hydrate-study.ts` + `src/campus/use-campus-sync.ts`
+1. ✅ `apps/mobile/src/campus/hydrate-study.ts` + `apps/mobile/src/campus/use-campus-sync.ts`
 2. ✅ Migrated `campus-info-view`, `strukturen`, `kurse`.
-3. ✅ `src/campus/use-active-study.ts`; migrated `kurse`, `calendar-hero`,
+3. ✅ `apps/mobile/src/campus/use-active-study.ts`; migrated `kurse`, `calendar-hero`,
    `mehr`, `campus-info-view`.
-4. ✅ `src/campus/use-courses.ts`; migrated `calendar-hero` and `kalender`.
-5. ✅ `src/campus/use-node-courses.ts`; migrated the tree rows and the node
+4. ✅ `apps/mobile/src/campus/use-courses.ts`; migrated `calendar-hero` and `kalender`.
+5. ✅ `apps/mobile/src/campus/use-node-courses.ts`; migrated the tree rows and the node
    detail panel.
 6. `onboarding` course merge (needs the completion-semantics decision from
    §7.1) and the pre-walk snapshot catch-up.
-7. ✅ `src/mail/use-mail-snapshot.ts`; both `mail-verbindung` and `use-mail-inbox`
+7. ✅ `apps/mobile/src/mail/use-mail-snapshot.ts`; both `mail-verbindung` and `use-mail-inbox`
    consume it (the inbox keeps its local rows for `LayoutAnimation`).
-8. ✅ `src/auth/use-leave-session.ts` + `src/auth/use-biometric-prompt.ts`;
+8. ✅ `apps/mobile/src/auth/use-leave-session.ts` + `apps/mobile/src/auth/use-biometric-prompt.ts`;
    `use-server-status.ts` still open.
 
 ### Wave 3 — screens become renderers (2–3 days, medium risk)
 
-1. `useApiConsole` → `app/api.tsx`
-2. `useCalendarExport` → `app/kalender-export.tsx`
+1. `useApiConsole` → `apps/mobile/app/api.tsx`
+2. `useCalendarExport` → `apps/mobile/app/kalender-export.tsx`
 3. `useDocument` + `useGrokRewrite` → `dokument/[id]`, `chat`
 4. `useNfcCard` → `dev/nfc.tsx`
 5. `useDeviceLinkApproval` → `geraet-verknuepfen.tsx`
@@ -961,8 +961,8 @@ For every extracted hook:
 - [ ] No new dependency added; all of these are plain `react` /
       `@tanstack/react-query` / existing Expo modules.
 - [ ] Hooks stay in the right layer:
-      `src/hooks/*` (generic), `src/campus/*` + `src/mail/*` + `src/vpn/*` +
-      `src/auth/*` (domain), screens keep only render + wiring.
+      `apps/mobile/src/hooks/*` (generic), `apps/mobile/src/campus/*` + `apps/mobile/src/mail/*` + `apps/mobile/src/vpn/*` +
+      `apps/mobile/src/auth/*` (domain), screens keep only render + wiring.
 
 ---
 
@@ -972,30 +972,30 @@ Files with the most hook calls (proxy for extractable logic):
 
 | File | Hook calls | Main extractable unit |
 |------|-----------|-----------------------|
-| `src/onboarding/use-onboarding-import.ts` | 31 | `useRetryableRun` + 3-way split |
-| `src/mail/use-mail-inbox.ts` | 24 | `useMailSnapshot`; keep the rest |
-| `app/kurse.tsx` | 19 | `useCampusSync`, `useCourseFilter`, `useActiveStudy` |
-| `app/strukturen.tsx` | 18 | `useCampusSync`, `useCurriculumBrowser` |
-| `app/onboarding.tsx` | 18 | `useFittedList`, `useOnboardingSteps` |
-| `src/onboarding/OnboardingState.tsx` | 16 | `usePersistedState` |
-| `src/auth/use-campus-headless-login.ts` | 15 | leave (state machine) |
-| `app/login-legacy.tsx` | 13 | leave (frozen) |
-| `src/auth/use-login-flow.ts` | 12 | `useServerStatus`, `useBiometricPrompt` no; split harvest mutation |
-| `app/(tabs)/kalender.tsx` | 12 | `useCourseFilter`, `useCalendarNavigation` |
-| `src/mail/use-mail-list.ts` | 11 | reference design |
-| `src/components/campus-info-view.tsx` | 11 | `useCampusSync`, `useNodeCourses` |
-| `app/_layout.tsx` | 11 | `useAppStateChange` |
-| `src/components/app-lock.tsx` | 8 | `useBiometricPrompt` |
-| `app/vpn.tsx` | 8 | `useVpnForm` |
-| `app/anrechnung.tsx` | 8 | `useForm` |
-| `src/components/web-device-login.tsx` | 7 | `useWebDeviceLink` |
-| `app/kalender-export.tsx` | 7 | `useCalendarExport` |
-| `app/dev/onboarding.tsx` | 7 | `useRefreshOnFocus` |
-| `src/components/signing-in.tsx` | 6 | leave (animation) |
-| `app/sicherheit.tsx` | 6 | `useBiometricPrompt`, `useRefreshOnFocus` |
-| `app/mail-verbindung.tsx` | 6 | `useMailSnapshot`, `useMailConnection` |
-| `app/mail-nachricht.tsx` | 6 | `useMailMessage` |
-| `app/api.tsx` | 6 | `useApiConsole` |
+| `apps/mobile/src/onboarding/use-onboarding-import.ts` | 31 | `useRetryableRun` + 3-way split |
+| `apps/mobile/src/mail/use-mail-inbox.ts` | 24 | `useMailSnapshot`; keep the rest |
+| `apps/mobile/app/kurse.tsx` | 19 | `useCampusSync`, `useCourseFilter`, `useActiveStudy` |
+| `apps/mobile/app/strukturen.tsx` | 18 | `useCampusSync`, `useCurriculumBrowser` |
+| `apps/mobile/app/onboarding.tsx` | 18 | `useFittedList`, `useOnboardingSteps` |
+| `apps/mobile/src/onboarding/OnboardingState.tsx` | 16 | `usePersistedState` |
+| `apps/mobile/src/auth/use-campus-headless-login.ts` | 15 | leave (state machine) |
+| `apps/mobile/app/login-legacy.tsx` | 13 | leave (frozen) |
+| `apps/mobile/src/auth/use-login-flow.ts` | 12 | `useServerStatus`, `useBiometricPrompt` no; split harvest mutation |
+| `apps/mobile/app/(tabs)/kalender.tsx` | 12 | `useCourseFilter`, `useCalendarNavigation` |
+| `apps/mobile/src/mail/use-mail-list.ts` | 11 | reference design |
+| `apps/mobile/src/components/campus-info-view.tsx` | 11 | `useCampusSync`, `useNodeCourses` |
+| `apps/mobile/app/_layout.tsx` | 11 | `useAppStateChange` |
+| `apps/mobile/src/components/app-lock.tsx` | 8 | `useBiometricPrompt` |
+| `apps/mobile/app/vpn.tsx` | 8 | `useVpnForm` |
+| `apps/mobile/app/anrechnung.tsx` | 8 | `useForm` |
+| `apps/mobile/src/components/web-device-login.tsx` | 7 | `useWebDeviceLink` |
+| `apps/mobile/app/kalender-export.tsx` | 7 | `useCalendarExport` |
+| `apps/mobile/app/dev/onboarding.tsx` | 7 | `useRefreshOnFocus` |
+| `apps/mobile/src/components/signing-in.tsx` | 6 | leave (animation) |
+| `apps/mobile/app/sicherheit.tsx` | 6 | `useBiometricPrompt`, `useRefreshOnFocus` |
+| `apps/mobile/app/mail-verbindung.tsx` | 6 | `useMailSnapshot`, `useMailConnection` |
+| `apps/mobile/app/mail-nachricht.tsx` | 6 | `useMailMessage` |
+| `apps/mobile/app/api.tsx` | 6 | `useApiConsole` |
 
 ## Appendix B — repeated idioms checklist
 
@@ -1009,9 +1009,9 @@ Files with the most hook calls (proxy for extractable logic):
 | `setInterval` | 4 sites | `useInterval` / `usePolling` |
 | `AppState.addEventListener` | 3 sites | `useAppStateChange` |
 | `useFocusEffect(refresh)` | 3 sites | `useRefreshOnFocus` |
-| `one(value)` param helper | 8 files | `firstParam()` in `src/text.ts` |
-| `todayLocal` | 3 files | `src/date.ts` |
-| `monthShort` / `weekdayOf` | 3 files | `src/date.ts` |
+| `one(value)` param helper | 8 files | `firstParam()` in `apps/mobile/src/text.ts` |
+| `todayLocal` | 3 files | `apps/mobile/src/date.ts` |
+| `monthShort` / `weekdayOf` | 3 files | `apps/mobile/src/date.ts` |
 | device+server course merge | 4 files | `useCoursesForStudy/Studies` + `mergeById` |
 | `sessionMode === 'campus' ? activeStudy(...) : null` | 5 files | `useActiveStudy` |
 | `subscribeMailSnapshot` | 2 files | `useMailSnapshot` |

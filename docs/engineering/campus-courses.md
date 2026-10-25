@@ -1,6 +1,6 @@
 # C@MPUS curriculum-element courses
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session for study `339485` (Philosophie) and element `287785`. It lists the courses (`Lehrveranstaltungen`) grouped under one curriculum node. Types live in `src/campus/courses.ts`. A reduced fixture is `src/campus/courses.sample.ts`. The assistant server calls this URL for `POST /v1/campus/courses`. The app shows the mapped list per node and does not store it. The route requires the app bearer token, and the server store is per `user_id`.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session for study `339485` (Philosophie) and element `287785`. It lists the courses (`Lehrveranstaltungen`) grouped under one curriculum node. Types live in `apps/mobile/src/campus/courses.ts`. A reduced fixture is `apps/mobile/src/campus/courses.sample.ts`. The assistant server calls this URL for `POST /v1/campus/courses`. The app shows the mapped list per node and does not store it. The route requires the app bearer token, and the server store is per `user_id`.
 
 The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service, the same one as [campus-curriculum.md](campus-curriculum.md). This file records the one courses operation that was returned, not a full catalog of C@MPUS.
 
@@ -21,7 +21,7 @@ Accept: application/json
 | `$ctx` | `design=ca;lang=de` |
 | `$filter` | `active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true` |
 
-`coursesRequestUrl` in `src/campus/courses.ts` builds this URL. Unlike the structure call, an element id is required: `POST /v1/campus/courses` answers `bad_element_id` without one. The study id defaults to the configured study when omitted, so callers pass the selected study explicitly — see [campus-study-switcher.md](campus-study-switcher.md).
+`coursesRequestUrl` in `apps/mobile/src/campus/courses.ts` builds this URL. Unlike the structure call, an element id is required: `POST /v1/campus/courses` answers `bad_element_id` without one. The study id defaults to the configured study when omitted, so callers pass the selected study explicitly — see [campus-study-switcher.md](campus-study-switcher.md).
 
 The server reads `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` exactly as for the structure read. The token and `PSESSIONID` are not `EXPO_PUBLIC_` variables and are never returned or logged.
 
@@ -83,7 +83,7 @@ The mapped `CampusCourse` keeps `id`, `courseNumber`, the German `title`, `cours
 | --- | --- | --- |
 | `POST` | `/v1/campus/courses` | Calls the courses URL for `{ studyId, elementId }` and returns `{ studyId, elementId, courses }` |
 
-`server/catalog.mjs` lists it as `campus-courses`, so the Schnittstelle screen can replay it with an element id and the selected study. An element with no courses returns an empty list — a valid answer, not an error. Portal failures use the same codes and the same `detail` propagation as the structure read, documented in [campus-logging.md](campus-logging.md).
+`apps/server/catalog.mjs` lists it as `campus-courses`, so the Schnittstelle screen can replay it with an element id and the selected study. An element with no courses returns an empty list — a valid answer, not an error. Portal failures use the same codes and the same `detail` propagation as the structure read, documented in [campus-logging.md](campus-logging.md).
 
 ## Full course catalogue
 
@@ -120,14 +120,14 @@ No server route and no app screen calls the catalogue yet. It also returns 20 ro
 
 ## App usage
 
-- The C@MPUS tab (`app/(tabs)/campus-info.tsx`) shows a `Kurse` toggle under every structure node. It reads the course cache first (instant, offline) and only then the network with write-through. Switching studies reloads the tree, so the toggles always query the selected study.
-- Tapping a course opens `/kurs/[id]`: number, type and short name, `SWS` from `duration`, semester, lecturers, registration state with a link into the portal registration, the next appointment (`Nächster Termin`, rendered from `startTime`/`endTime` via `formatDay`/`formatTime` in `src/text.ts`), the room, and the C@MPUS detail page. It reads the session cache (`cacheCampusCourses` in `src/auth/campus.ts`) and, after a restart, the persisted course cache.
-- The courses view (`app/kurse.tsx`) runs one server job per study (structures plus courses), then hydrates the local store from the server snapshots and merges. It hydrates from the course cache on open, so `Weiter laden` continues the remainder. Dynamic type pills come from the returned `courseTypeName` values — Seminar, Vorlesung, Übung, or whatever else the portal returns — plus search across title, lecturers, number, and room, and title/type/appointment sort.
-- The Schnittstelle screen (`app/api.tsx`) replays the call and lists the mapped courses for inspection.
+- The C@MPUS tab (`apps/mobile/app/(tabs)/campus-info.tsx`) shows a `Kurse` toggle under every structure node. It reads the course cache first (instant, offline) and only then the network with write-through. Switching studies reloads the tree, so the toggles always query the selected study.
+- Tapping a course opens `/kurs/[id]`: number, type and short name, `SWS` from `duration`, semester, lecturers, registration state with a link into the portal registration, the next appointment (`Nächster Termin`, rendered from `startTime`/`endTime` via `formatDay`/`formatTime` in `apps/mobile/src/text.ts`), the room, and the C@MPUS detail page. It reads the session cache (`cacheCampusCourses` in `apps/mobile/src/auth/campus.ts`) and, after a restart, the persisted course cache.
+- The courses view (`apps/mobile/app/kurse.tsx`) runs one server job per study (structures plus courses), then hydrates the local store from the server snapshots and merges. It hydrates from the course cache on open, so `Weiter laden` continues the remainder. Dynamic type pills come from the returned `courseTypeName` values — Seminar, Vorlesung, Übung, or whatever else the portal returns — plus search across title, lecturers, number, and room, and title/type/appointment sort.
+- The Schnittstelle screen (`apps/mobile/app/api.tsx`) replays the call and lists the mapped courses for inspection.
 
 ## Course cache
 
-`src/campus/db.ts` persists courses per study in the same `campus-cache.db` (AsyncStorage on web):
+`apps/mobile/src/campus/db.ts` persists courses per study in the same `campus-cache.db` (AsyncStorage on web):
 
 | Table | Contents |
 | --- | --- |
@@ -135,7 +135,7 @@ No server route and no app screen calls the catalogue yet. It also returns 20 ro
 | `course_elements` | Which elements each course was seen on (a course can appear under several) |
 | `courses_sync` | Fetched element ids (JSON, for resume), course count, finish time, `complete` flag |
 
-`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's structure cache leaves its courses alone (and vice versa via `clearCachedCourses`); only the global `Alle Caches leeren` drops both. Round-trips on both backends are pinned by `scripts/check-campus-db.ts` (real SQLite via node:sqlite, AsyncStorage faked), wired into `npm run check`.
+`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's structure cache leaves its courses alone (and vice versa via `clearCachedCourses`); only the global `Alle Caches leeren` drops both. Round-trips on both backends are pinned by `tools/check-campus-db.ts` (real SQLite via node:sqlite, AsyncStorage faked), wired into `npm run check`.
 
 ## What this call does not return
 

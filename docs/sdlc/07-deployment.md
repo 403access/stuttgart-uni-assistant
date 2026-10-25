@@ -33,7 +33,7 @@ Secrets:
 
 ## Build path when a binary is needed
 
-Do not commit `ios/` or `android/`. When a binary is required:
+Do not commit `apps/mobile/ios/` or `apps/mobile/android/`. When a binary is required:
 
 ```bash
 npx expo prebuild

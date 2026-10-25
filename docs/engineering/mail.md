@@ -9,9 +9,9 @@ stay stable while OWA markup would not.
 
 ## Screens
 
-Three surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`):
+Three surfaces share one snapshot (`subscribeMailSnapshot` in `apps/mobile/src/auth/mail.ts`):
 
-- **Messages tab** (`app/(tabs)/mail.tsx`): while not connected it shows the credential
+- **Messages tab** (`apps/mobile/app/(tabs)/mail.tsx`): while not connected it shows the credential
   form; once connected it becomes a clean inbox — subject, sender, date, read/unread dot,
   tap a row to open the read view (see below). The sticky control bar (pinned while the
   inbox scrolls under it) is one row: a **burger button** opens the left mailbox drawer
@@ -32,13 +32,13 @@ Three surfaces share one snapshot (`subscribeMailSnapshot` in `src/auth/mail.ts`
   "Absender" with two or more senders, "Neu zuerst" while unread rows exist. The stored
   selection is intent only; the effective value is derived in render, so a refresh that
   removes the variety silently falls back to newest.
-- **Compose screen** (`app/mail-verfassen.tsx`, pushed from the toolbar pencil or the
+- **Compose screen** (`apps/mobile/app/mail-verfassen.tsx`, pushed from the toolbar pencil or the
   read view's reply/forward actions): recipient chips with an address-book dropdown
   (lecturers, mailbox contacts, recent recipients — each with source badges), Cc/Bcc,
   subject, plain-text body, templates, attachments, autosaved drafts and the send action.
-  The recipient registry is derived in `src/mail/recipients.ts`; drafts and history live
-  in `src/mail/draft-storage.ts` / `src/mail/recent-recipients.ts`.
-- **Connection screen** (`app/mail-verbindung.tsx`, pushed outside the tabs): the status
+  The recipient registry is derived in `apps/mobile/src/mail/recipients.ts`; drafts and history live
+  in `apps/mobile/src/mail/draft-storage.ts` / `apps/mobile/src/mail/recent-recipients.ts`.
+- **Connection screen** (`apps/mobile/app/mail-verbindung.tsx`, pushed outside the tabs): the status
   card with the two actions "Posteingang aktualisieren" and "Verbindung lösen". Both
   screens apply each other's results through the published snapshot, so dropping the
   connection on this screen immediately restores the sign-in form in the tab, and a
@@ -51,8 +51,8 @@ Student → app (list, read flag, compose) → assistant server (process memory)
 
 ## Modules
 
-`server/mail.mjs` is the stable public facade for routes and tests. The
-implementation lives in `server/mail/`:
+`apps/server/mail.mjs` is the stable public facade for routes and tests. The
+implementation lives in `apps/server/mail/`:
 
 | File | Responsibility |
 | --- | --- |
@@ -67,13 +67,13 @@ implementation lives in `server/mail/`:
 
 ## Flow
 
-1. **Credentials** (`app/login.tsx` via `src/auth/use-login-flow.ts`, then
-   `app/(tabs)/mail.tsx`). A successful automated C@MPUS sign-in already holds the
+1. **Credentials** (`apps/mobile/app/login.tsx` via `apps/mobile/src/auth/use-login-flow.ts`, then
+   `apps/mobile/app/(tabs)/mail.tsx`). A successful automated C@MPUS sign-in already holds the
    st-account and password, so the flow posts them here automatically and the Messages
    tab opens already connected; the same submission runs when the tab's credential form
    is used, where the account is prefilled from the session and only the password is
    asked for. Either way both values are `POST`ed to the assistant server.
-2. **Proof and keep** (`POST /v1/mail/credentials`, `server/mail/accounts.mjs`). The server
+2. **Proof and keep** (`POST /v1/mail/credentials`, `apps/server/mail/accounts.mjs`). The server
    normalizes the long form (`st123456@stud.uni-stuttgart.de` → `st123456`), then proves
    the pair by opening a TLS session and logging in. On success it keeps
    `{ username, password }` in process memory only — never logged, never echoed, never
@@ -89,7 +89,7 @@ implementation lives in `server/mail/`:
    `BODY.PEEK[TEXT]<0.1024>` excerpt. `BODY.PEEK` keeps the list read from touching
    any flag; read state changes only through the explicit `POST /v1/mail/seen` route.
 
-   Tapping a row pushes **`app/mail-nachricht.tsx`**, which fetches the full body via
+   Tapping a row pushes **`apps/mobile/app/mail-nachricht.tsx`**, which fetches the full body via
    `GET /v1/mail/body?folder=&uid=`. The server reads the message's `BODYSTRUCTURE`,
    picks the actual `text/plain` / `text/html` leaf parts and fetches exactly those
    sections (`UID FETCH <uid> BODY.PEEK[1] BODY.PEEK[2]`, charset-decoded per part,
@@ -98,7 +98,7 @@ implementation lives in `server/mail/`:
    multipart mail. Transfer encodings are decoded server-side when the server leaves them
    intact (`decodeQuotedPrintable`, triggered by the part's `ENCODING` field — Exchange
    does not decode quoted-printable itself), so `über` never shows as `=C3=BCber`.
-   The read view (`src/components/mailBody.tsx`) renders selectable paragraphs and folds
+   The read view (`apps/mobile/src/components/mailBody.tsx`) renders selectable paragraphs and folds
    quoted replies (`> …` runs) behind "Zitat anzeigen" toggles; the HTML view styles
    `<blockquote>` the same way. The **plain text shows by default**; if the body is HTML,
    the sanitized markup is available but only rendered after the user taps
@@ -107,19 +107,19 @@ implementation lives in `server/mail/`:
 
    Opening the view calls `POST /v1/mail/seen` once, and a button flips the same flag
    back. The route runs one IMAP session (`SELECT`, `UID STORE <uid> ±FLAGS (\Seen)`);
-   `src/auth/mail.ts` publishes the new row state into the snapshot optimistically first
+   `apps/mobile/src/auth/mail.ts` publishes the new row state into the snapshot optimistically first
    and restores it when the request fails, so the list dot, the "Neu" filter and the
    detail pill stay in agreement. `BODY.PEEK` still keeps the body fetch from changing
    the flag implicitly.
-4. **Write and send** (`POST /v1/mail/send`, `server/mail/send.mjs`). The compose screen posts
+4. **Write and send** (`POST /v1/mail/send`, `apps/server/mail/send.mjs`). The compose screen posts
    `{ to, cc, bcc, subject, text, attachments, sentFolder, inReplyTo, references }`.
-   `server/mail-mime.mjs` parses and dedupes addresses, rejects header injection, caps
+   `apps/server/mail-mime.mjs` parses and dedupes addresses, rejects header injection, caps
    recipients (20), subject (255), body (100 KB) and attachments (5 files, 6 MB each,
    8 MB total, base64 in JSON), and builds a `multipart/mixed` message with a
    `multipart/alternative` text/plain + text/html body. Non-ASCII headers become RFC 2047
    words, attachment names carry an ASCII fallback plus `filename*`, Bcc never appears in
    the headers, and reply headers point at the original `Message-ID`.
-   `server/smtp.mjs` opens one `smtp.uni-stuttgart.de:587` session (`EHLO`, `STARTTLS`,
+   `apps/server/smtp.mjs` opens one `smtp.uni-stuttgart.de:587` session (`EHLO`, `STARTTLS`,
    `AUTH PLAIN` with `LOGIN` fallback, `MAIL FROM`, one `RCPT TO` per envelope address,
    `DATA` with dot-stuffing). A rejected recipient is reported without failing the whole
    message; no accepted recipient is an error. The route requires the app bearer token —
@@ -134,7 +134,7 @@ implementation lives in `server/mail/`:
 
 `GET /v1/mail/folders` lists the account's mailboxes with one IMAP session
 (`LIST "" "*"`): name verbatim plus a `selectable` flag (non-selectable `\Noselect`
-entries are kept out of the dropdown by the app). `server/mail/folders.mjs` parses the mailbox
+entries are kept out of the dropdown by the app). `apps/server/mail/folders.mjs` parses the mailbox
 name as the astring after the hierarchy delimiter, covering quoted names, bare atoms
 (`"/" INBOX` — reading the last quoted token would turn the delimiter into the name) and
 inline `{n}` literals.
@@ -169,11 +169,11 @@ what the university already forwards to the mailbox.
   the WebView runs with `javaScriptEnabled={false}` plus `allowFileAccess` off; and every
   navigation attempt is refused (`onShouldStartLoadWithRequest={() => false}`), so mail
   links cannot open tracking or phishing pages inside the app.
-- Tests in `server/mail.test.mjs` cover the pure parser parts (FETCH pieces with inline
+- Tests in `apps/server/mail.test.mjs` cover the pure parser parts (FETCH pieces with inline
   `{n}` literals, folded headers, RFC 2047 words, HTML preview flatten, LIST lines, the
   HTML sanitizer, BODYSTRUCTURE picking, quoted-printable decoding).
-  `server/mail-mime.test.mjs` covers address parsing, header encoding, MIME structure,
-  Bcc suppression, threading headers and dot-stuffing; `scripts/mail-compose.test.mjs`
+  `apps/server/mail-mime.test.mjs` covers address parsing, header encoding, MIME structure,
+  Bcc suppression, threading headers and dot-stuffing; `tools/mail-compose.test.mjs`
   covers recipient search and reply/forward prefill. No network in tests; the IMAP and
   SMTP session classes are exercised only in production against the real hosts.
 

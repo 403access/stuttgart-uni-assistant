@@ -1,6 +1,6 @@
 # C@MPUS study chooser
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session. It lists the studies the student is enrolled in. Types live in `src/campus/studies.ts`. A reduced fixture is `src/campus/studies.sample.ts`. The assistant server calls this URL for `GET /v1/campus/studies`. The app stores the mapped list, not the raw portal body. The route requires the app bearer token, and the snapshot is stored per `user_id`.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session. It lists the studies the student is enrolled in. Types live in `apps/mobile/src/campus/studies.ts`. A reduced fixture is `apps/mobile/src/campus/studies.sample.ts`. The assistant server calls this URL for `GET /v1/campus/studies`. The app stores the mapped list, not the raw portal body. The route requires the app bearer token, and the snapshot is stored per `user_id`.
 
 The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service, the same one as [campus-curriculum.md](campus-curriculum.md). This file records the one chooser operation that was returned, not a full catalog of C@MPUS.
 
@@ -22,7 +22,7 @@ Accept: application/json
 | `$ctx` | `design=ca;lang=de` |
 | `$filter` | Empty |
 
-`studiesChooserUrl` in `src/campus/studies.ts` builds this URL. Unlike the structure request, the chooser is not scoped to a study. It is the call that reveals the study ids in the first place.
+`studiesChooserUrl` in `apps/mobile/src/campus/studies.ts` builds this URL. Unlike the structure request, the chooser is not scoped to a study. It is the call that reveals the study ids in the first place.
 
 The server reads `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` from `.env` or the environment, exactly as for the structure read. See [campus-curriculum.md](campus-curriculum.md). The token and `PSESSIONID` are not `EXPO_PUBLIC_` variables and are not returned to the app.
 
@@ -66,7 +66,7 @@ The JSON key is `CmStudyInfoDto`, with a capital `C`. That is the observed spell
 
 `LangData` and `CampusLink` are the types from [campus-curriculum.md](campus-curriculum.md).
 
-`myStudyLink.href` points at the root curriculum element, for example `.../myStudies/339485/myCurriculumElements/278343`. `elementIdFromLink` in `server/campus.mjs` and `myStudyElementId` in `src/campus/studies.ts` read the trailing `myCurriculumElements` id and reject anything else. That root id is the `{elementId}` the structure call uses, so the chooser is how both ids are discovered.
+`myStudyLink.href` points at the root curriculum element, for example `.../myStudies/339485/myCurriculumElements/278343`. `elementIdFromLink` in `apps/server/campus.mjs` and `myStudyElementId` in `apps/mobile/src/campus/studies.ts` read the trailing `myCurriculumElements` id and reject anything else. That root id is the `{elementId}` the structure call uses, so the chooser is how both ids are discovered.
 
 ## Studies in the observed body
 
@@ -85,7 +85,7 @@ Both had `studyStatus` `STUDYING_ALLOWED`. The Philosophie study is the one `CAM
 | --- | --- | --- |
 | `GET` | `/v1/campus/studies` | Calls the chooser and returns `{ studies, activeStudyId }` |
 
-`server/catalog.mjs` lists it as `campus-studies`, so the Schnittstelle screen can replay it. The mapped `CampusStudy` keeps `studyId`, the German `name`, `intendedDegree`, `versionIdentifier`, `studyStatus`, `identifier`, `curriculumVersionId`, `curriculumId`, `color`, `lastAccessed`, and `elementId`. The raw body is not stored.
+`apps/server/catalog.mjs` lists it as `campus-studies`, so the Schnittstelle screen can replay it. The mapped `CampusStudy` keeps `studyId`, the German `name`, `intendedDegree`, `versionIdentifier`, `studyStatus`, `identifier`, `curriculumVersionId`, `curriculumId`, `color`, `lastAccessed`, and `elementId`. The raw body is not stored.
 
 `campusStudies` lives on the device record next to `curriculumNodes`, plus `activeStudyId` for the selected study. Sign-out, and a switch to the demo, local, or OIDC session, clears both. A later chooser call replaces the whole list, because the endpoint returns every study at once. The selection rule (single study auto-selected, else stored choice, `lastAccessed`, first row) and the switcher UI are documented in [campus-study-switcher.md](campus-study-switcher.md).
 

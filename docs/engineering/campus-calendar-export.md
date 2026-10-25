@@ -48,13 +48,13 @@ Validation: dates must be `TT.MM.JJJJ` between 2000 and 2100, format one of `1`,
 
 ## App usage
 
-`exportCampusCalendar` in `src/auth/campus.ts` posts the range (today to today-plus-one-year) and the chosen format, and records the call as an `export` entry in the API history. The Kalender-Import screen offers ICS (UTF-8) and CSV (ISO 8859-1, the portal default): on native the file is written to the cache and handed to the share sheet (`expo-sharing`), on web it downloads via a Blob link — the same split as document export in `src/documents/io.ts`.
+`exportCampusCalendar` in `apps/mobile/src/auth/campus.ts` posts the range (today to today-plus-one-year) and the chosen format, and records the call as an `export` entry in the API history. The Kalender-Import screen offers ICS (UTF-8) and CSV (ISO 8859-1, the portal default): on native the file is written to the cache and handed to the share sheet (`expo-sharing`), on web it downloads via a Blob link — the same split as document export in `apps/mobile/src/documents/io.ts`.
 
 ## Database sync
 
 `In Datenbank syncen` downloads the ICS and upserts its `VEVENT`s into the `exported_events` table (`POST /v1/campus/calendar-sync`, always ICS/UTF-8): unfolding of folded lines, unescaping, and the UID plus recurrence id as the dedupe key — repeats are skipped, so re-syncing imports only what's new. The answer reports `{ filename, imported, skipped, total, events }`; the parsed events are returned so the first caller can render them without a second round-trip.
 
-The onboarding calendar page runs the same sync automatically and uses the returned events for its overview: imported total, upcoming total, and the next entries. `GET /v1/campus/calendar-events` (`loadCalendarEvents` in `src/auth/campus.ts`) remains the store read; if an older server returns only counts, the page parses the ICS attachment from `calendar-export` locally (`src/onboarding/ics.ts`). The Kalender-Import screen keeps its manual buttons and history.
+The onboarding calendar page runs the same sync automatically and uses the returned events for its overview: imported total, upcoming total, and the next entries. `GET /v1/campus/calendar-events` (`loadCalendarEvents` in `apps/mobile/src/auth/campus.ts`) remains the store read; if an older server returns only counts, the page parses the ICS attachment from `calendar-export` locally (`apps/mobile/src/onboarding/ics.ts`). The Kalender-Import screen keeps its manual buttons and history.
 
 ## Import history
 

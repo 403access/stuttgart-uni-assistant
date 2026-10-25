@@ -4,7 +4,7 @@ Campus calls fail at two hops: app to assistant server, assistant server to port
 
 ## App side
 
-`src/auth/campus-log.ts` keeps a ring buffer of the last 30 campus calls (login, structure, studies). Every call in `src/auth/campus.ts` records one entry through `recordCampusCall`:
+`apps/mobile/src/auth/campus-log.ts` keeps a ring buffer of the last 30 campus calls (login, structure, studies). Every call in `apps/mobile/src/auth/campus.ts` records one entry through `recordCampusCall`:
 
 | Field | Contents |
 | --- | --- |
@@ -21,9 +21,9 @@ Each entry is also printed to the Metro console as `[campus-log]`, next to the e
 
 Every call is also persisted: `appendApiCall` writes it fire-and-forget into the `api_calls` table (SQLite on native, AsyncStorage on web — same platform split as the structure cache), capped at the newest 1000 rows and keyed by a stable `uid`. `readApiLog(limit)` reads newest-first. The structure browser merges the live session log with the stored log by `uid`, so the history survives reloads and keeps growing across sessions. It additionally merges the server's portal hops (`GET /v1/campus/calls`, one row per attempt including retries, ordered by full timestamp), so syncs started anywhere stay traceable. Its `Verlauf löschen` button empties both the session log and the store. Logging never throws into the call it records.
 
-Each entry carries more than metadata: `request` names what was asked (`element=… study=…`) and `response` summarizes what came back (`30 Knoten · Philosophie, Basismodule, …`, capped at 300 characters). The mapped payload additionally lands in `responseJson` (compact JSON, arrays clipped to fit ~8000 characters so it always parses) — never the raw portal body. The detail panel renders the payload as a count with name pills, as raw JSON, or as a collapsible syntax-highlighted tree (`JsonTree` in `src/components/json-tree.tsx`) behind a Text/JSON/Pretty toggle, and the history search covers the summary fields.
+Each entry carries more than metadata: `request` names what was asked (`element=… study=…`) and `response` summarizes what came back (`30 Knoten · Philosophie, Basismodule, …`, capped at 300 characters). The mapped payload additionally lands in `responseJson` (compact JSON, arrays clipped to fit ~8000 characters so it always parses) — never the raw portal body. The detail panel renders the payload as a count with name pills, as raw JSON, or as a collapsible syntax-highlighted tree (`JsonTree` in `apps/mobile/src/components/json-tree.tsx`) behind a Text/JSON/Pretty toggle, and the history search covers the summary fields.
 
-The study switcher (`src/components/study-selector.tsx`) shows the newest entries under a switch error, so the failing request is visible where it happened:
+The study switcher (`apps/mobile/src/components/study-selector.tsx`) shows the newest entries under a switch error, so the failing request is visible where it happened:
 
 ```text
 12:03:11 structure s=339484 e=2496981 → campus_failed upstream 500: … (502) · 812ms
@@ -31,12 +31,12 @@ The study switcher (`src/components/study-selector.tsx`) shows the newest entrie
 
 ## Server side
 
-`server/campus.mjs` maps the portal answer in `readCampus`:
+`apps/server/campus.mjs` maps the portal answer in `readCampus`:
 
 - The portal message is read by `portalMessage`, which checks the observed `resource[0].content.coErrorDto.message` shape first and falls back to `error.message`, `message`, `error_description`, and `error`. Anything else is an empty message, never an exception.
 - Every failure carries `detail`: `upstream <status>[: <portal message>]`, or `request failed: <reason>` when the portal was unreachable. The request logs the upstream status, the portal message, the user id, and the elapsed milliseconds. The token and cookie are never logged.
 - Portal hops land in `user_portal_calls` with the calling `user_id`; `GET /v1/campus/calls` reads only that user's rows. The cap is the newest 2000 hops per user.
-- `server/routes/campus.mjs` forwards `{ error, detail, status }` for the campus routes, and logs each campus request with an id, timestamp, and request body: `[campus #7 …] POST /v1/campus/structure body={"elementId":…,"studyId":…}` followed by the `ok` or `failed … detail=…` line.
+- `apps/server/routes/campus.mjs` forwards `{ error, detail, status }` for the campus routes, and logs each campus request with an id, timestamp, and request body: `[campus #7 …] POST /v1/campus/structure body={"elementId":…,"studyId":…}` followed by the `ok` or `failed … detail=…` line.
 
 ## Stale server detection
 
@@ -44,7 +44,7 @@ A `detail` of `http <status> vom Assistenz-Server ohne Detail` means the assista
 
 ## Error alerts
 
-Fetch failures surface twice: inline red text where they happened (always, including background loads) and a toast with a retry action for user-initiated loads. `showToast` in `src/components/toast.tsx` renders bottom-stacked dark cards (accent bar per tone, action pill, dismiss, auto-expire) through `<ToastHost />` at the root; `showFetchAlert` in `src/components/fetch-alert.ts` builds the error variant and re-invokes the same loader on retry, so study switches, structure/node/course loads, bulk syncs, and the C@MPUS sign-in all resume with one tap. Auto and silent loads (tab hydration, first paint) stay inline-only and never pop up unasked.
+Fetch failures surface twice: inline red text where they happened (always, including background loads) and a toast with a retry action for user-initiated loads. `showToast` in `apps/mobile/src/components/toast.tsx` renders bottom-stacked dark cards (accent bar per tone, action pill, dismiss, auto-expire) through `<ToastHost />` at the root; `showFetchAlert` in `apps/mobile/src/components/fetch-alert.ts` builds the error variant and re-invokes the same loader on retry, so study switches, structure/node/course loads, bulk syncs, and the C@MPUS sign-in all resume with one tap. Auto and silent loads (tab hydration, first paint) stay inline-only and never pop up unasked.
 
 ## Diagnosing a failed study switch
 
@@ -53,4 +53,4 @@ Fetch failures surface twice: inline red text where they happened (always, inclu
 3. Read the in-app call log under the error (request ids, statuses, portal message, duration).
 4. Match it with the `[campus #N]` lines in the server terminal, which show the request body the app sent and the upstream answer.
 
-Pinned by `server/campus.test.mjs`: `portalMessage` extraction, `parseStudyId` validation, and detail propagation for a 500 with a `coErrorDto` message and for an empty 403 body.
+Pinned by `apps/server/campus.test.mjs`: `portalMessage` extraction, `parseStudyId` validation, and detail propagation for a 500 with a `coErrorDto` message and for an empty 403 body.

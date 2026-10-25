@@ -4,10 +4,10 @@ After a C@MPUS sign-in the app starts from production data, not the demonstratio
 
 ## Flow
 
-1. `signInWithCampusToken` in `src/auth/campus.ts` calls `POST /v1/campus/login` and then `GET /v1/campus/studies`. The login response may already carry the chooser list (current server); otherwise the client fetches it. Without the studies list there is no sign-in — the app would otherwise fall back to mockup data silently.
+1. `signInWithCampusToken` in `apps/mobile/src/auth/campus.ts` calls `POST /v1/campus/login` and then `GET /v1/campus/studies`. The login response may already carry the chooser list (current server); otherwise the client fetches it. Without the studies list there is no sign-in — the app would otherwise fall back to mockup data silently.
 2. The studies are stored as `campusStudies` on the device record, next to `curriculumNodes`. See [data-model.md](data-model.md).
-3. `activeStudyId` names the selected study. `pickActiveStudyId` in `src/state/persisted.ts` resolves it: a single study is auto-selected; otherwise the stored choice wins if it is still enrolled, then `lastAccessed`, then the first row. `setStudies` re-resolves it on every chooser refresh; `setActiveStudy` (both in `src/state/use-content-actions.ts`) only accepts an enrolled id.
-4. `StudySelector` in `src/components/study-selector.tsx` renders at the top of Today (`app/(tabs)/index.tsx`) and on the More, C@MPUS, and Kurse screens. It returns nothing outside a campus session or without studies. The Calendar tab does not use it; the calendar has its own study filter (default **Alle**) that spans all enrolled studies.
+3. `activeStudyId` names the selected study. `pickActiveStudyId` in `apps/mobile/src/state/persisted.ts` resolves it: a single study is auto-selected; otherwise the stored choice wins if it is still enrolled, then `lastAccessed`, then the first row. `setStudies` re-resolves it on every chooser refresh; `setActiveStudy` (both in `apps/mobile/src/state/use-content-actions.ts`) only accepts an enrolled id.
+4. `StudySelector` in `apps/mobile/src/components/study-selector.tsx` renders at the top of Today (`apps/mobile/app/(tabs)/index.tsx`) and on the More, C@MPUS, and Kurse screens. It returns nothing outside a campus session or without studies. The Calendar tab does not use it; the calendar has its own study filter (default **Alle**) that spans all enrolled studies.
 
 ## Switching studies
 
@@ -16,7 +16,7 @@ A tap on another study loads its curriculum before anything is committed:
 - `loadCampusCurriculum(elementId, studyId)` posts `{ elementId, studyId }` to `POST /v1/campus/structure`.
 - Only after the portal answers do `setActiveStudy` and `setCurriculum` run, so the header and the curriculum nodes stay consistent. A failed switch keeps the previous study.
 - A study without a `myStudyLink` root id (`elementId` null) cannot load a structure. The selector says so and asks for a chooser refresh instead of calling the server.
-- `POST /v1/campus/structure` also accepts `studyId` alone: the server resolves the root element through the chooser (`loadCurriculumStructure` in `server/campus.mjs`). `POST /v1/campus/login` returns `{ studies, activeStudyId }` alongside the profile.
+- `POST /v1/campus/structure` also accepts `studyId` alone: the server resolves the root element through the chooser (`loadCurriculumStructure` in `apps/server/campus.mjs`). `POST /v1/campus/login` returns `{ studies, activeStudyId }` alongside the profile.
 
 ## Failure UX
 
@@ -28,4 +28,4 @@ A failed switch shows `Studium nicht gewechselt (<code>, <detail>).` with the la
 | Several chips, one highlighted | Enrolled studies, tap to switch; `…` marks the loading one |
 | Error + call log | Switch failed, previous study still active |
 
-The Today subtitle and the degree pill follow the active study (`name · intendedDegree · versionIdentifier`); demo and local sessions keep the demonstration record. The Schnittstelle screen (`app/api.tsx`) lists the same studies and taps select the active one for inspection.
+The Today subtitle and the degree pill follow the active study (`name · intendedDegree · versionIdentifier`); demo and local sessions keep the demonstration record. The Schnittstelle screen (`apps/mobile/app/api.tsx`) lists the same studies and taps select the active one for inspection.

@@ -1,0 +1,22 @@
+# Cloudflare named tunnel for the distribution service.
+#
+#   cp apps/dist/tunnel.yml.example apps/dist/tunnel.yml
+#   cloudflared tunnel login
+#   cloudflared tunnel create builds        # prints the UUID
+#   cloudflared tunnel route dns builds builds.olimo.me
+#
+# Fill in the tunnel UUID below, and the credentials path it printed, then:
+#
+#   npm run dist:tunnel
+#
+# TLS is terminated at Cloudflare's edge, so the Node process stays on loopback
+# and needs no certificate of its own. Keep DIST_HOST at 127.0.0.1.
+
+tunnel: REPLACE-WITH-TUNNEL-UUID
+credentials-file: /Users/REPLACE-WITH-YOU/.cloudflared/REPLACE-WITH-TUNNEL-UUID.json
+
+ingress:
+  - hostname: builds.olimo.me
+    service: http://127.0.0.1:8788
+  # Anything else the tunnel is asked for is refused rather than proxied.
+  - service: http_status:404

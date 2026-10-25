@@ -33,11 +33,11 @@ expects.
 
 | File | Purpose |
 | --- | --- |
-| `app/dev/nfc.tsx` | Screen: scan, cancel, result sections, error mapping |
-| `src/nfc/card.ts` | Native reader: `start`, `isSupported`, `requestTechnology`, `getTag`, cleanup |
-| `src/nfc/card.web.ts` | Web stub: NFC reported as unsupported, no native import |
-| `src/nfc/types.ts` | `CardReading` and `CardRecord` shared by both platforms |
-| `plugins/withNfc.js` | Android permission, iOS usage description, optional iOS entitlement |
+| `apps/mobile/app/dev/nfc.tsx` | Screen: scan, cancel, result sections, error mapping |
+| `apps/mobile/src/nfc/card.ts` | Native reader: `start`, `isSupported`, `requestTechnology`, `getTag`, cleanup |
+| `apps/mobile/src/nfc/card.web.ts` | Web stub: NFC reported as unsupported, no native import |
+| `apps/mobile/src/nfc/types.ts` | `CardReading` and `CardRecord` shared by both platforms |
+| `apps/mobile/plugins/withNfc.js` | Android permission, iOS usage description, optional iOS entitlement |
 
 The web stub exists so the Metro web bundle never pulls in
 `react-native-nfc-manager`. The screen is still routable on web and shows the
@@ -46,7 +46,7 @@ unsupported message.
 ## Platform configuration
 
 Android needs only the NFC permission. It is declared by the library manifest and
-is also ensured by `plugins/withNfc.js`; no flag is required.
+is also ensured by `apps/mobile/plugins/withNfc.js`; no flag is required.
 
 iOS needs the **NFC Tag Reading** capability, which a Personal Team cannot sign.
 The plugin therefore always writes `NFCReaderUsageDescription` (the prompt stays

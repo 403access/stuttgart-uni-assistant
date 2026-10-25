@@ -1,0 +1,11 @@
+{
+  "name": "@ua/admin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "echo 'The admin is served by the assistant server at /admin'",
+    "typecheck": "echo 'vanilla phase'",
+    "test": "echo 'vanilla phase'"
+  }
+}

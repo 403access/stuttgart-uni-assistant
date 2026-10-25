@@ -15,34 +15,34 @@ A local-first study assistant for students at campus-management universities. It
 
 ## Development
 
-Requirements: Node.js 22 or newer. Use `npx expo install` for Expo packages.
+Requirements: Node.js 22 or newer. Use `bunx expo install` for Expo packages.
 
 ```bash
-npm install
-npx expo start        # dev server
-npm run assistant     # optional assistant server (needs XAI_API_KEY)
+bun install
+bunx expo start        # dev server
+bun run assistant     # optional assistant server (needs XAI_API_KEY)
 ```
 
 Before opening a pull request, both checks must pass:
 
 ```bash
-npm run typecheck
-npm run check
+bun run typecheck
+bun run check
 ```
 
-`npm run check` is an aggregate of the smaller checks, so you can run only the part
+`bun run check` is an aggregate of the smaller checks, so you can run only the part
 you touched while iterating:
 
 ```bash
-npm run check:types        # tsc --noEmit
-npm run check:lint         # expo lint
-npm run check:catalog      # curriculum, quiz, and PDF-pipeline assertions
-npm run check:components   # generated component catalog, docs, and admin asset are current
-npm run catalog:components # regenerate the catalog after a component change
-npm run check:campus-db    # campus cache round-trips
-npm run check:app-tests    # app and script tests (jsdom, headless login, ...)
-npm run check:server-tests # assistant server tests
-npm run check:tooling-tests # build, tunnel, secret, and dist-service tests
+bun run check:types        # tsc --noEmit
+bun run check:lint         # expo lint
+bun run check:catalog      # curriculum, quiz, and PDF-pipeline assertions
+bun run check:components   # generated component catalog, docs, and admin asset are current
+bun run catalog:components # regenerate the catalog after a component change
+bun run check:campus-db    # campus cache round-trips
+bun run check:app-tests    # app and script tests (jsdom, headless login, ...)
+bun run check:server-tests # assistant server tests
+bun run check:tooling-tests # build, tunnel, secret, and dist-service tests
 ```
 
 ## Generative AI

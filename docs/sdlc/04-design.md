@@ -18,13 +18,13 @@ Five tabs, because the product has more than five areas and a tab bar with ten i
 | Campus | Vaihingen and Stadtmitte, schematic map, room search |
 | Mehr | Profile and the rest: platforms, documents, peers, past exams, news, recognition, deadlines, settings |
 
-Stack screens open on top of the tabs for a module, a person, a room, a document, a notice, and an exam topic. The paths are the file names under `app/`.
+Stack screens open on top of the tabs for a module, a person, a room, a document, a notice, and an exam topic. The paths are the file names under `apps/mobile/app/`.
 
 ## Record before connectors
 
 The design treats the academic record as a typed snapshot. Screens and the assistant read that snapshot. A connector, later, replaces the snapshot. Nothing in the UI reaches for a network client of its own except the optional assistant call.
 
-That split is why `src/data/` and `src/domain/plan.ts` do not import React.
+That split is why `apps/mobile/src/data/` and `apps/mobile/src/domain/plan.ts` do not import React.
 
 ## Assistant design
 
@@ -47,7 +47,7 @@ Past papers are an index: term, topics, focus, hint. The design refuses a file s
 
 Light only. White cards on mist `#F3F6F8`, anthracite text, mid blue for actions and section labels, light blue as a small second circle and a highlight. Hairline borders, no drop shadows, 18 px card radius. The mark is two overlapping circles drawn in the app, so there is no logo file to misuse.
 
-German copy is the source. English is a full second string, not a machine pass left in the bundle. Both live in the keyed catalogs in `src/i18n/` ([i18n.md](../engineering/i18n.md)); no screen carries a German and an English sentence inline. System names are not translated.
+German copy is the source. English is a full second string, not a machine pass left in the bundle. Both live in the keyed catalogs in `apps/mobile/src/i18n/` ([i18n.md](../engineering/i18n.md)); no screen carries a German and an English sentence inline. System names are not translated.
 
 ## What design refused
 
@@ -58,4 +58,4 @@ German copy is the source. English is a full second string, not a machine pass l
 
 ## Exit check
 
-Design is complete when a new screen can be placed on the tab or stack map, can read the record without a new network client, and can be built from the existing card, pill, meter, and button. The screens in `app/` follow that rule.
+Design is complete when a new screen can be placed on the tab or stack map, can read the record without a new network client, and can be built from the existing card, pill, meter, and button. The screens in `apps/mobile/app/` follow that rule.

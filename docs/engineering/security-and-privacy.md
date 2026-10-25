@@ -55,7 +55,7 @@ snapshot, action, compact detail, timestamp) without credentials. Details:
 
 ## API key
 
-`XAI_API_KEY`, `CAMPUS_BEARER_TOKEN`, and `CAMPUS_SESSION_COOKIE` are read by `server/index.mjs` from the environment or from a git-ignored `.env`. `.gitignore` lists `.env` and `.env*.local`. `.env.example` leaves the secrets empty and must stay empty. `npm run campus:token` and `npm run campus:session` write the two campus values, set `.env` to mode `0600`, and print only a masked confirmation. The campus token and the `PSESSIONID` value are not `EXPO_PUBLIC_` variables. `/health` reports `campus.tokenConfigured` and `campus.sessionCookieConfigured`, plus the study and element ids. It does not return either secret. The Schnittstelle screen can replay only the routes in `server/catalog.mjs`, including the study chooser at `GET /v1/campus/studies`. It cannot pass a URL through to C@MPUS.
+`XAI_API_KEY`, `CAMPUS_BEARER_TOKEN`, and `CAMPUS_SESSION_COOKIE` are read by `apps/server/index.mjs` from the environment or from a git-ignored `.env`. `.gitignore` lists `.env` and `.env*.local`. `.env.example` leaves the secrets empty and must stay empty. `npm run campus:token` and `npm run campus:session` write the two campus values, set `.env` to mode `0600`, and print only a masked confirmation. The campus token and the `PSESSIONID` value are not `EXPO_PUBLIC_` variables. `/health` reports `campus.tokenConfigured` and `campus.sessionCookieConfigured`, plus the study and element ids. It does not return either secret. The Schnittstelle screen can replay only the routes in `apps/server/catalog.mjs`, including the study chooser at `GET /v1/campus/studies`. It cannot pass a URL through to C@MPUS.
 
 `EXPO_PUBLIC_*` variables are embedded in the client. This app uses two, `EXPO_PUBLIC_ASSISTANT_URL` and `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`, and both are URLs, not secrets. Do not rename either key so that it starts with `EXPO_PUBLIC_`. `EXPO_PUBLIC_ASSISTANT_URL` is the base URL: a local address on the LAN path, and the computer's LAN address on a phone. `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` holds a `trycloudflare.com` hostname while a tunnel is up, so it is the more sensitive of the two: anyone who reads the bundle can see it, and every assistant route is public while that tunnel is up, so the hostname is sensitive for the length of a session. The tunnel script clears it again when the tunnel stops — see [assistant-tunnel.md](assistant-tunnel.md).
 
@@ -133,9 +133,9 @@ The server listens on `0.0.0.0` so a phone on the same LAN can connect. CORS all
 
 ## Identity of the binary
 
-`app.json` uses the display name "University Assistant" and the bundle id `dev.demo.universityassistant` on iOS and Android. The id is deliberately not a `uni-stuttgart.de` identifier. The mark in `src/components/ui.tsx` is two original circles. The university signet is not in the asset catalog. Univers is not embedded.
+`app.json` uses the display name "University Assistant" and the bundle id `dev.demo.universityassistant` on iOS and Android. The id is deliberately not a `uni-stuttgart.de` identifier. The mark in `apps/mobile/src/components/ui.tsx` is two original circles. The university signet is not in the asset catalog. Univers is not embedded.
 
-The web shell (`app/+html.tsx`) sets `lang="de"` and a light page background. It does not present itself as an official university host.
+The web shell (`apps/mobile/app/+html.tsx`) sets `lang="de"` and a light page background. It does not present itself as an official university host.
 
 ## Threats this build does not claim to handle
 

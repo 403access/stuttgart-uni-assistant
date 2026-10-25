@@ -5,11 +5,11 @@ offline with the bundled catalog and a local progress store. When a user is
 signed in, checked answers and completed rounds are also synced to that account;
 the operator dashboard shows every answer across all users.
 
-Status: implemented. The tab is `app/(tabs)/quiz.tsx`, the topic overview is
-`app/quiz/[topic]/index.tsx`, a round is `app/quiz/[topic]/run.tsx`, and the
-reusable question views live in `src/quiz/components/`. The server catalog and
-analytics live in `server/quiz/`; the admin screens are
-`server/dashboard/pages/quiz/`.
+Status: implemented. The tab is `apps/mobile/app/(tabs)/quiz.tsx`, the topic overview is
+`apps/mobile/app/quiz/[topic]/index.tsx`, a round is `apps/mobile/app/quiz/[topic]/run.tsx`, and the
+reusable question views live in `apps/mobile/src/quiz/components/`. The server catalog and
+analytics live in `apps/server/quiz/`; the admin screens are
+`apps/admin/public/pages/quiz/`.
 
 ## Question kinds
 
@@ -32,7 +32,7 @@ state; the views render only.
 
 The map view uses `react-native-svg`. A `MapQuestion` carries its own `viewBox`
 and `backdrop` outlines, and every region carries an SVG `path` plus a label
-anchor. The Europe shapes live in `src/quiz/maps/europe.ts`, generated from
+anchor. The Europe shapes live in `apps/mobile/src/quiz/maps/europe.ts`, generated from
 Natural Earth 1:50m Admin 0 Countries and 1:10m Admin 1 States/Provinces (public
 domain) with a Lambert conformal conic projection. The backdrop countries are
 context only; the interactive regions are keyed by the same ids as `correct`.
@@ -41,14 +41,14 @@ The diagram view uses the same SVG approach for illustrated questions. A
 `DiagramQuestion` owns a `viewBox`, `backdrop` outlines, labelled regions and one
 or more correct region ids. Regions can be paths or circles and carry a fixed
 tone, so the anatomy stays readable in both themes. The head cross-section and
-the IPA vowel chart live in `src/quiz/figures/vocal-tract.ts`. A topic can also
+the IPA vowel chart live in `apps/mobile/src/quiz/figures/vocal-tract.ts`. A topic can also
 carry a `figure` (`QuizFigure`), which the overview renders as a numbered study
 card above the round options; the card and the questions share the exact same
 geometry, so a label can never drift from its tap target.
 
 ## Content
 
-`src/quiz/content/index.ts` registers modules. A module has topics, and a topic
+`apps/mobile/src/quiz/content/index.ts` registers modules. A module has topics, and a topic
 has questions:
 
 ```ts
@@ -101,7 +101,7 @@ module header.
 
 ### Generated topics from PDFs
 
-`scripts/quiz-from-pdf.ts` turns PDFs into topics that are attached to an
+`tools/quiz-from-pdf.ts` turns PDFs into topics that are attached to an
 existing module. It reads embedded PDF text, asks xAI for a structured topic,
 validates it, and writes TypeScript source:
 
@@ -126,8 +126,8 @@ bun run quiz:from-pdf --module prag ./sitzung-2.pdf --dry-run
   overrides the model.
 
 Each PDF becomes one topic in
-`src/quiz/content/generated/<module>-<file>.ts`, and the CLI rewrites
-`src/quiz/content/generated/index.ts`. `content/index.ts` attaches those topics
+`apps/mobile/src/quiz/content/generated/<module>-<file>.ts`, and the CLI rewrites
+`apps/mobile/src/quiz/content/generated/index.ts`. `content/index.ts` attaches those topics
 to their modules, so generated and hand-authored content share progress,
 modes, the module hub, and validation. The pipeline never overwrites
 hand-authored topics.
@@ -146,7 +146,7 @@ the next first-start seed.
 
 ### Free text checking
 
-`src/quiz/evaluate.ts` lower-cases, strips accents and punctuation, collapses
+`apps/mobile/src/quiz/evaluate.ts` lower-cases, strips accents and punctuation, collapses
 whitespace, and folds `ß` to `ss`. Numeric answers also drop thousands
 separators, so `6.000`, `6 000`, and `6000` match. Answers up to three
 characters must match exactly; longer answers tolerate one typo (two above ten
@@ -169,9 +169,9 @@ keywords: [
 The app bundle stays the offline fallback; the running assistant server owns
 the live catalog:
 
-- `bun run quiz:export-catalog` writes `server/quiz/catalog.json` from the
+- `bun run quiz:export-catalog` writes `apps/server/quiz/catalog.json` from the
   bundled TypeScript content.
-- On startup, `seedQuizCatalog()` (`server/quiz/seed.mjs`) fills the quiz tables
+- On startup, `seedQuizCatalog()` (`apps/server/quiz/seed.mjs`) fills the quiz tables
   only when they are empty. **Katalog neu importieren** on the dashboard's
   Lernquiz page replaces the catalog from the snapshot; answers and rounds are
   never deleted by an import.
@@ -197,11 +197,11 @@ correctness, and text filters plus `attempts/export.csv`). Rounds are under
 Question-specific fields are edited as JSON on the dashboard. The server
 validates the shape for every kind before writing, so an invalid payload cannot
 reach the app. The bundled snapshot and the server catalog are checked for
-drift by `scripts/check-quiz.ts`.
+drift by `tools/check-quiz.ts`.
 
 ## Rounds and progress
 
-`src/quiz/session.ts` builds a round:
+`apps/mobile/src/quiz/session.ts` builds a round:
 
 - `all` keeps the authored order,
 - `quick` takes five questions, preferring unseen, then previously wrong ones,
@@ -209,7 +209,7 @@ drift by `scripts/check-quiz.ts`.
 - `mixed` shuffles all questions and caps the round at twenty.
 
 Progress is stored separately from the app store under
-`university-assistant/quiz/v1` (`src/quiz/progress.tsx`). It keeps per-question
+`university-assistant/quiz/v1` (`apps/mobile/src/quiz/progress.tsx`). It keeps per-question
 attempts, correct counts, the last result, the latest 60 sessions, and one
 **active session per topic**. Keeping it separate means an older persisted app
 state still loads without migration. This local store remains the UI source of
@@ -238,14 +238,14 @@ round. Finishing a round records the session and deletes the active entry. Going
 back from the run returns to the overview, so the interrupted session is visible
 immediately; a later visit from the tab reads the same persisted record.
 
-The provider is mounted in `app/_layout.tsx` so the tab, the overview, and the
+The provider is mounted in `apps/mobile/app/_layout.tsx` so the tab, the overview, and the
 round screen see the same record. The tab can reset everything after an `Alert`
 confirmation.
 
 ## Checks
 
-`scripts/check-quiz.ts` verifies unique ids, answer shapes, bilingual copy,
+`tools/check-quiz.ts` verifies unique ids, answer shapes, bilingual copy,
 correct/incorrect evaluation, free-text tolerance, kind labels, and topic
-registration. `scripts/check-quiz-pipeline.ts` checks slugging, normalization,
+registration. `tools/check-quiz-pipeline.ts` checks slugging, normalization,
 invalid drafts, source capping, the registry round-trip, and serializer
 escaping. Both run as part of `bun run check`.

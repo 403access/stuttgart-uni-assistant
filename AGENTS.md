@@ -1,5 +1,7 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+The accepted target is a modular monorepo with shared packages; see [ADR-001](docs/engineering/modularization/05-adr-001-target-architecture.md). The migration has started with the workspace skeleton, so apps live under `apps/` and tools under `tools/`.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
@@ -13,19 +15,19 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+bunx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
+bun run start               # start the dev server
+bun run check:lint          # lint
+bun run check:types         # typecheck
+bunx expo-doctor            # diagnose dependency and config issues
+bunx expo install --fix     # fix incompatible package versions
 ```
 
 Run lint and typecheck before declaring any task done.
 
 ## Navigation & Routing
 
-- Use **Expo Router** for all navigation. Routes live in `app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) in `src/`. Do not move routes to `src/app/`.
+- Use **Expo Router** for all navigation. Routes live in `apps/mobile/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep app-only non-route code in `apps/mobile/src/`, and shared code in `packages/`. Do not move routes to `src/app/`.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
@@ -36,6 +38,6 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
+- If `apps/mobile/ios/` and `apps/mobile/android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
+- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `bunx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md

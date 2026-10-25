@@ -10,21 +10,21 @@ below exist unless marked *planned*.
 
 ## What runs today
 
-1. A sign-in succeeds and the gate in `app/_layout.tsx` sees a session.
-2. `src/onboarding/OnboardingState.tsx` reports whether this installation has
+1. A sign-in succeeds and the gate in `apps/mobile/app/_layout.tsx` sees a session.
+2. `apps/mobile/src/onboarding/OnboardingState.tsx` reports whether this installation has
    completed onboarding and whether the device has an enrolled biometric.
 3. If the record is due and biometrics are available — or a development override
    is set — the gate replaces the route with `/onboarding`.
-4. `app/onboarding.tsx` asks the user to enable biometrics, or to skip with
+4. `apps/mobile/app/onboarding.tsx` asks the user to enable biometrics, or to skip with
    **Nicht jetzt**.
-5. `src/onboarding/use-onboarding-import.ts` starts three pipelines. The
+5. `apps/mobile/src/onboarding/use-onboarding-import.ts` starts three pipelines. The
    calendar request is launched first:
    - **Calendar:** `syncExportedCalendar` imports the personal C@MPUS ICS range
      (today to one year out) and returns the parsed events of that same run, so
      the overview does not depend on a second read. The persisted
      `loadCalendarEvents` rows are shown while the import runs. If an older
      server only returns counts, the page parses the export attachment locally
-     (`src/onboarding/ics.ts`). This page only uses exported appointments;
+     (`apps/mobile/src/onboarding/ics.ts`). This page only uses exported appointments;
      offered/booked timetable courses are never substituted for them.
    - **Messages:** `hydrateMailSnapshot` publishes the cached inbox first;
      `fetchMailStatus`, `fetchMailFolders`, and `loadMailMessages` refresh it.
@@ -46,7 +46,7 @@ store for the Kalender tab.
 
 ## Gate
 
-`app/_layout.tsx` keeps the manual gate used for login. The onboarding condition
+`apps/mobile/app/_layout.tsx` keeps the manual gate used for login. The onboarding condition
 is:
 
 ```ts
@@ -129,7 +129,7 @@ a secret and is not encrypted by AsyncStorage.
 
 ## Biometrics and App Lock
 
-Availability is checked in `src/auth/biometrics.ts`:
+Availability is checked in `apps/mobile/src/auth/biometrics.ts`:
 
 - `expo-local-authentication` is imported dynamically and never on web.
 - Hardware and enrollment are probed together. `hasHardwareAsync()` or a
@@ -152,8 +152,8 @@ Availability is checked in `src/auth/biometrics.ts`:
   as a blocking error: the page shows a short note and completes the flow.
   Settings can start the prompt again later.
 
-When onboarding completes with biometrics enabled, `app/_layout.tsx` renders
-`src/components/app-lock.tsx` over the navigator whenever:
+When onboarding completes with biometrics enabled, `apps/mobile/app/_layout.tsx` renders
+`apps/mobile/src/components/app-lock.tsx` over the navigator whenever:
 
 ```ts
 signedIn && onboardingCompleted && biometricsEnabled && biometricsAvailable
@@ -170,7 +170,7 @@ signedIn && onboardingCompleted && biometricsEnabled && biometricsAvailable
   device passcode; the lock screen always offers sign-out.
 
 The app lock is a UI gate. It does not encrypt AsyncStorage. The separate
-C@MPUS autologin vault still uses `expo-secure-store` ([vault.ts](../../src/auth/vault.ts)).
+C@MPUS autologin vault still uses `expo-secure-store` ([vault.ts](../../apps/mobile/src/auth/vault.ts)).
 The login screen's `Anmeldung merken` follows this preference for new entries:
 with the app lock on, the credential is stored with a biometric gate; without it,
 the vault uses a device-passcode-protected entry without the biometric gate.
@@ -178,9 +178,9 @@ Enabling the lock does not rewrite an already stored entry.
 
 ## Security screen
 
-`app/sicherheit.tsx` is a dedicated screen reached from the **App** group in
-`app/(tabs)/mehr.tsx` (`/sicherheit`). It is not part of the general
-`app/einstellungen.tsx` screen.
+`apps/mobile/app/sicherheit.tsx` is a dedicated screen reached from the **App** group in
+`apps/mobile/app/(tabs)/mehr.tsx` (`/sicherheit`). It is not part of the general
+`apps/mobile/app/einstellungen.tsx` screen.
 
 - The top is a status hero: a large white shield-check icon, a state pill, a
   headline, and one sentence. It uses the login palette: blue background, a

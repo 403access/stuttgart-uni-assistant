@@ -5,7 +5,7 @@ build never creates the **Dev** category or its routes in the menu.
 
 ## Where it lives
 
-The Campus tab (`app/(tabs)/mehr.tsx`) has a separate **Dev** group in
+The Campus tab (`apps/mobile/app/(tabs)/mehr.tsx`) has a separate **Dev** group in
 development builds. It contains:
 
 | Entry | Route | Purpose |
@@ -45,7 +45,7 @@ clears the flag. This makes the flow testable even on a simulator with no
 enrolled Face ID.
 
 The scheduling action intentionally does not update React state. If it did, the
-gate in `app/_layout.tsx` would immediately redirect to `/onboarding` and the
+gate in `apps/mobile/app/_layout.tsx` would immediately redirect to `/onboarding` and the
 developer could not first check the other values. The pending record is loaded
 by `OnboardingProvider` on the next launch, and the gate re-reads it on sign-out
 so signing in again in the same app session also shows the flow.
@@ -55,7 +55,7 @@ defaults. A failed write is reported below the buttons and in the Metro log.
 
 ## Diagnosing the gate
 
-`app/_layout.tsx` prints a `[gate]` line in development builds:
+`apps/mobile/app/_layout.tsx` prints a `[gate]` line in development builds:
 
 ```text
 [gate] { ready, onboardingReady, signedIn, onboardingCompleted, forceOnboarding,
@@ -90,7 +90,7 @@ bearer token.
 
 ## Component catalog (`/dev/components`)
 
-The screen lists every React component under `src/` with its category, native
+The screen lists every React component under `apps/mobile/src/` with its category, native
 and web files, exports, import count, and every place it is rendered, called,
 or passed as a value. The data is generated from the TypeScript AST, not typed
 by hand, so a moved component or a new usage shows up after regeneration:
@@ -100,19 +100,19 @@ bun run catalog:components   # rewrite the in-app data, docs page, and admin ass
 bun run check:components     # fail when any generated file is stale
 ```
 
-The in-app data lives in `src/components/catalog.generated.ts`; the same
+The in-app data lives in `apps/mobile/src/components/catalog.generated.ts`; the same
 inventory is written to [component-catalog.md](component-catalog.md) and to
 the admin dashboard at **Komponenten** (`/admin#/components`). The generator
 skips its own sources and the preview registry, so previews do not inflate the
 counts. The dashboard reads
-`server/dashboard/assets/component-catalog.mjs`; a reload after regeneration
+`apps/admin/public/assets/component-catalog.mjs`; a reload after regeneration
 is enough, no assistant restart. The dashboard page module is
-`server/dashboard/pages/components.mjs`. Its **Vorschau** column and
+`apps/admin/public/pages/components.mjs`. Its **Vorschau** column and
 **Live-Vorschau öffnen** button link to the Expo web app on port 8081 with a
 `?q=<component>` filter; start it with `bun run web` and sign in there before
 following the link.
 
-Live previews come from `src/components/component-previews.tsx`, keyed by
+Live previews come from `apps/mobile/src/components/component-previews.tsx`, keyed by
 export name. The generator adds that key list to the catalog, so the in-app
 page, the admin **Vorschau** column, and the docs **Preview** column all show
 the same set. Add a preview there when a component is safe to render without a
@@ -138,8 +138,8 @@ enabled for the App ID. Build steps, limits, and the platform matrix are in
 
 ## Adding another diagnostic
 
-1. Put the screen under `app/dev/`.
+1. Put the screen under `apps/mobile/app/dev/`.
 2. Keep it read-only unless an action is explicitly a reset or a forced state.
 3. Do not print passwords, bearer tokens, or SecureStore values.
-4. Add the entry inside the `__DEV__` branch in `app/(tabs)/mehr.tsx`.
+4. Add the entry inside the `__DEV__` branch in `apps/mobile/app/(tabs)/mehr.tsx`.
 5. Never rely on a dev screen for a production flow.

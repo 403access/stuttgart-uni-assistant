@@ -1,0 +1,11 @@
+{
+  "extends": "../apps/mobile/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["../apps/mobile/*"],
+      "expo-sqlite": ["./testing/fake-expo-sqlite.mjs"],
+      "@react-native-async-storage/async-storage": ["./testing/fake-async-storage.mjs"]
+    }
+  },
+  "include": ["./check-campus-db.ts"]
+}

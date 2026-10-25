@@ -1,6 +1,6 @@
 # Assistant tunnel
 
-The app and the assistant are two processes: Expo serves the bundle, `server/index.mjs` answers on `:8787`. When the phone is not on this machine's network, each one needs its own way out. Expo has a tunnel of its own (`npm run tunnel`, ngrok through `@expo/ngrok`). That tunnel carries the bundle only — on it the phone is off the LAN, so `http://127.0.0.1:8787` resolves to the phone and the computer's LAN address is not routable either. The assistant therefore gets a public HTTPS hostname of its own, and the app is pointed at it with `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`.
+The app and the assistant are two processes: Expo serves the bundle, `apps/server/index.mjs` answers on `:8787`. When the phone is not on this machine's network, each one needs its own way out. Expo has a tunnel of its own (`npm run tunnel`, ngrok through `@expo/ngrok`). That tunnel carries the bundle only — on it the phone is off the LAN, so `http://127.0.0.1:8787` resolves to the phone and the computer's LAN address is not routable either. The assistant therefore gets a public HTTPS hostname of its own, and the app is pointed at it with `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL`.
 
 ## Two URLs, one at a time
 
@@ -9,7 +9,7 @@ The app and the assistant are two processes: Expo serves the bundle, `server/ind
 | `EXPO_PUBLIC_ASSISTANT_URL` | you, by hand | Optional override. `off` disables the remote engine. A non-loopback value (a fixed LAN IP, another host) is used as-is. The default `http://127.0.0.1:8787` lets the app reuse the Metro dev-server host instead. The tunnel script never changes it. |
 | `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` | `npm run assistant:tunnel` | The `https://<words>.trycloudflare.com` hostname while a tunnel is up. It wins over the base URL while it is set, and the script blanks it again when the tunnel stops. |
 
-`src/assistant/endpoints.ts` resolves the base URL, and `src/assistant/remote.ts` feeds it `Constants.expoConfig.hostUri`. Order, highest first: `off` disables the engine; the tunnel URL wins while set; an explicit non-loopback base URL wins next; otherwise the Metro dev-server host (`hostUri`, for example `192.168.1.23:8081`) is reused on the assistant port (`PORT`, default 8787).
+`apps/mobile/src/assistant/endpoints.ts` resolves the base URL, and `apps/mobile/src/assistant/remote.ts` feeds it `Constants.expoConfig.hostUri`. Order, highest first: `off` disables the engine; the tunnel URL wins while set; an explicit non-loopback base URL wins next; otherwise the Metro dev-server host (`hostUri`, for example `192.168.1.23:8081`) is reused on the assistant port (`PORT`, default 8787).
 
 That last rule is what makes the default `.env` work for both targets. On a phone the dev-server host is the machine's LAN address, so no `.env` edit is needed; on the simulator it is loopback, which resolves to the same machine. A release build has no dev-server host, so it needs an explicit `EXPO_PUBLIC_ASSISTANT_URL`.
 
@@ -42,7 +42,7 @@ Two ways out, neither of which edits `app.json`:
 
 | Target | Command | Why it works |
 | --- | --- | --- |
-| Simulator | `npx expo start --localhost`, then press `i` | `http://localhost:8081` is loopback, which ATS always allows. `npx expo run:ios` has no `--localhost` flag, so start the bundler separately. With a loopback dev-server host the assistant falls back to `http://127.0.0.1:8787` (`src/assistant/endpoints.ts`, rule 5). |
+| Simulator | `npx expo start --localhost`, then press `i` | `http://localhost:8081` is loopback, which ATS always allows. `npx expo run:ios` has no `--localhost` flag, so start the bundler separately. With a loopback dev-server host the assistant falls back to `http://127.0.0.1:8787` (`apps/mobile/src/assistant/endpoints.ts`, rule 5). |
 | Phone | the two-tunnel path above | Both URLs are HTTPS on public hostnames, so neither ATS nor the hotspot's NAT is in the way. |
 
 Turning ATS off is not the fix. `NSAllowsArbitraryLoads` would unblock the simulator only — the phone still has no route to `192.0.0.2` — and it would weaken the release build for a development-only problem. The plain LAN path comes back on its own when the hotspot hands out a real IPv4, for example `172.20.10.2`.
@@ -59,12 +59,12 @@ The order matters. `EXPO_PUBLIC_*` is inlined into the bundle, so Expo has to st
 
 ## What `npm run assistant:tunnel` does
 
-`scripts/tunnel-assistant.mjs`:
+`tools/tunnel-assistant.mjs`:
 
 1. Probes `http://127.0.0.1:8787/health` and warns when the assistant server is not up yet.
 2. Runs `cloudflared tunnel --url http://127.0.0.1:<port>`. The port is `PORT` or 8787, overridable with `npm run assistant:tunnel -- --port 9000`.
 3. Reads the `https://<words>.trycloudflare.com` hostname out of the `cloudflared` output, forwarding its log to stderr.
-4. Writes that hostname to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` in the git-ignored `.env`, through the same helper the C@MPUS secret writer uses (`scripts/set-campus-secret.mjs`), and keeps the file at mode `600`. `EXPO_PUBLIC_ASSISTANT_URL` is left as it is.
+4. Writes that hostname to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` in the git-ignored `.env`, through the same helper the C@MPUS secret writer uses (`tools/set-campus-secret.mjs`), and keeps the file at mode `600`. `EXPO_PUBLIC_ASSISTANT_URL` is left as it is.
 5. Checks `GET /health` once more through the public URL.
 6. Blanks `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` again on Ctrl-C and on every exit path, so no dead hostname is left behind. A run that never got a hostname leaves `.env` untouched.
 
@@ -85,7 +85,7 @@ A stable hostname means a named tunnel instead — `cloudflared tunnel login`, `
 
 ## What the tunnel exposes
 
-The tunnel is a public ingress. Every route the assistant serves becomes reachable by whoever has the hostname: the Grok rewrite (`POST /v1/assist`), the C@MPUS reads under `/v1/campus/*`, and UniMail under `/v1/mail/*`. `server/index.mjs` answers with `Access-Control-Allow-Origin: *` and has no authentication, so the hostname should be treated as sensitive while it lives. The C@MPUS bearer token and `PSESSIONID` never leave the server, and the university password is not on the tunnel path — except for UniMail, where the app posts the account password to the assistant over this public URL before the server proves it against `imap.uni-stuttgart.de` (see [mail.md](mail.md)). Stop the tunnel when the demonstration is over and do not leave a key-installed assistant publicly reachable, as [release-and-operations.md](../delivery/release-and-operations.md) states.
+The tunnel is a public ingress. Every route the assistant serves becomes reachable by whoever has the hostname: the Grok rewrite (`POST /v1/assist`), the C@MPUS reads under `/v1/campus/*`, and UniMail under `/v1/mail/*`. `apps/server/index.mjs` answers with `Access-Control-Allow-Origin: *` and has no authentication, so the hostname should be treated as sensitive while it lives. The C@MPUS bearer token and `PSESSIONID` never leave the server, and the university password is not on the tunnel path — except for UniMail, where the app posts the account password to the assistant over this public URL before the server proves it against `imap.uni-stuttgart.de` (see [mail.md](mail.md)). Stop the tunnel when the demonstration is over and do not leave a key-installed assistant publicly reachable, as [release-and-operations.md](../delivery/release-and-operations.md) states.
 
 ## Verifying
 
@@ -93,4 +93,4 @@ The tunnel is a public ingress. Every route the assistant serves becomes reachab
 curl -s https://<words>.trycloudflare.com/health   # the JSON from GET /health
 ```
 
-The same routes are listed in **Mehr → Schnittstelle** (`app/api.tsx`). A `detail` of `… ohne Detail` still means the assistant process is older than the code and needs `npm run assistant` again, tunnel or not ([campus-logging.md](campus-logging.md)).
+The same routes are listed in **Mehr → Schnittstelle** (`apps/mobile/app/api.tsx`). A `detail` of `… ohne Detail` still means the assistant process is older than the code and needs `npm run assistant` again, tunnel or not ([campus-logging.md](campus-logging.md)).

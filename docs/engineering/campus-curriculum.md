@@ -1,6 +1,6 @@
 # C@MPUS curriculum structure
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session. Types live in `src/campus/curriculum.ts`. A reduced fixture is `src/campus/curriculum.sample.ts`. The assistant server calls this URL for `POST /v1/campus/login` and `POST /v1/campus/structure`. The app stores the mapped nodes, not the raw portal body. Both routes require the app bearer token, and the server stores the rows under the caller's `user_id`.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session. Types live in `apps/mobile/src/campus/curriculum.ts`. A reduced fixture is `apps/mobile/src/campus/curriculum.sample.ts`. The assistant server calls this URL for `POST /v1/campus/login` and `POST /v1/campus/structure`. The app stores the mapped nodes, not the raw portal body. Both routes require the app bearer token, and the server stores the rows under the caller's `user_id`.
 
 The two ids in the path are discovered by the study chooser in [campus-studies.md](campus-studies.md). The portal is CAMPUSonline. The path segment `slc.cm.cs` is the student curriculum service. This file records the one structure operation that was returned, not a full catalog of C@MPUS.
 
@@ -22,7 +22,7 @@ Accept: application/json
 | `$ctx` | `design=ca;lang=de` |
 | `$filter` | `active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true` |
 
-`curriculumStructureUrl` in `src/campus/curriculum.ts` builds this URL. The two ids are per student. They are not constants of the app.
+`curriculumStructureUrl` in `apps/mobile/src/campus/curriculum.ts` builds this URL. The two ids are per student. They are not constants of the app.
 
 The observed call sent `Authorization: Bearer` and no other credential. A browser session cookie is not this header.
 
@@ -40,11 +40,11 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 
 **Mit C@MPUS-Token anmelden** on the login screen calls `POST /v1/campus/login`. The server sends the token and `PSESSIONID` to the structure URL above, then reads the study chooser, and returns the German root name, the designation, the nodes on that level, and `{ studies, activeStudyId }`. The app stores those nodes and the study list with the session. The token and cookie are not returned.
 
-**Schnittstelle** (`app/api.tsx`, linked from Mehr) lists the routes from `GET /v1/api` and can send the ones marked for replay. `POST /v1/campus/structure` accepts an optional positive integer `elementId` and an optional `studyId`, and calls the same path for that study and node; a `studyId` without an `elementId` resolves the root through the chooser. It does not accept a URL. A tap on a loaded node sends that node’s id. OIDC start, exchange, and logout stay in the browser sign-in flow and are not replayed from this screen.
+**Schnittstelle** (`apps/mobile/app/api.tsx`, linked from Mehr) lists the routes from `GET /v1/api` and can send the ones marked for replay. `POST /v1/campus/structure` accepts an optional positive integer `elementId` and an optional `studyId`, and calls the same path for that study and node; a `studyId` without an `elementId` resolves the root through the chooser. It does not accept a URL. A tap on a loaded node sends that node’s id. OIDC start, exchange, and logout stay in the browser sign-in flow and are not replayed from this screen.
 
 ## Server routes
 
-`server/catalog.mjs` is the list. The screen refuses any other path.
+`apps/server/catalog.mjs` is the list. The screen refuses any other path.
 
 | Method | Path | Replay from Schnittstelle |
 | --- | --- | --- |
@@ -59,7 +59,7 @@ The name is not `EXPO_PUBLIC_`. A public Expo variable would be copied into the 
 | `POST` | `/v1/oidc/exchange` | No |
 | `POST` | `/v1/oidc/logout` | No |
 
-The client types are `src/auth/campus.ts` and `src/auth/api.ts`. `nodesFromCurriculum` in `server/campus.mjs` maps each `curriculumStructureElementDto` to `CurriculumNode`: `id`, `designation`, `elementType`, `name` (German, then `value`), `parentId`, `completed` from `enabledInfo.completed`, and `inProgress` when a tag has `tagType` `IN_PROGRESS`. The raw portal body is not stored.
+The client types are `apps/mobile/src/auth/campus.ts` and `apps/mobile/src/auth/api.ts`. `nodesFromCurriculum` in `apps/server/campus.mjs` maps each `curriculumStructureElementDto` to `CurriculumNode`: `id`, `designation`, `elementType`, `name` (German, then `value`), `parentId`, `completed` from `enabledInfo.completed`, and `inProgress` when a tag has `tagType` `IN_PROGRESS`. The raw portal body is not stored.
 
 `curriculumNodes` lives on the device record, with `curriculumStudyId` naming the study the tree belongs to. Sign-out, and a switch to the demo, local, or OIDC session, clears both. Reset keeps them while the campus session stays. A later structure call merges nodes by id, so loading a child does not drop the root; a study switch or a fresh login replaces the whole tree instead, so nodes from another study never linger.
 
@@ -77,7 +77,7 @@ Known portal failures, mapped to short codes and never logged with the token or 
 
 A call from this server with only the bearer token was answered `401` and `$core.lib.authn.missing_session_cookie`. A call with only a guessed `JSESSIONID` was answered `401` and `Authorization missing`. C@MPUS expects the bearer token and the portal session cookie together when the request does not come from the already signed-in browser.
 
-The signed-in browser on `https://campus.uni-stuttgart.de` shows these cookie names. Types are `CampusCookieName` and `CampusCookies` in `src/campus/cookies.ts`.
+The signed-in browser on `https://campus.uni-stuttgart.de` shows these cookie names. Types are `CampusCookieName` and `CampusCookies` in `apps/mobile/src/campus/cookies.ts`.
 
 | Name | Role |
 | --- | --- |
@@ -87,7 +87,7 @@ The signed-in browser on `https://campus.uni-stuttgart.de` shows these cookie na
 | `PROFILE_CHOOSER_ENABLED` | Profile-chooser preference. |
 | `SESSION_MODIFICATION_DEBUG` | Debug flag. |
 
-Put only the `PSESSIONID` value into `CAMPUS_SESSION_COOKIE`, without the name `PSESSIONID=`, and restart `npm run assistant`. `npm run campus:session -- <value>` writes it; paste the whole cookie string and the script keeps just the `PSESSIONID`. The other four cookies are not sent. `CAMPUS_STUDY_ID` and `CAMPUS_CURRICULUM_ID` select the node. The defaults are the observed ids `339485` and `278343`. The normalization, the masked output, and the refusal cases of both updater commands are pinned by `scripts/set-campus-secret.test.mjs`, which `npm run check` runs.
+Put only the `PSESSIONID` value into `CAMPUS_SESSION_COOKIE`, without the name `PSESSIONID=`, and restart `npm run assistant`. `npm run campus:session -- <value>` writes it; paste the whole cookie string and the script keeps just the `PSESSIONID`. The other four cookies are not sent. `CAMPUS_STUDY_ID` and `CAMPUS_CURRICULUM_ID` select the node. The defaults are the observed ids `339485` and `278343`. The normalization, the masked output, and the refusal cases of both updater commands are pinned by `tools/set-campus-secret.test.mjs`, which `npm run check` runs.
 
 How `{studyId}` and the root `{elementId}` are discovered is the chooser call in [campus-studies.md](campus-studies.md). The body only describes the node that was requested and the nodes directly under it.
 
@@ -148,13 +148,13 @@ Each resource:
 
 ## C@MPUS tab
 
-The `C@MPUS` tab (`app/(tabs)/campus-info.tsx`) renders the stored tree for the active study: the study switcher on top, the root and its groups as an indented tree, and a reload button. Tapping a node loads its children through `POST /v1/campus/structure` with that study's id. A `Kurse` toggle under every node loads that node's courses through `POST /v1/campus/courses`, documented in [campus-courses.md](campus-courses.md). When the stored nodes belong to another study (`curriculumStudyId` differs from the selection), the tab says so and offers to load the matching structure.
+The `C@MPUS` tab (`apps/mobile/app/(tabs)/campus-info.tsx`) renders the stored tree for the active study: the study switcher on top, the root and its groups as an indented tree, and a reload button. Tapping a node loads its children through `POST /v1/campus/structure` with that study's id. A `Kurse` toggle under every node loads that node's courses through `POST /v1/campus/courses`, documented in [campus-courses.md](campus-courses.md). When the stored nodes belong to another study (`curriculumStudyId` differs from the selection), the tab says so and offers to load the matching structure.
 
 ## Full sync and SQLite cache
 
-One structure call returns a node and the level below it, so the whole tree needs one call per node. The walk runs on the assistant server as a background job (`POST /v1/campus/sync`, `server/sync.mjs`): breadth-first from the root, three calls in flight, every unseen id queued exactly once, a failing element retried up to three times before it lands in `failedIds`. The app only starts, polls (`runServerSync` in `src/campus/server-sync.ts`), and cancels — progress persists server-side as it is fetched, so cancelling keeps partials and the next job resumes where the last stopped. Each job completion lands in the call history as a `sync` entry.
+One structure call returns a node and the level below it, so the whole tree needs one call per node. The walk runs on the assistant server as a background job (`POST /v1/campus/sync`, `apps/server/sync.mjs`): breadth-first from the root, three calls in flight, every unseen id queued exactly once, a failing element retried up to three times before it lands in `failedIds`. The app only starts, polls (`runServerSync` in `apps/mobile/src/campus/server-sync.ts`), and cancels — progress persists server-side as it is fetched, so cancelling keeps partials and the next job resumes where the last stopped. Each job completion lands in the call history as a `sync` entry.
 
-`src/campus/db.ts` keeps the client's own copy in the on-device SQLite database `campus-cache.db` (`expo-sqlite`):
+`apps/mobile/src/campus/db.ts` keeps the client's own copy in the on-device SQLite database `campus-cache.db` (`expo-sqlite`):
 
 | Table / column | Contents |
 | --- | --- |
@@ -167,13 +167,13 @@ Native and web caches are separate devices stores: SQLite lives in the app's fil
 
 ## Server as source of truth
 
-The assistant server keeps the same tables in `server/campus-server.db` and fills them from every portal read; the client cache is the offline copy. Reads are live-first with store fallback (`cached: true` in the response), and `POST /v1/campus/sync` walks whole studies in background jobs so the app no longer has to hammer the portal itself. Details in [architecture.md](architecture.md).
+The assistant server keeps the same tables in `apps/server/campus-server.db` and fills them from every portal read; the client cache is the offline copy. Reads are live-first with store fallback (`cached: true` in the response), and `POST /v1/campus/sync` walks whole studies in background jobs so the app no longer has to hammer the portal itself. Details in [architecture.md](architecture.md).
 
-The web-only structure browser (`app/strukturen.tsx`, linked from the C@MPUS tab) reads all cached studies side by side: per-study fetch buttons with resume, per-study and global cache clearing, search across names and designations, type and completion filters, name/code/id sort, an expandable tree per study, and the session API history in the right column — itself searchable, filterable by status and operation, and sortable by time or duration, with failures in red. Tapping a search hit reveals it in the tree: ancestors expand, the node selects, and the column scrolls to it. The root element stays hidden by default (the header line already carries the study name plus element id, section and node counts); a `Wurzel` toggle restores the classic view. Only the arrow toggles a branch; tapping the row itself opens a node detail panel (designation, status, study, parent, children, courses — cached courses show instantly, otherwise a load button fetches once) in place of the call detail. Clicking a history entry opens a detail panel with the full call data and a reload button for that exact call. Expanding, searching, filtering, and sorting touch only cached rows — the page issues no structure calls itself.
+The web-only structure browser (`apps/mobile/app/strukturen.tsx`, linked from the C@MPUS tab) reads all cached studies side by side: per-study fetch buttons with resume, per-study and global cache clearing, search across names and designations, type and completion filters, name/code/id sort, an expandable tree per study, and the session API history in the right column — itself searchable, filterable by status and operation, and sortable by time or duration, with failures in red. Tapping a search hit reveals it in the tree: ancestors expand, the node selects, and the column scrolls to it. The root element stays hidden by default (the header line already carries the study name plus element id, section and node counts); a `Wurzel` toggle restores the classic view. Only the arrow toggles a branch; tapping the row itself opens a node detail panel (designation, status, study, parent, children, courses — cached courses show instantly, otherwise a load button fetches once) in place of the call detail. Clicking a history entry opens a detail panel with the full call data and a reload button for that exact call. Expanding, searching, filtering, and sorting touch only cached rows — the page issues no structure calls itself.
 
-The browser is assembled from shared, tree-agnostic pieces: `CurriculumTree` (`src/components/curriculum-tree.tsx`) draws any node list as an indented tree and is reused by the C@MPUS tab; `CurriculumToolbar` (`src/components/curriculum-toolbar.tsx`); `StudyCacheCard` (`src/components/study-cache-card.tsx`); `ApiHistory` (`src/components/api-history.tsx`) and `ApiEntryDetail` (`src/components/api-entry-detail.tsx`); and `CurriculumNodeDetail` (`src/components/curriculum-node-detail.tsx`). The pure grouping, sorting, filtering and summary helpers live in `src/domain/curriculum.ts`, with the node status labels in `src/labels.ts`.
+The browser is assembled from shared, tree-agnostic pieces: `CurriculumTree` (`apps/mobile/src/components/curriculum-tree.tsx`) draws any node list as an indented tree and is reused by the C@MPUS tab; `CurriculumToolbar` (`apps/mobile/src/components/curriculum-toolbar.tsx`); `StudyCacheCard` (`apps/mobile/src/components/study-cache-card.tsx`); `ApiHistory` (`apps/mobile/src/components/api-history.tsx`) and `ApiEntryDetail` (`apps/mobile/src/components/api-entry-detail.tsx`); and `CurriculumNodeDetail` (`apps/mobile/src/components/curriculum-node-detail.tsx`). The pure grouping, sorting, filtering and summary helpers live in `apps/mobile/src/domain/curriculum.ts`, with the node status labels in `apps/mobile/src/labels.ts`.
 
-`expo-sqlite` is intentionally absent from the web bundle: its web worker breaks Metro bundling without a wasm/`SharedArrayBuffer` setup, so on web `src/campus/db.web.ts` (AsyncStorage in `localStorage`) implements the same API instead of `src/campus/db.ts`. Syncing, resuming, and hydrating work identically — the rows just live in `localStorage` instead of SQLite on web.
+`expo-sqlite` is intentionally absent from the web bundle: its web worker breaks Metro bundling without a wasm/`SharedArrayBuffer` setup, so on web `apps/mobile/src/campus/db.web.ts` (AsyncStorage in `localStorage`) implements the same API instead of `apps/mobile/src/campus/db.ts`. Syncing, resuming, and hydrating work identically — the rows just live in `localStorage` instead of SQLite on web.
 
 ## Nodes in the observed body
 
@@ -194,7 +194,7 @@ The root was `Philosophie` (`ROOT`, id `278343`, designation `84-127-14`). The g
 | 560867 | OP | Orientierungsprüfung |
 | 287775 | 400 | Schlüsselqualifikationen fachaffin |
 
-In the first captured body, `Basismodule` and `Schlüsselqualifikationen fachübergreifend` carried the in-progress tag for semester `2026 W`. A later read through `POST /v1/campus/structure` on 14 October 2026 returned the same 13 nodes and marked only `Basismodule` in progress. This is one student's tree, not the Informatik demonstration record in `src/data/modules.ts`.
+In the first captured body, `Basismodule` and `Schlüsselqualifikationen fachübergreifend` carried the in-progress tag for semester `2026 W`. A later read through `POST /v1/campus/structure` on 14 October 2026 returned the same 13 nodes and marked only `Basismodule` in progress. This is one student's tree, not the Informatik demonstration record in `apps/mobile/src/data/modules.ts`.
 
 ## What this call does not return
 

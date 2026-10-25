@@ -8,8 +8,8 @@ The work follows eight phases. They are sequential on paper and overlapping in p
 | Planning | What is in the first build, and in which order? | [02-planning.md](02-planning.md), [delivery/backlog.md](../delivery/backlog.md) | Done for the prototype |
 | Requirements | What must each area do, and which facts are in or out? | [03-requirements.md](03-requirements.md), [00-product-description.md](../00-product-description.md) | Done for the prototype |
 | Design | How is the product structured, visually and technically? | [04-design.md](04-design.md), `docs/engineering/` | Done for the prototype |
-| Implementation | What was built, and where does it live? | [05-implementation.md](05-implementation.md), `app/`, `src/`, `server/` | Done for the prototype |
-| Testing | How do we know the record and the answers stay honest? | [06-testing.md](06-testing.md), `scripts/check-assistant.ts` | First pass done |
+| Implementation | What was built, and where does it live? | [05-implementation.md](05-implementation.md), `apps/mobile/app/`, `apps/mobile/src/`, `apps/server/` | Done for the prototype |
+| Testing | How do we know the record and the answers stay honest? | [06-testing.md](06-testing.md), `tools/check-assistant.ts` | First pass done |
 | Deployment | How does a build leave this machine? | [07-deployment.md](07-deployment.md) | Specified, not shipped |
 | Maintenance | What has to stay true after the first build? | [08-maintenance.md](08-maintenance.md) | Operating rules written |
 

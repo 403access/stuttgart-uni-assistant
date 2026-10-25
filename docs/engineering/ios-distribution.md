@@ -73,13 +73,13 @@ profiles **inside Xcode** rather than in the portal.
 | --- | --- |
 | No `eas.json`; cloud builds are not configured | repository root |
 | Bundle id `dev.demo.universityassistant` | `app.json` |
-| `ios/` and `android/` are git-ignored and regenerated | `.gitignore` |
-| The iOS entitlements file is an **empty** `<dict/>` | `ios/UniversityAssistant/UniversityAssistant.entitlements` |
-| A team is already wired into the generated project: `DEVELOPMENT_TEAM = QML5B57EMH`, automatic signing, `Apple Development` | `ios/UniversityAssistant.xcodeproj/project.pbxproj` |
-| No Packet Tunnel extension target exists | `ios/`, searched for `OVPNEXT` and `PacketTunnelProvider` |
-| `plugins/withVpnTunnel.js` writes `com.apple.developer.networking.networkextension` and `com.apple.security.application-groups` **only** when `EXPO_ENABLE_IOS_VPN_ENTITLEMENTS=1` | `plugins/withVpnTunnel.js` |
-| `plugins/withNfc.js` writes `com.apple.developer.nfc.readersession.formats` **only** when `EXPO_ENABLE_IOS_NFC=1` | `plugins/withNfc.js` |
-| The JS side already addresses an extension that does not exist: `iosExtensionBundleIdentifier` = `<bundle id>.OVPNEXT` | `src/vpn/engine-config.ts`, `src/vpn/engine-openvpn.ts` |
+| `apps/mobile/ios/` and `apps/mobile/android/` are git-ignored and regenerated | `.gitignore` |
+| The iOS entitlements file is an **empty** `<dict/>` | `apps/mobile/ios/UniversityAssistant/UniversityAssistant.entitlements` |
+| A team is already wired into the generated project: `DEVELOPMENT_TEAM = QML5B57EMH`, automatic signing, `Apple Development` | `apps/mobile/ios/UniversityAssistant.xcodeproj/project.pbxproj` |
+| No Packet Tunnel extension target exists | `apps/mobile/ios/`, searched for `OVPNEXT` and `PacketTunnelProvider` |
+| `apps/mobile/plugins/withVpnTunnel.js` writes `com.apple.developer.networking.networkextension` and `com.apple.security.application-groups` **only** when `EXPO_ENABLE_IOS_VPN_ENTITLEMENTS=1` | `apps/mobile/plugins/withVpnTunnel.js` |
+| `apps/mobile/plugins/withNfc.js` writes `com.apple.developer.nfc.readersession.formats` **only** when `EXPO_ENABLE_IOS_NFC=1` | `apps/mobile/plugins/withNfc.js` |
+| The JS side already addresses an extension that does not exist: `iosExtensionBundleIdentifier` = `<bundle id>.OVPNEXT` | `apps/mobile/src/vpn/engine-config.ts`, `apps/mobile/src/vpn/engine-openvpn.ts` |
 
 The empty entitlements file is not a mistake to fix. It is the reason the
 current tree can be signed at all by a free Account.
@@ -128,7 +128,7 @@ problem.
 
 ## Why prebuild used to be a trap
 
-`plugins/withVpnTunnel.js` writes two iOS entitlements. Both are unavailable to
+`apps/mobile/plugins/withVpnTunnel.js` writes two iOS entitlements. Both are unavailable to
 a Personal Team, and Network Extensions cannot be added to a free Account at
 all. A prebuild that added them produced a tree that **could not be signed here**,
 with `Personal development teams do not support the … capability` — and if such
@@ -152,12 +152,12 @@ Two things still catch people out:
 
 1. **Gating a mod does not undo a file.** Turning the flag off does not strip
    entitlements an earlier prebuild already wrote; the mod simply does not run.
-   Only `--clean`, which regenerates `ios/`, is guaranteed to produce a clean
+   Only `--clean`, which regenerates `apps/mobile/ios/`, is guaranteed to produce a clean
    entitlements file. `npm run ios:ipa` refuses to archive if the file still
    carries either key, whichever way it got there.
-2. **`ios/` is git-ignored.** Nothing about the native project is committed, so
+2. **`apps/mobile/ios/` is git-ignored.** Nothing about the native project is committed, so
    "the tree that worked last week" is a local artifact. Treat a fresh
-   `--clean` as the baseline rather than an existing `ios/`.
+   `--clean` as the baseline rather than an existing `apps/mobile/ios/`.
 
 The VPN is unaffected either way: there is no iOS tunnel target, so the
 entitlements are inert. See [vpn-tunnel.md](vpn-tunnel.md) — the extension
@@ -166,7 +166,7 @@ membership exists.
 
 The NFC Tag Reading entitlement follows the same rule for the same reason. A
 prebuild that carried it produced `Personal development teams do not support the
-NFC Tag Reading capability` on this machine, so `plugins/withNfc.js` leaves it
+NFC Tag Reading capability` on this machine, so `apps/mobile/plugins/withNfc.js` leaves it
 out unless `EXPO_ENABLE_IOS_NFC=1` is set. Enabling it also needs **NFC Tag
 Reading** turned on for the App ID in the developer portal; automatic signing
 does not add that capability to an existing App ID. The dev screen and the
@@ -198,17 +198,17 @@ it. The repository fixes this with the supported build property in `app.json`:
 ```
 
 `npx expo prebuild --platform ios` writes
-`EX_DEV_CLIENT_NETWORK_INSPECTOR=false` into `ios/Podfile.properties.json`; the
+`EX_DEV_CLIENT_NETWORK_INSPECTOR=false` into `apps/mobile/ios/Podfile.properties.json`; the
 podspec then compiles the stub class and the linker has nothing to resolve. The
 trade-off is that the Expo network inspector is off in the dev build.
 
 To keep the inspector, replace that property with
 `"buildReactNativeFromSource": true` instead. React Native is then compiled from
 source, including `Libraries/WebSocket/RCTReconnectingWebSocket.m`, at a
-significantly higher build time. Do not patch `ios/Podfile` by hand: `ios/` is
+significantly higher build time. Do not patch `apps/mobile/ios/Podfile` by hand: `apps/mobile/ios/` is
 generated and ignored.
 
-After a prebuild that clears `ios/`, Xcode may lose the selected development
+After a prebuild that clears `apps/mobile/ios/`, Xcode may lose the selected development
 team. `npx expo run:ios` signs automatically with the team it finds; a
 `--clean` prebuild is the case that needs `DEVELOPMENT_TEAM` set again.
 
@@ -218,7 +218,7 @@ build failure: unlock the iPhone and run the install/launch step again.
 ## Building the test build
 
 `npm run ios:ipa` does the whole thing: preflight, archive, export. It is
-`scripts/build-ios-ipa.mjs` as orchestration, with the pieces in `scripts/ios/`:
+`tools/build-ios-ipa.mjs` as orchestration, with the pieces in `tools/ios/`:
 `project.mjs` (paths, `app.json`, `Info.plist`, the team), `entitlements.mjs`,
 `provisioning.mjs` (reading the signature back), `artifact.mjs` (naming, export
 options, checksum) and `cli.mjs`.
@@ -239,7 +239,7 @@ an archive that cannot be signed:
 | --- | --- |
 | the entitlements file carries either VPN key | no free Account can sign them, and the failure would otherwise surface on the tester's device rather than here |
 | no team id in the project and none passed | pass `--team`, or sign the project once in Xcode |
-| `ios/` is missing | it runs prebuild instead of failing |
+| `apps/mobile/ios/` is missing | it runs prebuild instead of failing |
 | `app.json`'s version differs from the native one | a warning, not a refusal — the `.ipa` ships the native version, and the printout names it |
 | the exported `.ipa` is signed by another team, has expired, or is not a development build | the embedded profile is read back after the export. The account `xcodebuild` *tried* is a different question from the team that signed, and only the file answers the second |
 
@@ -282,7 +282,7 @@ where Apple has to reissue the profile and the binary is re-signed.
 
 ## Publishing builds to your own service
 
-`dist-service/` is a standalone distribution service: its own port, its own
+`apps/dist/` is a standalone distribution service: its own port, its own
 SQLite database, its own data directory and, once deployed, its own domain. It
 shares nothing with the assistant server, and it is the answer to "where does the
 history live" that does not depend on GitHub, Firebase or App Store Connect.
@@ -296,7 +296,7 @@ DIST_TOKEN=dev-token npm run dist:publish   # newest .ipa in dist/ios
 and device count out of the `.ipa` itself, hashes the bytes it sends, and the
 service verifies that hash before storing anything. The pages list the history,
 serve the binary, and generate the `itms-services` manifest for the install
-button. Its API and deployment steps are in `dist-service/README.md`.
+button. Its API and deployment steps are in `apps/dist/README.md`.
 
 What it cannot do is the same thing this document cannot: sign. An ad-hoc
 profile only installs on devices whose UDID is inside it, so registering a tester
@@ -309,7 +309,7 @@ refuses plain HTTP and self-signed certificates, so the service is useful on
 `localhost` for the history and the API, but a phone can only install from an
 HTTPS origin. The supported shape is a named Cloudflare tunnel — `olimo.me` is
 already on Cloudflare's nameservers, so `builds.olimo.me` is one command — with a
-`Caddyfile` for the VPS alternative. Both are in `dist-service/README.md`.
+`Caddyfile` for the VPS alternative. Both are in `apps/dist/README.md`.
 
 
 
@@ -385,7 +385,7 @@ Two conditional shortcuts, recorded for completeness rather than recommended:
   CoreTrust bug and is therefore limited to old iOS versions, so it is only
   worth checking if the testers' devices happen to be on one.
 - **The web export** (`bunx expo export --platform web`) needs no signing at all
-  and reaches everyone. It is a degraded demo: `src/auth/campus-browser.ts`
+  and reaches everyone. It is a degraded demo: `apps/mobile/src/auth/campus-browser.ts`
   returns `NO_NATIVE_COOKIES` on web, so the C@MPUS browser sign-in does not
   work, and the VPN is inert. Fine for showing screens, not for testing the
   campus flows.
@@ -394,19 +394,19 @@ Two conditional shortcuts, recorded for completeness rather than recommended:
 
 Read out of this repository:
 
-- No `eas.json`; `ios/` and `android/` are git-ignored; the entitlements file is
+- No `eas.json`; `apps/mobile/ios/` and `apps/mobile/android/` are git-ignored; the entitlements file is
   an empty dictionary; a Personal-Team-style `DEVELOPMENT_TEAM` is present; no
   Packet Tunnel target exists; the config plugin writes both iOS entitlements
   only under its flag.
-- `src/vpn/engine-config.ts` and `src/vpn/engine-openvpn.ts` already pass an
+- `apps/mobile/src/vpn/engine-config.ts` and `apps/mobile/src/vpn/engine-openvpn.ts` already pass an
   `OVPNEXT` bundle id that no target provides.
-- `scripts/build-ios-ipa.test.mjs` covers the workflow's preflight and its
+- `tools/build-ios-ipa.test.mjs` covers the workflow's preflight and its
   archive/export sequence against a stand-in `xcodebuild`. It asserts that a
   tree carrying the VPN entitlements is refused **before** `xcodebuild` is
   called at all, that a clean tree produces one `.ipa` with the expected name,
   and that no scratch directory is left beside the archive. It runs as part of
   `npm run check`.
-- `scripts/xcode-accounts.test.mjs` pins the account-and-team findings against a
+- `tools/xcode-accounts.test.mjs` pins the account-and-team findings against a
   fixture copied from a real `defaults export`: two accounts, one identifier,
   and a cached team list that contradicts the live one.
 - The account and team table above is `npm run ios:accounts` output, quoted

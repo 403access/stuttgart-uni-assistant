@@ -1,13 +1,13 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Learn more at https://help.github.com/articles/ignoring-files/
 
 # dependencies
 node_modules/
 
 # Expo
-.expo/
-dist/
+apps/mobile/.expo/
+apps/mobile/dist/
 web-build/
-expo-env.d.ts
+apps/mobile/expo-env.d.ts
 
 # Native
 .kotlin/
@@ -33,17 +33,18 @@ yarn-error.*
 # local env files
 .env
 .env*.local
+apps/mobile/.env
 
 # typescript
 *.tsbuildinfo
 
 # generated native folders
-/ios
-/android
+/apps/mobile/ios
+/apps/mobile/android
 
 # local Expo module build output
-modules/*/android/build/
-modules/*/ios/build/
+apps/mobile/modules/*/android/build/
+apps/mobile/modules/*/ios/build/
 
 # local databases
 *.db
@@ -52,6 +53,14 @@ modules/*/ios/build/
 *.db-shm
 
 # distribution service state (database and uploaded .ipa files)
-/dist-service/data/
+/apps/dist/data/
+/apps/dist/dist/
 # machine-specific Cloudflare tunnel config; the example is tracked
-/dist-service/tunnel.yml
+/apps/dist/tunnel.yml
+
+# admin production build
+/apps/admin/dist/
+
+# docs build output
+/apps/docs/build/
+/apps/docs/.docusaurus/

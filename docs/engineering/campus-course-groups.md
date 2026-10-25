@@ -1,6 +1,6 @@
 # C@MPUS course groups and appointments
 
-One authenticated read from the C@MPUS portal, observed in a signed-in browser session on 18 October 2026 for course `461098`. It lists the groups (`Gruppen`) of one course with every dated appointment (`Termine`) and the group lecturers. The mapping lives in `server/campus.mjs`; there is no app type or store for it — the app sees the mapped JSON as raw text. The assistant server calls this URL for `POST /v1/campus/course-groups`.
+One authenticated read from the C@MPUS portal, observed in a signed-in browser session on 18 October 2026 for course `461098`. It lists the groups (`Gruppen`) of one course with every dated appointment (`Termine`) and the group lecturers. The mapping lives in `apps/server/campus.mjs`; there is no app type or store for it — the app sees the mapped JSON as raw text. The assistant server calls this URL for `POST /v1/campus/course-groups`.
 
 The path segment `slc.tm.cp` is the course-pages service — the same prefix as the `detailPageLink` hrefs of [campus-courses.md](campus-courses.md) (`.../pages/slc.tm.cp/course/461098`). `firstGroups` answers with the first-group set the course page shows.
 
@@ -14,7 +14,7 @@ Cookie: PSESSIONID=<portal_session>
 Accept: application/json
 ```
 
-`courseGroupsRequestUrl` in `server/campus.mjs` builds this URL. A course id is required, same as the element id of the courses read: `POST /v1/campus/course-groups` answers `bad_course_id` without one. The server reads `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` exactly as for the other portal reads, and renews the bearer through the refresh endpoint on the same cadence (see [campus-curriculum.md](campus-curriculum.md)).
+`courseGroupsRequestUrl` in `apps/server/campus.mjs` builds this URL. A course id is required, same as the element id of the courses read: `POST /v1/campus/course-groups` answers `bad_course_id` without one. The server reads `CAMPUS_BEARER_TOKEN` and `CAMPUS_SESSION_COOKIE` exactly as for the other portal reads, and renews the bearer through the refresh endpoint on the same cadence (see [campus-curriculum.md](campus-curriculum.md)).
 
 ## Response
 
@@ -63,7 +63,7 @@ Rows without a numeric `id` (group) or without an id and a `timestampFrom` (appo
 | --- | --- | --- |
 | `POST` | `/v1/campus/course-groups` | Calls the groups URL for `{ courseId }` and returns `{ courseId, groups }` |
 
-`server/catalog.mjs` lists it as `campus-course-groups` with `acceptsCourseId: true`, so the Schnittstelle screen can replay it with a course id. Portal failures use the same codes and the same `detail` propagation as the courses read.
+`apps/server/catalog.mjs` lists it as `campus-course-groups` with `acceptsCourseId: true`, so the Schnittstelle screen can replay it with a course id. Portal failures use the same codes and the same `detail` propagation as the courses read.
 
 ## What this call does not return
 

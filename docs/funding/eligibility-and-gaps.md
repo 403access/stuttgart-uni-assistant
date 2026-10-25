@@ -106,7 +106,7 @@ The verified position is more precise than "LLMs are banned":
 The repository's history shows substantial AI-assisted development. Do not conceal it. Instead:
 
 - Disclose it in the README (done) and in every application.
-- Frame the funded work as **human design**: the domain model, the credit rules in `src/domain/plan.ts`, the i18n catalogue, the privacy boundary, the campus API mapping and the test suite.
+- Frame the funded work as **human design**: the domain model, the credit rules in `apps/mobile/src/domain/plan.ts`, the i18n catalogue, the privacy boundary, the campus API mapping and the test suite.
 - Keep a prompt log for anything you generate while preparing an application, because NLnet requires it.
 - Prefer **Prototype Fund**, which has no equivalent blanket exclusion, and treat NLnet as optional.
 

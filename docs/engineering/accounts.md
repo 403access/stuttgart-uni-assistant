@@ -6,10 +6,10 @@ public user record; the server keeps the identity, the token hash, and one row
 per linked platform. The account screen at `/konto` shows all of it as one
 account across C@MPUS, ILIAS, SDG Campus, SIAM, and UniMail.
 
-Status: implemented. The server side is `server/auth.mjs` and the `users`,
-`user_sessions`, and `user_platforms` tables in `server/db.mjs`. The client side
-is `src/auth/session.ts`, `src/auth/user.ts`, the store in `src/state/`, and
-`app/konto.tsx`.
+Status: implemented. The server side is `apps/server/auth.mjs` and the `users`,
+`user_sessions`, and `user_platforms` tables in `apps/server/db.mjs`. The client side
+is `apps/mobile/src/auth/session.ts`, `apps/mobile/src/auth/user.ts`, the store in `apps/mobile/src/state/`, and
+`apps/mobile/app/konto.tsx`.
 
 ## Identity
 
@@ -54,11 +54,11 @@ links the proven platforms, and issues a token.
 - `POST /v1/auth/logout` marks the token revoked. Expired and revoked rows are
   pruned; revoked rows stay for a day so a stale client gets a 401 instead of a
   silent new session.
-- `src/auth/session.ts` keeps the token in `expo-secure-store` (iOS keychain /
+- `apps/mobile/src/auth/session.ts` keeps the token in `expo-secure-store` (iOS keychain /
   Android Keystore) on native and in AsyncStorage on web, where no secure store
   exists. It is **not** in the `university-assistant/v1` AsyncStorage payload.
 
-On launch the store (`src/state/use-auth-session.ts`) reads the token and asks
+On launch the store (`apps/mobile/src/state/use-auth-session.ts`) reads the token and asks
 `/v1/auth/me`. A network failure
 keeps the cached user, so the app still opens offline with the last account
 shown.
@@ -67,8 +67,8 @@ The token is stored with the server **session id** (`session.id` from
 `/v1/auth/me`, also returned by every sign-in route). The id is not a bearer and
 cannot authenticate a request; it names the session row next to the token.
 
-`SessionRefresh` (`src/auth/session-refresh.tsx`) repeats the check whenever the
-app becomes active; the silent path lives in `src/state/use-session-resume.ts`.
+`SessionRefresh` (`apps/mobile/src/auth/session-refresh.tsx`) repeats the check whenever the
+app becomes active; the silent path lives in `apps/mobile/src/state/use-session-resume.ts`.
 A 401 triggers one re-login before anything is dropped:
 
 - `demo` and `local` accounts are minted again from the stored mode and account.

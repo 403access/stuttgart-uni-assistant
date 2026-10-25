@@ -41,7 +41,7 @@ The commercial services are mostly fine for development use. xAI and Apple are *
 
 1. **The operator credential path is the clearest university-rules breach.** `resolveLoginCredential()` falls back to `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` when the caller has no ticket and no session. The deprecated `/login-legacy` screen still calls that path, and the server exposes it to any direct caller. Any user who can reach the server can therefore trigger a C@MPUS read under the operator's account. The university's rules say the user must ensure that no other person gains access through their credentials.
 2. **Server-side scraping of C@MPUS has no published permission.** I found no C@MPUS-specific "no bots" clause, and no explicit "automation is allowed" clause either. What I did find: no public API or client registration for this app, `campus.uni-stuttgart.de/robots.txt` set to `Disallow: /`, and a CERT precedent that treats provider-side web scraping plus credential processing as a violation. This is a permission gap with strong negative signals, not a quoted prohibition.
-3. **The UniMail read routes are unauthenticated and share one global credential.** `server/mail.mjs` has a single `secrets` object; the read routes in `server/routes/mail.mjs` never call `requireAuth`, and `GET /v1/mail/config` even returns the connected account and address to anyone. `POST /v1/mail/send` is the exception and does require the token. With the tunnel up, the mailbox is still publicly readable.
+3. **The UniMail read routes are unauthenticated and share one global credential.** `apps/server/mail.mjs` has a single `secrets` object; the read routes in `apps/server/routes/mail.mjs` never call `requireAuth`, and `GET /v1/mail/config` even returns the connected account and address to anyone. `POST /v1/mail/send` is the exception and does require the token. With the tunnel up, the mailbox is still publicly readable.
 4. **xAI is not being used on xAI's terms for personal data.** The Enterprise Terms require personal data to go through the ZDR-enabled API. The app uses `store: false`, which is a request flag, not ZDR. The privacy notice itself says the Grok forwarding cannot yet be switched off.
 5. **Apple is likely to reject the current shape** on third-party-service permission (5.2.2), account deletion (5.1.1(v)), explicit third-party-AI consent (5.1.2(i)), and VPN apps from an individual developer (5.4). Ad Hoc is for testing on registered devices, not a general distribution channel.
 
@@ -106,14 +106,14 @@ That is the exact fault line this project has to decide on:
 
 | Behaviour | Evidence |
 | --- | --- |
-| Hidden WebView fills the official Shibboleth/Keycloak form with the stored password | `src/auth/campus-browser-scripts.ts:52` (`headlessAutofillScript`), `src/auth/use-campus-headless-login.ts` |
-| Visible WebView harvests `document.cookie`, `localStorage`, `sessionStorage`, plus native `HttpOnly` cookies | `src/auth/campus-browser-scripts.ts:16`, `src/auth/use-campus-browser-login.ts:64-65`, `src/auth/campus-browser.ts:28` |
-| Harvest is POSTed to the assistant server | `src/auth/campus.ts:708` (`submitBrowserCredentials`), `server/routes/campus.mjs:33` |
-| Server validates and keeps the session in process memory | `server/campus.mjs:1086` (`validateBrowserCredentials`), `server/campus.mjs:56` (`setUserCampusCredential`) |
-| Server calls internal C@MPUS REST endpoints with `PSESSIONID` and bearer | `server/campus.mjs:182-202`, `server/campus.mjs:121-129` |
-| Unauthenticated `/v1/campus/login` falls back to the operator's `.env` credential | `server/campus.mjs:655-660`, `server/routes/campus.mjs:59`, `src/auth/campus.ts:194-204` |
-| Successful automated sign-in reuses the same password for UniMail and sends it to the server | `src/auth/use-login-flow.ts:109-110`, `src/auth/use-login-flow.ts:169-176`, `server/routes/mail.mjs:28` |
-| Server binds all interfaces and allows any origin | `server/index.mjs:47`, `server/http.mjs:44` |
+| Hidden WebView fills the official Shibboleth/Keycloak form with the stored password | `apps/mobile/src/auth/campus-browser-scripts.ts:52` (`headlessAutofillScript`), `apps/mobile/src/auth/use-campus-headless-login.ts` |
+| Visible WebView harvests `document.cookie`, `localStorage`, `sessionStorage`, plus native `HttpOnly` cookies | `apps/mobile/src/auth/campus-browser-scripts.ts:16`, `apps/mobile/src/auth/use-campus-browser-login.ts:64-65`, `apps/mobile/src/auth/campus-browser.ts:28` |
+| Harvest is POSTed to the assistant server | `apps/mobile/src/auth/campus.ts:708` (`submitBrowserCredentials`), `apps/server/routes/campus.mjs:33` |
+| Server validates and keeps the session in process memory | `apps/server/campus.mjs:1086` (`validateBrowserCredentials`), `apps/server/campus.mjs:56` (`setUserCampusCredential`) |
+| Server calls internal C@MPUS REST endpoints with `PSESSIONID` and bearer | `apps/server/campus.mjs:182-202`, `apps/server/campus.mjs:121-129` |
+| Unauthenticated `/v1/campus/login` falls back to the operator's `.env` credential | `apps/server/campus.mjs:655-660`, `apps/server/routes/campus.mjs:59`, `apps/mobile/src/auth/campus.ts:194-204` |
+| Successful automated sign-in reuses the same password for UniMail and sends it to the server | `apps/mobile/src/auth/use-login-flow.ts:109-110`, `apps/mobile/src/auth/use-login-flow.ts:169-176`, `apps/server/routes/mail.mjs:28` |
+| Server binds all interfaces and allows any origin | `apps/server/index.mjs:47`, `apps/server/http.mjs:44` |
 | The docs say every assistant route is public while the tunnel is up | `docs/engineering/security-and-privacy.md:56` |
 
 ### 3.4 Verdict and what would make it compliant
@@ -289,16 +289,16 @@ xAI's API is governed by the **Terms of Service — Enterprise** (last updated 1
 
 ### 7.2 What the app sends
 
-`server/routes/assist.mjs` sends:
+`apps/server/routes/assist.mjs` sends:
 
 - the user's question;
 - the last six chat turns;
 - a fact sheet up to 24,000 characters;
 - the focused document text, if a document is open.
 
-The fact sheet is built from the local record and can include imported notes, chat history, grades, modules, deadlines, and peers (`docs/engineering/security-and-privacy.md:87-91`). The request uses `store: false` (`server/routes/assist.mjs:61`).
+The fact sheet is built from the local record and can include imported notes, chat history, grades, modules, deadlines, and peers (`docs/engineering/security-and-privacy.md:87-91`). The request uses `store: false` (`apps/server/routes/assist.mjs:61`).
 
-`store: false` asks xAI not to retain the response. It is **not** the contractual ZDR-Enabled API described in § 11.2. The app has no separate Grok toggle; the privacy notice admits this at `site/datenschutz/index.html:251-253`.
+`store: false` asks xAI not to retain the response. It is **not** the contractual ZDR-Enabled API described in § 11.2. The app has no separate Grok toggle; the privacy notice admits this at `apps/site/datenschutz/index.html:251-253`.
 
 ### 7.3 Verdict
 
@@ -333,7 +333,7 @@ The assistant tunnel is HTTP ingress, not a VPN, so § 2.2.1(j) is not automatic
 
 ### 8.2 Named tunnel for the build service
 
-`dist-service/` uses a named Cloudflare tunnel for `builds.olimo.me`. That is the supported shape and is fine technically. The IPA download is a large file; Cloudflare's current self-serve terms do not contain the old blanket non-HTML restriction, but keep an eye on plan limits and do not use the free tier as a general file CDN.
+`apps/dist/` uses a named Cloudflare tunnel for `builds.olimo.me`. That is the supported shape and is fine technically. The IPA download is a large file; Cloudflare's current self-serve terms do not contain the old blanket non-HTML restriction, but keep an eye on plan limits and do not use the free tier as a general file CDN.
 
 ### 8.3 Fix
 
@@ -383,7 +383,7 @@ The app is intended for Ad Hoc / TestFlight / a sideloading fallback, not the Ap
 
 Apple's DPLA allows distribution through the App Store, Custom App Distribution, **Ad Hoc** (registered devices, testing, 100 devices per product family per membership year), and **TestFlight** (beta testing). Ad Hoc is explicitly a testing mechanism, not a long-term distribution channel. The repository's own `docs/engineering/ios-distribution.md` says this correctly.
 
-`dist-service/` is fine for Ad Hoc/TestFlight testers. Do not turn it into a public download page for anyone with the link. The device limit and the one-year profile expiry are the guardrails, not a licence to distribute broadly.
+`apps/dist/` is fine for Ad Hoc/TestFlight testers. Do not turn it into a public download page for anyone with the link. The device limit and the one-year profile expiry are the guardrails, not a licence to distribute broadly.
 
 ### 11.2 App Review issues
 
@@ -621,18 +621,18 @@ All URLs retrieved on 20 October 2026.
 
 ### Repository evidence
 
-- `server/mail/config.mjs` and `server/mail/accounts.mjs` — global `secrets`, IMAP handling.
-- `server/routes/mail.mjs` — unauthenticated mail routes.
-- `server/campus.mjs` — C@MPUS REST calls, credential resolution, `.env` fallback.
-- `server/routes/campus.mjs` — credential and login routes.
-- `src/auth/campus-browser-scripts.ts` — autofill and harvest scripts.
-- `src/auth/use-campus-browser-login.ts` — native cookie read and harvest.
-- `src/auth/campus.ts` — `submitBrowserCredentials`, `signInWithCampusToken`.
-- `src/auth/use-login-flow.ts` — password reuse for UniMail.
-- `server/routes/assist.mjs` — xAI request.
-- `app/(tabs)/chat.tsx` — automatic Grok call.
-- `server/index.mjs` — `0.0.0.0` bind.
-- `server/http.mjs` — CORS `*`.
+- `apps/server/mail/config.mjs` and `apps/server/mail/accounts.mjs` — global `secrets`, IMAP handling.
+- `apps/server/routes/mail.mjs` — unauthenticated mail routes.
+- `apps/server/campus.mjs` — C@MPUS REST calls, credential resolution, `.env` fallback.
+- `apps/server/routes/campus.mjs` — credential and login routes.
+- `apps/mobile/src/auth/campus-browser-scripts.ts` — autofill and harvest scripts.
+- `apps/mobile/src/auth/use-campus-browser-login.ts` — native cookie read and harvest.
+- `apps/mobile/src/auth/campus.ts` — `submitBrowserCredentials`, `signInWithCampusToken`.
+- `apps/mobile/src/auth/use-login-flow.ts` — password reuse for UniMail.
+- `apps/server/routes/assist.mjs` — xAI request.
+- `apps/mobile/app/(tabs)/chat.tsx` — automatic Grok call.
+- `apps/server/index.mjs` — `0.0.0.0` bind.
+- `apps/server/http.mjs` — CORS `*`.
 - `docs/engineering/security-and-privacy.md` — the "every assistant route is public" admission.
 - `docs/engineering/campus-browser-login.md` — the browser-login design and limits.
 - `docs/engineering/mail.md` — the IMAP design.

@@ -3,7 +3,7 @@
 A server-hosted operator console for the user store, sessions, platform links,
 C@MPUS and ILIAS data, portal activity, app news, and server health. Open
 `http://127.0.0.1:8787/admin` while the assistant server is running. It is a
-plain HTML page served by `server/routes/admin/index.mjs`; there is no separate
+plain HTML page served by `apps/server/routes/admin/index.mjs`; there is no separate
 frontend build and no npm dependency. The browser modules are native ES modules,
 also served by the same Node process.
 
@@ -87,7 +87,7 @@ status filter narrows to published items or drafts. Publishing and deleting are
 confirmed and recorded in the audit log.
 
 **Lernquiz:** the catalog comes from the app's bundled snapshot
-(`server/quiz/catalog.json`) and is owned by the server after the first start.
+(`apps/server/quiz/catalog.json`) and is owned by the server after the first start.
 The overview shows module, topic, question, answer, user, and accuracy KPIs,
 plus a module table and a searchable topic table. Operators can create, edit,
 publish, withdraw, and delete topics and questions; question-specific fields
@@ -99,13 +99,13 @@ lists completed rounds. Each account detail also has a **Lernquiz** tab with its
 own answers and per-topic accuracy. Catalog mutations are recorded in the audit
 log.
 
-**Components:** the generated catalog from `scripts/generate-component-catalog.mjs`,
+**Components:** the generated catalog from `tools/generate-component-catalog.mjs`,
 with search, category and platform filters, export lists, native/web file
 variants, and every import, render, call, reference, and re-export with its
 file and line. It is the same inventory as **Dev → Komponenten** in the app and
 [component-catalog.md](component-catalog.md). Opening a row expands its details
-in place. The page module is `server/dashboard/pages/components.mjs`; the
-generated data is served as `server/dashboard/assets/component-catalog.mjs`, so
+in place. The page module is `apps/admin/public/pages/components.mjs`; the
+generated data is served as `apps/admin/public/assets/component-catalog.mjs`, so
 a dashboard reload picks up a regenerated catalog without restarting the
 assistant server.
 
@@ -206,7 +206,7 @@ the operator confirms **Geheimnisse anzeigen**; that read is recorded as
 `environment.reveal` in the audit log. Reloading the page hides them again. The
 mail login is process-wide, so that action disconnects every user's mail view.
 
-**Logs:** every service writes through one logger (`server/service-log.mjs`),
+**Logs:** every service writes through one logger (`apps/server/service-log.mjs`),
 which mirrors the line to stdout and stores it in SQLite. The page shows the
 newest 100 lines per page with the time, service, level (`info`, `warn`,
 `error`, `debug`), message, optional JSON detail, and a link to the account when
@@ -284,45 +284,45 @@ All routes below except `login`/`logout` require the admin cookie.
 | `DELETE /v1/admin/sync-jobs/<id>` | Cancels a sync job. |
 | `POST /v1/admin/system/mail/logout` | Forgets the process-wide UniMail credentials. |
 
-The admin routes are not in `server/catalog.mjs`, so the app's Schnittstelle
+The admin routes are not in `apps/server/catalog.mjs`, so the app's Schnittstelle
 screen cannot replay them.
 
 ## Files
 
 | File | Responsibility |
 | --- | --- |
-| `server/admin/index.mjs` | Public data-layer API and re-exports. |
-| `server/admin/session.mjs` | Token, cookie, and request authorization. |
-| `server/admin/audit.mjs` | Audit writes, filters, and facets. |
-| `server/admin/overview.mjs` | Cross-account counts and statistics. |
-| `server/admin/users.mjs` | Account list and detail reads. |
-| `server/admin/devices.mjs` | QR-linked browser list, detail read, parsed client details, stats, and revoke. |
-| `server/admin/user-agent.mjs` | User-Agent parsing for form factor, OS, browser, model, and engine. |
-| `server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content, member, profile and image reads, file download, and disconnect. |
-| `server/admin/news.mjs` | News list, create, update, publish, and delete. |
-| `server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
-| `server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
-| `server/admin/sync.mjs` | Manual sync start/cancel. |
-| `server/admin/system.mjs` | Runtime, configuration, database, and mail status. |
-| `server/admin/environment.mjs` | Project environment variables, `.env` metadata, and host details with masked secrets. |
-| `server/admin/logs.mjs` | Service log list, filters, and audited clear. |
-| `server/admin/util.mjs` | Shared validation and pagination helpers. |
-| `server/service-log.mjs` | The single logger: stdout plus the bounded `service_logs` table. |
-| `server/news.mjs` | Published news read model and admin input validation. |
-| `server/routes/news.mjs` | Public `/v1/news` routes. |
-| `server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
-| `server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, quiz, audit, logs, and system routes. |
-| `server/quiz/` | Seed from `catalog.json`, published projection, admin CRUD, answer analytics. |
-| `server/dashboard/index.html` | The page shell. |
-| `server/dashboard/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `server/dashboard/pages/*.mjs` | Overview, news, quiz, users, user detail, device detail, ILIAS, audit, logs, and system views. |
-| `server/dashboard/assets/styles.css` | The dashboard styles. |
-| `server/db.mjs` | Schema, including the `admin_audit` and `service_logs` tables. |
-| `server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
-| `server/admin.test.mjs` | Token matching, stats, filters, detail, editors, audit, system status, destructive actions. |
-| `server/service-log.test.mjs` | Service log persistence, filters, facets, clearing, and the audited admin clear. |
-| `server/admin-route.test.mjs` | Endpoint-level cookie gate, login, readers, mutations, audit, and deletion over a throwaway HTTP listener. |
-| `server/news.test.mjs` | News CRUD, draft visibility, public filtering, ordering, and validation. |
+| `apps/server/admin/index.mjs` | Public data-layer API and re-exports. |
+| `apps/server/admin/session.mjs` | Token, cookie, and request authorization. |
+| `apps/server/admin/audit.mjs` | Audit writes, filters, and facets. |
+| `apps/server/admin/overview.mjs` | Cross-account counts and statistics. |
+| `apps/server/admin/users.mjs` | Account list and detail reads. |
+| `apps/server/admin/devices.mjs` | QR-linked browser list, detail read, parsed client details, stats, and revoke. |
+| `apps/server/admin/user-agent.mjs` | User-Agent parsing for form factor, OS, browser, model, and engine. |
+| `apps/server/admin/ilias.mjs` | ILIAS connections, snapshot counts, live content, member, profile and image reads, file download, and disconnect. |
+| `apps/server/admin/news.mjs` | News list, create, update, publish, and delete. |
+| `apps/server/admin/explorers.mjs` | Curriculum, course, event, and call explorers. |
+| `apps/server/admin/mutations.mjs` | Account, session, platform, campus, and portal mutations. |
+| `apps/server/admin/sync.mjs` | Manual sync start/cancel. |
+| `apps/server/admin/system.mjs` | Runtime, configuration, database, and mail status. |
+| `apps/server/admin/environment.mjs` | Project environment variables, `.env` metadata, and host details with masked secrets. |
+| `apps/server/admin/logs.mjs` | Service log list, filters, and audited clear. |
+| `apps/server/admin/util.mjs` | Shared validation and pagination helpers. |
+| `apps/server/service-log.mjs` | The single logger: stdout plus the bounded `service_logs` table. |
+| `apps/server/news.mjs` | Published news read model and admin input validation. |
+| `apps/server/routes/news.mjs` | Public `/v1/news` routes. |
+| `apps/server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
+| `apps/server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, quiz, audit, logs, and system routes. |
+| `apps/server/quiz/` | Seed from `catalog.json`, published projection, admin CRUD, answer analytics. |
+| `apps/admin/public/index.html` | The page shell. |
+| `apps/admin/public/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
+| `apps/admin/public/pages/*.mjs` | Overview, news, quiz, users, user detail, device detail, ILIAS, audit, logs, and system views. |
+| `apps/admin/public/assets/styles.css` | The dashboard styles. |
+| `apps/server/db.mjs` | Schema, including the `admin_audit` and `service_logs` tables. |
+| `apps/server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
+| `apps/server/admin.test.mjs` | Token matching, stats, filters, detail, editors, audit, system status, destructive actions. |
+| `apps/server/service-log.test.mjs` | Service log persistence, filters, facets, clearing, and the audited admin clear. |
+| `apps/server/admin-route.test.mjs` | Endpoint-level cookie gate, login, readers, mutations, audit, and deletion over a throwaway HTTP listener. |
+| `apps/server/news.test.mjs` | News CRUD, draft visibility, public filtering, ordering, and validation. |
 
 ## Limits
 

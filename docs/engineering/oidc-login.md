@@ -60,7 +60,7 @@ Server → userinfo
 App  ←  account, name, email, subject, and a local session id
 ```
 
-Code lives in `server/oidc.mjs`, `src/auth/oidc.ts`, and `src/auth/use-login-flow.ts` (rendered by `app/login.tsx`). The browser step uses `expo-web-browser` and `expo-auth-session` (`makeRedirectUri`). `WebBrowser.maybeCompleteAuthSession()` runs from `app/_layout.tsx` so a web popup can close when the code returns to `/oidc`.
+Code lives in `apps/server/oidc.mjs`, `apps/mobile/src/auth/oidc.ts`, and `apps/mobile/src/auth/use-login-flow.ts` (rendered by `apps/mobile/app/login.tsx`). The browser step uses `expo-web-browser` and `expo-auth-session` (`makeRedirectUri`). `WebBrowser.maybeCompleteAuthSession()` runs from `apps/mobile/app/_layout.tsx` so a web popup can close when the code returns to `/oidc`.
 
 The university access token and the refresh token stay in the server process memory, keyed by the local session id. They are not written to Async Storage and not returned to the app. Sign-out calls `POST /v1/oidc/logout`, which revokes the refresh token (or the access token) at the revocation endpoint and drops the memory entry. Restarting the server drops every token. The profile cached on the device remains until the student signs out.
 
@@ -112,6 +112,6 @@ The code exchange also creates or refreshes the server-side user for that accoun
 
 ## Checks
 
-`node --test server/oidc.test.mjs` (also run by `npm run check`) asserts that the authorize URL uses the production endpoint, sends PKCE, omits `execution` and any password, and that a secret in the environment is not copied into the URL. It does not complete a login against the IdP. A real login needs a TIK client, a running `npm run assistant`, and a redirect URI that TIK has registered.
+`node --test apps/server/oidc.test.mjs` (also run by `npm run check`) asserts that the authorize URL uses the production endpoint, sends PKCE, omits `execution` and any password, and that a secret in the environment is not copied into the URL. It does not complete a login against the IdP. A real login needs a TIK client, a running `npm run assistant`, and a redirect URI that TIK has registered.
 
 `GET /health` and `GET /v1/oidc/config` report `oidc.configured`. They do not report the secret or the login hint.

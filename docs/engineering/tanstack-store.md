@@ -6,13 +6,13 @@ The app state lives in a TanStack Store (`@tanstack/store`, read through `@tanst
 
 | File | Responsibility |
 | --- | --- |
-| `src/state/app-store.ts` | `appStore` (`AppStoreState`), `updateApp`/`patchApp`, and the persisted-slice helpers |
-| `src/state/actions/` | Plain action functions: session, sign-in, resume, account, appearance, content, chat |
-| `src/state/actions/index.ts` | `appActions`, one stable object with every action |
-| `src/state/use-app-store.ts` | `useAppSelector` (one slice) and `useAppState` (whole store, diagnostics only) |
-| `src/state/use-app-persistence.ts` | Hydration from AsyncStorage plus the write subscription |
-| `src/state/AppStateProvider.tsx` | Mounts hydration, launch session restore, and the cross-device campus snapshot |
-| `src/state/AppState.tsx` | Public entry point; screens import from here |
+| `apps/mobile/src/state/app-store.ts` | `appStore` (`AppStoreState`), `updateApp`/`patchApp`, and the persisted-slice helpers |
+| `apps/mobile/src/state/actions/` | Plain action functions: session, sign-in, resume, account, appearance, content, chat |
+| `apps/mobile/src/state/actions/index.ts` | `appActions`, one stable object with every action |
+| `apps/mobile/src/state/use-app-store.ts` | `useAppSelector` (one slice) and `useAppState` (whole store, diagnostics only) |
+| `apps/mobile/src/state/use-app-persistence.ts` | Hydration from AsyncStorage plus the write subscription |
+| `apps/mobile/src/state/AppStateProvider.tsx` | Mounts hydration, launch session restore, and the cross-device campus snapshot |
+| `apps/mobile/src/state/AppState.tsx` | Public entry point; screens import from here |
 
 `AppStoreState` is `PersistedState` plus three runtime fields: `ready`, `authToken`, and `authSessionId`. The runtime fields never reach AsyncStorage; `selectPersisted` strips them before a write and `samePersisted` skips writes when only a runtime value changed.
 
@@ -59,9 +59,9 @@ Three smaller stores use the same library without the app store:
 
 | Store | Consumer | Notes |
 | --- | --- | --- |
-| `mailStore` (`src/auth/mail.ts`) | `useMailSnapshot` | Status, folders, rows, active folder; mirrored to `mail-snapshot/v1` |
-| `campusLogStore` (`src/auth/campus-log.ts`) | `useCampusLog` | Last 30 calls of this session, newest first |
-| `quizProgressStore` (`src/quiz/progress.tsx`) | `useQuizProgress` | Attempts, sessions, interrupted rounds; its own AsyncStorage key |
+| `mailStore` (`apps/mobile/src/auth/mail.ts`) | `useMailSnapshot` | Status, folders, rows, active folder; mirrored to `mail-snapshot/v1` |
+| `campusLogStore` (`apps/mobile/src/auth/campus-log.ts`) | `useCampusLog` | Last 30 calls of this session, newest first |
+| `quizProgressStore` (`apps/mobile/src/quiz/progress.tsx`) | `useQuizProgress` | Attempts, sessions, interrupted rounds; its own AsyncStorage key |
 
 ## Relation to TanStack Query
 
