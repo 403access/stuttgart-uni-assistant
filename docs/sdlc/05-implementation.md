@@ -11,7 +11,7 @@ Record what was built, with the paths a later change should start from.
 - Async Storage for the device record of language, session, notes, reviews, recognition drafts, downloads, and chat.
 - `expo-document-picker`, `expo-file-system`, and `expo-sharing` for import and export. The file system is imported only when a native export or a native text read actually runs.
 - A Node server in `apps/server/index.mjs` with no npm dependencies. It calls `https://api.x.ai/v1/responses`, and `apps/server/oidc.mjs` calls the university token and userinfo endpoints. The browser calls the authorize endpoint.
-- Server-side users in `apps/server/auth.mjs`, per-user C@MPUS credentials and portal rows in `apps/server/campus.mjs` and `apps/server/db.mjs`, and the token-protected operator console in `apps/server/admin/` + `apps/server/routes/admin/` + `apps/admin/public/` ([admin-dashboard.md](../engineering/admin-dashboard.md)).
+- Server-side users in `apps/server/auth.mjs`, per-user C@MPUS credentials and portal rows in `apps/server/campus.mjs` and `apps/server/db.mjs`, and the token-protected operator console in `apps/server/admin/` + `apps/server/routes/admin/` + `apps/admin/` ([admin-dashboard.md](../engineering/admin-dashboard.md)).
 
 `apps/mobile/ios/` and `apps/mobile/android/` are not in the tree. Continuous Native Generation produces them at build time from `app.json`.
 

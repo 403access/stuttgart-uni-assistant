@@ -105,9 +105,9 @@ inventory is written to [component-catalog.md](component-catalog.md) and to
 the admin dashboard at **Komponenten** (`/admin#/components`). The generator
 skips its own sources and the preview registry, so previews do not inflate the
 counts. The dashboard reads
-`apps/admin/public/assets/component-catalog.mjs`; a reload after regeneration
+`apps/admin/src/generated/component-catalog.json`; a reload after regeneration
 is enough, no assistant restart. The dashboard page module is
-`apps/admin/public/pages/components.mjs`. Its **Vorschau** column and
+`apps/admin/src/routes/components.tsx`. Its **Vorschau** column and
 **Live-Vorschau öffnen** button link to the Expo web app on port 8081 with a
 `?q=<component>` filter; start it with `bun run web` and sign in there before
 following the link.
