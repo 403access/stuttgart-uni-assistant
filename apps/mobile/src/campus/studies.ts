@@ -1,6 +1,7 @@
 /** Types for one observed C@MPUS (CAMPUSonline) study-chooser call. */
 
-import { campusRestOrigin, type CampusLink, type LangData } from '@/src/campus/curriculum';
+import { campusStudiesUrl, elementIdFromLink } from '@ua/contracts/campus';
+import type { CampusLink, LangData } from '@/src/campus/curriculum';
 
 export interface CmStudyInfoDto {
   studyId: number;
@@ -36,13 +37,10 @@ export interface StudiesChooserResponse {
 }
 
 export function studiesChooserUrl(lang: 'de' | 'en' = 'de'): string {
-  return `${campusRestOrigin}/slc.cm.cs/student/myStudies/chooser?$ctx=design=ca;lang=${lang}&$filter=`;
+  return campusStudiesUrl(lang);
 }
 
 /** Root curriculum element id from a `myStudyLink`, or null when the portal omits it. */
 export function myStudyElementId(link: CampusLink | undefined): number | null {
-  const match = link?.href.match(/\/myCurriculumElements\/(\d{1,10})(?:[/?]|$)/);
-  if (!match) return null;
-  const id = Number(match[1]);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return elementIdFromLink(link?.href);
 }

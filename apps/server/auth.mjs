@@ -13,10 +13,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 
 import { getDb } from './db.mjs';
+import { PLATFORMS, PLATFORM_STATUS, SIGN_IN_MODES } from '@ua/contracts/auth';
 
-export const PLATFORMS = ['campus', 'ilias', 'sdg', 'siam', 'mail'];
-export const PLATFORM_STATUS = ['connected', 'linked'];
-export const SIGN_IN_MODES = ['campus', 'oidc', 'demo', 'local'];
+export { PLATFORMS, PLATFORM_STATUS, SIGN_IN_MODES };
 
 export function authError(status, code, detail) {
   const error = new Error(code);

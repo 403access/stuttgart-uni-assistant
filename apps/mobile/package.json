@@ -65,7 +65,9 @@
     "react-native-web": "~0.21.0",
     "react-native-webview": "14.0.1",
     "react-native-worklets": "0.13.0",
-    "@ua/format": "workspace:*"
+    "@ua/format": "workspace:*",
+    "@ua/contracts": "workspace:*",
+    "@ua/design-tokens": "workspace:*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",

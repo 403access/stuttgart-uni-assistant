@@ -1,6 +1,8 @@
 /** Types for one observed C@MPUS (CAMPUSonline) curriculum call. */
 
-export const campusRestOrigin = 'https://campus.uni-stuttgart.de/cusonline/ee/rest';
+import { CAMPUS_REST_ORIGIN, campusStructureUrl, langText as contractLangText } from '@ua/contracts/campus';
+
+export const campusRestOrigin = CAMPUS_REST_ORIGIN;
 
 export interface CampusLink {
   rel: string;
@@ -79,21 +81,10 @@ export interface CurriculumStructureRequest {
   partOfCurriculum?: boolean;
 }
 
-function flag(value: boolean | undefined, fallback: boolean): string {
-  return String(value ?? fallback);
-}
-
 export function curriculumStructureUrl(request: CurriculumStructureRequest): string {
-  const lang = request.lang ?? 'de';
-  const filter = [
-    `active-eq=${flag(request.active, true)}`,
-    `currentlyValid-eq=${flag(request.currentlyValid, true)}`,
-    `partOfCurriculum-eq=${flag(request.partOfCurriculum, true)}`,
-  ].join(';');
-  return `${campusRestOrigin}/slc.cm.cs/student/myStudies/${request.studyId}/myCurriculumElements/${request.elementId}/structure?$ctx=design=ca;lang=${lang}&$filter=${filter}`;
+  return campusStructureUrl(request);
 }
 
 export function langText(data: LangData, lang: string): string {
-  const translated = data.translations?.translation.find((item) => item.lang === lang && item.value)?.value;
-  return translated || data.value || '';
+  return contractLangText(data, lang);
 }

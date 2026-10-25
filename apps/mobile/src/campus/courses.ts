@@ -1,6 +1,7 @@
 /** Types for one observed C@MPUS (CAMPUSonline) curriculum-element courses call. */
 
-import { campusRestOrigin, type CampusLink, type LangData } from '@/src/campus/curriculum';
+import { campusCoursesUrl } from '@ua/contracts/campus';
+import type { CampusLink, LangData } from '@/src/campus/curriculum';
 
 export interface CourseNumberDto {
   dotIndex?: number;
@@ -99,8 +100,5 @@ export interface CoursesResponse {
 }
 
 export function coursesRequestUrl(studyId: number, elementId: number, lang: 'de' | 'en' = 'de'): string {
-  return (
-    `${campusRestOrigin}/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/courses` +
-    `?$ctx=design=ca;lang=${lang}&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`
-  );
+  return campusCoursesUrl(studyId, elementId, lang);
 }

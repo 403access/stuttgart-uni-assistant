@@ -2,6 +2,18 @@
 
 import { randomBytes } from 'node:crypto';
 
+import {
+  campusCalendarExportUrl,
+  campusCourseGroupsUrl,
+  campusCoursesUrl,
+  campusRefreshUrl,
+  campusStudiesUrl,
+  campusStructureUrl,
+  elementIdFromLink as contractElementIdFromLink,
+  langText,
+  pickActiveStudyId as contractPickActiveStudyId,
+} from '@ua/contracts/campus';
+
 import { getCoursesSync, isExpanded, loadCampusSource, loadCourses, loadCoursesFetchedIds, loadStudiesSnapshot, loadStructure, logPortalCall, saveCourses, saveCampusSource, saveExportedEvents, saveStudiesSnapshot, saveStructure } from './db.mjs';
 import { logService } from './service-log.mjs';
 
@@ -175,32 +187,31 @@ export function portalMessage(payload) {
 }
 
 function langValue(data) {
-  const german = data?.translations?.translation?.find((item) => item.lang === 'de' && item.value)?.value;
-  return german || data?.value || '';
+  return langText(data, 'de');
 }
 
 export function curriculumRequestUrl(studyId, elementId) {
-  return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/structure?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
+  return campusStructureUrl({ studyId, elementId, lang: 'de' });
 }
 
 export function studiesRequestUrl() {
-  return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/chooser?$ctx=design=ca;lang=de&$filter=';
+  return campusStudiesUrl('de');
 }
 
 export function coursesRequestUrl(studyId, elementId) {
-  return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.cm.cs/student/myStudies/${studyId}/myCurriculumElements/${elementId}/courses?$ctx=design=ca;lang=de&$filter=active-eq=true;currentlyValid-eq=true;partOfCurriculum-eq=true`;
+  return campusCoursesUrl(studyId, elementId, 'de');
 }
 
 export function courseGroupsRequestUrl(courseId) {
-  return `https://campus.uni-stuttgart.de/cusonline/ee/rest/slc.tm.cp/student/courseGroups/firstGroups/${courseId}`;
+  return campusCourseGroupsUrl(courseId);
 }
 
 export function refreshRequestUrl() {
-  return 'https://campus.uni-stuttgart.de/cusonline/ee/rest/auth/token/refresh';
+  return campusRefreshUrl();
 }
 
 export function calendarExportUrl() {
-  return 'https://campus.uni-stuttgart.de/cusonline/wbKalender.wbExport';
+  return campusCalendarExportUrl();
 }
 
 /** `TT.MM.JJJJ` as the export mask requires it. */
@@ -398,19 +409,12 @@ export function parseStudyId(value) {
 
 /** Single study is shown directly. Otherwise prefer lastAccessed, then the first row. */
 export function pickActiveStudyId(studies, current = null) {
-  if (!Array.isArray(studies) || !studies.length) return null;
-  if (studies.length === 1) return studies[0].studyId;
-  if (current != null && studies.some((item) => item?.studyId === current)) return current;
-  return studies.find((item) => item?.lastAccessed)?.studyId ?? studies[0].studyId;
+  return contractPickActiveStudyId(studies, current);
 }
 
 /** Root curriculum element id from a `myStudyLink` href, or null when the portal omits it. */
 export function elementIdFromLink(href) {
-  if (typeof href !== 'string') return null;
-  const match = href.match(/\/myCurriculumElements\/(\d{1,10})(?:[/?]|$)/);
-  if (!match) return null;
-  const id = Number(match[1]);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return contractElementIdFromLink(href);
 }
 
 export function nodesFromCurriculum(payload) {

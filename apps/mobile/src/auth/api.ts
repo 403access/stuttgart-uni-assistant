@@ -1,15 +1,9 @@
+import { API_OPERATIONS, type ApiOperation } from '@ua/contracts/api';
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders } from '@/src/auth/session';
 import { tx } from '@/src/text';
 
-export interface ApiOperation {
-  id: string;
-  method: 'GET' | 'POST';
-  path: string;
-  replay: boolean;
-  acceptsElementId?: boolean;
-  acceptsCourseId?: boolean;
-}
+export type { ApiOperation } from '@ua/contracts/api';
 
 export interface ApiCallResult {
   status: number;
@@ -17,27 +11,7 @@ export interface ApiCallResult {
   body: unknown;
 }
 
-const fallback: ApiOperation[] = [
-  { id: 'health', method: 'GET', path: '/health', replay: true },
-  { id: 'campus-config', method: 'GET', path: '/v1/campus/config', replay: true },
-  { id: 'oidc-config', method: 'GET', path: '/v1/oidc/config', replay: true },
-  { id: 'campus-login', method: 'POST', path: '/v1/campus/login', replay: true },
-  { id: 'campus-structure', method: 'POST', path: '/v1/campus/structure', replay: true, acceptsElementId: true },
-  { id: 'campus-studies', method: 'GET', path: '/v1/campus/studies', replay: true },
-  { id: 'ilias-config', method: 'GET', path: '/v1/ilias/config', replay: true },
-  { id: 'ilias-dashboard', method: 'GET', path: '/v1/ilias/dashboard', replay: true },
-  { id: 'ilias-content', method: 'GET', path: '/v1/ilias/content', replay: false },
-  { id: 'ilias-file', method: 'GET', path: '/v1/ilias/file', replay: false },
-  { id: 'assist', method: 'POST', path: '/v1/assist', replay: true },
-  { id: 'oidc-start', method: 'POST', path: '/v1/oidc/start', replay: false },
-  { id: 'oidc-exchange', method: 'POST', path: '/v1/oidc/exchange', replay: false },
-  { id: 'oidc-logout', method: 'POST', path: '/v1/oidc/logout', replay: false },
-  { id: 'auth-session', method: 'POST', path: '/v1/auth/session', replay: false },
-  { id: 'auth-me', method: 'GET', path: '/v1/auth/me', replay: false },
-  { id: 'auth-logout', method: 'POST', path: '/v1/auth/logout', replay: false },
-  { id: 'auth-links', method: 'POST', path: '/v1/auth/links', replay: false },
-  { id: 'auth-sync', method: 'POST', path: '/v1/auth/sync', replay: false },
-];
+const fallback: ApiOperation[] = API_OPERATIONS;
 
 function endpoint(path: string): string {
   return `${assistantUrl.replace(/\/$/, '')}${path}`;
