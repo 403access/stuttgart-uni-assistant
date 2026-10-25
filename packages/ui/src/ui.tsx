@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 import type { RefreshControlProps, StyleProp, TextInputProps, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AmbientBackground } from '@/src/components/ambient-background';
+import { AmbientBackground } from './ambient-background';
 import { usePaneMode , useResponsive } from '@ua/ui';
 import { colors, themedStyles } from '@ua/ui/theme';
 

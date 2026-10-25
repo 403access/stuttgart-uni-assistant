@@ -3,12 +3,11 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
+import { Card, Meter, Pill, Screen, Section } from '@ua/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { findQuizTopic, isMixedTopic } from '@ua/quiz-content';
-import { DiagramFigureCard } from '@/src/quiz/components/diagram-figure';
-import { QuizButton } from '@/src/quiz/components/quiz-button';
+import { DiagramFigureCard , QuizButton } from '@ua/feature-quiz/ui';
 import { questionKindLabel , topicStats } from '@ua/feature-quiz';
 import { useQuizProgress } from '@/src/quiz/progress';
 import type { QuizMode, QuizTopic } from '@ua/quiz-content/types';

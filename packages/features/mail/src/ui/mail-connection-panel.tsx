@@ -1,6 +1,6 @@
 import { Text, TextInput, View } from 'react-native';
 
-import { Button, Card, FieldLabel, Pill } from '@/src/components/ui';
+import { Button, Card, FieldLabel, Pill } from '@ua/ui';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale, MailStatus } from '@ua/core/domain/types';

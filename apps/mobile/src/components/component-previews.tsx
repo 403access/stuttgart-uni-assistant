@@ -14,13 +14,12 @@ import {
   SearchField,
   Section,
   Strong,
-} from '@/src/components/ui';
+ ControlIcon, ToolButton , DrawerPanel , DropdownPicker , JsonTree , ResponsiveGrid , showToast } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@ua/ui/theme';
 import type { Locale, MailAttachment, MailMessage } from '@ua/core/domain/types';
 
 import { ChoiceCard } from './choice-card';
-import { ControlIcon, ToolButton , DrawerPanel , DropdownPicker , JsonTree , ResponsiveGrid , showToast } from '@ua/ui';
 import { DeviceQr } from './device-qr';
 import {
   Checkbox,
@@ -39,21 +38,13 @@ import { SigningIn } from './signing-in';
 import { StructureRow, TreeChildren } from './structure-row';
 
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
-import { AttachmentList } from '@/src/mail/components/attachment-list';
-import { ContactBadge } from '@/src/mail/components/contact-badge';
+import { AttachmentList , ContactBadge } from '@ua/feature-mail/ui';
 import { MailRow } from '@/src/mail/components/mail-row';
 import { MailListSkeleton, ToolbarSkeleton } from '@/src/mail/components/mail-skeletons';
 import { ProfilePreview } from '@/src/profile/profile-preview';
 import { ProfileSummary } from '@/src/profile/profile-summary';
 import { useProfileData } from '@/src/profile/use-profile-data';
-import { ClozeView } from '@/src/quiz/components/cloze';
-import { FlashcardView } from '@/src/quiz/components/flashcard';
-import { OptionRow } from '@/src/quiz/components/option-row';
-import { QuestionFeedback } from '@/src/quiz/components/question-feedback';
-import { QuizButton } from '@/src/quiz/components/quiz-button';
-import { QuizToolbar } from '@/src/quiz/components/quiz-toolbar';
-import { SingleChoiceView } from '@/src/quiz/components/single-choice';
-import { TrueFalseView } from '@/src/quiz/components/true-false';
+import { ClozeView , FlashcardView , OptionRow , QuestionFeedback , QuizButton , QuizToolbar , SingleChoiceView , TrueFalseView } from '@ua/feature-quiz/ui';
 import type { ClozeQuestion, FlashcardQuestion, SingleChoiceQuestion, TrueFalseQuestion } from '@ua/quiz-content/types';
 
 import { CalendarHero } from './calendar-hero';

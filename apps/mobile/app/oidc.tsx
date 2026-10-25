@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 
-import { Screen } from '@/src/components/ui';
+import { Screen } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { tx } from '@ua/core/format';
 

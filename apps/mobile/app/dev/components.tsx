@@ -11,7 +11,7 @@ import {
   type ComponentCatalogUsageKind,
 } from '@/src/components/catalog.generated';
 import { COMPONENT_PREVIEWS } from '@/src/components/component-previews';
-import { Card, Muted, Pill, Screen, SearchField, Section, Strong } from '@/src/components/ui';
+import { Card, Muted, Pill, Screen, SearchField, Section, Strong } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx, type TranslationKey } from '@ua/core/format';

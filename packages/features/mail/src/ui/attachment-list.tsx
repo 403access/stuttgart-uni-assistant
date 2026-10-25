@@ -5,7 +5,7 @@ import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale, MailAttachment } from '@ua/core/domain/types';
 
-import { MAX_TOTAL_ATTACHMENT_BYTES, formatBytes } from '../attachments';
+import { MAX_TOTAL_ATTACHMENT_BYTES, formatBytes } from './attachments';
 
 /** Attachment rows under the body: name, size, total against the server limit, remove. */
 export function AttachmentList({

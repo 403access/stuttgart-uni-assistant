@@ -3,7 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Button, Card, Pill, Screen, SearchField, Section } from '@/src/components/ui';
+import { Button, Card, Pill, Screen, SearchField, Section } from '@ua/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@ua/ui/theme';

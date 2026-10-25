@@ -7,7 +7,7 @@ import { fetchCampusStatus } from '@/src/auth/campus';
 import { openOfficialCampus, universityUrls } from '@/src/auth/oidc';
 import { findPlatform, initialsFor } from '@ua/core/auth/user';
 import { useLeaveSession } from '@/src/auth/use-leave-session';
-import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
+import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@ua/ui';
 import { platformName } from '@ua/core/labels';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';

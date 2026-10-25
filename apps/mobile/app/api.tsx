@@ -7,7 +7,7 @@ import { fetchApiCatalog, sendApiOperation, type ApiCallResult, type ApiOperatio
 import { asCampusCourses, asCampusStudies, asCurriculumNodes, type CampusLogin } from '@/src/auth/campus';
 import { asAuthSession } from '@/src/auth/session';
 import type { CampusCourse } from '@ua/core/domain/types';
-import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Screen, Section } from '@ua/ui';
 import { keys } from '@ua/core/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';

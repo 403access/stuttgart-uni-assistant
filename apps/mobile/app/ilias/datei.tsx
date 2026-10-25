@@ -3,8 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 
-import { showToast } from '@ua/ui';
-import { Button, Muted, Screen } from '@/src/components/ui';
+import { showToast , Button, Muted, Screen } from '@ua/ui';
 import { IliasOfficeView } from '@/src/ilias/components/office-view';
 import { IliasPdfView } from '@/src/ilias/components/pdf-view';
 import { saveIliasFile } from '@/src/ilias/download';

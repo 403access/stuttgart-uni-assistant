@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Stack } from 'expo-router';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, InfoRow, Pill, Screen } from '@ua/ui';
 import { modules } from '@ua/core/data';
 import { suggestRecognitionTarget } from '@ua/core/domain/plan';
 import { useAppSelector, appActions } from '@/src/state/AppState';

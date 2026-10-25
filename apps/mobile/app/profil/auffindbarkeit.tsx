@@ -1,7 +1,7 @@
 import { Stack, router } from 'expo-router';
 import { Switch, Text, View } from 'react-native';
 
-import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
+import { Card, InfoRow, Screen, Section } from '@ua/ui';
 import { PROFILE_FIELDS } from '@ua/core/profile/privacy';
 import { ProfilePreview } from '@/src/profile/profile-preview';
 import { ProfileSummary } from '@/src/profile/profile-summary';

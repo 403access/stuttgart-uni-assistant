@@ -8,7 +8,7 @@ import { CampusBrowserModal } from '@/src/components/campus-browser-modal';
 import { CampusHeadlessModal } from '@/src/components/campus-headless-modal';
 import { Field, Checkbox, LanguagePicker } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
-import { Button, Mark } from '@/src/components/ui';
+import { Button, Mark } from '@ua/ui';
 import { WebDeviceLogin } from '@/src/components/web-device-login';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';

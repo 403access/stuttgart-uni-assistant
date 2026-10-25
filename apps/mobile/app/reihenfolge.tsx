@@ -1,7 +1,7 @@
 import { Stack, router } from 'expo-router';
 import { Text } from 'react-native';
 
-import { Card, InfoRow, Screen, Section } from '@/src/components/ui';
+import { Card, InfoRow, Screen, Section } from '@ua/ui';
 import { modules, program } from '@ua/core/data';
 import { lockReason, suggestNextSemester } from '@ua/core/domain/plan';
 import { useAppSelector } from '@/src/state/AppState';

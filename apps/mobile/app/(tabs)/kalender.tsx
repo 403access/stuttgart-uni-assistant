@@ -6,8 +6,7 @@ import { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { studyCourseKey, useCoursesForStudies, type StudyCourse } from '@/src/campus/use-courses';
-import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
-import { useResponsive } from '@ua/ui';
+import { Button, Card, Muted, Pill, Screen, Section , useResponsive } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyle, themedStyles } from '@ua/ui/theme';
 import { formatDay, formatTime, localDay, monthShort, shiftDay, tx, weekdayOf } from '@ua/core/format';

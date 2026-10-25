@@ -17,9 +17,14 @@ const ROOT = process.cwd();
 const APP_DIR = path.join(ROOT, 'apps', 'mobile', 'app');
 const SRC_DIR = path.join(ROOT, 'apps', 'mobile', 'src');
 const UI_DIR = path.join(ROOT, 'packages', 'ui', 'src');
+const FEATURES_DIR = path.join(ROOT, 'packages', 'features');
+const FEATURE_UI_DIRS = fs.readdirSync(FEATURES_DIR, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => path.join(FEATURES_DIR, entry.name, 'src', 'ui'))
+  .filter((dir) => fs.existsSync(dir));
+const FEATURE_UI_INDEXES = FEATURE_UI_DIRS.map((dir) => path.relative(ROOT, path.join(dir, '..', 'ui.ts')).split(path.sep).join('/'));
 const TS_OUT = path.join(SRC_DIR, 'components', 'catalog.generated.ts');
 const MD_OUT = path.join(ROOT, 'docs', 'engineering', 'component-catalog.md');
-const DASHBOARD_OUT = path.join(ROOT, 'apps', 'admin', 'public', 'assets', 'component-catalog.mjs');
 const ADMIN_JSON_OUT = path.join(ROOT, 'apps', 'admin', 'src', 'generated', 'component-catalog.json');
 const CHECK = process.argv.includes('--check');
 
@@ -160,6 +165,12 @@ function collectExports(file) {
 }
 
 function resolveModule(fromRel, specifier) {
+  const featureUi = specifier.match(/^@ua\/feature-([^/]+)\/ui$/);
+  if (featureUi) {
+    const rel = `packages/features/${featureUi[1]}/src/ui.ts`;
+    if (fs.existsSync(path.join(ROOT, rel))) return { base: baseFromRel(rel), file: rel };
+    return null;
+  }
   if (specifier === '@ua/ui') {
     const rel = 'packages/ui/src/index.ts';
     return { base: baseFromRel(rel), file: rel };
@@ -225,6 +236,7 @@ function collectPreviewNames() {
 
 function categoryFor(base) {
   if (base.startsWith('apps/mobile/src/components/') || base.startsWith('packages/ui/src/')) return 'shared';
+  if (base.startsWith('packages/features/')) return 'feature';
   if (/^apps\/mobile\/src\/[^/]+\/components\//.test(base)) return 'feature';
   if (/provider|state|client|progress|refresh|auto-connect|headless/i.test(base)) return 'provider';
   return 'feature';
@@ -302,7 +314,7 @@ function finalizeEntry(entry) {
 // Parse every TSX file once.
 // ---------------------------------------------------------------------------
 
-const allFiles = [...walk(APP_DIR), ...walk(SRC_DIR), ...walk(UI_DIR), 'packages/ui/src/index.ts']
+const allFiles = [...walk(APP_DIR), ...walk(SRC_DIR), ...walk(UI_DIR), ...FEATURE_UI_DIRS.flatMap((dir) => walk(dir)), 'packages/ui/src/index.ts', ...FEATURE_UI_INDEXES]
   .map(toRel)
   .filter((rel) => !IGNORED_USAGE_FILES.has(rel))
   .sort();
@@ -327,7 +339,7 @@ const previewNames = collectPreviewNames();
 
 const groups = new Map();
 for (const file of parsed.values()) {
-  if (!file.rel.startsWith('apps/mobile/src/') && !file.rel.startsWith('packages/ui/src/')) continue;
+  if (!file.rel.startsWith('apps/mobile/src/') && !file.rel.startsWith('packages/ui/src/') && !file.rel.startsWith('packages/features/')) continue;
   const exports = collectExports(file);
   // A barrel such as src/state/AppState.tsx only re-exports. The component
   // belongs to the file that declares it, so the barrel is not an entry.
@@ -880,21 +892,13 @@ const mdSource = renderMarkdown();
 
 const adminJson = `${JSON.stringify(catalog, null, 2)}\n`;
 
-const dashSource = `/**
- * GENERATED FILE — do not edit by hand.
- *
- * The same inventory as apps/mobile/src/components/catalog.generated.ts, for the
- * operator dashboard at #/components. Run \`bun run catalog:components\`.
- */
-export const COMPONENT_CATALOG = ${JSON.stringify(catalog, null, 2)};
-`;
+
 
 if (CHECK) {
   const problems = [];
   for (const [file, expected] of [
     [TS_OUT, tsSource],
     [MD_OUT, mdSource],
-    [DASHBOARD_OUT, dashSource],
     [ADMIN_JSON_OUT, adminJson],
   ]) {
     const actual = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
@@ -911,16 +915,13 @@ if (CHECK) {
 
 fs.mkdirSync(path.dirname(TS_OUT), { recursive: true });
 fs.mkdirSync(path.dirname(MD_OUT), { recursive: true });
-fs.mkdirSync(path.dirname(DASHBOARD_OUT), { recursive: true });
 fs.mkdirSync(path.dirname(ADMIN_JSON_OUT), { recursive: true });
 fs.writeFileSync(TS_OUT, tsSource);
 fs.writeFileSync(MD_OUT, mdSource);
-fs.writeFileSync(DASHBOARD_OUT, dashSource);
 fs.writeFileSync(ADMIN_JSON_OUT, adminJson);
 console.log(
   `catalog: ${stats.components} components, ${stats.exports} exports, ${stats.usageCount} usage references`,
 );
 console.log(`wrote ${toRel(TS_OUT)}`);
 console.log(`wrote ${toRel(MD_OUT)}`);
-console.log(`wrote ${toRel(DASHBOARD_OUT)}`);
 console.log(`wrote ${toRel(ADMIN_JSON_OUT)}`);

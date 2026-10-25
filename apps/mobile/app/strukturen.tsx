@@ -18,7 +18,7 @@ import { CurriculumToolbar } from '@/src/components/curriculum-toolbar';
 import { CurriculumTree } from '@/src/components/curriculum-tree';
 import { StudyCacheCard } from '@/src/components/study-cache-card';
 import { showFetchAlert } from '@/src/components/fetch-alert';
-import { Button, Card, InfoRow, Muted, Screen, Section } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Screen, Section } from '@ua/ui';
 import {
   buildCurriculumIndex,
   curriculumSummary,

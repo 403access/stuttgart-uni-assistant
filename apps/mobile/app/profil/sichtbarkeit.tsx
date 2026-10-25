@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { Button, Card, Screen, Section } from '@ua/ui';
 import { PROFILE_FIELDS } from '@ua/core/profile/privacy';
 import { ProfilePreview } from '@/src/profile/profile-preview';
 import { ProfileSummary } from '@/src/profile/profile-summary';

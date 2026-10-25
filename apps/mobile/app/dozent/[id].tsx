@@ -1,7 +1,7 @@
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
-import { Card, InfoRow, Screen } from '@/src/components/ui';
+import { Card, InfoRow, Screen } from '@ua/ui';
 import { modules, people, places } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@ua/ui/theme';

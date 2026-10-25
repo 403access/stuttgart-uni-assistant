@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 
 import { CampusInfoView } from '@/src/components/campus-info-view';
-import { Screen } from '@/src/components/ui';
+import { Screen } from '@ua/ui';
 
 export default function CampusInfoScreen() {
   return (

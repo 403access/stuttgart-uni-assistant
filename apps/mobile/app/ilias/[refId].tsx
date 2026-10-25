@@ -4,8 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, RefreshControl, Text, View } from 'react-native';
 
-import { showToast } from '@ua/ui';
-import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { showToast , Button, Card, Muted, Pill, Screen, Section } from '@ua/ui';
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage , iliasPreviewKind } from '@ua/feature-ilias';
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';

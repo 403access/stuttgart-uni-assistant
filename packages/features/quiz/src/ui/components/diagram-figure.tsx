@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { Card, Section } from '@/src/components/ui';
+import { Card, Section } from '@ua/ui';
 import { themedStyles } from '@ua/ui/theme';
 import { pick } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';

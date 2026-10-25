@@ -5,7 +5,7 @@ import { WebView } from 'react-native-webview';
 
 import { fetchMailBody, folderLabel, getMailSnapshot, mailDetail, mailMessage, setMailSeen } from '@/src/auth/mail';
 import { MailBody } from '@/src/components/mailBody';
-import { Button, Card, Pill } from '@/src/components/ui';
+import { Button, Card, Pill } from '@ua/ui';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

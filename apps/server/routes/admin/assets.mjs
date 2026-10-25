@@ -9,8 +9,7 @@ import { sendAsset, sendHtml } from '../../http.mjs';
 const DIST_ROOT = process.env.ADMIN_DIST_DIR
   ? resolve(process.env.ADMIN_DIST_DIR)
   : fileURLToPath(new URL('../../../admin/dist/', import.meta.url));
-const LEGACY_ROOT = fileURLToPath(new URL('../../../admin/public/', import.meta.url));
-const ROOT = existsSync(resolve(DIST_ROOT, 'index.html')) ? DIST_ROOT : LEGACY_ROOT;
+const ROOT = DIST_ROOT;
 const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',

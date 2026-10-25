@@ -6,10 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { isBiometricCancel } from '@/src/auth/biometric-messages';
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
-import { AmbientBackground } from '@/src/components/ambient-background';
+import { AmbientBackground , Button, Mark, Pill , showToast } from '@ua/ui';
 import { ChoiceCard } from '@/src/components/choice-card';
-import { Button, Mark, Pill } from '@/src/components/ui';
-import { showToast } from '@ua/ui';
 import type { IliasTutorial, IliasTutorialFile } from '@ua/feature-ilias';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useOnboardingImport } from '@/src/onboarding/use-onboarding-import';

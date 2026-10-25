@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
-import { useAppSelector } from '@/src/state/AppState';
-import { themedStyles } from '@ua/ui/theme';
+import { themedStyles } from './theme';
+import { useDesignMode } from './design-mode';
 
 /**
  * Backdrop used by the app screens, mirroring the marketing site's section
@@ -15,7 +15,7 @@ import { themedStyles } from '@ua/ui/theme';
  * avoids shipping a bitmap tile.
  */
 export function AmbientBackground() {
-  const design = useAppSelector((state) => state.design);
+  const design = useDesignMode();
   if (design === 'clean') return null;
   return (
     <View

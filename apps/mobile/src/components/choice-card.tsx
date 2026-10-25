@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Text, View } from 'react-native';
 
-import { Card } from '@/src/components/ui';
+import { Card } from '@ua/ui';
 import { colors } from '@ua/ui/theme';
 
 /** Single-choice row used by the appearance and language screens. */

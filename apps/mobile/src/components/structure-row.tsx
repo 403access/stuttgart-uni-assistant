@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-import { Pill } from '@/src/components/ui';
+import { Pill } from '@ua/ui';
 import { themedStyles } from '@ua/ui/theme';
 
 /**

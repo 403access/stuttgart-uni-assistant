@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Pill, SearchField } from '@/src/components/ui';
+import { Pill, SearchField } from '@ua/ui';
 import { curriculumSortOrder, type CurriculumSortKey, type CurriculumStatusFilter } from '@ua/core/domain/curriculum';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

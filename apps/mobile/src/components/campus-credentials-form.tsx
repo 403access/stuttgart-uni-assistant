@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 
 import { Chip, Field, Notice, SectionTitle } from '@/src/components/login-blocks';
-import { Button } from '@/src/components/ui';
+import { Button } from '@ua/ui';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';

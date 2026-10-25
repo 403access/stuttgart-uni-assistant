@@ -2,7 +2,7 @@ import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 
-import { Button, Card, InfoRow, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, InfoRow, Pill, Screen } from '@ua/ui';
 import { documents, exams, modules, people, places, reviews as seedReviews, tutorials } from '@ua/core/data';
 import { lockReason } from '@ua/core/domain/plan';
 import { moduleStatus, sessionKind } from '@ua/core/labels';

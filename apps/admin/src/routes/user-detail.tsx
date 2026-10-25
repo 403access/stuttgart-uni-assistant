@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
 import { formatTimestamp } from '@ua/format';
 import { Avatar, Badge, Button, Card, DataTable, Dialog, ErrorState, Field, Input, Muted, PageHeader, Row, Section, Select, Spinner, StatCard, Tabs, TextArea, useToast } from '@ua/ui-react';
+import { IliasViewerDialog } from './ilias-viewer';
 import { useState } from 'react';
 
 import { api } from '../lib/api';
@@ -31,6 +32,7 @@ export function UserDetailPage() {
   const [linkOpen, setLinkOpen] = useState(false);
   const [form, setForm] = useState<any>({});
   const [linkForm, setLinkForm] = useState({ platform: 'campus', account: '', status: 'linked' });
+  const [iliasView, setIliasView] = useState<any | null>(null);
 
   const detailQuery = useQuery({ queryKey: ['user', userId], queryFn: () => api.user(userId) });
   const detail = (detailQuery.data ?? {}) as any;
@@ -208,7 +210,32 @@ export function UserDetailPage() {
       {tab === 'ilias' ? (
         <Section title="ILIAS">
           <Card>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>{JSON.stringify(detail.ilias ?? {}, null, 2)}</pre>
+            <div style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
+              <Row><strong>Quelle</strong><Badge tone={detail.ilias?.source ? 'blue' : 'warn'}>{detail.ilias?.source ?? 'keine'}</Badge></Row>
+              <Row><strong>Konto</strong><Muted>{detail.ilias?.account ?? '—'}</Muted></Row>
+              <Row><strong>Sitzung</strong><Badge tone={detail.ilias?.active ? 'ok' : 'warn'}>{detail.ilias?.active ? 'aktiv' : 'nein'}</Badge></Row>
+              <Row><strong>Letzter Snapshot</strong><Muted>{detail.ilias?.fetchedAt ? formatTimestamp(detail.ilias.fetchedAt, 'de') : '—'}</Muted></Row>
+            </div>
+            <DataTable
+              rows={detail.ilias?.dashboard?.memberships ?? []}
+              rowKey={(item: any) => `${item.kind}-${item.refId ?? item.id}`}
+              empty="Keine ILIAS-Mitgliedschaften gespeichert"
+              columns={[
+                { key: 'title', header: 'Mitgliedschaft', render: (item: any) => <div><strong>{item.title}</strong><div><Muted>{item.kind} {item.refId ? `· ${item.refId}` : ''}</Muted></div></div> },
+                { key: 'type', header: 'Typ', render: (item: any) => item.type ?? '—' },
+                {
+                  key: 'actions',
+                  header: '',
+                  render: (item: any) => (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {item.refId ? <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'content', item })}>Inhalte</Button> : null}
+                      {item.refId ? <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'members', item })}>Mitglieder</Button> : null}
+                      <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'profile', item })}>Profil</Button>
+                    </div>
+                  ),
+                },
+              ]}
+            />
             <div style={{ marginTop: 14 }}><Button variant="danger" onClick={() => disconnectIlias.mutate()}>ILIAS trennen</Button></div>
           </Card>
         </Section>
@@ -298,6 +325,8 @@ export function UserDetailPage() {
           <Field label="Status"><Select value={linkForm.status} onChange={(event) => setLinkForm({ ...linkForm, status: event.target.value })}><option value="linked">verknüpft</option><option value="connected">verbunden</option></Select></Field>
         </div>
       </Dialog>
+
+      <IliasViewerDialog view={iliasView} userId={userId} onClose={() => setIliasView(null)} />
 
       <Dialog open={deleteOpen} title="Konto löschen?" onClose={() => setDeleteOpen(false)} actions={<><Button variant="secondary" onClick={() => setDeleteOpen(false)}>Abbrechen</Button><Button variant="danger" disabled={remove.isPending} onClick={() => remove.mutate()}>Löschen</Button></>}>
         <p>{user.account} und alle zugehörigen Sitzungen, Geräte und Portaldaten werden gelöscht. Die Audit-Spur bleibt.</p>

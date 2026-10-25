@@ -23,7 +23,7 @@
     "typecheck": "bun run check:types",
     "check": "bun run check:types && bun run check:lint && bun run check:boundaries && bun run check:tokens && bun run check:catalog && bun run check:components && bun run check:campus-db && bun run check:packages && bun run check:app-tests && bun run check:server-tests && bun run check:tooling-tests && bun run check:admin",
     "check:types": "tsc -p apps/mobile/tsconfig.json --noEmit",
-    "check:lint": "cd apps/mobile && expo lint src app && cd ../.. && eslint apps/server tools apps/admin/public apps/dist",
+    "check:lint": "cd apps/mobile && expo lint src app && cd ../.. && eslint apps/server tools apps/dist",
     "check:catalog": "tsx tools/check-assistant.ts && tsx tools/check-quiz.ts && tsx tools/check-quiz-pipeline.ts",
     "check:components": "node tools/generate-component-catalog.mjs --check",
     "catalog:components": "node tools/generate-component-catalog.mjs",

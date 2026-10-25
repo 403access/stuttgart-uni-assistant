@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { Card, Pill } from '@/src/components/ui';
+import { Card, Pill } from '@ua/ui';
 import type { ProfileData } from '@/src/profile/use-profile-data';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

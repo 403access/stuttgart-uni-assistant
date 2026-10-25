@@ -8,7 +8,7 @@ import { clearCachedStudy } from '@/src/campus/db';
 import { useActiveStudy } from '@/src/campus/use-active-study';
 import { useCampusSync } from '@/src/campus/use-campus-sync';
 import { useNodeCourses } from '@/src/campus/use-node-courses';
-import { Button, Card, InfoRow, Muted, Pill, Section } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Pill, Section } from '@ua/ui';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { CurriculumTree } from '@/src/components/curriculum-tree';
 import { StudySelector } from '@/src/components/study-selector';

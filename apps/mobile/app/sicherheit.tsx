@@ -5,9 +5,8 @@ import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
-import { Button, Card } from '@/src/components/ui';
+import { Button, Card , useResponsive } from '@ua/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
-import { useResponsive } from '@ua/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';

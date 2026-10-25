@@ -23,7 +23,7 @@ import { CampusHeadlessModal } from '@/src/components/campus-headless-modal';
 import { showFetchAlert } from '@/src/components/fetch-alert';
 import { Footer, Field, LanguagePicker, Meta, Notice, SectionTitle } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
-import { Button, Mark } from '@/src/components/ui';
+import { Button, Mark } from '@ua/ui';
 import { student } from '@ua/core/data';
 import { keys } from '@ua/core/query/keys';
 import { useAppSelector, appActions } from '@/src/state/AppState';

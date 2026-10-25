@@ -49,6 +49,7 @@ export function QuizPage() {
   const [editing, setEditing] = useState<Topic | null>(null);
   const [form, setForm] = useState<any>(EMPTY_TOPIC);
   const [deleting, setDeleting] = useState<Topic | null>(null);
+  const [questionsFor, setQuestionsFor] = useState<Topic | null>(null);
   const [attemptSearch, setAttemptSearch] = useState('');
   const [attemptCorrect, setAttemptCorrect] = useState('');
   const [attemptPage, setAttemptPage] = useState(1);
@@ -159,7 +160,7 @@ export function QuizPage() {
               { key: 'attempts', header: 'Antworten', render: (topic) => topic.attempts },
               { key: 'accuracy', header: 'Trefferquote', render: (topic) => `${topic.accuracy}%` },
               { key: 'updated', header: 'Aktualisiert', render: (topic) => formatTimestamp(topic.updatedAt, 'de') },
-              { key: 'actions', header: '', render: (topic) => <div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" size="small" onClick={() => editTopic(topic)}>Bearbeiten</Button><Button variant="danger" size="small" onClick={() => setDeleting(topic)}>Löschen</Button></div> },
+              { key: 'actions', header: '', render: (topic) => <div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" size="small" onClick={() => setQuestionsFor(topic)}>Fragen</Button><Button variant="secondary" size="small" onClick={() => editTopic(topic)}>Bearbeiten</Button><Button variant="danger" size="small" onClick={() => setDeleting(topic)}>Löschen</Button></div> },
             ]}
           />
           <div style={{ marginTop: 12 }}><Pagination page={page} pageSize={PAGE_SIZE} total={topicData.total ?? 0} onPage={setPage} /></div>
@@ -241,8 +242,135 @@ export function QuizPage() {
         </div>
       </Dialog>
 
+      <QuestionManagerDialog topic={questionsFor} onClose={() => setQuestionsFor(null)} />
+
       <Dialog open={Boolean(deleting)} title="Thema löschen?" onClose={() => setDeleting(null)} actions={<><Button variant="secondary" onClick={() => setDeleting(null)}>Abbrechen</Button><Button variant="danger" disabled={remove.isPending} onClick={() => deleting && remove.mutate(deleting.id)}>Löschen</Button></>}>
         <p>{deleting?.title.de}</p>
+      </Dialog>
+    </>
+  );
+}
+
+
+function QuestionManagerDialog({ topic, onClose }: { topic: Topic | null; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<any>(null);
+  const [deleting, setDeleting] = useState<any | null>(null);
+  const detail = useQuery({
+    queryKey: ['quiz', 'topic', topic?.id],
+    queryFn: () => api.quizTopic(topic!.id),
+    enabled: Boolean(topic),
+  });
+  const data = (detail.data ?? {}) as any;
+  const questions = data.questions ?? [];
+
+  function open(question?: any) {
+    setEditing(question ?? null);
+    setForm(question ? {
+      kind: question.kind,
+      difficulty: question.difficulty ?? 2,
+      promptDe: question.prompt?.de ?? '',
+      promptEn: question.prompt?.en ?? '',
+      hintDe: question.hint?.de ?? '',
+      hintEn: question.hint?.en ?? '',
+      explanationDe: question.explanation?.de ?? '',
+      explanationEn: question.explanation?.en ?? '',
+      payloadJson: JSON.stringify(question.payload ?? {}, null, 2),
+      published: Boolean(question.published),
+    } : {
+      kind: 'single',
+      difficulty: 2,
+      promptDe: '',
+      promptEn: '',
+      hintDe: '',
+      hintEn: '',
+      explanationDe: '',
+      explanationEn: '',
+      payloadJson: '{\n  "options": [],\n  "correct": ""\n}',
+      published: false,
+    });
+  }
+
+  const save = useMutation({
+    mutationFn: () => {
+      const payload = JSON.parse(form.payloadJson);
+      const body = {
+        topicId: topic!.id,
+        kind: form.kind,
+        difficulty: Number(form.difficulty),
+        promptDe: form.promptDe,
+        promptEn: form.promptEn,
+        hintDe: form.hintDe,
+        hintEn: form.hintEn,
+        explanationDe: form.explanationDe,
+        explanationEn: form.explanationEn,
+        payload,
+        published: form.published,
+      };
+      return editing ? api.quizUpdateQuestion(editing.id, body) : api.quizCreateQuestion(body);
+    },
+    onSuccess: () => {
+      setForm(null);
+      queryClient.invalidateQueries({ queryKey: ['quiz'] });
+      toast.show(editing ? 'Frage gespeichert.' : 'Frage angelegt.');
+    },
+    onError: (error) => toast.show(error instanceof Error ? error.message : 'Frage konnte nicht gespeichert werden.', 'error'),
+  });
+  const remove = useMutation({
+    mutationFn: (id: string) => api.quizDeleteQuestion(id),
+    onSuccess: () => { setDeleting(null); queryClient.invalidateQueries({ queryKey: ['quiz'] }); toast.show('Frage gelöscht.'); },
+  });
+
+  if (!topic) return null;
+
+  return (
+    <>
+      <Dialog open title={`Fragen · ${topic.title.de}`} onClose={onClose} actions={<><Button variant="secondary" onClick={onClose}>Schließen</Button><Button onClick={() => open()}>Neue Frage</Button></>}>
+        <div style={{ maxHeight: '65vh', overflow: 'auto' }}>
+          <DataTable
+            rows={questions}
+            rowKey={(question: any) => question.id}
+            loading={detail.isLoading}
+            empty="Keine Fragen"
+            columns={[
+              { key: 'prompt', header: 'Frage', render: (question: any) => <div><strong>{question.prompt?.de ?? question.id}</strong><div><Muted>{question.kind} · {question.id}</Muted></div></div> },
+              { key: 'difficulty', header: 'Stufe', render: (question: any) => question.difficulty },
+              { key: 'published', header: 'Status', render: (question: any) => <Badge tone={question.published ? 'ok' : 'warn'}>{question.published ? 'veröffentlicht' : 'Entwurf'}</Badge> },
+              { key: 'attempts', header: 'Antworten', render: (question: any) => `${question.attempts ?? 0} · ${question.accuracy ?? 0}%` },
+              { key: 'actions', header: '', render: (question: any) => <div style={{ display: 'flex', gap: 6 }}><Button variant="secondary" size="small" onClick={() => open(question)}>Bearbeiten</Button><Button variant="danger" size="small" onClick={() => setDeleting(question)}>Löschen</Button></div> },
+            ]}
+          />
+        </div>
+      </Dialog>
+
+      <Dialog open={Boolean(form)} title={editing ? 'Frage bearbeiten' : 'Neue Frage'} onClose={() => setForm(null)} actions={<><Button variant="secondary" onClick={() => setForm(null)}>Abbrechen</Button><Button disabled={!form?.promptDe?.trim() || save.isPending} onClick={() => save.mutate()}>{save.isPending ? 'Speichern …' : 'Speichern'}</Button></>}>
+        {form ? <div style={{ display: 'grid', gap: 10, maxHeight: '65vh', overflow: 'auto', paddingRight: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Typ"><Select value={form.kind} onChange={(event) => setForm({ ...form, kind: event.target.value })}><option value="single">Single Choice</option><option value="multiple">Multiple Choice</option><option value="true-false">Wahr/Falsch</option><option value="free-text">Freitext</option><option value="matching">Zuordnen</option><option value="ordering">Reihenfolge</option><option value="cloze">Lückentext</option><option value="map">Karte</option><option value="diagram">Diagramm</option><option value="flashcard">Karteikarte</option></Select></Field>
+            <Field label="Schwierigkeit"><Select value={String(form.difficulty)} onChange={(event) => setForm({ ...form, difficulty: Number(event.target.value) })}><option value="1">1</option><option value="2">2</option><option value="3">3</option></Select></Field>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Frage (DE)"><TextArea rows={2} value={form.promptDe} onChange={(event) => setForm({ ...form, promptDe: event.target.value })} /></Field>
+            <Field label="Frage (EN)"><TextArea rows={2} value={form.promptEn} onChange={(event) => setForm({ ...form, promptEn: event.target.value })} /></Field>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Hinweis (DE)"><Input value={form.hintDe} onChange={(event) => setForm({ ...form, hintDe: event.target.value })} /></Field>
+            <Field label="Hinweis (EN)"><Input value={form.hintEn} onChange={(event) => setForm({ ...form, hintEn: event.target.value })} /></Field>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Erklärung (DE)"><TextArea rows={2} value={form.explanationDe} onChange={(event) => setForm({ ...form, explanationDe: event.target.value })} /></Field>
+            <Field label="Erklärung (EN)"><TextArea rows={2} value={form.explanationEn} onChange={(event) => setForm({ ...form, explanationEn: event.target.value })} /></Field>
+          </div>
+          <Field label="Payload (JSON)"><TextArea rows={10} value={form.payloadJson} onChange={(event) => setForm({ ...form, payloadJson: event.target.value })} /></Field>
+          <Checkbox label="Veröffentlicht" checked={form.published} onChange={(event) => setForm({ ...form, published: event.target.checked })} />
+          <Muted>Der Payload folgt dem Schema der gewählten Frageart. Die App-Ansicht validiert ihn beim Speichern.</Muted>
+        </div> : null}
+      </Dialog>
+
+      <Dialog open={Boolean(deleting)} title="Frage löschen?" onClose={() => setDeleting(null)} actions={<><Button variant="secondary" onClick={() => setDeleting(null)}>Abbrechen</Button><Button variant="danger" disabled={remove.isPending} onClick={() => deleting && remove.mutate(deleting.id)}>Löschen</Button></>}>
+        <p>{deleting?.prompt?.de}</p>
       </Dialog>
     </>
   );

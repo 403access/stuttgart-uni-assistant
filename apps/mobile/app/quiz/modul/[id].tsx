@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { Card, Meter, Pill, Screen, Section } from '@/src/components/ui';
+import { Card, Meter, Pill, Screen, Section } from '@ua/ui';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { findQuizModuleById, studyForModule } from '@ua/quiz-content';
 import { useQuizProgress } from '@/src/quiz/progress';

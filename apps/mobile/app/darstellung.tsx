@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { View } from 'react-native';
 
 import { ChoiceCard } from '@/src/components/choice-card';
-import { Muted, Screen, Section } from '@/src/components/ui';
+import { Muted, Screen, Section } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@ua/core/format';
 

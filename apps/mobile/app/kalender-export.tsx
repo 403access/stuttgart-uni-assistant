@@ -6,7 +6,7 @@ import { Platform, Pressable, Text, View } from 'react-native';
 
 import { exportCampusCalendar, syncExportedCalendar, type CalendarExportFormat } from '@/src/auth/campus';
 import { useCampusLog, type CampusLogEntry } from '@/src/auth/campus-log';
-import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@/src/components/ui';
+import { Button, Card, InfoRow, Pill, Screen, Section, listPosition } from '@ua/ui';
 import { keys } from '@ua/core/query/keys';
 import { apiLogQuery } from '@/src/query/queries';
 import { useAppSelector } from '@/src/state/AppState';

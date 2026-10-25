@@ -2,10 +2,9 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { CalendarHero } from '@/src/components/calendar-hero';
-import { Card, InfoRow, Meter, Screen, Section } from '@/src/components/ui';
+import { Card, InfoRow, Meter, Screen, Section , useResponsive } from '@ua/ui';
 import { deadlines, modules, places, program } from '@ua/core/data';
 import { scheduleForDay, totals, weightedAverage } from '@ua/core/domain/plan';
-import { useResponsive } from '@ua/ui';
 import { newsSource, sessionKind } from '@ua/core/labels';
 import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';

@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
 import { authHeaders } from '@/src/auth/session';
-import { Button } from '@/src/components/ui';
+import { Button } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

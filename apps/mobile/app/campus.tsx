@@ -3,7 +3,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { Button, Card, InfoRow, Muted, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Pill, Screen } from '@ua/ui';
 import { UniMapView } from '@/src/components/uni-map-view';
 import { places } from '@ua/core/data';
 import { campusName, placeKind } from '@ua/core/labels';

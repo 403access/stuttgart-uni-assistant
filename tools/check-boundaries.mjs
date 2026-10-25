@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Enforce the package dependency direction described in docs/engineering/modularization/02-target-modules.md. */
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
 const ROOT = process.cwd();

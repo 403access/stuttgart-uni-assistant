@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native';
 
-import { Button, Card } from '@/src/components/ui';
+import { Button, Card } from '@ua/ui';
 import type { CurriculumSyncInfo } from '@/src/campus/db';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

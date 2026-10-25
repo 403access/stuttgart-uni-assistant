@@ -10,7 +10,7 @@ import { getActiveAuthToken } from '@/src/auth/session';
 import { SessionRefresh } from '@/src/auth/session-refresh';
 import { clearLogin } from '@/src/auth/vault';
 import { AppLock } from '@/src/components/app-lock';
-import { ToastHost , useResponsive } from '@ua/ui';
+import { DesignModeProvider, ToastHost, useResponsive } from '@ua/ui';
 import { WebHead } from '@/src/components/web-head';
 import { WebSidebar } from '@/src/components/web-sidebar';
 import { useAppStateChange } from '@/src/hooks/use-app-state-change';
@@ -37,6 +37,7 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   return (
     <AppStateProvider>
+      <DesignModeBridge>
       <IliasHeadlessProvider>
         <SessionRefresh />
         <IliasAutoConnect />
@@ -53,8 +54,14 @@ export default function RootLayout() {
           </QueryProvider>
         </OnboardingProvider>
       </IliasHeadlessProvider>
+      </DesignModeBridge>
     </AppStateProvider>
   );
+}
+
+function DesignModeBridge({ children }: { children: React.ReactNode }) {
+  const design = useAppSelector((state) => state.design);
+  return <DesignModeProvider mode={design}>{children}</DesignModeProvider>;
 }
 
 function Gate() {

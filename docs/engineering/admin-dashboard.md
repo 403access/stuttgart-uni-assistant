@@ -5,9 +5,7 @@ C@MPUS and ILIAS data, portal activity, app news, and server health. Open
 `http://127.0.0.1:8787/admin` while the assistant server is running. It is a
 React + Vite app in `apps/admin`, built to `apps/admin/dist` and served by
 `apps/server/routes/admin/index.mjs`. Run `bun run admin:build` before starting
-the server; if the build is missing, the server falls back to the legacy vanilla
-dashboard in `apps/admin/public`. The React app uses `@ua/ui-react` and
-`@ua/api-client/admin`.
+the server. The React app uses `@ua/ui-react` and `@ua/api-client/admin`.
 
 ## Access
 
@@ -106,8 +104,8 @@ with search, category and platform filters, export lists, native/web file
 variants, and every import, render, call, reference, and re-export with its
 file and line. It is the same inventory as **Dev → Komponenten** in the app and
 [component-catalog.md](component-catalog.md). Opening a row expands its details
-in place. The page module is `apps/admin/public/pages/components.mjs`; the
-generated data is served as `apps/admin/public/assets/component-catalog.mjs`, so
+in place. The page is `apps/admin/src/routes/components.tsx`; the generated
+data is `apps/admin/src/generated/component-catalog.json`, so
 a dashboard reload picks up a regenerated catalog without restarting the
 assistant server.
 
@@ -315,10 +313,12 @@ screen cannot replay them.
 | `apps/server/routes/admin/index.mjs` | `/admin` shell, asset serving, and `/v1/admin/*` dispatch. |
 | `apps/server/routes/admin/*.mjs` | Guards, session, users, user detail/actions, quiz, audit, logs, and system routes. |
 | `apps/server/quiz/` | Seed from `catalog.json`, published projection, admin CRUD, answer analytics. |
-| `apps/admin/public/index.html` | The page shell. |
-| `apps/admin/public/assets/*.mjs` | DOM, format, UI, API, routing, state, and app shell modules. |
-| `apps/admin/public/pages/*.mjs` | Overview, news, quiz, users, user detail, device detail, ILIAS, audit, logs, and system views. |
-| `apps/admin/public/assets/styles.css` | The dashboard styles. |
+| `apps/admin/index.html` | The Vite entry HTML. |
+| `apps/admin/src/main.tsx` | React root, theme, query client, and router. |
+| `apps/admin/src/routes/*` | Overview, users, user detail, devices, news, audit, logs, system, ILIAS, components, and quiz views. |
+| `apps/admin/src/lib/*` | Admin API client, query client, and auth flow. |
+| `apps/admin/src/styles/app.css` | The admin shell styles. |
+| `packages/ui-react/*` | Shared React DOM components and CSS Modules. |
 | `apps/server/db.mjs` | Schema, including the `admin_audit` and `service_logs` tables. |
 | `apps/server/sync.mjs` | `listSyncJobs()` and job pruning for the system view. |
 | `apps/server/admin.test.mjs` | Token matching, stats, filters, detail, editors, audit, system status, destructive actions. |

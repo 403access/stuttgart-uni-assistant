@@ -5,7 +5,7 @@ import { Text } from 'react-native';
 
 import { cacheCampusCourses, getCachedCourse } from '@/src/auth/campus';
 import { findCachedCourse } from '@/src/campus/db';
-import { Button, Card, InfoRow, Muted, Screen } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Screen } from '@ua/ui';
 import { deviceCourseQuery } from '@/src/query/queries';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@ua/ui/theme';

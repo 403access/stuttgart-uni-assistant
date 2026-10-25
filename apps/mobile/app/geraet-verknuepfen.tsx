@@ -12,7 +12,7 @@ import {
   revokeServerDevice,
   type DeviceLinkInfo,
 } from '@/src/auth/session';
-import { Button, Card, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, Pill, Screen } from '@ua/ui';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';

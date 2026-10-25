@@ -5,7 +5,7 @@ import { Text, View } from 'react-native';
 
 import { askGrok } from '@/src/assistant/remote';
 import { asBullets, summarize } from '@ua/core/assistant/summarize';
-import { Button, Card, Screen } from '@/src/components/ui';
+import { Button, Card, Screen } from '@ua/ui';
 import { documents } from '@ua/core/data';
 import { exportText } from '@/src/documents/io';
 import { useAppSelector, appActions } from '@/src/state/AppState';

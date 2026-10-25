@@ -5,14 +5,22 @@
  */
 
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { after, before, test } from 'node:test';
 
 process.env.CAMPUS_DB_PATH = ':memory:';
 process.env.DASHBOARD_TOKEN = 'route-token';
-// This test covers the legacy dashboard modules; force the fallback so a local
-// Vite build in apps/admin/dist does not change the fixture.
-process.env.ADMIN_DIST_DIR = '/tmp/ua-admin-test-no-build';
+// Serve a tiny fixture so the test does not depend on a local Vite build.
+const adminDir = mkdtempSync(join(tmpdir(), 'ua-admin-test-'));
+mkdirSync(join(adminDir, 'assets'), { recursive: true });
+writeFileSync(join(adminDir, 'index.html'), '<!doctype html><link rel="stylesheet" href="/admin/assets/styles.css"><div id="root"></div><script src="/admin/assets/app.js"></script>');
+writeFileSync(join(adminDir, 'assets', 'app.js'), 'console.log("admin");');
+writeFileSync(join(adminDir, 'assets', 'styles.css'), ':root{}');
+writeFileSync(join(adminDir, 'assets', 'favicon.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+process.env.ADMIN_DIST_DIR = adminDir;
 
 const db = await import('./db.mjs');
 const auth = await import('./auth.mjs');
@@ -71,10 +79,9 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   const page = await call('/admin');
   assert.equal(page.status, 200);
   const html = await page.text();
-  assert.match(html, /DASHBOARD_TOKEN/);
+  assert.match(html, /id="root"/);
   assert.match(html, /\/admin\/assets\/styles\.css/);
-  assert.match(html, /\/admin\/assets\/app\.mjs/);
-  assert.match(html, /\/admin\/assets\/favicon\.png/);
+  assert.match(html, /\/admin\/assets\/app\.js/);
   assert.doesNotMatch(html, /<script(?![^>]*\bsrc=)/);
 
   const favicon = await call('/admin/assets/favicon.png');
@@ -87,10 +94,14 @@ test('the admin HTTP surface gates, reads, mutates, audits, and deletes', async 
   assert.match(styles.headers.get('content-type'), /text\/css/);
   assert.match(await styles.text(), /:root/);
 
-  const modules = await call('/admin/assets/app.mjs');
+  const modules = await call('/admin/assets/app.js');
   assert.equal(modules.status, 200);
   assert.match(modules.headers.get('content-type'), /javascript/);
-  assert.match(await modules.text(), /^import /m);
+  assert.match(await modules.text(), /console\.log/);
+
+  const deepLink = await call('/admin/users');
+  assert.equal(deepLink.status, 200);
+  assert.match(await deepLink.text(), /id="root"/);
 
   const missingAsset = await call('/admin/assets/missing.mjs');
   assert.equal(missingAsset.status, 404);

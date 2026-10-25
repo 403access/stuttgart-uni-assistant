@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 
-import { Card, Meter, Screen } from '@/src/components/ui';
+import { Card, Meter, Screen } from '@ua/ui';
 import { modules, program, student } from '@ua/core/data';
 import { areaTotals, totals, weightedAverage } from '@ua/core/domain/plan';
 import { useAppSelector } from '@/src/state/AppState';

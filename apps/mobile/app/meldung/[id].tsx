@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Text } from 'react-native';
 
-import { Card, Screen } from '@/src/components/ui';
+import { Card, Screen } from '@ua/ui';
 import { newsSource } from '@ua/core/labels';
 import { useNewsItem } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';

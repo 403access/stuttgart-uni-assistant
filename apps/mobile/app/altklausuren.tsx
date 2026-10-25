@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 
-import { InfoRow, Screen } from '@/src/components/ui';
+import { InfoRow, Screen } from '@ua/ui';
 import { exams, modules } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
 import { pick, tx } from '@ua/core/format';

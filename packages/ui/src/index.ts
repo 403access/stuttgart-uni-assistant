@@ -8,3 +8,22 @@ export { ResponsiveGrid } from './responsive-grid';
 export { showToast, ToastHost, type ToastInput, type ToastTone } from './toast';
 export * from './theme';
 export * from './use-responsive';
+
+export * from './design-mode';
+export * from './ambient-background';
+export {
+  Button,
+  Card,
+  FieldLabel,
+  InfoRow,
+  Mark,
+  Meter,
+  Muted,
+  Pill,
+  Screen,
+  SearchField,
+  Section,
+  Strong,
+  listPosition,
+  type CardPosition,
+} from './ui';

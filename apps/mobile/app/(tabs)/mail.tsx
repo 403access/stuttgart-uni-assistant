@@ -4,10 +4,8 @@ import { RefreshControl, ScrollView, Text, View, useWindowDimensions } from 'rea
 import { Drawer } from 'react-native-drawer-layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AmbientBackground } from '@/src/components/ambient-background';
-import { Screen } from '@/src/components/ui';
-import { DrawerPanel , OptionRows , useResponsive } from '@ua/ui';
-import { MailConnectionPanel } from '@/src/mail/components/mail-connection-panel';
+import { AmbientBackground , Screen , DrawerPanel , OptionRows , useResponsive } from '@ua/ui';
+import { MailConnectionPanel } from '@ua/feature-mail/ui';
 import { MailMessageList } from '@/src/mail/components/mail-message-list';
 import { MailReader } from '@/src/mail/components/mail-reader';
 import { MailReveal } from '@/src/mail/components/mail-skeletons';

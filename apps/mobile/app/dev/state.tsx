@@ -3,8 +3,7 @@ import { Stack } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 
-import { JsonTree } from '@ua/ui';
-import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { JsonTree , Button, Card, Screen, Section } from '@ua/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { APP_STATE_STORAGE_KEY, useAppState } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';

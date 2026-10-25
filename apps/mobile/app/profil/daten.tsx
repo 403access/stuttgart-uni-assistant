@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 
-import { Card, InfoRow, Pill, Screen, Section } from '@/src/components/ui';
+import { Card, InfoRow, Pill, Screen, Section } from '@ua/ui';
 import { formatStamp, modeLabel } from '@ua/core/profile/format';
 import { PROFILE_FIELDS, isProfileFieldPublic } from '@ua/core/profile/privacy';
 import { ProfileSummary } from '@/src/profile/profile-summary';

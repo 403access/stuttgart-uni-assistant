@@ -1,7 +1,7 @@
 import { Link, Stack } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { AmbientBackground } from '@/src/components/ambient-background';
+import { AmbientBackground } from '@ua/ui';
 import { themedStyles } from '@ua/ui/theme';
 
 export default function NotFoundScreen() {

@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { Screen } from '@/src/components/ui';
+import { Screen } from '@ua/ui';
 import { MailReader } from '@/src/mail/components/mail-reader';
 import { useAppSelector } from '@/src/state/AppState';
 import { tx } from '@ua/core/format';

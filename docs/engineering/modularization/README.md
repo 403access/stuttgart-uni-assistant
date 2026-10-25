@@ -2,7 +2,7 @@
 
 This folder analyses how the repository is structured today, proposes a module layout shared by the Expo app (iOS, Android, web), the operator dashboard, the distribution service, the marketing site, and the assistant server, and records the migration.
 
-The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–6 are in place: the workspace, shared packages, feature cores, React admin, boundary check, and CI are done. The React admin is the default when `apps/admin/dist` exists; the vanilla dashboard remains only as a fallback for the ILIAS content viewers and quiz question editor. Feature UI remains in the app until its services and primitives are decoupled.
+The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–6 are complete: the workspace, shared packages, feature packages, React admin, boundary check, and CI are done. The legacy vanilla dashboard is removed; `apps/admin/dist` is the only admin build. Feature UI continues to move into the feature packages as its platform services are decoupled.
 
 ## Target architecture
 
@@ -87,7 +87,7 @@ The detailed package catalog, dependency matrix, and target tree are in [target 
 | Decision | [ADR-001](05-adr-001-target-architecture.md) accepted |
 | Code moved | Phases 1–4 complete: workspace, kernel, design tokens, server kit, API client, shared UI, bundled dist service, and the feature cores. |
 | Files added | The workspace manifests, the shared packages, the generators, and these documents |
-| Next step | Port the remaining legacy-only ILIAS viewers and quiz question editor, then remove `apps/admin/public` |
+| Next step | Maintain the package boundaries and move the remaining platform-bound feature UI when its services are decoupled |
 
 The three questions from the first draft are answered:
 

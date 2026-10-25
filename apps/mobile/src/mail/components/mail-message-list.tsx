@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 
-import { Card } from '@/src/components/ui';
+import { Card } from '@ua/ui';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale, MailMessage } from '@ua/core/domain/types';

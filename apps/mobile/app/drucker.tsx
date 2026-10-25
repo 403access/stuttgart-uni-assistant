@@ -2,7 +2,7 @@ import { Stack, router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Linking, Text, View } from 'react-native';
 
-import { Button, Card, Screen, Section } from '@/src/components/ui';
+import { Button, Card, Screen, Section } from '@ua/ui';
 import { campusName } from '@ua/core/labels';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors } from '@ua/ui/theme';

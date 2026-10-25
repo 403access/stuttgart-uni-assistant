@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import Pdf from 'react-native-pdf';
 
-import { Button } from '@/src/components/ui';
+import { Button } from '@ua/ui';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

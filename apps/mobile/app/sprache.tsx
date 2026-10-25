@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 
 import { ChoiceCard } from '@/src/components/choice-card';
-import { Screen } from '@/src/components/ui';
+import { Screen } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { tx } from '@ua/core/format';
 

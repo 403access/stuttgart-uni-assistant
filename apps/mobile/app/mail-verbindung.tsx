@@ -11,7 +11,7 @@ import {
   mailMessage,
 } from '@/src/auth/mail';
 import { useMailSnapshot } from '@/src/mail/use-mail-snapshot';
-import { Button, Card, Pill, Screen } from '@/src/components/ui';
+import { Button, Card, Pill, Screen } from '@ua/ui';
 import { useAppSelector, appActions } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

@@ -1,7 +1,6 @@
 import { Stack } from 'expo-router';
 
-import { ResponsiveGrid } from '@ua/ui';
-import { InfoRow, Screen } from '@/src/components/ui';
+import { ResponsiveGrid , InfoRow, Screen } from '@ua/ui';
 import { deadlines } from '@ua/core/data';
 import { useAppSelector } from '@/src/state/AppState';
 import { formatDate, pick, tx } from '@ua/core/format';

@@ -3,7 +3,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Linking, RefreshControl, Text, View } from 'react-native';
 
-import { Button, Card, Muted, Pill, Screen, Section } from '@/src/components/ui';
+import { Button, Card, Muted, Pill, Screen, Section } from '@ua/ui';
 import { iliasContentErrorMessage } from '@ua/feature-ilias';
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
 import { iliasProfileQuery, refreshIliasProfile } from '@/src/ilias/queries';

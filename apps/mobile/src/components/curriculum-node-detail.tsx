@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 
 import { getCoursesSyncInfo, type CoursesSyncInfo } from '@/src/campus/db';
 import { useNodeCourses } from '@/src/campus/use-node-courses';
-import { Button, Card, InfoRow, Muted, Section } from '@/src/components/ui';
+import { Button, Card, InfoRow, Muted, Section } from '@ua/ui';
 import { useAsyncAction } from '@/src/hooks/use-async-action';
 import { colors } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';

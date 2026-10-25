@@ -6,8 +6,7 @@ import { Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-na
 
 import { useLeaveSession } from '@/src/auth/use-leave-session';
 import { useActiveStudy } from '@/src/campus/use-active-study';
-import { PaneModeProvider , ResponsiveGrid , useResponsive } from '@ua/ui';
-import { Button, Card, InfoRow, Screen, Section, listPosition } from '@/src/components/ui';
+import { PaneModeProvider , ResponsiveGrid , useResponsive , Button, Card, InfoRow, Screen, Section, listPosition } from '@ua/ui';
 import { SETTINGS_PANELS } from '@/src/settings/settings-panels';
 import { StudySelector } from '@/src/components/study-selector';
 import { program, student } from '@ua/core/data';

@@ -5,7 +5,7 @@ import { Pressable, Text, TextInput, View, type ViewStyle } from 'react-native';
 import { CampusInfoView } from '@/src/components/campus-info-view';
 import { LecturersList } from '@/src/components/lecturers-list';
 import { TutorialsList } from '@/src/components/tutorials-list';
-import { Card, InfoRow, Meter, Pill, Screen, Section } from '@/src/components/ui';
+import { Card, InfoRow, Meter, Pill, Screen, Section } from '@ua/ui';
 import { modules, program } from '@ua/core/data';
 import { searchModules, totals } from '@ua/core/domain/plan';
 import { moduleStatus } from '@ua/core/labels';

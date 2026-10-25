@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Card, Muted, Pill, SearchField } from '@/src/components/ui';
+import { Card, Muted, Pill, SearchField } from '@ua/ui';
 import type { CampusLogEntry } from '@/src/auth/campus-log';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { breakable, tx } from '@ua/core/format';

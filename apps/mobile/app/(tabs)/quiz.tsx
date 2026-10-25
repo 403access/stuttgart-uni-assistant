@@ -4,9 +4,8 @@ import { useState } from 'react';
 import { Platform, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Drawer } from 'react-native-drawer-layout';
 
-import { DrawerPanel , useResponsive } from '@ua/ui';
+import { DrawerPanel , useResponsive , Card, Meter, Screen, Section } from '@ua/ui';
 import { OptionRows, type DropdownOption } from '@ua/ui';
-import { Card, Meter, Screen, Section } from '@/src/components/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import {
   findQuizStudy,
@@ -17,7 +16,7 @@ import {
   quizModulesForStudy,
   quizStudies,
 } from '@ua/quiz-content';
-import { QuizToolbar } from '@/src/quiz/components/quiz-toolbar';
+import { QuizToolbar } from '@ua/feature-quiz/ui';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@ua/feature-quiz';

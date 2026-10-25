@@ -8,7 +8,7 @@ import { CAMPUS_START_URL } from '@/src/auth/campus-browser';
 import type { CampusLoginPhase } from '@/src/auth/campus-progress';
 import { ErrorText } from '@/src/components/login-blocks';
 import { SigningIn } from '@/src/components/signing-in';
-import { Button, Mark } from '@/src/components/ui';
+import { Button, Mark } from '@ua/ui';
 import { themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';

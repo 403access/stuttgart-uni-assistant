@@ -1,8 +1,7 @@
 import { Stack, router } from 'expo-router';
 import { RefreshControl } from 'react-native';
 
-import { ResponsiveGrid } from '@ua/ui';
-import { InfoRow, Screen } from '@/src/components/ui';
+import { ResponsiveGrid , InfoRow, Screen } from '@ua/ui';
 import { newsSource } from '@ua/core/labels';
 import { useNewsItems } from '@/src/news/use-news';
 import { useAppSelector } from '@/src/state/AppState';
