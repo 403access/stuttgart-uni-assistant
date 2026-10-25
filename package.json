@@ -19,6 +19,7 @@
     "web": "cd apps/mobile && expo start --web",
     "android": "cd apps/mobile && expo run:android",
     "ios": "cd apps/mobile && expo run:ios",
+    "ios:device": "cd apps/mobile && bunx expo run:ios -d",
     "tunnel": "cd apps/mobile && expo start --tunnel",
     "typecheck": "bun run check:types",
     "check": "bun run check:types && bun run check:lint && bun run check:boundaries && bun run check:tokens && bun run check:catalog && bun run check:components && bun run check:campus-db && bun run check:packages && bun run check:app-tests && bun run check:server-tests && bun run check:tooling-tests && bun run check:admin",

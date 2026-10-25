@@ -8,6 +8,7 @@
     "web": "expo start --web",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "ios:device": "expo run:ios -d",
     "tunnel": "expo start --tunnel",
     "typecheck": "tsc --noEmit",
     "test": "echo 'Run the root check:* scripts'",
