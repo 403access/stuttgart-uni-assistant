@@ -5,11 +5,9 @@ import { Drawer } from 'react-native-drawer-layout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AmbientBackground , Screen , DrawerPanel , OptionRows , useResponsive } from '@ua/ui';
-import { MailConnectionPanel } from '@ua/feature-mail/ui';
+import { MailConnectionPanel , MailReveal , MailToolbar } from '@ua/feature-mail/ui';
 import { MailMessageList } from '@/src/mail/components/mail-message-list';
 import { MailReader } from '@/src/mail/components/mail-reader';
-import { MailReveal } from '@/src/mail/components/mail-skeletons';
-import { MailToolbar } from '@/src/mail/components/mail-toolbar';
 import { useMailInbox } from '@/src/mail/use-mail-inbox';
 import { useMailList } from '@/src/mail/use-mail-list';
 import { useAppSelector } from '@/src/state/AppState';

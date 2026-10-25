@@ -82,7 +82,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `Button`; 8 import `Card`; 8 import `Screen`; 163 render `Screen`; 170 render `Screen`; 200 render `Screen`; 221 render `Card`; 224 render `Button`; 225 render `Button`
 - `apps/mobile/app/(tabs)/index.tsx`: 5 import `Card`; 5 import `InfoRow`; 5 import `Meter`; 5 import `Screen`; 5 import `Section`; 28 render `Card`; 34 render `Meter`; 40 render `Card`; 53 render `Section`; 56 render `InfoRow`; 65 render `Card`; 70 render `Section`; 72 render `InfoRow`; 81 render `Section`; 83 render `InfoRow`; 95 render `Screen`
 - `apps/mobile/app/(tabs)/kalender.tsx`: 9 import `Button`; 9 import `Card`; 9 import `Muted`; 9 import `Pill`; 9 import `Screen`; 9 import `Section`; 124 render `Screen`; 126 render `Card`; 127 render `Muted`; 132 render `Card`; 133 render `Muted`; 136 render `Button`; 222 render `Section`; 223 render `Card`; 224 render `Muted`; 285 render `Pill`; 289 render `Pill`; 296 render `Pill`; 299 render `Pill`; 315 render `Pill`; 319 render `Pill`; 334 render `Pill`; 338 render `Pill`; 354 render `Pill`; 433 render `Muted`; 499 render `Muted`; 508 render `Pill`; 511 render `Pill`; 514 render `Pill`; 539 render `Muted`; 623 render `Pill`; 626 render `Pill`; 629 render `Pill`; 836 render `Section`; 841 render `Card`; 858 render `Button`; 860 render `Button`
-- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `Screen`; 163 render `Screen`
+- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `Screen`; 161 render `Screen`
 - `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `Button`; 9 import `Card`; 9 import `InfoRow`; 9 import `listPosition`; 9 import `Screen`; 9 import `Section`; 222 render `InfoRow`; 227 call `listPosition`; 236 render `Section`; 243 render `Screen`; 279 render `Card`; 310 render `Card`; 382 render `Card`; 386 render `Button`; 392 render `Button`
 - `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `Card`; 7 import `Meter`; 7 import `Screen`; 7 import `Section`; 122 render `Screen`; 123 render `Card`; 285 render `Card`; 299 render `Meter`; 328 render `Section`; 351 render `Card`; 361 render `Section`; 362 render `Card`; 386 render `Screen`; 447 render `Screen`; 557 render `Meter`
 - `apps/mobile/app/altklausuren.tsx`: 3 import `InfoRow`; 3 import `Screen`; 11 render `Screen`; 19 render `InfoRow`
@@ -187,9 +187,9 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `ControlIcon`, `ToolButton`
 - Usages: 14 references in 9 files
 
-- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 9 import `ControlIcon`; 9 import `ToolButton`; 52 render `ToolButton`; 54 render `ToolButton`; 60 render `ControlIcon`; 78 render `ToolButton`
 - `packages/features/ilias/src/ui/ilias-toolbar.tsx`: 3 import `ControlIcon`; 3 import `ToolButton`; 30 render `ToolButton`; 38 render `ControlIcon`
 - `packages/features/mail/src/ui/attachment-list.tsx`: 3 import `ControlIcon`; 34 render `ControlIcon`
+- `packages/features/mail/src/ui/mail-toolbar.tsx`: 9 import `ControlIcon`; 9 import `ToolButton`; 52 render `ToolButton`; 54 render `ToolButton`; 60 render `ControlIcon`; 78 render `ToolButton`
 - `packages/features/mail/src/ui/template-sheet.tsx`: 3 import `ControlIcon`; 46 render `ControlIcon`
 - `packages/features/quiz/src/ui/components/quiz-toolbar.tsx`: 3 import `ControlIcon`; 3 import `ToolButton`; 36 render `ToolButton`; 45 render `ControlIcon`; 68 render `ToolButton`
 - `packages/ui/src/drawer-panel.tsx`: 7 import `ControlIcon`; 23 render `ControlIcon`
@@ -236,7 +236,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 9 references in 5 files
 
 - `apps/mobile/app/(tabs)/ilias.tsx`: 9 import `OptionRows`; 96 render `OptionRows`
-- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `OptionRows`; 84 render `OptionRows`; 97 render `OptionRows`; 108 render `OptionRows`; 110 render `OptionRows`
+- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `OptionRows`; 82 render `OptionRows`; 95 render `OptionRows`; 106 render `OptionRows`; 108 render `OptionRows`
 - `apps/mobile/app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 248 render `OptionRows`; 267 render `OptionRows`; 390 render `OptionRows`
 - `packages/ui/src/dropdown-picker.tsx`: 8 import `OptionRows`; 44 render `OptionRows`
 - `packages/ui/src/index.ts`: 5 re-export `OptionRows`
@@ -266,7 +266,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 5 references in 4 files
 
 - `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `DrawerPanel`; 193 render `DrawerPanel`
-- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `DrawerPanel`; 80 render `DrawerPanel`; 96 render `DrawerPanel`
+- `apps/mobile/app/(tabs)/mail.tsx`: 7 import `DrawerPanel`; 78 render `DrawerPanel`; 94 render `DrawerPanel`
 - `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 420 render `DrawerPanel`; 438 render `DrawerPanel`
 - `packages/ui/src/index.ts`: 2 re-export `DrawerPanel`
 
@@ -470,7 +470,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `DropdownPicker`
 - Usages: 1 reference in 2 files
 
-- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 9 import `DropdownPicker`; 76 render `DropdownPicker`
+- `packages/features/mail/src/ui/mail-toolbar.tsx`: 9 import `DropdownPicker`; 76 render `DropdownPicker`
 - `packages/ui/src/index.ts`: 3 re-export `DropdownPicker`
 
 ### LecturersList
@@ -554,7 +554,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
 | `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 8 | 3 |
-| `mail-skeletons` | `apps/mobile/src/mail/components/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 2 |
+| `mail-skeletons` | `packages/features/mail/src/ui/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 3 |
 | `OptionRow` | `packages/features/quiz/src/ui/components/option-row.tsx` | Native + Web | OptionRow | OptionRow | 4 | 4 |
 | `ProfileSummary` | `apps/mobile/src/profile/profile-summary.tsx` | Native + Web | ProfileSummary | ProfileSummary | 4 | 4 |
 | `diagram` | `packages/features/quiz/src/ui/components/diagram.tsx` | Native + Web | – | DiagramCanvas, DiagramView, diagramAspect | 3 | 3 |
@@ -573,10 +573,10 @@ Every component under `src/` with its exports, platform files, and every place i
 | `IliasOfficeView` | `apps/mobile/src/ilias/components/office-view.tsx` | Native + Web (split) | – | IliasOfficeView | 1 | 1 |
 | `IliasPdfView` | `apps/mobile/src/ilias/components/pdf-view.tsx` | Native + Web (split) | – | IliasPdfView | 1 | 1 |
 | `IliasToolbar` | `packages/features/ilias/src/ui/ilias-toolbar.tsx` | Native + Web | – | IliasToolbar | 1 | 2 |
-| `MailComposeActions` | `apps/mobile/src/mail/components/compose-actions.tsx` | Native + Web | – | MailComposeActions | 1 | 1 |
+| `MailComposeActions` | `packages/features/mail/src/ui/compose-actions.tsx` | Native + Web | – | MailComposeActions | 1 | 2 |
 | `MailConnectionPanel` | `packages/features/mail/src/ui/mail-connection-panel.tsx` | Native + Web | – | MailConnectionPanel | 1 | 2 |
-| `MailRow` | `apps/mobile/src/mail/components/mail-row.tsx` | Native + Web | MailRow | MailRow | 1 | 1 |
-| `MailToolbar` | `apps/mobile/src/mail/components/mail-toolbar.tsx` | Native + Web | – | MailToolbar | 1 | 1 |
+| `MailRow` | `packages/features/mail/src/ui/mail-row.tsx` | Native + Web | MailRow | MailRow | 1 | 2 |
+| `MailToolbar` | `packages/features/mail/src/ui/mail-toolbar.tsx` | Native + Web | – | MailToolbar | 1 | 2 |
 | `MapView` | `packages/features/quiz/src/ui/components/map.tsx` | Native + Web | – | MapView | 1 | 2 |
 | `MatchingView` | `packages/features/quiz/src/ui/components/matching.tsx` | Native + Web | – | MatchingView | 1 | 2 |
 | `MultipleChoiceView` | `packages/features/quiz/src/ui/components/multiple-choice.tsx` | Native + Web | – | MultipleChoiceView | 1 | 2 |
@@ -602,14 +602,15 @@ Every component under `src/` with its exports, platform files, and every place i
 
 ### mail-skeletons
 
-- File: `apps/mobile/src/mail/components/mail-skeletons.tsx`
+- File: `packages/features/mail/src/ui/mail-skeletons.tsx`
 - Category: Feature components
 - Exports: `MailListSkeleton` (component), `MailReveal` (component), `ToolbarReveal` (component), `ToolbarSkeleton` (component)
 - Live preview in the app: `MailListSkeleton`, `ToolbarSkeleton`
-- Usages: 4 references in 2 files
+- Usages: 4 references in 3 files
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 11 import `MailReveal`; 124 render `MailReveal`; 193 render `MailReveal`
-- `apps/mobile/src/mail/components/mail-toolbar.tsx`: 10 import `ToolbarReveal`; 10 import `ToolbarSkeleton`; 56 render `ToolbarSkeleton`; 58 render `ToolbarReveal`
+- `apps/mobile/app/(tabs)/mail.tsx`: 8 import `MailReveal`; 122 render `MailReveal`; 191 render `MailReveal`
+- `packages/features/mail/src/ui.ts`: 9 re-export `ToolbarReveal`; 10 re-export `MailListSkeleton`; 11 re-export `ToolbarSkeleton`; 13 re-export `MailReveal`
+- `packages/features/mail/src/ui/mail-toolbar.tsx`: 10 import `ToolbarReveal`; 10 import `ToolbarSkeleton`; 56 render `ToolbarSkeleton`; 58 render `ToolbarReveal`
 
 ### OptionRow
 
@@ -686,7 +687,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailMessageList` (component)
 - Usages: 2 references in 1 file
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 9 import `MailMessageList`; 127 render `MailMessageList`; 196 render `MailMessageList`
+- `apps/mobile/app/(tabs)/mail.tsx`: 9 import `MailMessageList`; 125 render `MailMessageList`; 194 render `MailMessageList`
 
 ### MailReader
 
@@ -695,7 +696,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailReader` (component)
 - Usages: 2 references in 2 files
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 10 import `MailReader`; 144 render `MailReader`
+- `apps/mobile/app/(tabs)/mail.tsx`: 10 import `MailReader`; 142 render `MailReader`
 - `apps/mobile/app/mail-nachricht.tsx`: 4 import `MailReader`; 23 render `MailReader`
 
 ### MemberAvatar
@@ -805,12 +806,13 @@ Every component under `src/` with its exports, platform files, and every place i
 
 ### MailComposeActions
 
-- File: `apps/mobile/src/mail/components/compose-actions.tsx`
+- File: `packages/features/mail/src/ui/compose-actions.tsx`
 - Category: Feature components
 - Exports: `MailComposeActions` (component)
-- Usages: 1 reference in 1 file
+- Usages: 1 reference in 2 files
 
 - `apps/mobile/src/mail/components/mail-reader.tsx`: 14 import `MailComposeActions`; 141 render `MailComposeActions`
+- `packages/features/mail/src/ui.ts`: 12 re-export `MailComposeActions`
 
 ### MailConnectionPanel
 
@@ -819,27 +821,29 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MailConnectionPanel` (component)
 - Usages: 1 reference in 2 files
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 8 import `MailConnectionPanel`; 179 render `MailConnectionPanel`
+- `apps/mobile/app/(tabs)/mail.tsx`: 8 import `MailConnectionPanel`; 177 render `MailConnectionPanel`
 - `packages/features/mail/src/ui.ts`: 4 re-export `MailConnectionPanel`
 
 ### MailRow
 
-- File: `apps/mobile/src/mail/components/mail-row.tsx`
+- File: `packages/features/mail/src/ui/mail-row.tsx`
 - Category: Feature components
 - Exports: `MailRow` (component)
 - Live preview in the app: `MailRow`
-- Usages: 1 reference in 1 file
+- Usages: 1 reference in 2 files
 
 - `apps/mobile/src/mail/components/mail-message-list.tsx`: 9 import `MailRow`; 54 render `MailRow`
+- `packages/features/mail/src/ui.ts`: 7 re-export `MailRow`
 
 ### MailToolbar
 
-- File: `apps/mobile/src/mail/components/mail-toolbar.tsx`
+- File: `packages/features/mail/src/ui/mail-toolbar.tsx`
 - Category: Feature components
 - Exports: `MailToolbar` (component)
-- Usages: 1 reference in 1 file
+- Usages: 1 reference in 2 files
 
-- `apps/mobile/app/(tabs)/mail.tsx`: 12 import `MailToolbar`; 53 render `MailToolbar`
+- `apps/mobile/app/(tabs)/mail.tsx`: 8 import `MailToolbar`; 51 render `MailToolbar`
+- `packages/features/mail/src/ui.ts`: 8 re-export `MailToolbar`
 
 ### MapView
 

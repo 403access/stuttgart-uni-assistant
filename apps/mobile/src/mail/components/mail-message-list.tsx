@@ -6,7 +6,7 @@ import { tx } from '@ua/core/format';
 import type { Locale, MailMessage } from '@ua/core/domain/types';
 
 import type { InboxFilter } from '@ua/feature-mail';
-import { MailRow } from './mail-row';
+import { MailRow } from '@ua/feature-mail/ui';
 
 /** The loaded rows plus the meta line and empty hints that describe the current view. */
 export function MailMessageList({

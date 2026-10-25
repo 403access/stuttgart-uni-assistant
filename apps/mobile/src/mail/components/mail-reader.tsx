@@ -11,7 +11,7 @@ import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale, MailBody as MailBodyData, MailMessage } from '@ua/core/domain/types';
 
-import { MailComposeActions } from './compose-actions';
+import { MailComposeActions } from '@ua/feature-mail/ui';
 
 /** Fixed viewport: the WebView scrolls internally, the page keeps the normal app scroll. */
 const WEBVIEW_HEIGHT = 480;

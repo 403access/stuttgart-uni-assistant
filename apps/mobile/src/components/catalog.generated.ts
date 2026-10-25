@@ -80,7 +80,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
   "stats": {
     "components": 78,
     "exports": 115,
-    "occurrences": 1305,
+    "occurrences": 1312,
     "usageCount": 813,
     "files": 106,
     "unused": 0,
@@ -648,7 +648,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 163,
+          "line": 161,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
@@ -7061,48 +7061,6 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "defaultExport": null,
       "occurrences": [
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 9,
-          "kind": "import",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 9,
-          "kind": "import",
-          "exportName": "ToolButton",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 52,
-          "kind": "render",
-          "exportName": "ToolButton",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 54,
-          "kind": "render",
-          "exportName": "ToolButton",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 60,
-          "kind": "render",
-          "exportName": "ControlIcon",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
-          "line": 78,
-          "kind": "render",
-          "exportName": "ToolButton",
-          "count": 1
-        },
-        {
           "file": "packages/features/ilias/src/ui/ilias-toolbar.tsx",
           "line": 3,
           "kind": "import",
@@ -7142,6 +7100,48 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "line": 34,
           "kind": "render",
           "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
+          "line": 9,
+          "kind": "import",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
+          "line": 9,
+          "kind": "import",
+          "exportName": "ToolButton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
+          "line": 52,
+          "kind": "render",
+          "exportName": "ToolButton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
+          "line": 54,
+          "kind": "render",
+          "exportName": "ToolButton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
+          "line": 60,
+          "kind": "render",
+          "exportName": "ControlIcon",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
+          "line": 78,
+          "kind": "render",
+          "exportName": "ToolButton",
           "count": 1
         },
         {
@@ -7251,9 +7251,9 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         }
       ],
       "usedBy": [
-        "apps/mobile/src/mail/components/mail-toolbar.tsx",
         "packages/features/ilias/src/ui/ilias-toolbar.tsx",
         "packages/features/mail/src/ui/attachment-list.tsx",
+        "packages/features/mail/src/ui/mail-toolbar.tsx",
         "packages/features/mail/src/ui/template-sheet.tsx",
         "packages/features/quiz/src/ui/components/quiz-toolbar.tsx",
         "packages/ui/src/drawer-panel.tsx",
@@ -7637,14 +7637,21 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 84,
+          "line": 82,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 97,
+          "line": 95,
+          "kind": "render",
+          "exportName": "OptionRows",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/(tabs)/mail.tsx",
+          "line": 106,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
@@ -7652,13 +7659,6 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
           "line": 108,
-          "kind": "render",
-          "exportName": "OptionRows",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 110,
           "kind": "render",
           "exportName": "OptionRows",
           "count": 1
@@ -7931,14 +7931,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 80,
+          "line": 78,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 96,
+          "line": 94,
           "kind": "render",
           "exportName": "DrawerPanel",
           "count": 1
@@ -9302,14 +9302,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "defaultExport": null,
       "occurrences": [
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
           "line": 9,
           "kind": "import",
           "exportName": "DropdownPicker",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
           "line": 76,
           "kind": "render",
           "exportName": "DropdownPicker",
@@ -9324,7 +9324,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         }
       ],
       "usedBy": [
-        "apps/mobile/src/mail/components/mail-toolbar.tsx",
+        "packages/features/mail/src/ui/mail-toolbar.tsx",
         "packages/ui/src/index.ts"
       ],
       "usageCount": 1,
@@ -9896,14 +9896,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/mail/components/mail-skeletons",
+      "id": "packages/features/mail/src/ui/mail-skeletons",
       "name": "mail-skeletons",
       "category": "feature",
-      "file": "apps/mobile/src/mail/components/mail-skeletons.tsx",
+      "file": "packages/features/mail/src/ui/mail-skeletons.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/mail/components/mail-skeletons.tsx"
+          "file": "packages/features/mail/src/ui/mail-skeletons.tsx"
         }
       ],
       "platforms": [
@@ -9945,48 +9945,76 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 11,
+          "line": 8,
           "kind": "import",
           "exportName": "MailReveal",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 124,
+          "line": 122,
           "kind": "render",
           "exportName": "MailReveal",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 193,
+          "line": 191,
           "kind": "render",
           "exportName": "MailReveal",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 9,
+          "kind": "re-export",
+          "exportName": "ToolbarReveal",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 10,
+          "kind": "re-export",
+          "exportName": "MailListSkeleton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 11,
+          "kind": "re-export",
+          "exportName": "ToolbarSkeleton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 13,
+          "kind": "re-export",
+          "exportName": "MailReveal",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
           "line": 10,
           "kind": "import",
           "exportName": "ToolbarReveal",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
           "line": 10,
           "kind": "import",
           "exportName": "ToolbarSkeleton",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
           "line": 56,
           "kind": "render",
           "exportName": "ToolbarSkeleton",
           "count": 1
         },
         {
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
           "line": 58,
           "kind": "render",
           "exportName": "ToolbarReveal",
@@ -9995,7 +10023,8 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       ],
       "usedBy": [
         "apps/mobile/app/(tabs)/mail.tsx",
-        "apps/mobile/src/mail/components/mail-toolbar.tsx"
+        "packages/features/mail/src/ui.ts",
+        "packages/features/mail/src/ui/mail-toolbar.tsx"
       ],
       "usageCount": 4,
       "importCount": 3,
@@ -10583,14 +10612,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 127,
+          "line": 125,
           "kind": "render",
           "exportName": "MailMessageList",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 196,
+          "line": 194,
           "kind": "render",
           "exportName": "MailMessageList",
           "count": 1
@@ -10643,7 +10672,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 144,
+          "line": 142,
           "kind": "render",
           "exportName": "MailReader",
           "count": 1
@@ -11302,14 +11331,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/mail/components/compose-actions",
+      "id": "packages/features/mail/src/ui/compose-actions",
       "name": "MailComposeActions",
       "category": "feature",
-      "file": "apps/mobile/src/mail/components/compose-actions.tsx",
+      "file": "packages/features/mail/src/ui/compose-actions.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/mail/components/compose-actions.tsx"
+          "file": "packages/features/mail/src/ui/compose-actions.tsx"
         }
       ],
       "platforms": [
@@ -11341,10 +11370,18 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "render",
           "exportName": "MailComposeActions",
           "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 12,
+          "kind": "re-export",
+          "exportName": "MailComposeActions",
+          "count": 1
         }
       ],
       "usedBy": [
-        "apps/mobile/src/mail/components/mail-reader.tsx"
+        "apps/mobile/src/mail/components/mail-reader.tsx",
+        "packages/features/mail/src/ui.ts"
       ],
       "usageCount": 1,
       "importCount": 1,
@@ -11390,7 +11427,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 179,
+          "line": 177,
           "kind": "render",
           "exportName": "MailConnectionPanel",
           "count": 1
@@ -11416,14 +11453,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/mail/components/mail-row",
+      "id": "packages/features/mail/src/ui/mail-row",
       "name": "MailRow",
       "category": "feature",
-      "file": "apps/mobile/src/mail/components/mail-row.tsx",
+      "file": "packages/features/mail/src/ui/mail-row.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/mail/components/mail-row.tsx"
+          "file": "packages/features/mail/src/ui/mail-row.tsx"
         }
       ],
       "platforms": [
@@ -11457,10 +11494,18 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "render",
           "exportName": "MailRow",
           "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 7,
+          "kind": "re-export",
+          "exportName": "MailRow",
+          "count": 1
         }
       ],
       "usedBy": [
-        "apps/mobile/src/mail/components/mail-message-list.tsx"
+        "apps/mobile/src/mail/components/mail-message-list.tsx",
+        "packages/features/mail/src/ui.ts"
       ],
       "usageCount": 1,
       "importCount": 1,
@@ -11471,14 +11516,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "apps/mobile/src/mail/components/mail-toolbar",
+      "id": "packages/features/mail/src/ui/mail-toolbar",
       "name": "MailToolbar",
       "category": "feature",
-      "file": "apps/mobile/src/mail/components/mail-toolbar.tsx",
+      "file": "packages/features/mail/src/ui/mail-toolbar.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "apps/mobile/src/mail/components/mail-toolbar.tsx"
+          "file": "packages/features/mail/src/ui/mail-toolbar.tsx"
         }
       ],
       "platforms": [
@@ -11499,21 +11544,29 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 12,
+          "line": 8,
           "kind": "import",
           "exportName": "MailToolbar",
           "count": 1
         },
         {
           "file": "apps/mobile/app/(tabs)/mail.tsx",
-          "line": 53,
+          "line": 51,
           "kind": "render",
+          "exportName": "MailToolbar",
+          "count": 1
+        },
+        {
+          "file": "packages/features/mail/src/ui.ts",
+          "line": 8,
+          "kind": "re-export",
           "exportName": "MailToolbar",
           "count": 1
         }
       ],
       "usedBy": [
-        "apps/mobile/app/(tabs)/mail.tsx"
+        "apps/mobile/app/(tabs)/mail.tsx",
+        "packages/features/mail/src/ui.ts"
       ],
       "usageCount": 1,
       "importCount": 1,

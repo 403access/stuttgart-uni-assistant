@@ -38,9 +38,7 @@ import { SigningIn } from './signing-in';
 import { StructureRow, TreeChildren } from './structure-row';
 
 import { MemberAvatar } from '@/src/ilias/components/member-avatar';
-import { AttachmentList , ContactBadge } from '@ua/feature-mail/ui';
-import { MailRow } from '@/src/mail/components/mail-row';
-import { MailListSkeleton, ToolbarSkeleton } from '@/src/mail/components/mail-skeletons';
+import { AttachmentList , ContactBadge , MailRow , MailListSkeleton, ToolbarSkeleton } from '@ua/feature-mail/ui';
 import { ProfilePreview } from '@/src/profile/profile-preview';
 import { ProfileSummary } from '@/src/profile/profile-summary';
 import { useProfileData } from '@/src/profile/use-profile-data';

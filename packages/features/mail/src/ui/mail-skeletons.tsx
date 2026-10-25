@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
-import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
+import { useReducedMotion } from '@ua/ui';
 import { colors, themedStyles } from '@ua/ui/theme';
 
 /**

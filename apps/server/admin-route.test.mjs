@@ -65,7 +65,10 @@ before(async () => {
   base = `http://127.0.0.1:${server.address().port}`;
 });
 
-after(() => new Promise((resolve) => server.close(resolve)));
+after(() => new Promise((resolve) => {
+  server.close(resolve);
+  rmSync(adminDir, { recursive: true, force: true });
+}));
 
 function call(path, options = {}) {
   const headers = { ...(options.headers || {}) };

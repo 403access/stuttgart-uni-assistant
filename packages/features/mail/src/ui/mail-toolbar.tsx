@@ -1,13 +1,13 @@
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
+import { useReducedMotion } from '@ua/ui';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
 import type { DropdownOption } from '@ua/feature-mail';
 import { ControlIcon, ToolButton , DropdownPicker } from '@ua/ui';
-import { ToolbarReveal, ToolbarSkeleton } from './mail-skeletons';
+import { ToolbarReveal, ToolbarSkeleton } from '@ua/feature-mail/ui';
 
 /**
  * Sticky controls: mailbox drawer (left), compose, full-width search, sort

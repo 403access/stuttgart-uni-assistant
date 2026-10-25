@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 
 import { CAMPUS_LOGIN_PHASES, isPhaseDone, type CampusLoginPhase } from '@/src/auth/campus-progress';
-import { useReducedMotion } from '@/src/hooks/use-reduced-motion';
+import { useReducedMotion } from '@ua/ui';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 
