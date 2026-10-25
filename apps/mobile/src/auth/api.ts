@@ -1,3 +1,4 @@
+import { createPublicClient } from '@ua/api-client/public';
 import { API_OPERATIONS, type ApiOperation } from '@ua/contracts/api';
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders } from '@/src/auth/session';
@@ -32,9 +33,8 @@ function isOperation(value: unknown): value is ApiOperation {
 
 export async function fetchApiCatalog(): Promise<{ operations: ApiOperation[]; live: boolean }> {
   try {
-    const response = await fetch(endpoint('/v1/api'));
-    if (!response.ok) return { operations: fallback, live: false };
-    const payload = (await response.json()) as { operations?: unknown };
+    const client = createPublicClient({ baseUrl: assistantUrl, timeoutMs: 8_000 });
+    const payload = (await client.api()) as { operations?: unknown };
     const operations = Array.isArray(payload.operations) ? payload.operations.filter(isOperation) : [];
     return operations.length ? { operations, live: true } : { operations: fallback, live: false };
   } catch {

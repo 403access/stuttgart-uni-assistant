@@ -68,7 +68,8 @@
     "@ua/format": "workspace:*",
     "@ua/contracts": "workspace:*",
     "@ua/design-tokens": "workspace:*",
-    "@ua/core": "workspace:*"
+    "@ua/core": "workspace:*",
+    "@ua/api-client": "workspace:*"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.6",

@@ -37,6 +37,7 @@
         "@tanstack/react-query": "^5.104.3",
         "@tanstack/react-store": "^0.11.2",
         "@tanstack/store": "^0.11.2",
+        "@ua/api-client": "workspace:*",
         "@ua/contracts": "workspace:*",
         "@ua/core": "workspace:*",
         "@ua/design-tokens": "workspace:*",
@@ -99,6 +100,13 @@
     "apps/site": {
       "name": "@ua/site",
       "version": "0.0.0",
+    },
+    "packages/api-client": {
+      "name": "@ua/api-client",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ua/contracts": "workspace:*",
+      },
     },
     "packages/contracts": {
       "name": "@ua/contracts",
@@ -679,6 +687,8 @@
     "@typescript-eslint/visitor-keys": ["@typescript-eslint/visitor-keys@8.71.2", "", { "dependencies": { "@typescript-eslint/types": "8.71.2", "eslint-visitor-keys": "^5.0.0" } }, "sha512-zozlN0UA32bSG2zkKAgQyRYSbEISVoyU6vvkKYo2aSny74D8Jh4e+POkJ6Lk0dlezZi5x7TtD+88Xb06IB8nhg=="],
 
     "@ua/admin": ["@ua/admin@workspace:apps/admin"],
+
+    "@ua/api-client": ["@ua/api-client@workspace:packages/api-client"],
 
     "@ua/contracts": ["@ua/contracts@workspace:packages/contracts"],
 
