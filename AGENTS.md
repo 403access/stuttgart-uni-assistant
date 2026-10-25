@@ -1,6 +1,6 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
-The accepted target is a modular monorepo with shared packages; see [ADR-001](docs/engineering/modularization/05-adr-001-target-architecture.md). The migration has started with the workspace skeleton, so apps live under `apps/` and tools under `tools/`.
+The accepted target is a modular monorepo with shared packages; see [ADR-001](docs/engineering/modularization/05-adr-001-target-architecture.md). The migration is complete: apps live under `apps/`, shared code under `packages/`, and tools under `tools/`.
 
 ## Expo has changed — do not trust your training data
 
