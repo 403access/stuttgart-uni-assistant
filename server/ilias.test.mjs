@@ -921,14 +921,15 @@ test('the HTTP layer ingests, caches, and hands back the WebView cookie', async 
   }
 });
 
-test('the HTTP layer renders a PPTX in a self-contained viewer page', async () => {
+test('the HTTP layer renders PPTX and DOCX in self-contained viewer pages', async () => {
   resetDbForTests();
   const auth = await import('./auth.mjs');
   const created = auth.createUserSession({ account: 'st778899', name: 'Viewer Route', mode: 'local' });
   setUserIliasSession(created.user.id, { cookie: 'session-abc', account: 'st778899', source: 'browser' });
   const headers = { Authorization: `Bearer ${created.token}` };
   const pptxType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-  const bytes = Buffer.from('fake-pptx-bytes');
+  const docxType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  const bytes = Buffer.from('fake-office-bytes');
 
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1');
@@ -949,11 +950,11 @@ test('the HTTP layer renders a PPTX in a self-contained viewer page', async () =
       },
     });
   try {
-    // A PDF sent to the presentation viewer is refused instead of mis-rendered.
+    // A PDF sent to the office viewer is refused instead of mis-rendered.
     file = { contentType: 'application/pdf', filename: 'skript.pdf' };
     const refused = await realFetch(`${base}/v1/ilias/viewer?refId=4665501`, { headers });
     assert.equal(refused.status, 415);
-    assert.equal((await refused.json()).error, 'ilias_file_not_pptx');
+    assert.equal((await refused.json()).error, 'ilias_file_not_viewable');
 
     file = { contentType: pptxType, filename: 'folien.pptx' };
     const response = await realFetch(`${base}/v1/ilias/viewer?refId=4665501&locale=de`, { headers });
@@ -962,8 +963,17 @@ test('the HTTP layer renders a PPTX in a self-contained viewer page', async () =
     const html = await response.text();
     assert.match(html, /pptxPreview\.init/);
     assert.ok(html.includes(bytes.toString('base64')));
-    assert.match(html, /Präsentation wird geladen/);
+    assert.match(html, /Dokument wird geladen/);
     assert.equal(html.includes('cdn.jsdelivr.net'), false);
+
+    file = { contentType: docxType, filename: 'notizen.docx' };
+    const docxResponse = await realFetch(`${base}/v1/ilias/viewer?refId=4665502&locale=de`, { headers });
+    assert.equal(docxResponse.status, 200);
+    const docxHtml = await docxResponse.text();
+    assert.match(docxHtml, /docx\.renderAsync/);
+    assert.match(docxHtml, /ILIAS_VIEWER_DATA/);
+    assert.ok(docxHtml.includes(bytes.toString('base64')));
+    assert.match(docxHtml, /Dokument wird geladen/);
   } finally {
     globalThis.fetch = realFetch;
     await new Promise((resolve) => server.close(resolve));

@@ -21,26 +21,34 @@ function fileRow(overrides = {}) {
   };
 }
 
-test('PDF and PPTX repository rows open in the in-app reader', () => {
+test('PDF, PPTX, and DOCX repository rows open in the in-app reader', () => {
   assert.equal(iliasPreviewKind(fileRow({ type: 'pdf' })), 'pdf');
   assert.equal(iliasPreviewKind(fileRow({ type: 'PPTX' })), 'pptx');
+  assert.equal(iliasPreviewKind(fileRow({ type: 'docx' })), 'docx');
   assert.equal(iliasPreviewKind(fileRow({ title: 'Vorlesung 1.PDF' })), 'pdf');
   assert.equal(iliasPreviewKind(fileRow({ title: 'Vorlesung 1.pptx' })), 'pptx');
+  assert.equal(iliasPreviewKind(fileRow({ title: 'Notizen.docx' })), 'docx');
   assert.equal(
     iliasPreviewKind(fileRow({ properties: [{ name: 'Dateityp', value: 'pptx' }] })),
     'pptx',
+  );
+  assert.equal(
+    iliasPreviewKind(fileRow({ properties: [{ name: 'Dateityp', value: 'docx' }] })),
+    'docx',
   );
 });
 
 test('only files with a ref id are previewable', () => {
   assert.equal(iliasPreviewKind(fileRow({ kind: 'grp', type: 'pptx' })), null);
   assert.equal(iliasPreviewKind(fileRow({ refId: null, type: 'pptx' })), null);
-  assert.equal(iliasPreviewKind(fileRow({ type: 'docx' })), null);
+  assert.equal(iliasPreviewKind(fileRow({ type: 'xlsx' })), null);
 });
 
 test('the file screen recovers the format from its route params', () => {
   assert.equal(previewKindFromParams('pptx', 'Folien'), 'pptx');
+  assert.equal(previewKindFromParams('docx', 'Notizen'), 'docx');
   assert.equal(previewKindFromParams('', 'Skript.pdf'), 'pdf');
   assert.equal(previewKindFromParams('Datei', 'Skript.pdf'), 'pdf');
+  assert.equal(previewKindFromParams('Datei', 'Notizen.docx'), 'docx');
   assert.equal(previewKindFromParams('Datei', 'Notizen'), null);
 });

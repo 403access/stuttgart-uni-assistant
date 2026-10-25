@@ -592,19 +592,19 @@ export async function fetchIliasFile(refId: number): Promise<IliasFile> {
 }
 
 /**
- * The server-rendered presentation viewer. The page embeds the file bytes and
- * the renderer, so the WebView needs no further network access.
+ * The server-rendered office viewer (PPTX or DOCX). The page embeds the file
+ * bytes and the renderer, so the WebView needs no further network access.
  */
-export function iliasPptxViewerUrl(refId: number, locale: Locale): string {
+export function iliasOfficeViewerUrl(refId: number, locale: Locale): string {
   const query = new URLSearchParams({ refId: String(refId), locale });
   return endpoint(`/v1/ilias/viewer?${query.toString()}`);
 }
 
 /** The same viewer page as text, for the web build's iframe. */
-export async function fetchIliasPptxViewer(refId: number, locale: Locale): Promise<string> {
+export async function fetchIliasOfficeViewer(refId: number, locale: Locale): Promise<string> {
   let response: Response;
   try {
-    response = await fetch(iliasPptxViewerUrl(refId, locale), { headers: { ...authHeaders() } });
+    response = await fetch(iliasOfficeViewerUrl(refId, locale), { headers: { ...authHeaders() } });
   } catch {
     throw new IliasError('server_unreachable');
   }

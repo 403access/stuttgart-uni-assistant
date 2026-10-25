@@ -131,8 +131,8 @@ export default function IliasContentScreen() {
   const open = async (item: IliasContentItem) => {
     setActionError('');
     if (item.kind === 'file' && item.refId) {
-      // PDFs and presentations open in the reader; other formats keep the
-      // share sheet.
+      // PDFs, presentations, and documents open in the reader; other formats
+      // keep the share sheet.
       const preview = iliasPreviewKind(item);
       if (preview) {
         router.push({

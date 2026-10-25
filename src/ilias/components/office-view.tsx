@@ -8,21 +8,22 @@ import { useAppSelector } from '@/src/state/AppState';
 import { themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
-import { iliasPptxViewerUrl } from '../api';
+import { iliasOfficeViewerUrl } from '../api';
 
-export interface IliasPptxViewProps {
+export interface IliasOfficeViewProps {
   refId: number;
   title: string;
+  /** Present for PPTX; DOCX documents do not report a slide count. */
   onSlides?: (count: number) => void;
 }
 
 /**
- * Presentation reader for one ILIAS file. The assistant server fetches the
- * PPTX and returns a self-contained page with the slide renderer and the file
- * bytes; the WebView only runs that page. PDFs keep the native `react-native-pdf`
- * reader. The web build uses `pptx-view.web.tsx`.
+ * Reader for one ILIAS office file. The assistant server fetches the PPTX or
+ * DOCX and returns a self-contained page with the renderer and the file bytes;
+ * the WebView only runs that page. PDFs keep the native `react-native-pdf`
+ * reader. The web build uses `office-view.web.tsx`.
  */
-export function IliasPptxView({ refId, title, onSlides }: IliasPptxViewProps) {
+export function IliasOfficeView({ refId, title, onSlides }: IliasOfficeViewProps) {
   const locale = useAppSelector((state) => state.locale);
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -57,7 +58,7 @@ export function IliasPptxView({ refId, title, onSlides }: IliasPptxViewProps) {
   return (
     <WebView
       key={`${refId}:${attempt}`}
-      source={{ uri: iliasPptxViewerUrl(refId, locale), headers: { ...authHeaders() } }}
+      source={{ uri: iliasOfficeViewerUrl(refId, locale), headers: { ...authHeaders() } }}
       style={styles.view}
       containerStyle={styles.view}
       originWhitelist={['*']}

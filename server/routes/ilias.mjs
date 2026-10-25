@@ -26,6 +26,7 @@ import {
   readIliasFile,
   readIliasMembers,
   readIliasProfile,
+  renderIliasDocxViewer,
   renderIliasPptxViewer,
 } from '../ilias.mjs';
 import { attachmentDisposition, readJsonBody, send } from '../http.mjs';
@@ -37,6 +38,7 @@ function fail(response, error) {
 }
 
 const PPTX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const DOCX_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 export async function handleIlias(request, response, url) {
   if (request.method === 'GET' && url.pathname === '/v1/ilias/config') {
@@ -251,12 +253,17 @@ export async function handleIlias(request, response, url) {
       const auth = requireAuth(request);
       const refId = Number(url.searchParams.get('refId'));
       const file = await readIliasFile(auth.user.id, { refId });
-      const presentation = /\.pptx$/i.test(file.filename || '') || file.contentType === PPTX_CONTENT_TYPE;
-      if (!presentation) throw iliasError(415, 'ilias_file_not_pptx');
-      const html = renderIliasPptxViewer({
-        bytes: file.bytes,
-        locale: url.searchParams.get('locale') === 'en' ? 'en' : 'de',
-      });
+      const filename = file.filename || '';
+      const kind = /\.pptx$/i.test(filename) || file.contentType === PPTX_CONTENT_TYPE
+        ? 'pptx'
+        : /\.docx$/i.test(filename) || file.contentType === DOCX_CONTENT_TYPE
+          ? 'docx'
+          : '';
+      if (!kind) throw iliasError(415, 'ilias_file_not_viewable');
+      const locale = url.searchParams.get('locale') === 'en' ? 'en' : 'de';
+      const html = kind === 'pptx'
+        ? renderIliasPptxViewer({ bytes: file.bytes, locale })
+        : renderIliasDocxViewer({ bytes: file.bytes, locale });
       touchPlatform(auth.user.id, 'ilias');
       response.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8',
@@ -265,7 +272,7 @@ export async function handleIlias(request, response, url) {
         'X-Content-Type-Options': 'nosniff',
       });
       response.end(html);
-      logService('ilias', 'info', `#${reqId} viewer ok ref=${refId} bytes=${file.bytes.length} user=${auth.user.id}`, { userId: auth.user.id });
+      logService('ilias', 'info', `#${reqId} viewer ok ref=${refId} kind=${kind} bytes=${file.bytes.length} user=${auth.user.id}`, { userId: auth.user.id });
     } catch (error) {
       logService('ilias', 'warn', `#${reqId} viewer failed ${error?.message ?? 'ilias_failed'}`);
       fail(response, error);

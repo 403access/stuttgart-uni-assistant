@@ -167,7 +167,7 @@ profile itself exposes.
 | `POST /v1/ilias/session/expired` | app | The WebView saw a login page: drops only the in-memory cookie so the vault can reconnect |
 | `DELETE /v1/ilias/session` | app | Forgets the in-memory cookie, clears the WebView cookie, demotes the platform link |
 | `GET /v1/ilias/file` | app | Streams one repository file with its ILIAS content type and filename |
-| `GET /v1/ilias/viewer` | app | Fetches one PPTX and returns a self-contained presentation viewer page |
+| `GET /v1/ilias/viewer` | app | Fetches one PPTX or DOCX and returns a self-contained viewer page |
 
 The password is only a request-body field. It is not written to the database,
 not logged, and not echoed. The `PHPSESSID` is returned only to the
@@ -220,17 +220,17 @@ Folders and categories in that list drill down into the same screen. When the
 object has a members tab, the screen lists its tutor and members below the
 materials, with the member count in the section heading. Tapping a member opens
 `/ilias/mitglied`: avatar, profile sections, e-mail and ILIAS-mail actions, and
-any course links the profile publishes. A PDF or PPTX row opens the reader at
-`/ilias/datei`. PDFs are fetched through `/v1/ilias/file`, written to the cache,
-and rendered with `react-native-pdf` (PDFKit on iOS, PdfRenderer on Android);
-the web build hands a blob URL to the browser's own PDF viewer in an iframe.
-Presentations take the same file screen but render through
-`/v1/ilias/viewer`: the server fetches the PPTX, inlines the `pptx-preview`
-browser bundle and the file bytes into one HTML page, and the app shows that
-page in a WebView (web: an iframe with the fetched page). The slide list scales
-to the viewport and scrolls; the file never reaches a third-party viewer. Other
-file types keep the share sheet, and every file still has "Open in browser" and
-"Share" actions.
+any course links the profile publishes. A PDF, PPTX, or DOCX row opens the
+reader at `/ilias/datei`. PDFs are fetched through `/v1/ilias/file`, written to
+the cache, and rendered with `react-native-pdf` (PDFKit on iOS, PdfRenderer on
+Android); the web build hands a blob URL to the browser's own PDF viewer in an
+iframe. Presentations and documents take the same file screen but render
+through `/v1/ilias/viewer`: the server fetches the file, inlines the
+`pptx-preview` or `docx-preview` browser bundle and the file bytes into one HTML
+page, and the app shows that page in a WebView (web: an iframe with the fetched
+page). The content scales to the viewport and scrolls; the file never reaches a
+third-party viewer. Other file types keep the share sheet, and every file still
+has "Open in browser" and "Share" actions.
 
 `react-native-pdf` and `react-native-blob-util` carry native code, so the
 development build has to be rebuilt after a fresh install. The config plugins
@@ -251,9 +251,9 @@ The app reads the dashboard, the object lists of courses, groups, folders, and
 categories, and the members tabs of courses and groups; the server only parses
 and stores those pages. Course member galleries do not expose roles, so only
 group contact persons are marked as tutors. It does not paginate the magazine,
-post to forums, or send mail. PDFs and PPTX render in the app; other formats are
-downloaded or shared, not previewed. File bytes still stream through
+post to forums, or send mail. PDFs, PPTX, and DOCX render in the app; other
+formats are downloaded or shared, not previewed. File bytes still stream through
 `GET /v1/ilias/file` on the server (they are not harvested by the WebView) —
-presentations go through `GET /v1/ilias/viewer` — and are cached only for the
-current read, not kept as an offline library. Those
+presentations and documents go through `GET /v1/ilias/viewer` — and are cached
+only for the current read, not kept as an offline library. Those
 pages would need their own parsers and a separate permission decision.

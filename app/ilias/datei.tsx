@@ -5,8 +5,8 @@ import { Platform, Text, View } from 'react-native';
 
 import { showToast } from '@/src/components/toast';
 import { Button, Muted, Screen } from '@/src/components/ui';
+import { IliasOfficeView } from '@/src/ilias/components/office-view';
 import { IliasPdfView } from '@/src/ilias/components/pdf-view';
-import { IliasPptxView } from '@/src/ilias/components/pptx-view';
 import { saveIliasFile } from '@/src/ilias/download';
 import { iliasContentErrorMessage } from '@/src/ilias/errors';
 import { previewKindFromParams, type IliasPreviewKind } from '@/src/ilias/files';
@@ -16,7 +16,7 @@ import { firstParam, tx } from '@/src/text';
 
 const ILIAS_BASE = 'https://ilias3.uni-stuttgart.de';
 
-/** One ILIAS file rendered in the app: PDFs natively, PPTX in a WebView. */
+/** One ILIAS file rendered in the app: PDFs natively, PPTX/DOCX in a WebView. */
 export default function IliasFileScreen() {
   const locale = useAppSelector((state) => state.locale);
   const params = useLocalSearchParams<{
@@ -105,8 +105,8 @@ export default function IliasFileScreen() {
         ) : null}
       </View>
       <View style={styles.viewer}>
-        {validRef && kind === 'pptx' ? (
-          <IliasPptxView refId={refId} title={title} onSlides={setSlides} />
+        {validRef && (kind === 'pptx' || kind === 'docx') ? (
+          <IliasOfficeView refId={refId} title={title} onSlides={setSlides} />
         ) : validRef && kind === 'pdf' ? (
           <IliasPdfView
             refId={refId}

@@ -6,9 +6,9 @@ import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@/src/theme';
 import { tx } from '@/src/text';
 
-import { fetchIliasPptxViewer } from '../api';
+import { fetchIliasOfficeViewer } from '../api';
 import { iliasContentErrorMessage } from '../errors';
-import type { IliasPptxViewProps } from './pptx-view';
+import type { IliasOfficeViewProps } from './office-view';
 
 const Iframe = 'iframe' as unknown as ComponentType<{
   srcDoc?: string;
@@ -17,11 +17,11 @@ const Iframe = 'iframe' as unknown as ComponentType<{
 }>;
 
 /**
- * Web presentation reader. The assistant server returns a self-contained HTML
- * page (renderer plus file bytes), which the browser loads in an iframe. Same
- * props as `pptx-view.tsx`; the native slide count has no equivalent here.
+ * Web office reader. The assistant server returns a self-contained HTML page
+ * (renderer plus file bytes), which the browser loads in an iframe. Same props
+ * as `office-view.tsx`; the native slide count has no equivalent here.
  */
-export function IliasPptxView({ refId, title }: IliasPptxViewProps) {
+export function IliasOfficeView({ refId, title }: IliasOfficeViewProps) {
   const locale = useAppSelector((state) => state.locale);
   const [attempt, setAttempt] = useState(0);
   const requestKey = `${refId}:${attempt}`;
@@ -33,7 +33,7 @@ export function IliasPptxView({ refId, title }: IliasPptxViewProps) {
 
   useEffect(() => {
     let active = true;
-    fetchIliasPptxViewer(refId, locale)
+    fetchIliasOfficeViewer(refId, locale)
       .then((html) => {
         if (active) setResult({ key: requestKey, html, error: '' });
       })
