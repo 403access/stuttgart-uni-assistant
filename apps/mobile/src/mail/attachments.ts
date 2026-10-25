@@ -1,7 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { Platform } from 'react-native';
 
-import type { MailAttachment, Locale } from '@/src/types';
+import type { MailAttachment } from '@/src/types';
 
 export const MAX_ATTACHMENTS = 5;
 export const MAX_ATTACHMENT_BYTES = 6_000_000;
@@ -78,11 +78,4 @@ export async function pickMailAttachments(
   return { attachments, rejected };
 }
 
-/** `820 KB`, `1,4 MB` — compact enough for an attachment row. */
-export function formatBytes(size: number, locale: Locale): string {
-  if (!Number.isFinite(size) || size <= 0) return '0 KB';
-  if (size < 1024) return `${Math.round(size)} B`;
-  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
-  const value = (size / (1024 * 1024)).toFixed(1);
-  return `${locale === 'de' ? value.replace('.', ',') : value} MB`;
-}
+export { formatBytes } from '@ua/format';

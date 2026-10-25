@@ -33,6 +33,7 @@
         "@tanstack/react-query": "^5.104.3",
         "@tanstack/react-store": "^0.11.2",
         "@tanstack/store": "^0.11.2",
+        "@ua/format": "workspace:*",
         "docx-preview": "^0.4.1",
         "expo": "^58.0.0",
         "expo-auth-session": "~58.0.13",
@@ -86,6 +87,10 @@
     },
     "apps/site": {
       "name": "@ua/site",
+      "version": "0.0.0",
+    },
+    "packages/format": {
+      "name": "@ua/format",
       "version": "0.0.0",
     },
     "tools": {
@@ -645,6 +650,8 @@
     "@ua/admin": ["@ua/admin@workspace:apps/admin"],
 
     "@ua/dist": ["@ua/dist@workspace:apps/dist"],
+
+    "@ua/format": ["@ua/format@workspace:packages/format"],
 
     "@ua/mobile": ["@ua/mobile@workspace:apps/mobile"],
 
