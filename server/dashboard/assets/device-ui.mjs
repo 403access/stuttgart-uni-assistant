@@ -40,3 +40,20 @@ export function deviceClientCell(main, detail) {
     detail ? h('span', { text: detail }) : null,
   );
 }
+
+/** The latest address first, with the pairing address when they differ. */
+export function deviceAddressCell(device) {
+  const first = String(device?.ipAddress || '').trim();
+  const last = String(device?.lastIpAddress || '').trim();
+  const current = last || first;
+  if (!current) {
+    return h('div', { className: 'who-text' },
+      h('strong', { className: 'mono', text: '–', style: { fontSize: '12.5px' } }),
+      h('span', { text: 'nicht übermittelt' }),
+    );
+  }
+  return h('div', { className: 'who-text' },
+    h('strong', { className: 'mono', text: current, style: { fontSize: '12.5px' } }),
+    first && last && first !== last ? h('span', { text: 'zuerst ' + first }) : null,
+  );
+}

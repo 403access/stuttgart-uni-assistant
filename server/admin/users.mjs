@@ -162,7 +162,7 @@ export function adminUserDetail(userId) {
       const device = deviceBySession.get(session.id);
       return {
         ...session,
-        device: device ? { id: device.id, name: device.name, kind: device.kind, userAgent: device.userAgent, client: device.client } : null,
+        device: device ? { id: device.id, name: device.name, kind: device.kind, userAgent: device.userAgent, ipAddress: device.ipAddress, lastIpAddress: device.lastIpAddress, client: device.client } : null,
       };
     });
   const campusSource = loadCampusSource(userId);

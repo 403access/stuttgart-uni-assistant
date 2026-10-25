@@ -81,3 +81,43 @@ export function sendAsset(response, body, contentType) {
 export function isSecureRequest(request) {
   return Boolean(request.socket?.encrypted) || String(request.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
 }
+
+function normalizedAddress(value) {
+  let text = String(value ?? '').trim();
+  if (!text) return '';
+  if (text.startsWith('[')) {
+    const end = text.indexOf(']');
+    text = end === -1 ? text.slice(1) : text.slice(1, end);
+  } else if (/^\d+\.\d+\.\d+\.\d+:\d+$/.test(text)) {
+    text = text.slice(0, text.lastIndexOf(':'));
+  }
+  // Node reports IPv4 peers as `::ffff:192.0.2.1`; show the readable form.
+  const mapped = text.startsWith('::ffff:') ? text.slice(7) : text;
+  return (mapped === '::1' ? '127.0.0.1' : mapped).slice(0, 100);
+}
+
+function firstForwardedAddress(request) {
+  for (const header of ['cf-connecting-ip', 'x-real-ip', 'x-forwarded-for']) {
+    const raw = request.headers?.[header];
+    const value = Array.isArray(raw) ? raw[0] : String(raw ?? '').split(',')[0].trim();
+    if (value) return value;
+  }
+  return '';
+}
+
+/**
+ * The peer address for display in the operator dashboard.
+ *
+ * A same-host reverse proxy (including a local `cloudflared` tunnel) connects
+ * from loopback, so its forwarding headers are the only useful source. Set
+ * `TRUST_PROXY=1` when the proxy runs on another host.
+ */
+export function clientAddress(request) {
+  const socket = String(request?.socket?.remoteAddress ?? '');
+  const loopback = socket === '127.0.0.1' || socket === '::1' || socket === '::ffff:127.0.0.1';
+  if (loopback || process.env.TRUST_PROXY === '1') {
+    const forwarded = firstForwardedAddress(request);
+    if (forwarded) return normalizedAddress(forwarded);
+  }
+  return normalizedAddress(socket);
+}

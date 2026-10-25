@@ -6,6 +6,7 @@ process.env.CAMPUS_DB_PATH = ':memory:';
 const db = await import('./db.mjs');
 const auth = await import('./auth.mjs');
 const campus = await import('./campus.mjs');
+const http = await import('./http.mjs');
 
 beforeEach(() => {
   db.resetDbForTests();
@@ -119,19 +120,36 @@ test('readBearer accepts only a well-formed bearer header', () => {
   assert.equal(auth.readBearer({ headers: {} }), null);
 });
 
+test('the dashboard address trusts forwarding headers only from a proxy peer', () => {
+  const peer = (remoteAddress, headers = {}) => ({ socket: { remoteAddress }, headers });
+  assert.equal(http.clientAddress(peer('203.0.113.7', { 'x-forwarded-for': '198.51.100.9' })), '203.0.113.7');
+  assert.equal(http.clientAddress(peer('127.0.0.1', { 'x-forwarded-for': '198.51.100.9, 127.0.0.1' })), '198.51.100.9');
+  assert.equal(http.clientAddress(peer('::1', { 'cf-connecting-ip': '2001:db8::1' })), '2001:db8::1');
+  assert.equal(http.clientAddress(peer('::ffff:203.0.113.7')), '203.0.113.7');
+  assert.equal(http.clientAddress(peer('', {})), '');
+  process.env.TRUST_PROXY = '1';
+  try {
+    assert.equal(http.clientAddress(peer('203.0.113.7', { 'x-real-ip': '198.51.100.10' })), '198.51.100.10');
+  } finally {
+    delete process.env.TRUST_PROXY;
+  }
+});
+
 test('a QR pairing is authenticated by the phone and redeemed once by the browser', () => {
   const user = auth.upsertUser({ account: 'st123456', mode: 'campus' });
-  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0' });
+  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0', ip: '192.0.2.10' });
   assert.equal(link.state, 'pending');
   assert.equal(link.pairingUrl, `universityassistant://device-link?token=${link.token}`);
-  assert.equal(auth.pollDeviceLink(link.token).status, 'pending');
+  assert.equal(auth.pollDeviceLink(link.token, { ip: '192.0.2.11' }).status, 'pending');
 
   const approved = auth.approveDeviceLink(user.id, link.token);
   assert.equal(approved.state, 'approved');
   assert.equal(approved.userId, user.id);
   assert.equal(approved.name, 'Chrome · macOS');
+  assert.equal(approved.ipAddress, '192.0.2.10');
+  assert.equal(approved.lastIpAddress, '192.0.2.11');
 
-  const redeemed = auth.pollDeviceLink(link.token);
+  const redeemed = auth.pollDeviceLink(link.token, { ip: '192.0.2.12' });
   assert.equal(redeemed.status, 'approved');
   assert.equal(redeemed.session.user.id, user.id);
   assert.equal(auth.authenticateToken(redeemed.session.token).user.id, user.id);
@@ -140,6 +158,10 @@ test('a QR pairing is authenticated by the phone and redeemed once by the browse
   assert.equal(devices.length, 1);
   assert.equal(devices[0].state, 'active');
   assert.equal(devices[0].sessionId !== null, true);
+  assert.equal(devices[0].ipAddress, '192.0.2.10');
+  assert.equal(devices[0].lastIpAddress, '192.0.2.12');
+  assert.equal(redeemed.device.ipAddress, '192.0.2.10');
+  assert.equal(redeemed.device.lastIpAddress, '192.0.2.12');
 
   assert.throws(() => auth.pollDeviceLink(link.token), /device_link_consumed/);
   assert.equal(auth.revokeDeviceLink(user.id, link.id), true);

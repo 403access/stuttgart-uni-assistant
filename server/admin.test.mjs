@@ -175,9 +175,9 @@ test('user agents resolve to form factor, OS, browser, model, and engine', () =>
 
 test('device links are listed, counted, attached to sessions, and revocable', () => {
   const alice = user('st111111');
-  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36' });
+  const link = auth.createDeviceLink({ name: 'Chrome · macOS', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36', ip: '198.51.100.20' });
   auth.approveDeviceLink(alice.user.id, link.token);
-  const redeemed = auth.pollDeviceLink(link.token);
+  const redeemed = auth.pollDeviceLink(link.token, { ip: '198.51.100.21' });
   assert.equal(redeemed.status, 'approved');
 
   const stats = admin.adminDeviceStats();
@@ -193,18 +193,24 @@ test('device links are listed, counted, attached to sessions, and revocable', ()
   assert.equal(listed.devices[0].account, 'st111111');
   assert.equal(listed.devices[0].client.browser, 'Chrome');
   assert.equal(listed.devices[0].client.type, 'desktop');
+  assert.equal(listed.devices[0].ipAddress, '198.51.100.20');
+  assert.equal(listed.devices[0].lastIpAddress, '198.51.100.21');
   assert.equal(admin.getAdminDevice(link.id).name, 'Chrome · macOS');
+  assert.equal(admin.getAdminDevice(link.id).lastIpAddress, '198.51.100.21');
   assert.equal(admin.getAdminDevice('dev_missing'), null);
   assert.equal(admin.getAdminDevice('../etc/passwd'), null);
   assert.equal(admin.listAdminDevices({ state: 'revoked' }).total, 0);
   assert.equal(admin.listAdminDevices({ query: 'chrome' }).total, 1);
   assert.equal(admin.listAdminDevices({ query: 'desktop' }).total, 1);
+  assert.equal(admin.listAdminDevices({ query: '198.51.100.21' }).total, 1);
 
   const detail = admin.adminUserDetail(alice.user.id);
   assert.equal(detail.devices.length, 1);
   assert.equal(detail.devices[0].client.browser, 'Chrome');
+  assert.equal(detail.devices[0].lastIpAddress, '198.51.100.21');
   assert.equal(detail.sessions[0].device.name, 'Chrome · macOS');
   assert.equal(detail.sessions[0].device.client.browser, 'Chrome');
+  assert.equal(detail.sessions[0].device.lastIpAddress, '198.51.100.21');
   assert.equal(admin.listUsers({}).users[0].deviceCount, 1);
 
   const revoked = admin.revokeAdminDevice(link.id);

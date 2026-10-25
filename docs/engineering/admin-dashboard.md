@@ -40,8 +40,8 @@ that survives reloads and can be shared between operators:
 | `#/overview` | KPI cards, distribution bars, recent accounts, recent audit actions, configuration health |
 | `#/news` | Operator-managed app news with drafts, publishing, editing, and deletion |
 | `#/users` | Searchable, filterable, sortable, paginated account list with bulk actions and CSV export |
-| `#/devices` | QR-linked web browsers with form factor, OS, browser, account, state, timestamps, and revoke |
-| `#/devices/<id>` | One browser pairing: client details, account, session, timestamps, user agent, and revoke |
+| `#/devices` | QR-linked web browsers with form factor, OS, browser, IP address, account, state, timestamps, and revoke |
+| `#/devices/<id>` | One browser pairing: client details, IP addresses, account, session, timestamps, user agent, and revoke |
 | `#/ilias` | ILIAS connections, session state, and parsed course/news/mail counts |
 | `#/users/<id>/overview` | Profile, status, per-study summary, audit preview, delete zone |
 | `#/users/<id>/sessions` | App sessions with state, timestamps, copy and revoke |
@@ -82,12 +82,16 @@ confirmed and recorded in the audit log.
 
 **Web devices:** every browser pairing carries the browser label and user
 agent, the parsed form factor (desktop, mobile, tablet, or bot), operating
-system and version, browser and version, rendering engine, and device model,
-the account that approved it, the pairing and approval timestamps, and the
-session minted when the browser redeemed the code. A browser whose QR code
-expires without approval is shown as expired; revoking a linked device ends
-its web session immediately. Opening a row shows the pairing's full client
-details, timestamps, account, session, and raw user agent.
+system and version, browser and version, rendering engine, device model, and
+the IP address seen at pairing plus the most recent address reported by the
+browser, the account that approved it, the pairing and approval timestamps, and
+the session minted when the browser redeemed the code. MAC addresses are not
+available to a web server because browsers do not expose their hardware
+address; the console shows the network address the server actually observes
+(including `X-Forwarded-For` from a local reverse proxy). A browser whose QR
+code expires without approval is shown as expired; revoking a linked device
+ends its web session immediately. Opening a row shows the pairing's full
+client details, IP addresses, timestamps, account, session, and raw user agent.
 
 **ILIAS:** one row per account that has connected, with whether the
 `PHPSESSID` is still in server memory, the source (browser or `.env`), the
@@ -200,8 +204,8 @@ All routes below except `login`/`logout` require the admin cookie.
 | `GET /v1/admin/users/<id>/ilias/profile?userId=&url=` | Live-read one member's public profile. |
 | `GET /v1/admin/users/<id>/ilias/image?url=` | Stream a profile image with the account's ILIAS session. |
 | `GET /v1/admin/users/<id>/ilias/file?refId=` | Stream one repository file with the account's ILIAS session. |
-| `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers with parsed client details, newest pairing first. |
-| `GET /v1/admin/devices/<deviceId>` | One browser pairing with parsed client details, account, session, and timestamps. |
+| `GET /v1/admin/devices?query=&state=&limit=&offset=` | QR-linked browsers with parsed client details and IP addresses, newest pairing first. |
+| `GET /v1/admin/devices/<deviceId>` | One browser pairing with parsed client details, IP addresses, account, session, and timestamps. |
 | `DELETE /v1/admin/devices/<deviceId>` | Revokes the browser link and its minted session. |
 | `GET /v1/admin/users?query=&mode=&platform=&credential=&activity=&data=&sort=&limit=&offset=` | Paginated user list with stored-data counts and platform chips. |
 | `POST /v1/admin/users` | Pre-provisions an account (`account`, `name`, `email`, `matriculation`, `subject`, `mode`) without a session. |

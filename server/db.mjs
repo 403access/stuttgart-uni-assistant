@@ -21,6 +21,13 @@ function scope(userId) {
   return typeof userId === 'string' && userId ? userId : LEGACY_USER;
 }
 
+/** Add a column to an existing table without rebuilding it. */
+function ensureColumn(db, table, column, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (columns.some((item) => item.name === column)) return;
+  db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
 function parseLecturers(value) {
   if (typeof value !== 'string') return [];
   try {
@@ -82,6 +89,8 @@ export function getDb() {
       token_hash TEXT NOT NULL UNIQUE,
       name TEXT NOT NULL DEFAULT '',
       user_agent TEXT NOT NULL DEFAULT '',
+      ip_address TEXT NOT NULL DEFAULT '',
+      last_ip_address TEXT NOT NULL DEFAULT '',
       kind TEXT NOT NULL DEFAULT 'web',
       created_at TEXT NOT NULL,
       expires_at TEXT NOT NULL,
@@ -404,6 +413,9 @@ export function getDb() {
       created_at TEXT NOT NULL
     );
   `);
+  // Rows created before network addresses were recorded get the empty default.
+  ensureColumn(db, 'device_links', 'ip_address', "TEXT NOT NULL DEFAULT ''");
+  ensureColumn(db, 'device_links', 'last_ip_address', "TEXT NOT NULL DEFAULT ''");
   instances.set(path, db);
   return db;
 }

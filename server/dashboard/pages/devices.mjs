@@ -3,7 +3,7 @@
 import { api, errorText } from '../assets/api.mjs';
 import { setPage } from '../assets/auth-ui.mjs';
 import { PAGE_SIZES } from '../assets/constants.mjs';
-import { deviceClientCell, deviceStateBadge, deviceTypeBadge } from '../assets/device-ui.mjs';
+import { deviceAddressCell, deviceClientCell, deviceStateBadge, deviceTypeBadge } from '../assets/device-ui.mjs';
 import { $, h } from '../assets/dom.mjs';
 import { date, number, relative } from '../assets/format.mjs';
 import { icon } from '../assets/icons.mjs';
@@ -29,7 +29,7 @@ export async function renderDevicesPage(route) {
 
   const search = h('input', {
     id: 'device-query', type: 'search', value: state.devices.query, autocomplete: 'off',
-    placeholder: 'Gerät, Konto, Browser, Betriebssystem oder Geräte-ID',
+    placeholder: 'Gerät, Konto, Browser, Betriebssystem, IP-Adresse oder Geräte-ID',
   });
   const stateSelect = h('select', { id: 'device-state', onChange: () => applyDeviceFilters() },
     ...STATES.map(([key, label]) => h('option', { value: key, selected: state.devices.state === key, text: label })),
@@ -56,13 +56,14 @@ export async function renderDevicesPage(route) {
       ),
       h('section', { className: 'card table-card' },
         h('div', { className: 'table-wrap' },
-          h('table', { className: 'data', style: { minWidth: '1500px' } },
+          h('table', { className: 'data', style: { minWidth: '1660px' } },
             h('caption', { className: 'sr-only' }, 'Verknüpfte Web-Geräte'),
             h('thead', null, h('tr', null,
               h('th', null, 'Gerät'),
               h('th', null, 'Typ'),
               h('th', null, 'Betriebssystem'),
               h('th', null, 'Browser'),
+              h('th', null, 'IP-Adresse'),
               h('th', null, 'Konto'),
               h('th', null, 'Status'),
               h('th', null, 'Erstellt'),
@@ -131,7 +132,7 @@ async function loadDevices() {
   const seq = ++state.devices.seq;
   const tbody = $('devices-body');
   if (!tbody) return;
-  tbody.replaceChildren(...skeletonRows(11, 6));
+  tbody.replaceChildren(...skeletonRows(12, 6));
   const summary = $('devices-summary');
   if (summary) summary.textContent = 'Lade Geräte …';
   try {
@@ -149,7 +150,7 @@ async function loadDevices() {
     if (badgeNode) { badgeNode.textContent = number(data.total); badgeNode.hidden = false; }
   } catch (error) {
     if (error.code === 'unauthorized' || seq !== state.devices.seq) return;
-    tbody.replaceChildren(h('tr', null, h('td', { colspan: '11' }, emptyState('alert', 'Geräte konnten nicht geladen werden', errorText(error), h('button', { className: 'btn secondary', type: 'button', onClick: () => loadDevices() }, icon('refresh'), 'Erneut versuchen')))));
+    tbody.replaceChildren(h('tr', null, h('td', { colspan: '12' }, emptyState('alert', 'Geräte konnten nicht geladen werden', errorText(error), h('button', { className: 'btn secondary', type: 'button', onClick: () => loadDevices() }, icon('refresh'), 'Erneut versuchen')))));
     if (summary) summary.textContent = 'Fehler beim Laden.';
     toast(errorText(error), 'error');
   }
@@ -164,7 +165,7 @@ function renderDeviceRows(data) {
     summary.textContent = data.total === 1 ? '1 Gerät entspricht den Filtern.' : number(data.total) + ' Geräte entsprechen den Filtern.';
   }
   if (!data.devices.length) {
-    tbody.append(h('tr', null, h('td', { colspan: '11' }, emptyState('qr', 'Keine Geräte', 'Sobald sich die Web-App per QR-Code anmeldet, erscheint die Paarung hier.'))));
+    tbody.append(h('tr', null, h('td', { colspan: '12' }, emptyState('qr', 'Keine Geräte', 'Sobald sich die Web-App per QR-Code anmeldet, erscheint die Paarung hier.'))));
     return;
   }
   for (const device of data.devices) {
@@ -185,6 +186,7 @@ function renderDeviceRows(data) {
       h('td', null, deviceTypeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
       h('td', null, deviceClientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
       h('td', null, deviceClientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
+      h('td', null, deviceAddressCell(device)),
       h('td', null, userCell),
       h('td', null, deviceStateBadge(device.state)),
       h('td', null, h('div', { className: 'who-text' }, h('strong', { text: relative(device.createdAt), style: { fontSize: '12.5px' } }), h('span', { text: date(device.createdAt) }))),

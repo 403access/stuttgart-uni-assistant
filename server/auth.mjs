@@ -181,6 +181,8 @@ function deviceLinkRow(row, session = null) {
     name: row.name || 'Unbekanntes Gerät',
     kind: row.kind || 'web',
     userAgent: row.user_agent || '',
+    ipAddress: row.ip_address || '',
+    lastIpAddress: row.last_ip_address || '',
     createdAt: row.created_at,
     expiresAt: row.expires_at,
     approvedAt: row.approved_at ?? null,
@@ -197,6 +199,10 @@ function cleanDeviceName(value, fallback = 'Web-Browser') {
   return (text || fallback).slice(0, 80);
 }
 
+function cleanDeviceAddress(value) {
+  return typeof value === 'string' ? value.trim().slice(0, 100) : '';
+}
+
 /** Create a pending pairing. Only the QR code token is returned; the database gets its hash. */
 export function createDeviceLink(input = {}) {
   const db = getDb();
@@ -205,12 +211,13 @@ export function createDeviceLink(input = {}) {
   const now = nowIso();
   const expiresAt = new Date(Date.now() + DEVICE_LINK_TTL_MS).toISOString();
   const userAgent = typeof input.userAgent === 'string' ? input.userAgent.slice(0, 300) : '';
+  const ip = cleanDeviceAddress(input.ip);
   const name = cleanDeviceName(input.name);
   // Pending codes are cheap; drop the ones nobody scanned.
   db.prepare('DELETE FROM device_links WHERE user_id IS NULL AND expires_at <= ?').run(now);
   db.prepare(
-    'INSERT INTO device_links (id, user_id, token_hash, name, user_agent, kind, created_at, expires_at) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)',
-  ).run(id, hashToken(token), name, userAgent, 'web', now, expiresAt);
+    'INSERT INTO device_links (id, user_id, token_hash, name, user_agent, ip_address, last_ip_address, kind, created_at, expires_at) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?)',
+  ).run(id, hashToken(token), name, userAgent, ip, ip, 'web', now, expiresAt);
   return { id, token, name, expiresAt, state: 'pending', pairingUrl: devicePairingUrl(token) };
 }
 
@@ -244,10 +251,12 @@ export function approveDeviceLink(userId, token, input = {}) {
 }
 
 /** The browser polls with its one-time token; the first poll after approval mints the session. */
-export function pollDeviceLink(token) {
+export function pollDeviceLink(token, input = {}) {
   const db = getDb();
   const row = deviceLinkByToken(token);
   if (row.revoked_at) throw authError(410, 'device_link_revoked');
+  const ip = cleanDeviceAddress(input.ip);
+  if (ip) db.prepare('UPDATE device_links SET last_ip_address = ? WHERE id = ?').run(ip, row.id);
   const approvedAt = row.approved_at ? Date.parse(row.approved_at) : NaN;
   const redeemableAfterExpiry = row.user_id && Number.isFinite(approvedAt) && Date.now() <= approvedAt + DEVICE_REDEEM_GRACE_MS;
   if (row.expires_at <= nowIso() && !redeemableAfterExpiry) throw authError(410, 'device_link_expired');

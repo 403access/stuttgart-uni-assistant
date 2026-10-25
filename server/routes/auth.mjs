@@ -18,7 +18,7 @@ import {
   unlinkPlatform,
 } from '../auth.mjs';
 import { clearUserCampusCredential } from '../campus.mjs';
-import { readJsonBody, send } from '../http.mjs';
+import { clientAddress, readJsonBody, send } from '../http.mjs';
 import { logService } from '../service-log.mjs';
 
 export async function handleAuth(request, response, url) {
@@ -138,6 +138,7 @@ export async function handleAuth(request, response, url) {
       const link = createDeviceLink({
         name: parsed.body.name,
         userAgent: request.headers['user-agent'],
+        ip: clientAddress(request),
       });
       send(response, 200, { link });
     } catch (error) {
@@ -149,7 +150,7 @@ export async function handleAuth(request, response, url) {
     const parsed = await readJsonBody(request, response);
     if (!parsed) return true;
     try {
-      send(response, 200, pollDeviceLink(parsed.body.token));
+      send(response, 200, pollDeviceLink(parsed.body.token, { ip: clientAddress(request) }));
     } catch (error) {
       send(response, Number(error.status) || 400, { error: error.message || 'device_link_failed' });
     }

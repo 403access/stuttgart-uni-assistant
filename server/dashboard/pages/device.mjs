@@ -85,6 +85,8 @@ function renderDevice(device) {
       fieldBox('Betriebssystem', osText(client)),
       fieldBox('Browser', browserText(client)),
       fieldBox('Engine', client.engine || '–'),
+      fieldBox('IP-Adresse (zuletzt)', device.lastIpAddress || device.ipAddress || '–'),
+      fieldBox('IP-Adresse (Pairing)', device.ipAddress || '–'),
       fieldBox('Art', device.kind || 'web'),
       fieldBox('Status', deviceStateBadge(device.state)),
     ),

@@ -3,7 +3,7 @@
 import { api, errorText } from '../assets/api.mjs';
 import { setPage } from '../assets/auth-ui.mjs';
 import { AUDIT_LABELS, DANGEROUS_ACTIONS, MODES, PLATFORM_ICONS, PLATFORMS } from '../assets/constants.mjs';
-import { deviceClientCell, deviceStateBadge, deviceTypeBadge } from '../assets/device-ui.mjs';
+import { deviceAddressCell, deviceClientCell, deviceStateBadge, deviceTypeBadge } from '../assets/device-ui.mjs';
 import { $, h } from '../assets/dom.mjs';
 import { date, dateOnly, detailText, duration, icsDate, modeName, number, platformName, relative } from '../assets/format.mjs';
 import { icon } from '../assets/icons.mjs';
@@ -265,7 +265,7 @@ function renderSessionsTab(container, detail) {
         h('div', { className: 'main' },
           h('div', { className: 'row tight' }, h('strong', { className: 'mono', text: session.id }), copyButton(session.id, 'Sitzungs-ID')),
           h('span', { text: 'erstellt ' + date(session.createdAt) + ' · läuft ab ' + date(session.expiresAt) }),
-          session.device ? h('span', { text: 'Gerät ' + session.device.name + (session.device.kind === 'web' ? ' · Web' : '') }) : null,
+          session.device ? h('span', { text: 'Gerät ' + session.device.name + (session.device.kind === 'web' ? ' · Web' : '') + (session.device.lastIpAddress || session.device.ipAddress ? ' · IP ' + (session.device.lastIpAddress || session.device.ipAddress) : '') }) : null,
           h('span', { text: session.lastSeenAt ? 'zuletzt gesehen ' + date(session.lastSeenAt) : 'noch nicht verwendet' + (session.revokedAt ? ' · widerrufen ' + date(session.revokedAt) : '') }),
         ),
         h('div', { className: 'row actions' },
@@ -299,6 +299,7 @@ function renderDevicesTab(container, detail) {
           h('td', null, deviceTypeBadge(client), client.device ? h('div', { className: 'hint', text: client.device }) : null),
           h('td', null, deviceClientCell(client.os, client.osVersion ? 'Version ' + client.osVersion : '')),
           h('td', null, deviceClientCell(client.browser, [client.browserVersion ? 'Version ' + client.browserVersion : null, client.engine].filter(Boolean).join(' · '))),
+          h('td', null, deviceAddressCell(device)),
           h('td', null, deviceStateBadge(device.state)),
           h('td', null, date(device.createdAt)),
           h('td', null, device.approvedAt ? date(device.approvedAt) : h('span', { className: 'muted', text: '–' })),
@@ -306,16 +307,16 @@ function renderDevicesTab(container, detail) {
           h('td', null, device.state !== 'revoked' ? h('button', { className: 'btn danger-soft small', type: 'button', onClick: (event) => { event.stopPropagation(); revokeUserDevice(user.id, device); } }, icon('trash'), 'Widerrufen') : h('span', { className: 'muted', text: '–' })),
         );
       })
-    : [h('tr', null, h('td', { colspan: '9' }, emptyState('smartphone', 'Keine Web-Geräte', 'Dieses Konto hat noch keinen Browser per QR-Code freigegeben.')))];
+    : [h('tr', null, h('td', { colspan: '10' }, emptyState('smartphone', 'Keine Web-Geräte', 'Dieses Konto hat noch keinen Browser per QR-Code freigegeben.')))];
 
   container.append(
     callout('Die Web-App kann sich nur mit einem QR-Code anmelden, den die App auf dem Telefon freigibt. Ein Widerruf beendet die zugehörige Websitzung sofort.', '', 'shield'),
     h('div', { className: 'detail-section' },
       sectionHead('Web-Geräte', active + ' aktiv · ' + devices.length + ' insgesamt'),
       h('div', { className: 'table-wrap' },
-        h('table', { className: 'data', style: { minWidth: '1250px' } },
+        h('table', { className: 'data', style: { minWidth: '1400px' } },
           h('caption', { className: 'sr-only' }, 'Mit dem Konto verknüpfte Web-Geräte'),
-          h('thead', null, h('tr', null, h('th', null, 'Gerät'), h('th', null, 'Typ'), h('th', null, 'Betriebssystem'), h('th', null, 'Browser'), h('th', null, 'Status'), h('th', null, 'Erstellt'), h('th', null, 'Genehmigt'), h('th', null, 'Sitzung'), h('th', null, ''))),
+          h('thead', null, h('tr', null, h('th', null, 'Gerät'), h('th', null, 'Typ'), h('th', null, 'Betriebssystem'), h('th', null, 'Browser'), h('th', null, 'IP-Adresse'), h('th', null, 'Status'), h('th', null, 'Erstellt'), h('th', null, 'Genehmigt'), h('th', null, 'Sitzung'), h('th', null, ''))),
           h('tbody', null, ...rows),
         ),
       ),

@@ -35,6 +35,8 @@ function deviceRow(row) {
     name: row.name || 'Unbekanntes Gerät',
     kind: row.kind || 'web',
     userAgent: row.user_agent || '',
+    ipAddress: row.ip_address || '',
+    lastIpAddress: row.last_ip_address || '',
     client: parseUserAgent(row.user_agent || ''),
     state: deviceState(row, session),
     createdAt: row.created_at,
@@ -61,7 +63,7 @@ function matchingDevices({ query = '', state = '' } = {}) {
   return rows.filter((device) => {
     if (wanted && device.state !== wanted) return false;
     if (!text) return true;
-    return [device.name, device.account, device.userName, device.userAgent, device.id, device.client.type, device.client.os, device.client.browser]
+    return [device.name, device.account, device.userName, device.userAgent, device.ipAddress, device.lastIpAddress, device.id, device.client.type, device.client.os, device.client.browser]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(text));
   });
