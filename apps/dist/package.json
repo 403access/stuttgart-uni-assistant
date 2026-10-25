@@ -10,6 +10,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@ua/design-tokens": "workspace:*"
+    "@ua/design-tokens": "workspace:*",
+    "@ua/server-kit": "workspace:*"
   }
 }

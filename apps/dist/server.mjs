@@ -25,7 +25,7 @@
  *   DIST_MAX_BYTES    upload cap, default 512 MB
  */
 
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { createReadStream, existsSync, mkdirSync, statSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -43,6 +43,8 @@ import {
 } from './db.mjs';
 import { buildPage, indexPage, manifestPlist } from './render.mjs';
 import { loadEnv } from './env.mjs';
+import { constantTimeEqual } from '@ua/server-kit/auth';
+import { decodedHeader, header, readRawBody, sendHtml, sendJson } from '@ua/server-kit/http';
 
 // The repository keeps one `.env` at the root and `server/index.mjs` reads it the
 // same way. Values already in the environment win, so a systemd unit on a server
@@ -65,58 +67,7 @@ function baseUrl(request) {
 
 function authorized(request) {
   if (!TOKEN) return false;
-  const given = Buffer.from(String(request.headers.authorization || ''));
-  const expected = Buffer.from(`Bearer ${TOKEN}`);
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
-
-function sendJson(response, status, value) {
-  const body = JSON.stringify(value);
-  response.writeHead(status, {
-    'content-type': 'application/json; charset=utf-8',
-    'content-length': Buffer.byteLength(body),
-  });
-  response.end(body);
-}
-
-function sendHtml(response, status, html) {
-  response.writeHead(status, {
-    'content-type': 'text/html; charset=utf-8',
-    'content-length': Buffer.byteLength(html),
-  });
-  response.end(html);
-}
-
-/** Read a request body, refusing to buffer more than the cap. */
-async function readBody(request, limit = MAX_BYTES) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of request) {
-    total += chunk.length;
-    if (total > limit) {
-      const error = new Error(`Body is larger than ${limit} bytes.`);
-      error.status = 413;
-      throw error;
-    }
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks);
-}
-
-function header(request, name) {
-  const value = request.headers[name];
-  return typeof value === 'string' ? value : '';
-}
-
-/** A header the client percent-encoded, so non-ASCII survives the wire. */
-function decodedHeader(request, name) {
-  const raw = header(request, name);
-  if (!raw) return '';
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
+  return constantTimeEqual(request.headers.authorization || '', `Bearer ${TOKEN}`);
 }
 
 /** Strip the filesystem path before anything leaves the process. */
@@ -147,7 +98,7 @@ async function handleBuildUpload(request, response) {
 
   let body;
   try {
-    body = await readBody(request);
+    body = await readRawBody(request, MAX_BYTES);
   } catch (error) {
     request.destroy();
     return sendJson(response, error.status ?? 400, { error: 'body_rejected', detail: error.message });
@@ -242,7 +193,7 @@ async function route(request, response) {
       let name = url.searchParams.get('name') || '';
       if (!name) {
         try {
-          const body = await readBody(request, 4096);
+          const body = await readRawBody(request, 4096);
           if (body.length > 0) name = String(JSON.parse(body.toString('utf8')).name || '');
         } catch {
           // A body is optional; a malformed one should not fail the registration.

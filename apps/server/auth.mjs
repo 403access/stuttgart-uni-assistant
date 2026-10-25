@@ -10,12 +10,13 @@
  * `server/auth.test.mjs` exercises the store directly.
  */
 
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
 import { getDb } from './db.mjs';
+import { hashToken, readBearer } from '@ua/server-kit/auth';
 import { PLATFORMS, PLATFORM_STATUS, SIGN_IN_MODES } from '@ua/contracts/auth';
 
-export { PLATFORMS, PLATFORM_STATUS, SIGN_IN_MODES };
+export { PLATFORMS, PLATFORM_STATUS, SIGN_IN_MODES, hashToken, readBearer };
 
 export function authError(status, code, detail) {
   const error = new Error(code);
@@ -28,9 +29,6 @@ export function normalizeAccount(account) {
   return String(account ?? '').trim().toLowerCase();
 }
 
-export function hashToken(token) {
-  return createHash('sha256').update(String(token)).digest('hex');
-}
 
 function sessionTtlHours() {
   const value = Number(process.env.AUTH_SESSION_HOURS || 24 * 30);
@@ -360,12 +358,6 @@ export function issueSession(userId) {
   return { sessionId, token, expiresAt };
 }
 
-export function readBearer(request) {
-  const header = request?.headers?.authorization;
-  if (typeof header !== 'string') return null;
-  const match = /^Bearer\s+([A-Za-z0-9_-]{20,200})$/i.exec(header.trim());
-  return match ? match[1] : null;
-}
 
 /** Resolve a bearer token to its user. Expired and revoked sessions are rejected. */
 export function authenticateToken(token) {

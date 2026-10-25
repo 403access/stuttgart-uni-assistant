@@ -10,7 +10,7 @@
 
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { openSqlite } from '@ua/server-kit/sqlite';
 import { fileURLToPath } from 'node:url';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -35,9 +35,8 @@ export function getDb() {
   const path = dbPath();
   if (cached && cached.path === path) return cached.db;
   mkdirSync(dirname(path), { recursive: true });
-  const db = new DatabaseSync(path);
+  const db = openSqlite(path);
   db.exec(`
-    PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS builds (
       id TEXT PRIMARY KEY,
       created_at TEXT NOT NULL,

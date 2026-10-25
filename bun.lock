@@ -20,6 +20,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@ua/design-tokens": "workspace:*",
+        "@ua/server-kit": "workspace:*",
       },
     },
     "apps/mobile": {
@@ -92,6 +93,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@ua/contracts": "workspace:*",
+        "@ua/server-kit": "workspace:*",
       },
     },
     "apps/site": {
@@ -116,6 +118,10 @@
     },
     "packages/format": {
       "name": "@ua/format",
+      "version": "0.0.0",
+    },
+    "packages/server-kit": {
+      "name": "@ua/server-kit",
       "version": "0.0.0",
     },
     "tools": {
@@ -687,6 +693,8 @@
     "@ua/mobile": ["@ua/mobile@workspace:apps/mobile"],
 
     "@ua/server": ["@ua/server@workspace:apps/server"],
+
+    "@ua/server-kit": ["@ua/server-kit@workspace:packages/server-kit"],
 
     "@ua/site": ["@ua/site@workspace:apps/site"],
 

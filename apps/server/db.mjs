@@ -1,6 +1,6 @@
 /** Server-side SQLite store: the source of truth for portal data. Clients keep their own copy for sync. */
 
-import { DatabaseSync } from 'node:sqlite';
+import { openSqlite } from '@ua/server-kit/sqlite';
 
 const MAX_PORTAL_CALLS = 2000;
 const MAX_SERVICE_LOGS = 5000;
@@ -52,10 +52,8 @@ export function getDb() {
   const path = dbPath();
   const cached = instances.get(path);
   if (cached) return cached;
-  const db = new DatabaseSync(path);
+  const db = openSqlite(path, { foreignKeys: true });
   db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA foreign_keys = ON;
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       account TEXT NOT NULL,

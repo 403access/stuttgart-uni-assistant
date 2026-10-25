@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 
+import { escapeHtml } from '@ua/server-kit/html';
+
 import { t } from '../i18n/index.mjs';
 
 let pptxBundle = '';
@@ -36,22 +38,6 @@ function inlineScript(source) {
   return source.replace(/<\/script/gi, '<\\/script');
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => {
-    switch (character) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#39;';
-    }
-  });
-}
 
 const BASE_STYLES = `
   html, body { margin: 0; padding: 0; background: #f2f4f6; }

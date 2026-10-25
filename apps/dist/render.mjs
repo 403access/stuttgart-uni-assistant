@@ -6,16 +6,10 @@
  */
 
 import { tokensCss } from '@ua/design-tokens/css-string';
+import { escapeHtml } from '@ua/server-kit/html';
 
-/** Escape anything that came from a build's metadata before putting it in HTML. */
-export function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+export { escapeHtml };
+
 
 export function formatBytes(bytes) {
   const mb = Number(bytes) / (1024 * 1024);
