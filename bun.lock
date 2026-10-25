@@ -41,6 +41,7 @@
         "@ua/contracts": "workspace:*",
         "@ua/core": "workspace:*",
         "@ua/design-tokens": "workspace:*",
+        "@ua/feature-ilias": "workspace:*",
         "@ua/feature-mail": "workspace:*",
         "@ua/format": "workspace:*",
         "@ua/ui": "workspace:*",
@@ -125,6 +126,13 @@
     "packages/design-tokens": {
       "name": "@ua/design-tokens",
       "version": "0.0.0",
+    },
+    "packages/features/ilias": {
+      "name": "@ua/feature-ilias",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ua/core": "workspace:*",
+      },
     },
     "packages/features/mail": {
       "name": "@ua/feature-mail",
@@ -722,6 +730,8 @@
     "@ua/design-tokens": ["@ua/design-tokens@workspace:packages/design-tokens"],
 
     "@ua/dist": ["@ua/dist@workspace:apps/dist"],
+
+    "@ua/feature-ilias": ["@ua/feature-ilias@workspace:packages/features/ilias"],
 
     "@ua/feature-mail": ["@ua/feature-mail@workspace:packages/features/mail"],
 

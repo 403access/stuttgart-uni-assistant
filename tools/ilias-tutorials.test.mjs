@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { isTutorialItem, tutorialFromContent, tutorialItems } from '../apps/mobile/src/ilias/tutorials.ts';
+import { isTutorialItem, tutorialFromContent, tutorialItems } from '@ua/feature-ilias';
 
 /**
  * The onboarding tutorial preview is built from the ILIAS dashboard plus one

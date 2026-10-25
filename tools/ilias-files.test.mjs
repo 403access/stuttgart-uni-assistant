@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-const { iliasPreviewKind, previewKindFromParams } = await import('../apps/mobile/src/ilias/files.ts');
+const { iliasPreviewKind, previewKindFromParams } = await import('@ua/feature-ilias');
 
 function fileRow(overrides = {}) {
   return {

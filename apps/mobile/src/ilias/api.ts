@@ -7,6 +7,7 @@
  * is fresh enough and posts a freshly harvested page back to the server.
  */
 
+import { IliasError } from '@ua/feature-ilias';
 import { assistantUrl } from '@/src/assistant/remote';
 import { authHeaders } from '@/src/auth/session';
 import {
@@ -38,15 +39,7 @@ import type {
   IliasStatus,
 } from './types';
 
-export class IliasError extends Error {
-  detail: string;
-
-  constructor(code: string, detail = '') {
-    super(code);
-    this.name = 'IliasError';
-    this.detail = detail;
-  }
-}
+export { IliasError };
 
 function endpoint(path: string): string {
   return `${assistantUrl.replace(/\/$/, '')}${path}`;
