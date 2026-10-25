@@ -201,11 +201,12 @@ export function Badge({ children, tone = '' }: { children: ReactNode; tone?: Ton
   return <span className={`badge ${tone}`.trim()}>{children}</span>;
 }
 
-export function Avatar({ name, size = '' }: { name: string; size?: '' | 'sm' | 'lg' }) {
-  const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+export function Avatar({ name, account, size = '' }: { name: string; account?: string | null; size?: '' | 'sm' | 'lg' }) {
+  const source = String(name || account || '?').trim();
+  const parts = source.split(/\s+/).filter(Boolean);
   const letters = parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : (parts[0] ?? '?').slice(0, 2);
   let hash = 0;
-  for (const char of String(name || '?')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  for (const char of String(account || name || '?')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return <span className={`avatar a${hash % 6} ${size}`.trim()} aria-hidden="true">{letters.toUpperCase()}</span>;
 }
 

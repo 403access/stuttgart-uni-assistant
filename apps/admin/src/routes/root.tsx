@@ -23,21 +23,22 @@ const systemSections = [
 
 const pages: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Übersicht', subtitle: 'Konten, Daten und Betrieb im Blick' },
-  '/news': { title: 'News', subtitle: 'Meldungen für die App verwalten und veröffentlichen' },
+  '/news': { title: 'News', subtitle: 'Meldungen für den Feed der App veröffentlichen' },
   '/quiz': { title: 'Lernquiz', subtitle: 'Themen und Fragen verwalten, Antworten aller Nutzer einsehen' },
-  '/users': { title: 'Nutzer', subtitle: 'Konten, Sitzungen, Plattformen und C@MPUS-Daten' },
-  '/ilias': { title: 'ILIAS', subtitle: 'Sitzungen, Konten und gespeicherte Dashboards' },
-  '/devices': { title: 'Geräte', subtitle: 'Browser-Verknüpfungen und Geräte-Freigaben' },
-  '/audit': { title: 'Aktivität', subtitle: 'Audit-Protokoll des Operators' },
-  '/logs': { title: 'Logs', subtitle: 'Persistierte Service-Logs' },
-  '/components': { title: 'Komponenten', subtitle: 'Generierte Übersicht aller Komponenten' },
-  '/system': { title: 'System', subtitle: 'Konfiguration, Laufzeit und Sync-Jobs' },
+  '/users': { title: 'Nutzer', subtitle: 'Konten suchen, filtern, prüfen und verwalten' },
+  '/ilias': { title: 'ILIAS', subtitle: 'Verbindungen, Kurse und ungelesene Hinweise' },
+  '/devices': { title: 'Geräte', subtitle: 'Web-Browser, die per QR-Code von der App freigegeben wurden' },
+  '/audit': { title: 'Aktivität', subtitle: 'Jede Operator-Aktion, nachvollziehbar protokolliert' },
+  '/logs': { title: 'Logs', subtitle: 'Diagnose aller Dienste, neueste Einträge zuerst' },
+  '/components': { title: 'Komponenten', subtitle: 'Katalog, Plattformdateien und Fundstellen aus dem TypeScript-AST' },
+  '/system': { title: 'System', subtitle: 'Umgebung, Konfiguration, Datenbank und Wartung' },
 };
 
 export function Root() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const search = useRouterState({ select: (state) => state.location.search }) as { view?: string };
   const { theme, toggle } = useTheme();
   const toast = useToast();
   const overview = useQuery({ queryKey: ['overview'], queryFn: () => api.overview(), retry: false });
@@ -58,12 +59,17 @@ export function Root() {
   }
 
   const section = pathname === '/' ? '/' : `/${pathname.split('/').filter(Boolean)[0]}`;
+  const modeNames: Record<string, string> = { local: 'Lokal', campus: 'C@MPUS', oidc: 'SIAM', demo: 'Demo' };
   const page = userMatch
     ? {
         title: detailUser?.name || detailUser?.account || 'Nutzerdetails',
-        subtitle: detailUser ? `${detailUser.account} · ${detailUser.mode}` : 'Konto und Daten werden geladen …',
+        subtitle: detailUser ? `${detailUser.account} · ${modeNames[detailUser.mode ?? ''] ?? detailUser.mode}` : 'Konto und Daten werden geladen …',
       }
-    : pages[section] ?? pages['/'];
+    : section === '/quiz' && search.view === 'attempts'
+      ? { title: 'Quiz-Antworten', subtitle: 'Jede geprüfte Antwort aller Nutzer' }
+      : section === '/quiz' && search.view === 'sessions'
+        ? { title: 'Quiz-Runden', subtitle: 'Abgeschlossene Runden mit Score und Dauer' }
+        : pages[section] ?? pages['/'];
   const stats = overview.data as Record<string, number> | undefined;
   const isActive = (href: string) => href === section || (href !== '/' && section.startsWith(href));
 

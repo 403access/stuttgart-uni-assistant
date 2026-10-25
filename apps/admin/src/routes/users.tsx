@@ -210,7 +210,7 @@ export function UsersPage() {
                   <td><input type="checkbox" className="checkbox" aria-label={`Konto ${user.account} auswählen`} checked={selected.has(user.id)} onChange={() => toggle(user.id)} /></td>
                   <td>
                     <Link className="who" to="/users/$userId" params={{ userId: user.id }} style={{ color: 'inherit' }}>
-                      <Avatar name={user.name || user.account} />
+                      <Avatar name={user.name || user.account} account={user.account} />
                       <span className="who-text"><strong>{user.name || user.account}</strong><span>{user.account}{user.email ? ` · ${user.email}` : ''}</span></span>
                     </Link>
                   </td>

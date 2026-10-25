@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { formatTimestamp } from '@ua/format';
 import {
   Badge,
@@ -60,7 +61,10 @@ const EMPTY_TOPIC = {
 export function QuizPage() {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [tab, setTab] = useState<'topics' | 'attempts' | 'sessions'>('topics');
+  const navigate = useNavigate();
+  const routeSearch = useSearch({ strict: false }) as { view?: string };
+  const initialTab = routeSearch.view === 'attempts' ? 'attempts' : routeSearch.view === 'sessions' ? 'sessions' : 'topics';
+  const [tab, setTab] = useState<'topics' | 'attempts' | 'sessions'>(initialTab);
   const [search, setSearch] = useState('');
   const [moduleId, setModuleId] = useState('');
   const [published, setPublished] = useState('');
@@ -93,6 +97,11 @@ export function QuizPage() {
     queryFn: () => api.quizSessions({ query: sessionSearch, limit: PAGE_SIZE, offset: (sessionPage - 1) * PAGE_SIZE }),
     enabled: tab === 'sessions',
   });
+
+  function changeTab(next: 'topics' | 'attempts' | 'sessions') {
+    setTab(next);
+    navigate({ to: '/quiz', search: next === 'topics' ? {} : { view: next } });
+  }
 
   const stats = (overview.data ?? {}) as any;
   const modules: any[] = stats.modulesList ?? [];
@@ -214,12 +223,12 @@ export function QuizPage() {
   }
 
   const kpis = [
-    { icon: 'grid', tone: 'blue', value: stats.modules ?? 0, label: 'Module', sub: `${stats.studies ?? 0} Studiengänge`, onClick: () => setTab('topics') },
-    { icon: 'list', tone: 'cyan', value: stats.topics ?? 0, label: 'Themen', sub: `${stats.publishedTopics ?? 0} veröffentlicht`, onClick: () => setTab('topics') },
-    { icon: 'info', tone: 'purple', value: stats.questions ?? 0, label: 'Fragen', sub: `${stats.publishedQuestions ?? 0} veröffentlicht`, onClick: () => setTab('topics') },
-    { icon: 'check-circle', tone: 'green', value: stats.attempts ?? 0, label: 'Antworten', sub: `${stats.today ?? 0} heute`, onClick: () => setTab('attempts') },
-    { icon: 'users', tone: 'amber', value: stats.users ?? 0, label: 'Nutzer mit Antworten', sub: `${stats.sessions ?? 0} Runden`, onClick: () => setTab('attempts') },
-    { icon: 'activity', tone: 'red', value: `${stats.accuracy ?? 0}%`, label: 'Trefferquote', sub: `${stats.correct ?? 0} richtig`, onClick: () => setTab('attempts') },
+    { icon: 'grid', tone: 'blue', value: stats.modules ?? 0, label: 'Module', sub: `${stats.studies ?? 0} Studiengänge`, onClick: () => changeTab('topics') },
+    { icon: 'list', tone: 'cyan', value: stats.topics ?? 0, label: 'Themen', sub: `${stats.publishedTopics ?? 0} veröffentlicht`, onClick: () => changeTab('topics') },
+    { icon: 'info', tone: 'purple', value: stats.questions ?? 0, label: 'Fragen', sub: `${stats.publishedQuestions ?? 0} veröffentlicht`, onClick: () => changeTab('topics') },
+    { icon: 'check-circle', tone: 'green', value: stats.attempts ?? 0, label: 'Antworten', sub: `${stats.today ?? 0} heute`, onClick: () => changeTab('attempts') },
+    { icon: 'users', tone: 'amber', value: stats.users ?? 0, label: 'Nutzer mit Antworten', sub: `${stats.sessions ?? 0} Runden`, onClick: () => changeTab('attempts') },
+    { icon: 'activity', tone: 'red', value: `${stats.accuracy ?? 0}%`, label: 'Trefferquote', sub: `${stats.correct ?? 0} richtig`, onClick: () => changeTab('attempts') },
   ];
 
   return (
@@ -390,8 +399,8 @@ export function QuizPage() {
             subtitle="Jede geprüfte Antwort mit Nutzer, Frage und Ergebnis."
             actions={
               <div className="row tight">
-                <Button variant="secondary" size="small" onClick={() => setTab('attempts')}>Alle Antworten</Button>
-                <Button variant="secondary" size="small" onClick={() => setTab('sessions')}>Runden</Button>
+                <Button variant="secondary" size="small" onClick={() => changeTab('attempts')}>Alle Antworten</Button>
+                <Button variant="secondary" size="small" onClick={() => changeTab('sessions')}>Runden</Button>
               </div>
             }
           >
@@ -416,7 +425,7 @@ export function QuizPage() {
 
       {tab === 'attempts' ? (
         <>
-          <BackLink href="/quiz" onNavigate={() => setTab('topics')}>Zurück zum Katalog</BackLink>
+          <BackLink href="/quiz" onNavigate={() => changeTab('topics')}>Zurück zum Katalog</BackLink>
           <section className="card toolbar" aria-label="Antwortfilter">
             <label className="field grow">
               Suche
@@ -468,7 +477,7 @@ export function QuizPage() {
 
       {tab === 'sessions' ? (
         <>
-          <BackLink href="/quiz" onNavigate={() => setTab('topics')}>Zurück zum Katalog</BackLink>
+          <BackLink href="/quiz" onNavigate={() => changeTab('topics')}>Zurück zum Katalog</BackLink>
           <section className="card toolbar" aria-label="Rundenfilter">
             <label className="field grow">
               Suche

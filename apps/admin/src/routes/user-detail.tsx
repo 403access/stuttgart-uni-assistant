@@ -253,7 +253,7 @@ export function UserDetailPage() {
       <BackLink href="/users" onNavigate={() => navigate({ to: '/users' })}>Zurück zu den Konten</BackLink>
 
       <section className="card profile-card">
-        <Avatar name={user.name || user.account} size="lg" />
+        <Avatar name={user.name || user.account} account={user.account} size="lg" />
         <div className="profile-main">
           <div className="row"><h2>{user.name || user.account}</h2><span className="spacer" /></div>
           <p className="profile-sub">

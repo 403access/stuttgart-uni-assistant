@@ -127,7 +127,7 @@ export function OverviewPage() {
                 {recent.map((user) => (
                   <TimelineItem key={user.id}>
                     <a href={`/users/${user.id}`} onClick={(event) => { event.preventDefault(); navigate({ to: '/users/$userId', params: { userId: user.id } }); }} style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'inherit', textDecoration: 'none' }}>
-                      <Avatar name={user.name || user.account} size="sm" />
+                      <Avatar name={user.name || user.account} account={user.account} size="sm" />
                       <div className="timeline-body">
                         <strong>{user.name || user.account}</strong>
                         <span>{user.account}{user.email ? ` · ${user.email}` : ''}</span>

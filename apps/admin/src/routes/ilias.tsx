@@ -138,7 +138,7 @@ export function IliasPage() {
                     navigate({ to: '/users/$userId', params: { userId: user.id }, search: { tab: 'ilias' } });
                   }}
                 >
-                  <Avatar name={user.name || user.account} size="sm" />
+                  <Avatar name={user.name || user.account} account={user.account} size="sm" />
                   <span className="who-text">
                     <strong>{user.name || user.account}</strong>
                     <span>{user.account}{user.iliasAccount ? ` · ${user.iliasAccount}` : ''}</span>
