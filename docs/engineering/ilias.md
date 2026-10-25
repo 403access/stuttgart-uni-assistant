@@ -228,7 +228,9 @@ iframe. Presentations and documents take the same file screen but render
 through `/v1/ilias/viewer`: the server fetches the file, inlines the
 `pptx-preview` or `docx-preview` browser bundle and the file bytes into one HTML
 page, and the app shows that page in a WebView (web: an iframe with the fetched
-page). The content scales to the viewport and scrolls; the file never reaches a
+page). Every Word page is stretched to the viewport width; images and tables are
+capped at that width, and headers and footers stay inside the page card instead
+of the clipped page margin. The content scrolls; the file never reaches a
 third-party viewer. Other file types keep the share sheet, and every file still
 has "Open in browser" and "Share" actions.
 

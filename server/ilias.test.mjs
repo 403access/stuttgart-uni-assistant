@@ -974,6 +974,10 @@ test('the HTTP layer renders PPTX and DOCX in self-contained viewer pages', asyn
     assert.match(docxHtml, /ILIAS_VIEWER_DATA/);
     assert.ok(docxHtml.includes(bytes.toString('base64')));
     assert.match(docxHtml, /Dokument wird geladen/);
+    // Wide content, headers, and footers stay inside a full-width page card.
+    assert.match(docxHtml, /\.docx-wrapper > section\.docx \{\s*width: 100% !important/);
+    assert.match(docxHtml, /section\.docx > header,[\s\S]*section\.docx > footer \{/);
+    assert.match(docxHtml, /section\.docx img,\s*[\s\S]*section\.docx table \{\s*max-width: 100% !important/);
   } finally {
     globalThis.fetch = realFetch;
     await new Promise((resolve) => server.close(resolve));

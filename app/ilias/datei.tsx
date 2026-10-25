@@ -34,7 +34,9 @@ export default function IliasFileScreen() {
   const date = firstParam(params.date);
   const explicitView = firstParam(params.view);
   const kind: IliasPreviewKind | null =
-    explicitView === 'pdf' || explicitView === 'pptx' ? explicitView : previewKindFromParams(type, title);
+    explicitView === 'pdf' || explicitView === 'pptx' || explicitView === 'docx'
+      ? explicitView
+      : previewKindFromParams(type, title);
   const validRef = Number.isInteger(refId) && refId > 0;
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(0);

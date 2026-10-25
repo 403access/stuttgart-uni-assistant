@@ -94,12 +94,63 @@ const PPTX_STYLES = `
 `;
 
 const DOCX_STYLES = `
-  .docx-wrapper { background: transparent !important; padding: 0 !important; }
+  /* Word's default fonts are rarely installed on a phone, and a missing
+     Calibri otherwise falls back to Times. Map the common ones to installed
+     lookalikes. */
+  @font-face {
+    font-family: 'Calibri';
+    src: local('Calibri'), local('Carlito'), local('Helvetica Neue'), local('Roboto'), local('Arial');
+  }
+  @font-face {
+    font-family: 'Calibri Light';
+    src: local('Calibri Light'), local('Carlito'), local('Helvetica Neue'), local('Roboto'), local('Arial');
+  }
+  @font-face {
+    font-family: 'Cambria';
+    src: local('Cambria'), local('Caladea'), local('Georgia');
+  }
+  .docx-wrapper {
+    background: transparent !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+  /* ignoreWidth and align-items:center leave each section as wide as its own
+     longest line. Stretch every page to the viewport instead. */
   .docx-wrapper > section.docx {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
     margin: 0 auto 12px !important;
-    padding: 24px !important;
+    padding: 20px !important;
     border-radius: 6px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  }
+  /* docx-preview places headers and footers in the page margins with a
+     negative offset. The margin is 20px here, so reset the offset or they are
+     clipped above the card. */
+  .docx-wrapper > section.docx > header,
+  .docx-wrapper > section.docx > footer {
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
+    min-height: 0 !important;
+  }
+  .docx-wrapper > section.docx > footer {
+    margin-top: 12px !important;
+    margin-bottom: 0 !important;
+  }
+  .docx-wrapper > section.docx img,
+  .docx-wrapper > section.docx table {
+    max-width: 100% !important;
+  }
+  /* Drawings and text boxes are inline-block divs sized in points from the
+     page. A full-width figure is wider than a phone, so cap the box and let
+     the image inside keep its aspect ratio. */
+  .docx-wrapper > section.docx div[style*="display: inline-block"] {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  .docx-wrapper > section.docx img {
+    height: auto !important;
   }
 `;
 
