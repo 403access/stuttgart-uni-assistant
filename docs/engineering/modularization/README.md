@@ -2,7 +2,7 @@
 
 This folder analyses how the repository is structured today, proposes a module layout shared by the Expo app (iOS, Android, web), the operator dashboard, the distribution service, the marketing site, and the assistant server, and records the migration.
 
-The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–3 are in place: the apps and tools live under `apps/` and `tools/`, the shared kernel packages exist, and the server, API, and shared UI platform packages are wired. Phase 4 (feature packages) is next.
+The direction is decided: [ADR-001](05-adr-001-target-architecture.md) accepts a modular monorepo with a dual-renderer design system, a React admin, feature packages, and a bundled distribution service. Phases 1–4 are in place: the workspace, kernel, platform packages, and the mail, ILIAS, and quiz feature cores exist. Feature UI remains in the app until its services and primitives are decoupled. Phase 5 (React admin) is next.
 
 ## Target architecture
 
@@ -85,9 +85,9 @@ The detailed package catalog, dependency matrix, and target tree are in [target 
 | --- | --- |
 | Analysis baseline | `main` at `d147414`, working tree with the in-progress quiz catalog and quiz-sync work |
 | Decision | [ADR-001](05-adr-001-target-architecture.md) accepted |
-| Code moved | Phases 1–3 complete: workspace, kernel, design tokens, server kit, API client, shared UI, and the bundled dist service. |
+| Code moved | Phases 1–4 complete: workspace, kernel, design tokens, server kit, API client, shared UI, bundled dist service, and the feature cores. |
 | Files added | The workspace manifests, the shared packages, the generators, and these documents |
-| Next step | Phase 4: `@ua/feature-mail`, `@ua/feature-ilias`, and `@ua/feature-quiz` |
+| Next step | Phase 5: the React + Vite admin with `@ua/ui-react` and `@ua/api-client/admin` |
 
 The three questions from the first draft are answered:
 
