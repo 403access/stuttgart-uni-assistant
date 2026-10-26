@@ -329,6 +329,7 @@ export function DataTable<T>({
   footer,
   plain = false,
   onRowClick,
+  tableClassName = 'data',
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -342,6 +343,7 @@ export function DataTable<T>({
   footer?: ReactNode;
   plain?: boolean;
   onRowClick?: (row: T) => void;
+  tableClassName?: string;
 }) {
   const wrapperClass = plain ? 'table-card' : 'card table-card';
   if (loading) return <div className={wrapperClass}><div className="loading"><Spinner /> Wird geladen …</div>{footer}</div>;
@@ -349,7 +351,7 @@ export function DataTable<T>({
   return (
     <div className={wrapperClass}>
       <div className="table-wrap">
-        <table className="data">
+        <table className={tableClassName}>
           <thead>
             <tr>
               {columns.map((column) => (

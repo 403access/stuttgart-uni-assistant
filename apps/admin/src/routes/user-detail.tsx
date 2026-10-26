@@ -43,6 +43,7 @@ const TABS = [
 
 const MODE_NAMES: Record<string, string> = { local: 'Lokal', campus: 'C@MPUS', oidc: 'SIAM', demo: 'Demo' };
 const PLATFORM_NAMES: Record<string, string> = { campus: 'C@MPUS', ilias: 'ILIAS', sdg: 'SDG Campus', siam: 'SIAM', mail: 'UniMail' };
+const PLATFORM_ORDER = ['campus', 'ilias', 'sdg', 'siam', 'mail'];
 const AUDIT_LABELS: Record<string, string> = {
   'user.create': 'Konto angelegt',
   'user.update': 'Konto geändert',
@@ -90,7 +91,7 @@ export function UserDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
-  const [tab, setTab] = useState(TABS.some((item) => item.id === search.tab) ? search.tab! : 'overview');
+  const tab = TABS.some((item) => item.id === search.tab) ? search.tab! : 'overview';
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -98,20 +99,30 @@ export function UserDetailPage() {
   const [form, setForm] = useState<any>({});
   const [linkForm, setLinkForm] = useState({ platform: 'campus', account: '', status: 'linked' });
   const [iliasView, setIliasView] = useState<any | null>(null);
-  const [nodeStudy, setNodeStudy] = useState('');
+  const [nodeStudy, setNodeStudy] = useState<string | null>(null);
   const [nodeState, setNodeState] = useState('');
   const [nodeQuery, setNodeQuery] = useState('');
   const [nodePage, setNodePage] = useState(1);
+  const [dataView, setDataView] = useState<'nodes' | 'courses'>('nodes');
+  const [courseQuery, setCourseQuery] = useState('');
+  const [coursePage, setCoursePage] = useState(1);
   const [eventPage, setEventPage] = useState(1);
   const [callPage, setCallPage] = useState(1);
 
   const detailQuery = useQuery({ queryKey: ['user', userId], queryFn: () => api.user(userId) });
   const detail = (detailQuery.data ?? {}) as any;
   const user = detail.user;
+  const studyList: any[] = (detail.studies ?? []) as any[];
+  const activeStudyId = nodeStudy === null ? (studyList[0]?.studyId ? String(studyList[0].studyId) : '') : nodeStudy;
   const nodes = useQuery({
-    queryKey: ['user', userId, 'nodes', nodeStudy, nodeState, nodeQuery, nodePage],
-    queryFn: () => api.userNodes(userId, { studyId: nodeStudy, state: nodeState, query: nodeQuery, limit: 50, offset: (nodePage - 1) * 50 }),
-    enabled: tab === 'data',
+    queryKey: ['user', userId, 'nodes', activeStudyId, nodeState, nodeQuery, nodePage],
+    queryFn: () => api.userNodes(userId, { studyId: activeStudyId, state: nodeState, query: nodeQuery, limit: 50, offset: (nodePage - 1) * 50 }),
+    enabled: tab === 'data' && dataView === 'nodes',
+  });
+  const userCourses = useQuery({
+    queryKey: ['user', userId, 'courses', activeStudyId, courseQuery, coursePage],
+    queryFn: () => api.userCourses(userId, { studyId: activeStudyId, query: courseQuery, limit: 50, offset: (coursePage - 1) * 50 }),
+    enabled: tab === 'data' && dataView === 'courses',
   });
   const events = useQuery({
     queryKey: ['user', userId, 'events', eventPage],
@@ -218,6 +229,14 @@ export function UserDetailPage() {
     onError: (error) => toast.show(error instanceof Error ? error.message : 'Sync konnte nicht starten.', 'error'),
   });
 
+  function changeTab(next: string) {
+    navigate({
+      to: '/users/$userId',
+      params: { userId },
+      search: next === 'overview' ? {} : { tab: next },
+    });
+  }
+
   if (detailQuery.isLoading) return <div className="loading"><Spinner /> Konto wird geladen …</div>;
   if (detailQuery.error || !user) return <ErrorState message={detailQuery.error instanceof Error ? detailQuery.error.message : 'Konto nicht gefunden.'} />;
 
@@ -225,6 +244,7 @@ export function UserDetailPage() {
 
   const counts = detail.counts ?? {};
   const studies: any[] = detail.studies ?? [];
+  const selectedStudy = studies.find((study) => String(study.studyId) === activeStudyId) ?? null;
   const sessions: any[] = detail.sessions ?? [];
   const devices: any[] = detail.devices ?? [];
   const platforms: any[] = user.platforms ?? [];
@@ -232,6 +252,7 @@ export function UserDetailPage() {
   const activeSessions = sessions.filter((session) => !session.revokedAt).length;
   const campus = detail.campus ?? {};
   const ilias = detail.ilias ?? {};
+  const iliasCanRead = Boolean(ilias.canRead ?? ilias.active);
 
   const tabs = TABS.map((item) => {
     if (item.id === 'sessions') return { ...item, count: sessions.length };
@@ -283,7 +304,7 @@ export function UserDetailPage() {
         </div>
       </section>
 
-      <Tabs tabs={tabs} active={tab} onChange={setTab} />
+      <Tabs tabs={tabs} active={tab} onChange={changeTab} />
 
       <section className="card section-card detail-content">
         {tab === 'overview' ? (
@@ -377,7 +398,7 @@ export function UserDetailPage() {
                     header: '',
                     render: (study: any) => (
                       <div className="row tight">
-                        <Button variant="secondary" size="small" onClick={() => { setNodeStudy(String(study.studyId)); setNodePage(1); setTab('data'); }}>Öffnen</Button>
+                        <Button variant="secondary" size="small" onClick={() => { setNodeStudy(String(study.studyId)); setNodePage(1); changeTab('data'); }}>Öffnen</Button>
                         <Button variant="secondary" size="small" disabled={sync.isPending} onClick={() => sync.mutate(study.studyId)}>Sync</Button>
                         <Button variant="danger" size="small" onClick={() => setConfirmClear({ kind: 'portal', studyId: study.studyId, label: study.name })}>Leeren</Button>
                       </div>
@@ -486,24 +507,32 @@ export function UserDetailPage() {
               <div><h2>Plattformen</h2><p>Verknüpfungen des Kontos mit C@MPUS, ILIAS, SIAM, SDG und UniMail.</p></div>
               <div className="actions"><Button size="small" onClick={() => setLinkOpen(true)}>Verknüpfen</Button></div>
             </div>
-            {platforms.length ? (
-              <div className="field-grid">
-                {platforms.map((platform: any) => (
-                  <div key={platform.id} className="field-box">
-                    <span className="k">{PLATFORM_NAMES[platform.id] ?? platform.id}</span>
+            <div className="field-grid">
+              {PLATFORM_ORDER.map((platformId) => {
+                const platform = platforms.find((item: any) => item.id === platformId);
+                return (
+                  <div key={platformId} className="field-box">
+                    <span className="k">{PLATFORM_NAMES[platformId]}</span>
                     <span className="v">
-                      <Badge tone={platform.status === 'connected' ? 'ok' : 'blue'}>{platform.status}</Badge>
-                      <span>{platform.account ?? '—'}</span>
+                      {platform ? <Badge tone={platform.status === 'connected' ? 'ok' : 'blue'}>{platform.status === 'connected' ? 'verbunden' : 'verknüpft'}</Badge> : <Badge>nicht verknüpft</Badge>}
+                      <span>{platform?.account ?? '—'}</span>
                     </span>
-                    <span className="hint">{platform.lastSyncAt ? `zuletzt ${relative(platform.lastSyncAt)}` : 'noch nicht synchronisiert'}</span>
+                    <span className="hint">{platform?.lastSyncAt ? `zuletzt ${relative(platform.lastSyncAt)}` : platform ? 'noch nicht synchronisiert' : 'kein Zugang hinterlegt'}</span>
                     <div className="row tight">
-                      <Button variant="secondary" size="small" disabled={touchPlatform.isPending} onClick={() => touchPlatform.mutate(platform.id)}>Aktualisieren</Button>
-                      <Button variant="danger" size="small" disabled={unlinkPlatform.isPending} onClick={() => unlinkPlatform.mutate(platform.id)}>Entfernen</Button>
+                      {platform ? (
+                        <>
+                          <Button variant="secondary" size="small" disabled={touchPlatform.isPending} onClick={() => touchPlatform.mutate(platform.id)}>Sync</Button>
+                          <Button variant="secondary" size="small" onClick={() => { setLinkForm({ platform: platform.id, account: platform.account ?? '', status: platform.status }); setLinkOpen(true); }}>Bearbeiten</Button>
+                          <Button variant="danger" size="small" disabled={unlinkPlatform.isPending} onClick={() => unlinkPlatform.mutate(platform.id)}>Entfernen</Button>
+                        </>
+                      ) : (
+                        <Button variant="secondary" size="small" onClick={() => { setLinkForm({ platform: platformId, account: '', status: 'linked' }); setLinkOpen(true); }}>Verknüpfen</Button>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : <p className="hint">Keine Plattformen verknüpft.</p>}
+                );
+              })}
+            </div>
           </div>
         ) : null}
 
@@ -552,7 +581,9 @@ export function UserDetailPage() {
               <h3>Portal-Daten löschen</h3>
               <p className="hint">Entfernt Studiengänge, Knoten, Kurse, Kalender und Aufrufe dieses Kontos vollständig.</p>
               <div className="row">
-                <Button variant="danger" size="small" onClick={() => setConfirmClear({ kind: 'portal', label: 'alle Portal-Daten' })}>Alles löschen</Button>
+                <Button variant="danger" size="small" onClick={() => setConfirmClear({ kind: 'portal', label: 'alle Portal-Daten' })}>Alle Portal-Daten löschen</Button>
+                <Button variant="danger" size="small" onClick={() => setConfirmClear({ kind: 'events', label: 'den Kalender' })}>Kalender leeren</Button>
+                <Button variant="danger" size="small" onClick={() => setConfirmClear({ kind: 'calls', label: 'alle Aufrufe' })}>Aufrufe leeren</Button>
               </div>
             </div>
           </>
@@ -560,6 +591,11 @@ export function UserDetailPage() {
 
         {tab === 'ilias' ? (
           <>
+            <Callout>
+              ILIAS liefert kein JSON für Studierende. Der Server meldet sich einmal mit dem Standardformular an und
+              liest danach Dashboard und Kursseiten. Gespeichert werden nur die Stände im Speicher und der zuletzt
+              gelesene Dashboard-Stand. Kursinhalte werden live gelesen.
+            </Callout>
             <div className="detail-section">
               <h3>ILIAS-Sitzung</h3>
               <div className="field-grid">
@@ -576,6 +612,12 @@ export function UserDetailPage() {
             </div>
             <div className="detail-section">
               <h3>Kurse und Gruppen</h3>
+              {!iliasCanRead ? (
+                <p className="hint">
+                  Für Kursinhalte und Datei-Downloads ist eine aktive ILIAS-Sitzung nötig. Nach einem Server-Neustart
+                  meldet sich das Konto im ILIAS-Tab der App erneut an.
+                </p>
+              ) : null}
               <DataTable
                 plain
                 rows={ilias.dashboard?.memberships ?? []}
@@ -589,14 +631,57 @@ export function UserDetailPage() {
                     header: '',
                     render: (item: any) => (
                       <div className="row tight">
-                        {item.refId ? <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'content', item })}>Inhalte</Button> : null}
-                        {item.refId ? <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'members', item })}>Mitglieder</Button> : null}
-                        <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'profile', item })}>Profil</Button>
+                        {item.refId ? (
+                          <Button variant="secondary" size="small" disabled={!iliasCanRead} title={iliasCanRead ? 'Live aus ILIAS lesen' : 'ILIAS-Sitzung erforderlich'} onClick={() => setIliasView({ mode: 'content', item })}>Inhalte</Button>
+                        ) : null}
+                        {item.refId ? (
+                          <Button variant="secondary" size="small" disabled={!iliasCanRead} title={iliasCanRead ? 'Mitglieder live lesen' : 'ILIAS-Sitzung erforderlich'} onClick={() => setIliasView({ mode: 'members', item })}>Mitglieder</Button>
+                        ) : null}
+                        {item.url ? <Button variant="secondary" size="small" onClick={() => setIliasView({ mode: 'profile', item })}>Profil</Button> : null}
                       </div>
                     ),
                   },
                 ]}
               />
+            </div>
+            <div className="detail-section">
+              <h3>Neuigkeiten</h3>
+              {(ilias.dashboard?.news ?? []).length ? (
+                <Timeline>
+                  {ilias.dashboard.news.map((item: any, index: number) => (
+                    <TimelineItem key={`${item.title}-${index}`} time={item.date ?? ''}>
+                      <strong>{item.url ? <a href={item.url} target="_blank" rel="noreferrer">{item.title}</a> : item.title}</strong>
+                      <span>{item.description || '–'}</span>
+                    </TimelineItem>
+                  ))}
+                </Timeline>
+              ) : <p className="hint">Keine Neuigkeiten im gespeicherten Stand.</p>}
+            </div>
+            <div className="detail-section">
+              <h3>ILIAS-Postfach</h3>
+              {(ilias.dashboard?.mails ?? []).length ? (
+                <Timeline>
+                  {ilias.dashboard.mails.map((item: any, index: number) => (
+                    <TimelineItem key={`${item.title}-${index}`} time={item.date ?? ''}>
+                      <strong>{item.url ? <a href={item.url} target="_blank" rel="noreferrer">{item.title}</a> : item.title}</strong>
+                      <span>{item.properties?.map((entry: any) => `${entry.name}: ${entry.value}`).filter(Boolean).join(' · ') || '–'}</span>
+                    </TimelineItem>
+                  ))}
+                </Timeline>
+              ) : <p className="hint">Keine Mails im gespeicherten Stand.</p>}
+            </div>
+            <div className="detail-section">
+              <h3>To-Dos</h3>
+              {(ilias.dashboard?.tasks ?? []).length ? (
+                <Timeline>
+                  {ilias.dashboard.tasks.map((item: any, index: number) => (
+                    <TimelineItem key={`${item.title}-${index}`}>
+                      <strong>{item.title}</strong>
+                      <span>{item.description || '–'}</span>
+                    </TimelineItem>
+                  ))}
+                </Timeline>
+              ) : <p className="hint">Keine To-Dos im gespeicherten Stand.</p>}
             </div>
           </>
         ) : null}
@@ -605,40 +690,106 @@ export function UserDetailPage() {
           <div className="detail-section">
             <div className="section-head">
               <div><h2>Studiengänge</h2><p>Knoten und Kurse aus dem gespeicherten C@MPUS-Stand.</p></div>
+              <div className="actions">
+                <Button variant="secondary" size="small" disabled={!activeStudyId || sync.isPending} onClick={() => sync.mutate(Number(activeStudyId) || undefined)}>Sync starten</Button>
+                {activeStudyId ? <Button variant="danger" size="small" onClick={() => setConfirmClear({ kind: 'portal', studyId: Number(activeStudyId), label: selectedStudy?.name ?? 'Studiengang' })}>Daten löschen</Button> : null}
+              </div>
             </div>
+            {selectedStudy ? (
+              <div className="field-grid">
+                <FieldBox label="Studiengang" value={selectedStudy.name} />
+                <FieldBox label="Knoten" value={selectedStudy.nodeCount ?? 0} />
+                <FieldBox label="Abgeschlossen" value={selectedStudy.completedNodes ?? 0} />
+                <FieldBox label="In Arbeit" value={selectedStudy.inProgressNodes ?? 0} />
+                <FieldBox label="Kurse" value={selectedStudy.courseCount ?? 0} />
+                <FieldBox label="Sync-Status" value={selectedStudy.nodesComplete ? <Badge tone="ok">vollständig</Badge> : <Badge tone="warn">teilweise</Badge>} />
+                <FieldBox label="Zuletzt gelesen" value={selectedStudy.nodesFetchedAt ? relative(selectedStudy.nodesFetchedAt) : '–'} />
+              </div>
+            ) : null}
             <div className="row" style={{ flexWrap: 'wrap', marginBottom: 12 }}>
               <Field label="Studiengang">
-                <Select value={nodeStudy} onChange={(event) => { setNodeStudy(event.target.value); setNodePage(1); }}>
+                <Select value={activeStudyId} onChange={(event) => { setNodeStudy(event.target.value); setNodePage(1); setCoursePage(1); }}>
                   <option value="">Alle Studiengänge</option>
                   {studyOptions}
                 </Select>
               </Field>
-              <Field label="Status">
-                <Select value={nodeState} onChange={(event) => { setNodeState(event.target.value); setNodePage(1); }}>
-                  <option value="">Alle</option>
-                  <option value="completed">Abgeschlossen</option>
-                  <option value="in_progress">In Arbeit</option>
-                  <option value="open">Offen</option>
-                </Select>
+              <Field label="Ansicht">
+                <div className="segmented">
+                  <button type="button" className={dataView === 'nodes' ? 'active' : ''} onClick={() => setDataView('nodes')}>Struktur</button>
+                  <button type="button" className={dataView === 'courses' ? 'active' : ''} onClick={() => setDataView('courses')}>Kurse</button>
+                </div>
               </Field>
+              {dataView === 'nodes' ? (
+                <Field label="Status">
+                  <Select value={nodeState} onChange={(event) => { setNodeState(event.target.value); setNodePage(1); }}>
+                    <option value="">Alle</option>
+                    <option value="completed">Abgeschlossen</option>
+                    <option value="in_progress">In Arbeit</option>
+                    <option value="open">Offen</option>
+                  </Select>
+                </Field>
+              ) : null}
               <Field label="Suche">
-                <Input value={nodeQuery} onChange={(event) => { setNodeQuery(event.target.value); setNodePage(1); }} placeholder="Name, Typ oder Kennung" />
+                <Input
+                  value={dataView === 'nodes' ? nodeQuery : courseQuery}
+                  onChange={(event) => {
+                    if (dataView === 'nodes') { setNodeQuery(event.target.value); setNodePage(1); }
+                    else { setCourseQuery(event.target.value); setCoursePage(1); }
+                  }}
+                  placeholder={dataView === 'nodes' ? 'Knoten durchsuchen …' : 'Kurse durchsuchen …'}
+                />
               </Field>
             </div>
-            <DataTable
-              plain
-              rows={(nodes.data as any)?.nodes ?? []}
-              rowKey={(node: any) => node.id}
-              loading={nodes.isLoading}
-              empty="Keine Knoten"
-              footer={<Pagination page={nodePage} pageSize={50} total={(nodes.data as any)?.total ?? 0} onPage={setNodePage} />}
-              columns={[
-                { key: 'name', header: 'Knoten', render: (node: any) => <div><strong>{node.name}</strong><div className="hint">{node.designation || node.elementType}</div></div> },
-                { key: 'type', header: 'Typ', render: (node: any) => node.elementType || '–' },
-                { key: 'state', header: 'Status', render: (node: any) => node.completed ? <Badge tone="ok">abgeschlossen</Badge> : node.inProgress ? <Badge tone="warn">in Arbeit</Badge> : <Badge>offen</Badge> },
-                { key: 'fetched', header: 'Gelesen', render: (node: any) => node.fetchedAt ? relative(node.fetchedAt) : '–' },
-              ]}
-            />
+            {dataView === 'nodes' ? (
+              <DataTable
+                plain
+                rows={(nodes.data as any)?.nodes ?? []}
+                rowKey={(node: any) => node.id}
+                loading={nodes.isLoading}
+                empty="Keine Knoten gefunden"
+                footer={<Pagination page={nodePage} pageSize={50} total={(nodes.data as any)?.total ?? 0} onPage={setNodePage} />}
+                columns={[
+                  { key: 'name', header: 'Element', render: (node: any) => <div><strong>{node.name}</strong><div className="hint">{node.designation || '—'}</div></div> },
+                  { key: 'type', header: 'Typ', render: (node: any) => node.elementType || '–' },
+                  { key: 'state', header: 'Status', render: (node: any) => node.completed ? <Badge tone="ok">abgeschlossen</Badge> : node.inProgress ? <Badge tone="warn">in Arbeit</Badge> : <Badge>offen</Badge> },
+                  { key: 'id', header: 'ID', className: 'num', render: (node: any) => node.id },
+                  { key: 'parent', header: 'Eltern-ID', className: 'num', render: (node: any) => node.parentId ?? '–' },
+                ]}
+              />
+            ) : (
+              <DataTable
+                plain
+                rows={(userCourses.data as any)?.courses ?? []}
+                rowKey={(course: any) => course.id}
+                loading={userCourses.isLoading}
+                empty="Keine Kurse gefunden"
+                footer={<Pagination page={coursePage} pageSize={50} total={(userCourses.data as any)?.total ?? 0} onPage={setCoursePage} />}
+                columns={[
+                  {
+                    key: 'title',
+                    header: 'Kurs',
+                    render: (course: any) => (
+                      <div>
+                        {course.detailUrl ? <a href={course.detailUrl} target="_blank" rel="noreferrer">{course.title}</a> : <strong>{course.title}</strong>}
+                        <div className="hint">{course.courseNumber || '—'}</div>
+                      </div>
+                    ),
+                  },
+                  { key: 'type', header: 'Typ', render: (course: any) => <Badge>{course.courseTypeShort || course.courseType || '–'}</Badge> },
+                  { key: 'semester', header: 'Semester', render: (course: any) => course.semester || '–' },
+                  { key: 'lecturers', header: 'Lehrende', render: (course: any) => <span className="tiny">{course.lecturers?.length ? course.lecturers.join(', ') : '–'}</span> },
+                  { key: 'room', header: 'Raum', render: (course: any) => <span className="tiny">{course.roomName || '–'}</span> },
+                  { key: 'registration', header: 'Anmeldung', render: (course: any) => course.registrationStatus ? <Badge tone="blue">{course.registrationStatus}</Badge> : <span className="hint">–</span> },
+                  {
+                    key: 'elements',
+                    header: 'Elemente',
+                    render: (course: any) => course.elements?.length
+                      ? <div className="stack">{course.elements.slice(0, 3).map((element: any) => <span key={element.elementId} className="chip" title={element.elementName}>{element.elementId}</span>)}</div>
+                      : <span className="hint">–</span>,
+                  },
+                ]}
+              />
+            )}
           </div>
         ) : null}
 

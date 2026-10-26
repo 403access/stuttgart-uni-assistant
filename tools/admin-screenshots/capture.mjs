@@ -17,6 +17,7 @@ import { createServer, request as httpRequest } from 'node:http';
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, extname, join, normalize, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 
 import { chromium } from 'playwright';
@@ -50,7 +51,7 @@ const USERS = [
     login: iso(0, 2),
   },
   {
-    id: 'usr_max',
+    id: 'usr_maxim',
     account: 'st234567',
     name: 'Max Schneider',
     email: 'max.schneider@uni-stuttgart.de',
@@ -72,7 +73,7 @@ const USERS = [
     login: null,
   },
   {
-    id: 'usr_tom',
+    id: 'usr_tommy',
     account: 'st456789',
     name: 'Tom Becker',
     email: 'tom.becker@uni-stuttgart.de',
@@ -186,11 +187,11 @@ function insertFixtures(db) {
     ['usr_erika', 'ilias', 'st123456', 'connected', 'browser', iso(2)],
     ['usr_erika', 'mail', 'erika.mustermann@uni-stuttgart.de', 'connected', 'imap', iso(1)],
     ['usr_erika', 'sdg', 'st123456', 'linked', 'sso', iso(20)],
-    ['usr_max', 'campus', 'st234567', 'linked', 'sso', iso(9)],
-    ['usr_max', 'siam', 'max.schneider', 'connected', 'oidc', iso(1)],
-    ['usr_max', 'ilias', 'st234567', 'linked', 'env', iso(8)],
+    ['usr_maxim', 'campus', 'st234567', 'linked', 'sso', iso(9)],
+    ['usr_maxim', 'siam', 'max.schneider', 'connected', 'oidc', iso(1)],
+    ['usr_maxim', 'ilias', 'st234567', 'linked', 'env', iso(8)],
     ['usr_lena', 'mail', 'lena.weber@uni-stuttgart.de', 'connected', 'imap', iso(4)],
-    ['usr_tom', 'campus', 'st456789', 'connected', 'cookie', iso(0, 5)],
+    ['usr_tommy', 'campus', 'st456789', 'connected', 'cookie', iso(0, 5)],
   ];
   for (const [userId, platform, account, status, source, linkedAt] of platforms) {
     db.prepare(
@@ -201,8 +202,8 @@ function insertFixtures(db) {
   const sessions = [
     ['ses_parity_erika_pc', 'usr_erika', iso(0, 2), iso(0, -10), iso(0, 0.4), null],
     ['ses_parity_erika_old', 'usr_erika', iso(12), iso(-12), iso(10), iso(9)],
-    ['ses_parity_max_pc', 'usr_max', iso(1, 3), iso(1, -11), iso(0, 8), null],
-    ['ses_parity_tom_pc', 'usr_tom', iso(0, 5), iso(0, -9), iso(0, 1), null],
+    ['ses_parity_max_pc', 'usr_maxim', iso(1, 3), iso(1, -11), iso(0, 8), null],
+    ['ses_parity_tom_pc', 'usr_tommy', iso(0, 5), iso(0, -9), iso(0, 1), null],
   ];
   for (const [id, userId, created, expires, seen, revoked] of sessions) {
     db.prepare(
@@ -220,10 +221,10 @@ function insertFixtures(db) {
   };
   const devices = [
     ['dev_parity_mac', 'usr_erika', 'ses_parity_erika_pc', 'MacBook Pro · Erika', ua.macChrome, '192.168.1.42', iso(0, 2), iso(0, -10), iso(0, 1), iso(0, 0.4), null, iso(0, 0.2)],
-    ['dev_parity_iphone', 'usr_max', 'ses_parity_max_pc', 'iPhone 15 · Max', ua.iphone, '10.0.0.17', iso(1, 3), iso(1, -9), iso(1, -2), iso(0, 8), null, iso(0, 7)],
+    ['dev_parity_iphone', 'usr_maxim', 'ses_parity_max_pc', 'iPhone 15 · Max', ua.iphone, '10.0.0.17', iso(1, 3), iso(1, -9), iso(1, -2), iso(0, 8), null, iso(0, 7)],
     ['dev_parity_windows', null, null, 'Windows-PC · Bibliothek', ua.winFirefox, '192.168.7.11', iso(0, 1), iso(0, -0.7), null, null, null, null],
     ['dev_parity_lena', 'usr_lena', null, 'Surface · Lena', ua.winEdge, '172.16.0.5', iso(4), iso(4, -9), iso(3, 20), iso(3), null, iso(2)],
-    ['dev_parity_tom', 'usr_tom', 'ses_parity_tom_pc', 'Linux-Notebook · Tom', ua.linux, '192.168.3.9', iso(5), iso(4), iso(5, -1), iso(4, 22), iso(10), iso(2)],
+    ['dev_parity_tom', 'usr_tommy', 'ses_parity_tom_pc', 'Linux-Notebook · Tom', ua.linux, '192.168.3.9', iso(5), iso(4), iso(5, -1), iso(4, 22), iso(10), iso(2)],
     ['dev_parity_expired', null, null, 'Android · Praktikum', ua.android, '203.0.113.9', iso(9), iso(8), null, null, null, null],
   ];
   for (const [id, userId, sessionId, name, userAgent, ip, created, expires, approved, consumed, revoked, seen] of devices) {
@@ -234,9 +235,9 @@ function insertFixtures(db) {
   }
 
   db.prepare(`INSERT OR REPLACE INTO user_campus (user_id, source, account, updated_at) VALUES (?, ?, ?, ?)`).run('usr_erika', 'env', 'st123456', iso(0, 2));
-  db.prepare(`INSERT OR REPLACE INTO user_campus (user_id, source, account, updated_at) VALUES (?, ?, ?, ?)`).run('usr_tom', 'browser', 'st456789', iso(0, 5));
+  db.prepare(`INSERT OR REPLACE INTO user_campus (user_id, source, account, updated_at) VALUES (?, ?, ?, ?)`).run('usr_tommy', 'browser', 'st456789', iso(0, 5));
   db.prepare(`INSERT OR REPLACE INTO user_ilias (user_id, source, account, updated_at) VALUES (?, ?, ?, ?)`).run('usr_erika', 'browser', 'st123456', iso(2));
-  db.prepare(`INSERT OR REPLACE INTO user_ilias (user_id, source, account, updated_at) VALUES (?, ?, ?, ?)`).run('usr_max', 'env', 'st234567', iso(8));
+  db.prepare(`INSERT OR REPLACE INTO user_ilias (user_id, source, account, updated_at) VALUES (?, ?, ?, ?)`).run('usr_maxim', 'env', 'st234567', iso(8));
 
   const iliasDashboard = {
     name: 'Erika Mustermann',
@@ -252,13 +253,20 @@ function insertFixtures(db) {
       { kind: 'grp', refId: 145302, title: 'Praktikum Datenbanken', type: 'Gruppe' },
       { kind: 'grp', refId: 145303, title: 'Projektteam Softwaretechnik', type: 'Gruppe' },
     ],
-    news: [],
-    mails: [],
-    tasks: [],
+    news: [
+      { title: 'ILIAS-Wartung am Sonntag', description: 'Das System ist von 8 bis 12 Uhr nicht erreichbar.', date: '25.10.2026', url: '' },
+      { title: 'Neue Kursmaterialien online', description: 'Übungsblatt 3 steht im Ordner Materialien bereit.', date: '23.10.2026', url: '' },
+    ],
+    mails: [
+      { title: 'Willkommen im Kurs Programmierung I', properties: [{ name: 'Von', value: 'Prof. Dr. Martin' }], date: '24.10.2026', url: '' },
+    ],
+    tasks: [
+      { title: 'Übungsblatt 3 abgeben', description: 'Abgabe bis 30.10.2026, 23:59 Uhr.' },
+    ],
   };
   db.prepare(`INSERT OR REPLACE INTO user_ilias_snapshot (user_id, payload, fetched_at) VALUES (?, ?, ?)`).run('usr_erika', JSON.stringify(iliasDashboard), iso(2));
   db.prepare(`INSERT OR REPLACE INTO user_ilias_snapshot (user_id, payload, fetched_at) VALUES (?, ?, ?)`).run(
-    'usr_max',
+    'usr_maxim',
     JSON.stringify({
       name: 'Max Schneider',
       account: 'st234567',
@@ -439,7 +447,7 @@ function insertFixtures(db) {
     ['session.revoke', 'usr_erika', 'st123456', { label: 'Alte Sitzung' }, 3],
     ['news.create', null, null, { title: 'Semesterstart am 14. Oktober' }, 2],
     ['user.create', 'usr_aylin', 'st567890', { mode: 'local' }, 2],
-    ['device.revoke', 'usr_tom', 'st456789', { label: 'Linux-Notebook · Tom' }, 4],
+    ['device.revoke', 'usr_tommy', 'st456789', { label: 'Linux-Notebook · Tom' }, 4],
     ['quiz.catalog.seed', null, null, { topics: 15, questions: 347 }, 6],
   ]) {
     db.prepare(
@@ -722,6 +730,10 @@ so layout, tables, dialogs and empty states are comparable.
 The folder structure mirrors the admin routes, for example
 \`users/detail/05-campus.png\`.
 
+See [INTERACTIONS.md](INTERACTIONS.md) for the click-through audit: which
+rows, tabs, dialogs, links and confirmations were exercised, and which KPI
+tiles are intentionally static for parity with the old dashboard.
+
 ## Key comparisons
 
 ### Übersicht
@@ -754,14 +766,18 @@ ${sections.join('\n')}
   await writeFile(join(OUT, 'README.md'), content);
 }
 
-if (process.argv.includes('--readme-only')) {
-  writeReadme().then(() => console.log(`Wrote ${relative(REPO, join(OUT, 'README.md'))}`)).catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
-} else {
-  run().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+export { insertFixtures, USERS };
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv.includes('--readme-only')) {
+    writeReadme().then(() => console.log(`Wrote ${relative(REPO, join(OUT, 'README.md'))}`)).catch((error) => {
+      console.error(error);
+      process.exitCode = 1;
+    });
+  } else {
+    run().catch((error) => {
+      console.error(error);
+      process.exitCode = 1;
+    });
+  }
 }

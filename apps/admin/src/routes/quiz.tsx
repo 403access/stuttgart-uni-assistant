@@ -63,8 +63,7 @@ export function QuizPage() {
   const toast = useToast();
   const navigate = useNavigate();
   const routeSearch = useSearch({ strict: false }) as { view?: string };
-  const initialTab = routeSearch.view === 'attempts' ? 'attempts' : routeSearch.view === 'sessions' ? 'sessions' : 'topics';
-  const [tab, setTab] = useState<'topics' | 'attempts' | 'sessions'>(initialTab);
+  const tab = routeSearch.view === 'attempts' ? 'attempts' : routeSearch.view === 'sessions' ? 'sessions' : 'topics';
   const [search, setSearch] = useState('');
   const [moduleId, setModuleId] = useState('');
   const [published, setPublished] = useState('');
@@ -99,7 +98,6 @@ export function QuizPage() {
   });
 
   function changeTab(next: 'topics' | 'attempts' | 'sessions') {
-    setTab(next);
     navigate({ to: '/quiz', search: next === 'topics' ? {} : { view: next } });
   }
 

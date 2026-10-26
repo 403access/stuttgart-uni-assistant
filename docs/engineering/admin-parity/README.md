@@ -11,6 +11,10 @@ so layout, tables, dialogs and empty states are comparable.
 The folder structure mirrors the admin routes, for example
 `users/detail/05-campus.png`.
 
+See [INTERACTIONS.md](INTERACTIONS.md) for the click-through audit: which
+rows, tabs, dialogs, links and confirmations were exercised, and which KPI
+tiles are intentionally static for parity with the old dashboard.
+
 ## Key comparisons
 
 ### Übersicht

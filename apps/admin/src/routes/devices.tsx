@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { formatTimestamp } from '@ua/format';
 import {
   Badge,
@@ -55,6 +55,7 @@ function typeBadge(client: any) {
 
 export function DevicesPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const toast = useToast();
   const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const [search, setSearch] = useState(searchParams.query ?? '');
@@ -152,10 +153,10 @@ export function DevicesPage() {
               key: 'account',
               header: 'Konto',
               render: (device: any) => device.account ? (
-                <a className="who-text" href={`/users/${device.userId}`} style={{ color: 'inherit', textDecoration: 'none' }} onClick={(event) => event.stopPropagation()}>
+                <Link className="who-text" to="/users/$userId" params={{ userId: device.userId }} style={{ color: 'inherit', textDecoration: 'none' }} onClick={(event) => event.stopPropagation()}>
                   <strong>{device.userName || device.account}</strong>
                   <span>{device.account}</span>
-                </a>
+                </Link>
               ) : <span className="hint">noch nicht genehmigt</span>,
             },
             { key: 'state', header: 'Status', render: (device: any) => <Badge tone={stateTone(device.state)}>{STATE_NAMES[device.state] ?? device.state}</Badge> },
@@ -207,6 +208,17 @@ export function DevicesPage() {
         actions={
           <>
             <Button variant="secondary" onClick={() => setSelected(null)}>Schließen</Button>
+            {selected?.userId ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelected(null);
+                  navigate({ to: '/users/$userId', params: { userId: selected.userId } });
+                }}
+              >
+                Konto öffnen
+              </Button>
+            ) : null}
             {selected && selected.state !== 'revoked' ? (
               <Button variant="danger" onClick={() => setRevoking(selected)}>Widerrufen</Button>
             ) : null}
