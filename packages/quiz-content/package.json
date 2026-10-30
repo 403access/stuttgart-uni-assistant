@@ -11,7 +11,8 @@
     "./figures/*": "./src/figures/*.ts",
     "./maps/*": "./src/maps/*.ts",
     "./package.json": "./package.json",
-    "./content/generated": "./src/content/generated/index.ts"
+    "./content/generated": "./src/content/generated/index.ts",
+    "./articulation": "./src/articulation.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

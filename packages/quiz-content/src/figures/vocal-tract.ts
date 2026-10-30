@@ -21,7 +21,7 @@ const SKULL = `M600 68 C460 58 356 148 316 268 C304 310 306 342 292 374
   C876 666 900 588 900 486 C900 300 792 140 600 68 Z`;
 
 /** Small helper for the rounded lip pads. */
-function roundRect(x: number, y: number, width: number, height: number, radius: number): string {
+export function roundRect(x: number, y: number, width: number, height: number, radius: number): string {
   const r = Math.min(radius, width / 2, height / 2);
   return [
     `M${x + r} ${y}`,

@@ -17,6 +17,7 @@ import {
   quizStudies,
 } from '@ua/quiz-content';
 import { QuizToolbar } from '@ua/feature-quiz/ui';
+import { StudioLinkCard } from '@/src/quiz/studio-link';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { useQuizProgress } from '@/src/quiz/progress';
 import { moduleStats, statsForQuestions, topicStats } from '@ua/feature-quiz';
@@ -324,6 +325,9 @@ export default function QuizScreen() {
           </Pressable>
         ) : null}
       </Card>
+
+      <Section title={tx(locale, 'quiz.studio.tools')} />
+      <StudioLinkCard locale={locale} />
 
       <Section
         title={tx(locale, 'quiz.modules')}

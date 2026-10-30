@@ -2,6 +2,18 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '@ua/quiz-content';
+import {
+  articulationGroups,
+  articulationSounds,
+  findArticulationSound,
+  studioSoundForTopic,
+} from '@ua/quiz-content/articulation';
+import {
+  airflowLane,
+  articulationFocus,
+  lipOutlines,
+  tongueOutline,
+} from '@ua/quiz-content/figures/articulation';
 import { generatedTopics } from '@ua/quiz-content/content/generated';
 import { describeGivenAnswer, evaluateAnswer, initialAnswer, isAnswerComplete, matchesAccepted, questionKindLabel, questionsForMode, statsForQuestions } from '@ua/feature-quiz';
 import type { QuestionProgress, QuizAnswer, QuizQuestion, QuizQuestionKind } from '@ua/quiz-content/types';
@@ -311,6 +323,70 @@ expect(
   studyMixedTopics.every((entry) => entry.topic.questions.length > 0 && quizTopics.includes(entry.topic)),
   'every study mixed round has questions and is registered',
 );
+
+// The articulation studio animates the same head as the diagram questions.
+// These checks keep the sound catalog, the pose geometry and the topic links in
+// step — a broken path would render as an empty SVG instead of failing loudly.
+const soundIds = new Set<string>();
+for (const sound of articulationSounds) {
+  expect(!soundIds.has(sound.id), `articulation sound id is unique: ${sound.id}`);
+  soundIds.add(sound.id);
+  expect(sound.glyph.trim().length > 0, `articulation sound has a glyph: ${sound.id}`);
+  expect(Boolean(sound.word.de && sound.word.en), `articulation word is bilingual: ${sound.id}`);
+  expect(Boolean(sound.summary.de && sound.summary.en), `articulation summary is bilingual: ${sound.id}`);
+  if (sound.manner === 'vowel') {
+    expect(Boolean(sound.shape?.de && sound.shape?.en), `vowel has a shape description: ${sound.id}`);
+    expect(!sound.place, `vowel has no consonant place: ${sound.id}`);
+  } else {
+    expect(Boolean(sound.place), `consonant has a place: ${sound.id}`);
+    expect(!sound.shape, `consonant has no vowel shape: ${sound.id}`);
+  }
+
+  const nasal = sound.manner === 'nasal';
+  expect(
+    sound.pose.velum === (nasal ? 'lowered' : 'raised'),
+    `velum matches the manner: ${sound.id}`,
+  );
+  expect(
+    sound.pose.airflow === (nasal ? 'nasal' : 'oral'),
+    `airstream matches the manner: ${sound.id}`,
+  );
+  if (nasal) expect(sound.voiced, `nasal is voiced: ${sound.id}`);
+  if (sound.manner === 'vowel') expect(sound.voiced, `vowel is voiced: ${sound.id}`);
+
+  const tongue = tongueOutline(sound.pose.tongue);
+  expect(!/NaN|Infinity/.test(tongue), `tongue outline is numeric: ${sound.id}`);
+  expect(tongue.startsWith('M') && tongue.endsWith('Z'), `tongue outline is a closed path: ${sound.id}`);
+
+  const lips = lipOutlines(sound.pose.lips);
+  expect(lips.length === 2, `lips have two pads: ${sound.id}`);
+  expect(lips.every((path) => path.startsWith('M') && !/NaN/.test(path)), `lip pads are drawable: ${sound.id}`);
+
+  const lane = airflowLane(sound.pose.airflow, sound.pose);
+  expect(lane.length >= 8, `airstream lane has enough points: ${sound.id}`);
+  expect(
+    lane.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)),
+    `airstream lane is numeric: ${sound.id}`,
+  );
+  const focus = articulationFocus(sound);
+  expect(
+    Number.isFinite(focus[0]) && Number.isFinite(focus[1]),
+    `articulation focus is numeric: ${sound.id}`,
+  );
+}
+
+expect(
+  articulationGroups.every((group) => group.sounds.length > 0),
+  'every articulation manner group has sounds',
+);
+expect(
+  articulationGroups.reduce((count, group) => count + group.sounds.length, 0) === articulationSounds.length,
+  'articulation groups cover every sound exactly once',
+);
+for (const [topicId, soundId] of Object.entries(studioSoundForTopic)) {
+  expect(Boolean(quizTopics.find((topic) => topic.id === topicId)), `studio link targets a topic: ${topicId}`);
+  expect(Boolean(findArticulationSound(soundId)), `studio link targets a sound: ${topicId} -> ${soundId}`);
+}
 
 const english = quizModules[0].topics[0];
 const emptyProgress: Record<string, QuestionProgress> = {};

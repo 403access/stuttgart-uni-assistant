@@ -32,6 +32,11 @@ const TONES: Record<DiagramTone, { fill: string; stroke: string }> = {
   mouth: { fill: '#7D3F4A', stroke: '#7D3F4A' },
 };
 
+/** Fixed illustration palette, shared with the animated articulation figure. */
+export function diagramTone(tone: DiagramTone): { fill: string; stroke: string } {
+  return TONES[tone];
+}
+
 const INK = '#243447';
 const PAPER = '#FFFDF9';
 const CANVAS = '#F4F7FB';
@@ -75,7 +80,8 @@ export function DiagramCanvas({
   selected?: string[];
   revealed?: boolean;
   correctIds?: string[];
-  mode?: 'quiz' | 'figure';
+  /** `plain` draws the same illustration without badges, for animated overlays. */
+  mode?: 'quiz' | 'figure' | 'plain';
   onToggle?: (regionId: string) => void;
 }) {
   const selectedSet = new Set(selected);
@@ -115,7 +121,7 @@ export function DiagramCanvas({
         // react-native-svg attaches pointer responders for onPress, which React
         // DOM warns about on web. Use a plain click there instead.
         const pressProps =
-          mode === 'figure' || !onToggle
+          mode !== 'quiz' || !onToggle
             ? {}
             : Platform.OS === 'web'
               ? ({ onPress: null, onClick: () => onToggle(region.id) } as unknown as {
@@ -162,7 +168,7 @@ export function DiagramCanvas({
                 isCorrect={isCorrect}
                 isWrong={isWrong}
               />
-            ) : (
+            ) : mode === 'plain' ? null : (
               <QuizMarker
                 region={region}
                 isSelected={isSelected}

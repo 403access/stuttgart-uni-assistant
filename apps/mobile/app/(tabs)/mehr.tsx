@@ -15,7 +15,7 @@ import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';
 
-type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/components' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker';
+type CampusHref = '/api' | '/campus' | '/konto' | '/plattformen' | '/dokumente' | '/kommilitonen' | '/mail' | '/mail-verbindung' | '/altklausuren' | '/feed' | '/anrechnung' | '/fristen' | '/profil' | '/profil/daten' | '/profil/sichtbarkeit' | '/profil/auffindbarkeit' | '/einstellungen' | '/darstellung' | '/sprache' | '/sicherheit' | '/geraet-verknuepfen' | '/dev/onboarding' | '/dev/state' | '/dev/components' | '/dev/nfc' | '/kalender-export' | '/vpn' | '/drucker' | '/quiz/studio';
 type CampusEntry = { title: string; detail: string; href?: CampusHref; onPress?: () => void; tone?: 'danger'; tags: string[] };
 type CampusGroup = { title: string; entries: CampusEntry[] };
 
@@ -87,6 +87,7 @@ export default function MoreScreen() {
       title: tx(locale, 'tabsMehr.studium'),
       entries: [
         { title: tx(locale, 'common.kalender'), detail: tx(locale, 'tabsMehr.c'), href: '/kalender-export', tags: ['kalender', 'calendar', 'import', 'ics', 'csv', 'stundenplan', 'timetable', 'sync'] },
+        { title: tx(locale, 'quiz.studio.title'), detail: tx(locale, 'quiz.studio.tool_detail'), href: '/quiz/studio', tags: ['artikulation', 'articulation', 'laut', 'sound', 'phonetik', 'phonetics', 'ipa', 'zunge', 'tongue', 'stimmlippen', 'vocal cords', 'lernen', 'learning', 'werkzeug', 'tool', 'animation', 'quiz'] },
         { title: tx(locale, 'common.dokumente'), detail: tx(locale, 'tabsMehr.ilias'), href: '/dokumente', tags: ['dokumente', 'documents', 'dateien', 'files', 'ilias', 'notizen', 'notes', 'import'] },
         { title: tx(locale, 'common.altklausuren'), detail: tx(locale, 'tabsMehr.themen'), href: '/altklausuren', tags: ['altklausuren', 'past exams', 'klausuren', 'exams', 'prüfung', 'pruefung', 'themen', 'topics'] },
         { title: tx(locale, 'common.anrechnung'), detail: tx(locale, 'tabsMehr.anerkennung'), href: '/anrechnung', tags: ['anrechnung', 'anerkennung', 'recognition', 'credits', 'ects', 'leistungen'] },

@@ -18,23 +18,23 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Metric | Value |
 | --- | ---: |
-| Components | 78 |
-| Exports | 115 |
-| Usage references | 813 |
-| Files with occurrences | 106 |
+| Components | 80 |
+| Exports | 119 |
+| Usage references | 839 |
+| Files with occurrences | 109 |
 | Unused components | 0 |
 | Imported but never used | 0 |
 | Components with platform files | 4 |
 | Components with live previews | 32 |
 | Shared UI | 36 |
-| Feature components | 34 |
+| Feature components | 36 |
 | App-wide providers | 8 |
 
 ## Shared UI
 
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
-| `ui` | `packages/ui/src/ui.tsx` | Native + Web | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, SearchField, Section, Strong | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, Screen, SearchField, Section, Strong, listPosition | 610 | 84 |
+| `ui` | `packages/ui/src/ui.tsx` | Native + Web | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, SearchField, Section, Strong | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, Screen, SearchField, Section, Strong, listPosition | 622 | 86 |
 | `login-blocks` | `apps/mobile/src/components/login-blocks.tsx` | Native + Web | Checkbox, Chip, ErrorText, Field, Footer, LanguagePicker, Meta, Notice, SectionTitle | Checkbox, Chip, ErrorText, Field, Footer, LanguagePicker, Meta, Notice, SectionTitle | 25 | 6 |
 | `control-icon` | `packages/ui/src/control-icon.tsx` | Native + Web | ControlIcon, ToolButton | ControlIcon, ToolButton | 14 | 9 |
 | `ChoiceCard` | `apps/mobile/src/components/choice-card.tsx` | Native + Web | ChoiceCard | ChoiceCard | 10 | 3 |
@@ -77,14 +77,14 @@ Every component under `src/` with its exports, platform files, and every place i
 - Category: Shared UI
 - Exports: `Button` (component), `Card` (component), `FieldLabel` (component), `InfoRow` (component), `Mark` (component), `Meter` (component), `Muted` (component), `Pill` (component), `Screen` (component), `SearchField` (component), `Section` (component), `Strong` (component), `listPosition` (helper)
 - Live preview in the app: `Button`, `Card`, `FieldLabel`, `InfoRow`, `Mark`, `Meter`, `Muted`, `Pill`, `SearchField`, `Section`, `Strong`
-- Usages: 610 references in 84 files
+- Usages: 622 references in 86 files
 
 - `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `Button`; 8 import `Card`; 8 import `Screen`; 163 render `Screen`; 170 render `Screen`; 200 render `Screen`; 221 render `Card`; 224 render `Button`; 225 render `Button`
 - `apps/mobile/app/(tabs)/index.tsx`: 5 import `Card`; 5 import `InfoRow`; 5 import `Meter`; 5 import `Screen`; 5 import `Section`; 28 render `Card`; 34 render `Meter`; 40 render `Card`; 53 render `Section`; 56 render `InfoRow`; 65 render `Card`; 70 render `Section`; 72 render `InfoRow`; 81 render `Section`; 83 render `InfoRow`; 95 render `Screen`
 - `apps/mobile/app/(tabs)/kalender.tsx`: 9 import `Button`; 9 import `Card`; 9 import `Muted`; 9 import `Pill`; 9 import `Screen`; 9 import `Section`; 124 render `Screen`; 126 render `Card`; 127 render `Muted`; 132 render `Card`; 133 render `Muted`; 136 render `Button`; 222 render `Section`; 223 render `Card`; 224 render `Muted`; 285 render `Pill`; 289 render `Pill`; 296 render `Pill`; 299 render `Pill`; 315 render `Pill`; 319 render `Pill`; 334 render `Pill`; 338 render `Pill`; 354 render `Pill`; 433 render `Muted`; 499 render `Muted`; 508 render `Pill`; 511 render `Pill`; 514 render `Pill`; 539 render `Muted`; 623 render `Pill`; 626 render `Pill`; 629 render `Pill`; 836 render `Section`; 841 render `Card`; 858 render `Button`; 860 render `Button`
 - `apps/mobile/app/(tabs)/mail.tsx`: 7 import `Screen`; 161 render `Screen`
-- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `Button`; 9 import `Card`; 9 import `InfoRow`; 9 import `listPosition`; 9 import `Screen`; 9 import `Section`; 222 render `InfoRow`; 227 call `listPosition`; 236 render `Section`; 243 render `Screen`; 279 render `Card`; 310 render `Card`; 382 render `Card`; 386 render `Button`; 392 render `Button`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `Card`; 7 import `Meter`; 7 import `Screen`; 7 import `Section`; 122 render `Screen`; 123 render `Card`; 285 render `Card`; 299 render `Meter`; 328 render `Section`; 351 render `Card`; 361 render `Section`; 362 render `Card`; 386 render `Screen`; 447 render `Screen`; 557 render `Meter`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `Button`; 9 import `Card`; 9 import `InfoRow`; 9 import `listPosition`; 9 import `Screen`; 9 import `Section`; 223 render `InfoRow`; 228 call `listPosition`; 237 render `Section`; 244 render `Screen`; 280 render `Card`; 311 render `Card`; 383 render `Card`; 387 render `Button`; 393 render `Button`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `Card`; 7 import `Meter`; 7 import `Screen`; 7 import `Section`; 123 render `Screen`; 124 render `Card`; 286 render `Card`; 300 render `Meter`; 329 render `Section`; 332 render `Section`; 355 render `Card`; 365 render `Section`; 366 render `Card`; 390 render `Screen`; 451 render `Screen`; 561 render `Meter`
 - `apps/mobile/app/altklausuren.tsx`: 3 import `InfoRow`; 3 import `Screen`; 11 render `Screen`; 19 render `InfoRow`
 - `apps/mobile/app/anforderungen.tsx`: 3 import `Card`; 3 import `Meter`; 3 import `Screen`; 18 render `Screen`; 23 render `Card`; 39 render `Card`; 45 render `Meter`
 - `apps/mobile/app/anrechnung.tsx`: 5 import `Button`; 5 import `Card`; 5 import `InfoRow`; 5 import `Pill`; 5 import `Screen`; 60 render `Screen`; 67 render `Pill`; 70 render `Pill`; 84 render `Pill`; 89 render `Card`; 101 render `Card`; 108 render `Button`; 110 render `InfoRow`
@@ -125,9 +125,10 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/profil/index.tsx`: 4 import `Button`; 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 4 import `Section`; 23 render `Screen`; 28 render `Card`; 29 render `Button`; 33 render `Section`; 35 render `InfoRow`; 41 render `InfoRow`; 47 render `InfoRow`
 - `apps/mobile/app/profil/sichtbarkeit.tsx`: 5 import `Button`; 5 import `Card`; 5 import `Screen`; 5 import `Section`; 29 render `Screen`; 34 render `Card`; 35 render `Button`; 40 render `Section`; 44 render `Card`; 88 render `Section`
 - `apps/mobile/app/pruefung/[id].tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 17 render `Screen`; 24 render `Screen`; 26 render `Card`; 35 render `InfoRow`
-- `apps/mobile/app/quiz/[topic]/index.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 34 render `Screen`; 36 render `Card`; 45 render `Screen`; 119 render `Screen`; 125 render `Card`; 139 render `Meter`; 145 render `Pill`; 167 render `Meter`; 188 render `Section`; 189 render `Card`; 236 render `Section`; 237 render `Card`
+- `apps/mobile/app/quiz/[topic]/index.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 36 render `Screen`; 38 render `Card`; 47 render `Screen`; 121 render `Screen`; 127 render `Card`; 141 render `Meter`; 147 render `Pill`; 169 render `Meter`; 199 render `Section`; 200 render `Card`; 247 render `Section`; 248 render `Card`
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 58 render `Screen`; 60 render `Card`; 69 render `Screen`; 187 render `Screen`; 305 render `Screen`; 311 render `Meter`; 313 render `Pill`; 314 render `Pill`; 367 render `Screen`; 378 render `Card`; 391 render `Meter`
 - `apps/mobile/app/quiz/modul/[id].tsx`: 5 import `Card`; 5 import `Meter`; 5 import `Pill`; 5 import `Screen`; 5 import `Section`; 30 render `Screen`; 32 render `Card`; 41 render `Screen`; 76 render `Screen`; 79 render `Card`; 93 render `Meter`; 105 render `Section`; 132 render `Card`; 150 render `Meter`; 165 render `Pill`
+- `apps/mobile/app/quiz/studio/index.tsx`: 6 import `Card`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 42 render `Card`; 49 render `Section`; 56 render `Card`; 62 render `Card`; 81 render `Screen`; 116 render `Pill`; 118 render `Pill`; 120 render `Pill`; 122 render `Pill`; 148 render `Card`
 - `apps/mobile/app/raum/[id].tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 18 render `Screen`; 27 render `Screen`; 29 render `Card`; 39 render `InfoRow`
 - `apps/mobile/app/reihenfolge.tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 4 import `Section`; 17 render `Screen`; 22 render `Card`; 32 render `Section`; 36 render `InfoRow`; 49 render `Card`
 - `apps/mobile/app/sicherheit.tsx`: 8 import `Button`; 8 import `Card`; 111 render `Card`; 129 render `Button`; 141 render `Button`
@@ -159,6 +160,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/src/mail/components/mail-reader.tsx`: 8 import `Button`; 8 import `Card`; 8 import `Pill`; 129 render `Card`; 138 render `Pill`; 144 render `Button`; 157 render `Card`; 173 render `Button`; 178 render `Card`
 - `apps/mobile/src/profile/profile-preview.tsx`: 3 import `Card`; 13 render `Card`; 20 render `Card`; 26 render `Card`
 - `apps/mobile/src/profile/profile-summary.tsx`: 3 import `Card`; 3 import `Pill`; 12 render `Card`; 24 render `Pill`; 25 render `Pill`; 29 render `Pill`
+- `apps/mobile/src/quiz/studio-link.tsx`: 5 import `Card`; 27 render `Card`
 - `packages/features/ilias/src/ui/ilias-dashboard.tsx`: 4 import `Card`; 4 import `Pill`; 4 import `Section`; 65 render `Pill`; 143 render `Card`; 155 render `Section`
 - `packages/features/mail/src/ui/mail-connection-panel.tsx`: 3 import `Button`; 3 import `Card`; 3 import `FieldLabel`; 3 import `Pill`; 36 render `Card`; 39 render `Pill`; 42 render `FieldLabel`; 52 render `FieldLabel`; 54 render `Button`; 59 render `Card`
 - `packages/features/quiz/src/ui/components/diagram-figure.tsx`: 3 import `Card`; 3 import `Section`; 27 render `Section`; 28 render `Card`
@@ -218,7 +220,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 10 references in 9 files
 
 - `apps/mobile/app/(tabs)/chat.tsx`: 10 import `ResponsiveGrid`; 110 render `ResponsiveGrid`
-- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `ResponsiveGrid`; 405 render `ResponsiveGrid`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `ResponsiveGrid`; 406 render `ResponsiveGrid`
 - `apps/mobile/app/dokumente.tsx`: 5 import `ResponsiveGrid`; 75 render `ResponsiveGrid`; 92 render `ResponsiveGrid`
 - `apps/mobile/app/feed.tsx`: 4 import `ResponsiveGrid`; 29 render `ResponsiveGrid`
 - `apps/mobile/app/fristen.tsx`: 3 import `ResponsiveGrid`; 14 render `ResponsiveGrid`
@@ -237,7 +239,7 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - `apps/mobile/app/(tabs)/ilias.tsx`: 9 import `OptionRows`; 96 render `OptionRows`
 - `apps/mobile/app/(tabs)/mail.tsx`: 7 import `OptionRows`; 82 render `OptionRows`; 95 render `OptionRows`; 106 render `OptionRows`; 108 render `OptionRows`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 248 render `OptionRows`; 267 render `OptionRows`; 390 render `OptionRows`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 8 import `OptionRows`; 249 render `OptionRows`; 268 render `OptionRows`; 394 render `OptionRows`
 - `packages/ui/src/dropdown-picker.tsx`: 8 import `OptionRows`; 44 render `OptionRows`
 - `packages/ui/src/index.ts`: 5 re-export `OptionRows`
 
@@ -267,7 +269,7 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `DrawerPanel`; 193 render `DrawerPanel`
 - `apps/mobile/app/(tabs)/mail.tsx`: 7 import `DrawerPanel`; 78 render `DrawerPanel`; 94 render `DrawerPanel`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 420 render `DrawerPanel`; 438 render `DrawerPanel`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 7 import `DrawerPanel`; 424 render `DrawerPanel`; 442 render `DrawerPanel`
 - `packages/ui/src/index.ts`: 2 re-export `DrawerPanel`
 
 ### JsonTree
@@ -304,7 +306,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `StudySelector` (component)
 - Usages: 3 references in 3 files
 
-- `apps/mobile/app/(tabs)/mehr.tsx`: 11 import `StudySelector`; 278 render `StudySelector`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 11 import `StudySelector`; 279 render `StudySelector`
 - `apps/mobile/app/kurse.tsx`: 12 import `StudySelector`; 173 render `StudySelector`
 - `apps/mobile/src/components/campus-info-view.tsx`: 14 import `StudySelector`; 170 render `StudySelector`
 
@@ -355,7 +357,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `PaneModeProvider` (component), `usePaneMode` (hook)
 - Usages: 2 references in 3 files
 
-- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `PaneModeProvider`; 376 render `PaneModeProvider`
+- `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `PaneModeProvider`; 377 render `PaneModeProvider`
 - `packages/ui/src/index.ts`: 6 re-export `PaneModeProvider`; 6 re-export `usePaneMode`
 - `packages/ui/src/ui.tsx`: 7 import `usePaneMode`; 99 call `usePaneMode`
 
@@ -553,11 +555,11 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
-| `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 8 | 3 |
+| `diagram` | `packages/features/quiz/src/ui/components/diagram.tsx` | Native + Web | – | DiagramCanvas, DiagramView, diagramAspect, diagramTone | 13 | 4 |
+| `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 9 | 4 |
 | `mail-skeletons` | `packages/features/mail/src/ui/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 3 |
 | `OptionRow` | `packages/features/quiz/src/ui/components/option-row.tsx` | Native + Web | OptionRow | OptionRow | 4 | 4 |
 | `ProfileSummary` | `apps/mobile/src/profile/profile-summary.tsx` | Native + Web | ProfileSummary | ProfileSummary | 4 | 4 |
-| `diagram` | `packages/features/quiz/src/ui/components/diagram.tsx` | Native + Web | – | DiagramCanvas, DiagramView, diagramAspect | 3 | 3 |
 | `RecipientField` | `packages/features/mail/src/ui/recipient-field.tsx` | Native + Web | – | RecipientField | 3 | 2 |
 | `ContactBadge` | `packages/features/mail/src/ui/contact-badge.tsx` | Native + Web | ContactBadge | ContactBadge | 2 | 2 |
 | `ilias-dashboard` | `packages/features/ilias/src/ui/ilias-dashboard.tsx` | Native + Web | – | IliasDashboardView, iliasFilterLabel | 2 | 2 |
@@ -565,6 +567,8 @@ Every component under `src/` with its exports, platform files, and every place i
 | `MailReader` | `apps/mobile/src/mail/components/mail-reader.tsx` | Native + Web | – | MailReader | 2 | 2 |
 | `MemberAvatar` | `apps/mobile/src/ilias/components/member-avatar.tsx` | Native + Web | MemberAvatar | MemberAvatar | 2 | 2 |
 | `ProfilePreview` | `apps/mobile/src/profile/profile-preview.tsx` | Native + Web | ProfilePreview | ProfilePreview | 2 | 2 |
+| `StudioLinkCard` | `apps/mobile/src/quiz/studio-link.tsx` | Native + Web | – | StudioLinkCard | 2 | 2 |
+| `articulation` | `packages/features/quiz/src/ui/components/articulation.tsx` | Native + Web | – | ArticulationFigure, ArticulationPlayer | 1 | 2 |
 | `AttachmentList` | `packages/features/mail/src/ui/attachment-list.tsx` | Native + Web | AttachmentList | AttachmentList | 1 | 2 |
 | `ClozeView` | `packages/features/quiz/src/ui/components/cloze.tsx` | Native + Web | ClozeView | ClozeView | 1 | 2 |
 | `DiagramFigureCard` | `packages/features/quiz/src/ui/components/diagram-figure.tsx` | Native + Web | – | DiagramFigureCard | 1 | 2 |
@@ -588,17 +592,30 @@ Every component under `src/` with its exports, platform files, and every place i
 | `TemplateSheet` | `packages/features/mail/src/ui/template-sheet.tsx` | Native + Web | – | TemplateSheet | 1 | 2 |
 | `TrueFalseView` | `packages/features/quiz/src/ui/components/true-false.tsx` | Native + Web | TrueFalseView | TrueFalseView | 1 | 2 |
 
+### diagram
+
+- File: `packages/features/quiz/src/ui/components/diagram.tsx`
+- Category: Feature components
+- Exports: `DiagramCanvas` (component), `DiagramView` (component), `diagramAspect` (helper), `diagramTone` (helper)
+- Usages: 13 references in 4 files
+
+- `packages/features/quiz/src/ui.ts`: 4 re-export `DiagramCanvas`; 4 re-export `DiagramView`
+- `packages/features/quiz/src/ui/components/articulation.tsx`: 26 import `diagramAspect`; 26 import `DiagramCanvas`; 26 import `diagramTone`; 173 call `diagramAspect`; 174 render `DiagramCanvas`; 189 call `diagramTone`; 190 call `diagramTone`; 198 call `diagramTone`; 199 call `diagramTone`; 207 call `diagramTone`; 208 call `diagramTone`; 217 call `diagramTone`; 218 call `diagramTone`
+- `packages/features/quiz/src/ui/components/diagram-figure.tsx`: 9 import `diagramAspect`; 9 import `DiagramCanvas`; 29 call `diagramAspect`; 30 render `DiagramCanvas`
+- `packages/features/quiz/src/ui/components/question-view.tsx`: 5 import `DiagramView`; 120 render `DiagramView`
+
 ### QuizButton
 
 - File: `packages/features/quiz/src/ui/components/quiz-button.tsx`
 - Category: Feature components
 - Exports: `QuizButton` (component)
 - Live preview in the app: `QuizButton`
-- Usages: 8 references in 3 files
+- Usages: 9 references in 4 files
 
-- `apps/mobile/app/quiz/[topic]/index.tsx`: 10 import `QuizButton`; 173 render `QuizButton`; 177 render `QuizButton`; 227 render `QuizButton`
+- `apps/mobile/app/quiz/[topic]/index.tsx`: 12 import `QuizButton`; 175 render `QuizButton`; 179 render `QuizButton`; 238 render `QuizButton`
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 10 import `QuizButton`; 192 render `QuizButton`; 293 render `QuizButton`; 300 render `QuizButton`; 373 render `QuizButton`; 374 render `QuizButton`
-- `packages/features/quiz/src/ui.ts`: 13 re-export `QuizButton`
+- `apps/mobile/app/quiz/studio/index.tsx`: 7 import `QuizButton`; 70 render `QuizButton`
+- `packages/features/quiz/src/ui.ts`: 14 re-export `QuizButton`
 
 ### mail-skeletons
 
@@ -620,7 +637,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `OptionRow`
 - Usages: 4 references in 4 files
 
-- `packages/features/quiz/src/ui.ts`: 9 re-export `OptionRow`
+- `packages/features/quiz/src/ui.ts`: 10 re-export `OptionRow`
 - `packages/features/quiz/src/ui/components/multiple-choice.tsx`: 9 import `OptionRow`; 32 render `OptionRow`
 - `packages/features/quiz/src/ui/components/single-choice.tsx`: 9 import `OptionRow`; 30 render `OptionRow`
 - `packages/features/quiz/src/ui/components/true-false.tsx`: 7 import `OptionRow`; 24 render `OptionRow`; 32 render `OptionRow`
@@ -637,17 +654,6 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/profil/daten.tsx`: 8 import `ProfileSummary`; 23 render `ProfileSummary`
 - `apps/mobile/app/profil/index.tsx`: 6 import `ProfileSummary`; 26 render `ProfileSummary`
 - `apps/mobile/app/profil/sichtbarkeit.tsx`: 8 import `ProfileSummary`; 32 render `ProfileSummary`
-
-### diagram
-
-- File: `packages/features/quiz/src/ui/components/diagram.tsx`
-- Category: Feature components
-- Exports: `DiagramCanvas` (component), `DiagramView` (component), `diagramAspect` (helper)
-- Usages: 3 references in 3 files
-
-- `packages/features/quiz/src/ui.ts`: 3 re-export `DiagramCanvas`; 3 re-export `DiagramView`
-- `packages/features/quiz/src/ui/components/diagram-figure.tsx`: 9 import `diagramAspect`; 9 import `DiagramCanvas`; 29 call `diagramAspect`; 30 render `DiagramCanvas`
-- `packages/features/quiz/src/ui/components/question-view.tsx`: 5 import `DiagramView`; 120 render `DiagramView`
 
 ### RecipientField
 
@@ -721,6 +727,26 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/profil/auffindbarkeit.tsx`: 6 import `ProfilePreview`; 45 render `ProfilePreview`
 - `apps/mobile/app/profil/sichtbarkeit.tsx`: 7 import `ProfilePreview`; 89 render `ProfilePreview`
 
+### StudioLinkCard
+
+- File: `apps/mobile/src/quiz/studio-link.tsx`
+- Category: Feature components
+- Exports: `StudioLinkCard` (component)
+- Usages: 2 references in 2 files
+
+- `apps/mobile/app/(tabs)/quiz.tsx`: 20 import `StudioLinkCard`; 330 render `StudioLinkCard`
+- `apps/mobile/app/quiz/[topic]/index.tsx`: 9 import `StudioLinkCard`; 191 render `StudioLinkCard`
+
+### articulation
+
+- File: `packages/features/quiz/src/ui/components/articulation.tsx`
+- Category: Feature components
+- Exports: `ArticulationFigure` (component), `ArticulationPlayer` (component)
+- Usages: 1 reference in 2 files
+
+- `apps/mobile/app/quiz/studio/index.tsx`: 7 import `ArticulationPlayer`; 43 render `ArticulationPlayer`
+- `packages/features/quiz/src/ui.ts`: 1 re-export `ArticulationFigure`; 1 re-export `ArticulationPlayer`
+
 ### AttachmentList
 
 - File: `packages/features/mail/src/ui/attachment-list.tsx`
@@ -740,7 +766,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `ClozeView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 1 re-export `ClozeView`
+- `packages/features/quiz/src/ui.ts`: 2 re-export `ClozeView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 4 import `ClozeView`; 100 render `ClozeView`
 
 ### DiagramFigureCard
@@ -750,8 +776,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `DiagramFigureCard` (component)
 - Usages: 1 reference in 2 files
 
-- `apps/mobile/app/quiz/[topic]/index.tsx`: 10 import `DiagramFigureCard`; 186 render `DiagramFigureCard`
-- `packages/features/quiz/src/ui.ts`: 2 re-export `DiagramFigureCard`
+- `apps/mobile/app/quiz/[topic]/index.tsx`: 12 import `DiagramFigureCard`; 188 render `DiagramFigureCard`
+- `packages/features/quiz/src/ui.ts`: 3 re-export `DiagramFigureCard`
 
 ### FlashcardView
 
@@ -761,7 +787,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `FlashcardView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 4 re-export `FlashcardView`
+- `packages/features/quiz/src/ui.ts`: 5 re-export `FlashcardView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 6 import `FlashcardView`; 130 render `FlashcardView`
 
 ### FreeTextView
@@ -771,7 +797,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `FreeTextView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 5 re-export `FreeTextView`
+- `packages/features/quiz/src/ui.ts`: 6 re-export `FreeTextView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 7 import `FreeTextView`; 69 render `FreeTextView`
 
 ### IliasOfficeView
@@ -852,7 +878,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MapView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 6 re-export `MapView`
+- `packages/features/quiz/src/ui.ts`: 7 re-export `MapView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 8 import `MapView`; 110 render `MapView`
 
 ### MatchingView
@@ -862,7 +888,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MatchingView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 7 re-export `MatchingView`
+- `packages/features/quiz/src/ui.ts`: 8 re-export `MatchingView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 9 import `MatchingView`; 80 render `MatchingView`
 
 ### MultipleChoiceView
@@ -872,7 +898,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MultipleChoiceView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 8 re-export `MultipleChoiceView`
+- `packages/features/quiz/src/ui.ts`: 9 re-export `MultipleChoiceView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 10 import `MultipleChoiceView`; 49 render `MultipleChoiceView`
 
 ### OrderingView
@@ -882,7 +908,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `OrderingView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 10 re-export `OrderingView`
+- `packages/features/quiz/src/ui.ts`: 11 re-export `OrderingView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 11 import `OrderingView`; 90 render `OrderingView`
 
 ### QuestionFeedback
@@ -894,7 +920,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 10 import `QuestionFeedback`; 335 render `QuestionFeedback`
-- `packages/features/quiz/src/ui.ts`: 11 re-export `QuestionFeedback`
+- `packages/features/quiz/src/ui.ts`: 12 re-export `QuestionFeedback`
 
 ### QuestionView
 
@@ -904,7 +930,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 10 import `QuestionView`; 326 render `QuestionView`
-- `packages/features/quiz/src/ui.ts`: 12 re-export `QuestionView`
+- `packages/features/quiz/src/ui.ts`: 13 re-export `QuestionView`
 
 ### QuizToolbar
 
@@ -914,8 +940,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `QuizToolbar`
 - Usages: 1 reference in 2 files
 
-- `apps/mobile/app/(tabs)/quiz.tsx`: 19 import `QuizToolbar`; 234 render `QuizToolbar`
-- `packages/features/quiz/src/ui.ts`: 14 re-export `QuizToolbar`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 19 import `QuizToolbar`; 235 render `QuizToolbar`
+- `packages/features/quiz/src/ui.ts`: 15 re-export `QuizToolbar`
 
 ### SingleChoiceView
 
@@ -925,7 +951,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `SingleChoiceView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 15 re-export `SingleChoiceView`
+- `packages/features/quiz/src/ui.ts`: 16 re-export `SingleChoiceView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 12 import `SingleChoiceView`; 39 render `SingleChoiceView`
 
 ### TemplateSheet
@@ -946,7 +972,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `TrueFalseView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 16 re-export `TrueFalseView`
+- `packages/features/quiz/src/ui.ts`: 17 re-export `TrueFalseView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 13 import `TrueFalseView`; 59 render `TrueFalseView`
 
 ## App-wide providers
@@ -983,8 +1009,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 6 references in 5 files
 
 - `apps/mobile/app/_layout.tsx`: 21 import `QuizProgressProvider`; 47 render `QuizProgressProvider`
-- `apps/mobile/app/(tabs)/quiz.tsx`: 21 import `useQuizProgress`; 106 call `useQuizProgress`
-- `apps/mobile/app/quiz/[topic]/index.tsx`: 12 import `useQuizProgress`; 28 call `useQuizProgress`
+- `apps/mobile/app/(tabs)/quiz.tsx`: 22 import `useQuizProgress`; 107 call `useQuizProgress`
+- `apps/mobile/app/quiz/[topic]/index.tsx`: 14 import `useQuizProgress`; 30 call `useQuizProgress`
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 11 import `useQuizProgress`; 50 call `useQuizProgress`; 102 call `useQuizProgress`
 - `apps/mobile/app/quiz/modul/[id].tsx`: 8 import `useQuizProgress`; 25 call `useQuizProgress`
 

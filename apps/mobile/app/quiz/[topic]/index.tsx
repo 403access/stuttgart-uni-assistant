@@ -6,7 +6,9 @@ import { Pressable, Text, View } from 'react-native';
 import { Card, Meter, Pill, Screen, Section } from '@ua/ui';
 import { confirmQuizAction } from '@/src/quiz/confirm';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
+import { StudioLinkCard } from '@/src/quiz/studio-link';
 import { findQuizTopic, isMixedTopic } from '@ua/quiz-content';
+import { studioSoundForTopic } from '@ua/quiz-content/articulation';
 import { DiagramFigureCard , QuizButton } from '@ua/feature-quiz/ui';
 import { questionKindLabel , topicStats } from '@ua/feature-quiz';
 import { useQuizProgress } from '@/src/quiz/progress';
@@ -184,6 +186,15 @@ function TopicOverview({
       ) : null}
 
       {topic.figure ? <DiagramFigureCard figure={topic.figure} locale={locale} /> : null}
+
+      {studioSoundForTopic[topic.id] ? (
+        <StudioLinkCard
+          locale={locale}
+          variant="topic"
+          topic={topic.id}
+          sound={studioSoundForTopic[topic.id]}
+        />
+      ) : null}
 
       <Section title={tx(locale, 'quiz.new_round')} />
       <Card>

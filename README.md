@@ -86,7 +86,7 @@ bun run check
 
 ## Generate quiz content from PDFs
 
-Quiz topics can be generated from lecture PDFs and attached to an existing module. The command reads embedded PDF text, asks xAI for a validated bilingual topic (it needs `XAI_API_KEY`), and writes TypeScript under `apps/mobile/src/quiz/content/generated/`:
+Quiz topics can be generated from lecture PDFs and attached to an existing module. The command reads embedded PDF text, asks xAI for a validated bilingual topic (it needs `XAI_API_KEY`), and writes TypeScript under `packages/quiz-content/src/content/generated/`:
 
 ```bash
 bun run quiz:from-pdf --module prag ./sitzung-2.pdf
@@ -117,6 +117,7 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 | `apps/server/routes/` | Route modules for admin, health, auth, mail, C@MPUS, OIDC, and the Grok rewrite |
 | `packages/` | Shared workspace packages: `core`, `contracts`, `format`, `design-tokens`, `api-client`, `ui`, `ui-react`, `server-kit`, `quiz-content`, and `features/*` |
 | `tools/quiz-from-pdf.ts` | Builds quiz topics from PDF handouts; see [docs/engineering/quiz.md](docs/engineering/quiz.md) |
+| `packages/quiz-content/src/articulation.ts` | Sounds for the articulation studio (learning tool in the quiz); see [docs/engineering/quiz.md](docs/engineering/quiz.md#articulation-studio) |
 | `tools/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
 | `tools/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |

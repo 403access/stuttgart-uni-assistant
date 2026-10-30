@@ -7,9 +7,59 @@ the operator dashboard shows every answer across all users.
 
 Status: implemented. The tab is `apps/mobile/app/(tabs)/quiz.tsx`, the topic overview is
 `apps/mobile/app/quiz/[topic]/index.tsx`, a round is `apps/mobile/app/quiz/[topic]/run.tsx`, and the
-reusable question views live in `apps/mobile/src/quiz/components/`. The server catalog and
+reusable question views live in `packages/features/quiz/src/ui/components/`. The server catalog and
 analytics live in `apps/server/quiz/`; the admin screens are
 `apps/admin/src/routes/quiz.tsx`.
+
+## Learning tools
+
+Alongside the questions, the quiz ships small **learning tools** (in the UI:
+*Lernwerkzeuge*) that explain content instead of testing it. They are listed in
+the **Lernwerkzeuge** section on the quiz hub, linked from the topic they
+belong to, and searchable under **Campus → Studium**. The first one is the
+articulation studio.
+
+### Articulation studio
+
+`apps/mobile/app/quiz/studio/index.tsx` (route `/quiz/studio`) animates how a
+sound is produced: the airstream rises from the lungs, the vocal cords either
+vibrate or stay apart, and the tongue, lips and velum take the pose of the
+selected sound. 24 sounds are bundled (stops, nasals, fricatives, approximants
+and vowels), each with an IPA glyph, an example word and a one-line
+explanation.
+
+The figure reuses the quiz diagram: it draws `articulationRegions` (the static
+anatomy from `vocalTractRegions`) with the same `DiagramCanvas` in `plain` mode,
+then layers the movable articulators on top. The pose geometry lives in
+`packages/quiz-content/src/figures/articulation.ts`:
+
+- `tongueOutline(pose)` builds a closed Catmull-Rom curve through a handful of
+  anchors per `TonguePose`, so every tongue position shares one shape family.
+- `lipOutlines(pose)` returns the two lip pads for a `LipPose`.
+- `velumOutlines` rotate around `VELUM_HINGE` by `velumAngle(pose)`, which is how
+  the velum opens and closes the nasal cavity.
+- `cordOutlines(voiced)` draws the glottis open or closed.
+- `airflowLane(lane, pose)` returns a polyline; the oral lane follows the tongue
+  surface so the air never disappears inside the dorsum.
+- `articulationFocus(sound)` is the point the focus ring pulses on.
+
+`ArticulationFigure` / `ArticulationPlayer` (`packages/features/quiz/src/ui/components/articulation.tsx`)
+drive one `Animated.Value` from 0 to 1 every 5.2 s and derive everything from it:
+air puffs travel the lane, voicing rings pulse at the larynx, the focus ring
+marks the stricture, and the three stage chips (airstream, voice, articulation)
+light up in order. Switching sounds cross-fades the pose layer. With the
+platform's reduce-motion setting on, the figure stays static, the player hides
+the play button and says so.
+
+The sound catalog is `packages/quiz-content/src/articulation.ts`. Adding a sound
+is a data-only change: pick a `manner`, an optional `place` (vowels use `shape`
+instead), `voiced`, and the `pose`. `tools/check-quiz.ts` verifies unique ids,
+bilingual copy, manner/velum/airstream consistency, drawable paths and that
+`studioSoundForTopic` points at real topics and sounds.
+
+`studioSoundForTopic` decides which sound a topic opens with; it is kept next to
+the content rather than on `QuizTopic`, so importing a server catalog can never
+remove the link.
 
 ## Question kinds
 
@@ -32,7 +82,7 @@ state; the views render only.
 
 The map view uses `react-native-svg`. A `MapQuestion` carries its own `viewBox`
 and `backdrop` outlines, and every region carries an SVG `path` plus a label
-anchor. The Europe shapes live in `apps/mobile/src/quiz/maps/europe.ts`, generated from
+anchor. The Europe shapes live in `packages/quiz-content/src/maps/europe.ts`, generated from
 Natural Earth 1:50m Admin 0 Countries and 1:10m Admin 1 States/Provinces (public
 domain) with a Lambert conformal conic projection. The backdrop countries are
 context only; the interactive regions are keyed by the same ids as `correct`.
@@ -41,14 +91,14 @@ The diagram view uses the same SVG approach for illustrated questions. A
 `DiagramQuestion` owns a `viewBox`, `backdrop` outlines, labelled regions and one
 or more correct region ids. Regions can be paths or circles and carry a fixed
 tone, so the anatomy stays readable in both themes. The head cross-section and
-the IPA vowel chart live in `apps/mobile/src/quiz/figures/vocal-tract.ts`. A topic can also
+the IPA vowel chart live in `packages/quiz-content/src/figures/vocal-tract.ts`. A topic can also
 carry a `figure` (`QuizFigure`), which the overview renders as a numbered study
 card above the round options; the card and the questions share the exact same
 geometry, so a label can never drift from its tap target.
 
 ## Content
 
-`apps/mobile/src/quiz/content/index.ts` registers modules. A module has topics, and a topic
+`packages/quiz-content/src/content/index.ts` registers modules. A module has topics, and a topic
 has questions:
 
 ```ts
@@ -126,8 +176,8 @@ bun run quiz:from-pdf --module prag ./sitzung-2.pdf --dry-run
   overrides the model.
 
 Each PDF becomes one topic in
-`apps/mobile/src/quiz/content/generated/<module>-<file>.ts`, and the CLI rewrites
-`apps/mobile/src/quiz/content/generated/index.ts`. `content/index.ts` attaches those topics
+`packages/quiz-content/src/content/generated/<module>-<file>.ts`, and the CLI rewrites
+`packages/quiz-content/src/content/generated/index.ts`. `content/index.ts` attaches those topics
 to their modules, so generated and hand-authored content share progress,
 modes, the module hub, and validation. The pipeline never overwrites
 hand-authored topics.
@@ -146,7 +196,7 @@ the next first-start seed.
 
 ### Free text checking
 
-`apps/mobile/src/quiz/evaluate.ts` lower-cases, strips accents and punctuation, collapses
+`packages/features/quiz/src/core/evaluate.ts` lower-cases, strips accents and punctuation, collapses
 whitespace, and folds `ß` to `ss`. Numeric answers also drop thousands
 separators, so `6.000`, `6 000`, and `6000` match. Answers up to three
 characters must match exactly; longer answers tolerate one typo (two above ten
@@ -201,7 +251,7 @@ drift by `tools/check-quiz.ts`.
 
 ## Rounds and progress
 
-`apps/mobile/src/quiz/session.ts` builds a round:
+`packages/features/quiz/src/core/session.ts` builds a round:
 
 - `all` keeps the authored order,
 - `quick` takes five questions, preferring unseen, then previously wrong ones,
@@ -209,7 +259,7 @@ drift by `tools/check-quiz.ts`.
 - `mixed` shuffles all questions and caps the round at twenty.
 
 Progress is stored separately from the app store under
-`university-assistant/quiz/v1` (`apps/mobile/src/quiz/progress.tsx`). It keeps per-question
+`university-assistant/quiz/v1` (`apps/mobile/src/quiz/progress.tsx`, with the reducer in `packages/features/quiz/src/core/answer.ts`). It keeps per-question
 attempts, correct counts, the last result, the latest 60 sessions, and one
 **active session per topic**. Keeping it separate means an older persisted app
 state still loads without migration. This local store remains the UI source of
