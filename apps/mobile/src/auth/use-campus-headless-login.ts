@@ -12,8 +12,10 @@ import {
 import { buildHarvest, type BrowserHarvest } from '@/src/auth/campus-harvest';
 import { isLoginFailureStep, phaseForStep, type CampusLoginPhase } from '@/src/auth/campus-progress';
 import { formatDump, hostOf, parseHarvestMessage } from '@/src/auth/login-messages';
-import { biometricUnlockAvailable, clearLogin, readLogin, saveLogin, storedLoginHint } from '@/src/auth/vault';
+import { useSavedCampusCredentials } from '@/src/auth/use-saved-campus-credentials';
+import { biometricUnlockAvailable, saveLogin } from '@/src/auth/vault';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
+import { showToast } from '@ua/ui';
 import { tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
@@ -23,11 +25,6 @@ const TIMEOUT_MS = 90_000;
 interface RunOptions {
   /** Write the credential to the device vault before running. */
   save: boolean;
-  biometrics: boolean;
-}
-
-interface SavedLogin {
-  account: string;
   biometrics: boolean;
 }
 
@@ -62,7 +59,7 @@ export function useCampusHeadlessLogin({
   const [remember, setRemember] = useState(false);
   const [biometrics, setBiometrics] = useState(false);
   const [biometricsReady, setBiometricsReady] = useState(false);
-  const [savedLogin, setSavedLogin] = useState<SavedLogin | null>(null);
+  const savedCredentials = useSavedCampusCredentials();
 
   // The legacy screen still exposes its own biometric chip; both that and the
   // App Lock preference protect the vault entry. `rememberLogin` is what the
@@ -87,11 +84,6 @@ export function useCampusHeadlessLogin({
     biometricUnlockAvailable()
       .then((available) => {
         if (active) setBiometricsReady(available);
-      })
-      .catch(() => undefined);
-    storedLoginHint()
-      .then((hint) => {
-        if (active && hint) setSavedLogin(hint);
       })
       .catch(() => undefined);
     return () => {
@@ -230,8 +222,10 @@ export function useCampusHeadlessLogin({
         { account: accountValue, password: passwordValue, biometrics: options.biometrics },
         tx(locale, 'useCampusHeadlessLogin.c'),
       ).catch(() => false);
-      if (ok) setSavedLogin({ account: accountValue.trim(), biometrics: options.biometrics });
-      else setError(tx(locale, 'useCampusHeadlessLogin.geraetespeicher'));
+      if (ok) {
+        await savedCredentials.refresh();
+        showToast({ title: tx(locale, 'savedCredentials.gespeichert'), tone: 'success' });
+      } else setError(tx(locale, 'useCampusHeadlessLogin.geraetespeicher'));
     }
     setOpen(true);
     setAttempt((value) => value + 1);
@@ -257,15 +251,15 @@ export function useCampusHeadlessLogin({
   /** Unlock the vault and run with the stored credential. Never re-saves it. */
   async function startStoredLogin() {
     setError('');
-    const stored = await readLogin(
-      tx(locale, 'useCampusHeadlessLogin.c'),
-      savedLogin?.biometrics ?? false,
-    );
-    if (!stored) {
-      setSavedLogin(null);
-      setError(tx(locale, 'useCampusHeadlessLogin.gespeicherte'));
+    const result = await savedCredentials.unlock();
+    if (result.status === 'cancelled') return;
+    if (result.status !== 'ok') {
+      setError(
+        result.status === 'failed' ? result.message : tx(locale, 'useCampusHeadlessLogin.gespeicherte'),
+      );
       return;
     }
+    const stored = result.login;
     setAccount(stored.account);
     setPassword(stored.password);
     setBiometrics(stored.biometrics);
@@ -273,8 +267,7 @@ export function useCampusHeadlessLogin({
   }
 
   async function forgetStoredLogin() {
-    await clearLogin();
-    setSavedLogin(null);
+    await savedCredentials.forget();
     setPassword('');
   }
 
@@ -296,7 +289,8 @@ export function useCampusHeadlessLogin({
     start,
     startStoredLogin,
     forgetStoredLogin,
-    savedLogin,
+    savedLogin: savedCredentials.hint,
+    savedCredentials,
     biometricsReady,
     biometricGate,
     rememberLogin,

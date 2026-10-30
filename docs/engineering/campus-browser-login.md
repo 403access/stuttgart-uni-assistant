@@ -79,6 +79,8 @@ The last accepted harvest (cookies and storage keys, **not** the password) is ke
 
 The entry is device-only and local: the app deletes it on sign-out (`Campus → App → Sitzung beenden`), the login screen has `Gespeicherte Anmeldung löschen`, and it is never sent to C@MPUS. It does leave the device for UniMail alone, where the assistant server proves the same password against TIK IMAP after a successful automated sign-in (see [mail.md](mail.md)). The account id alone is mirrored to Async Storage as a non-secret hint, so the screen can offer the vaulted login without prompting first. iOS persists keychain entries across a reinstall with the same bundle id, which is why sign-out deletes rather than ignores.
 
+The stored account and password can be shown on demand — from the saved sign-in block on the login screen and from `Sicherheit → C@MPUS-Zugangsdaten` — through [use-saved-campus-credentials.ts](../../apps/mobile/src/auth/use-saved-campus-credentials.ts). A biometric-gated entry raises the OS prompt through `expo-secure-store`; an entry without the gate is read directly, unless the App Lock was enabled after saving, in which case the user is prompted first. The password hides itself again after 30 seconds, a cancelled prompt leaves the entry untouched, and only a read that reports the entry as missing drops the hint.
+
 ## Limits of the workaround
 
 - The native cookie read needs a development build that contains `@preeternal/react-native-cookie-manager`; the vault needs `expo-secure-store`. Expo Go does not. After adding or updating them, rebuild with `npx expo run:ios|android` or `eas build --profile development`. Both modules are New Architecture only (Expo SDK 58 / RN 0.88 is).

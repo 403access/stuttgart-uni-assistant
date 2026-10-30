@@ -7,6 +7,7 @@ import { useLoginFlow } from '@/src/auth/use-login-flow';
 import { CampusBrowserModal } from '@/src/components/campus-browser-modal';
 import { CampusHeadlessModal } from '@/src/components/campus-headless-modal';
 import { Field, Checkbox, LanguagePicker } from '@/src/components/login-blocks';
+import { SavedCredentialPanel } from '@/src/components/saved-credentials';
 import { SigningIn } from '@/src/components/signing-in';
 import { Button, Mark } from '@ua/ui';
 import { WebDeviceLogin } from '@/src/components/web-device-login';
@@ -123,17 +124,11 @@ function NativeLoginScreen() {
               onPress={() => void headless.start()}
             />
             {headless.savedLogin ? (
-              <Button
-                secondary
-                label={tx(locale, 'common.gespeicherte', [headless.savedLogin.account])}
-                onPress={() => void headless.startStoredLogin()}
-              />
-            ) : null}
-            {headless.savedLogin ? (
-              <Button
-                secondary
-                label={tx(locale, 'common.gespeicherte_anmeldung')}
-                onPress={() => void headless.forgetStoredLogin()}
+              <SavedCredentialPanel
+                locale={locale}
+                saved={headless.savedCredentials}
+                onUse={() => void headless.startStoredLogin()}
+                onForget={() => void headless.forgetStoredLogin()}
               />
             ) : null}
             {campusSignIn.isPending ? (

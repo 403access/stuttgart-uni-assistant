@@ -33,7 +33,11 @@ the session. **Anmeldung merken** keeps the credential in the device vault (iOS
 keychain / Android Keystore). With the biometric App Lock on, the box is checked
 automatically and the entry is unlocked with Face ID or your fingerprint;
 without biometrics it is still encrypted and protected by the device passcode,
-just without the biometric gate. It is deleted when you sign out. The same
+just without the biometric gate. It is deleted when you sign out. You can show
+the saved account and password again with **Anzeigen** on the login screen or
+under **Sicherheit → C@MPUS-Zugangsdaten**: with biometrics the app asks for
+Face ID or your fingerprint first, without them it reveals them directly, and
+the password hides itself after 30 seconds. The same
 st-account and password are also used to connect UniMail on the assistant server,
 so your Messages tab is ready without a second entry. A loading indicator names
 the phase while the profile and curriculum load.

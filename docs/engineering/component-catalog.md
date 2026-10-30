@@ -18,15 +18,15 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Metric | Value |
 | --- | ---: |
-| Components | 80 |
-| Exports | 119 |
-| Usage references | 839 |
-| Files with occurrences | 109 |
+| Components | 81 |
+| Exports | 120 |
+| Usage references | 842 |
+| Files with occurrences | 110 |
 | Unused components | 0 |
 | Imported but never used | 0 |
 | Components with platform files | 4 |
 | Components with live previews | 32 |
-| Shared UI | 36 |
+| Shared UI | 37 |
 | Feature components | 36 |
 | App-wide providers | 8 |
 
@@ -34,7 +34,7 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
-| `ui` | `packages/ui/src/ui.tsx` | Native + Web | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, SearchField, Section, Strong | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, Screen, SearchField, Section, Strong, listPosition | 622 | 86 |
+| `ui` | `packages/ui/src/ui.tsx` | Native + Web | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, SearchField, Section, Strong | Button, Card, FieldLabel, InfoRow, Mark, Meter, Muted, Pill, Screen, SearchField, Section, Strong, listPosition | 623 | 87 |
 | `login-blocks` | `apps/mobile/src/components/login-blocks.tsx` | Native + Web | Checkbox, Chip, ErrorText, Field, Footer, LanguagePicker, Meta, Notice, SectionTitle | Checkbox, Chip, ErrorText, Field, Footer, LanguagePicker, Meta, Notice, SectionTitle | 25 | 6 |
 | `control-icon` | `packages/ui/src/control-icon.tsx` | Native + Web | ControlIcon, ToolButton | ControlIcon, ToolButton | 14 | 9 |
 | `ChoiceCard` | `apps/mobile/src/components/choice-card.tsx` | Native + Web | ChoiceCard | ChoiceCard | 10 | 3 |
@@ -50,6 +50,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | `CampusInfoView` | `apps/mobile/src/components/campus-info-view.tsx` | Native + Web | – | CampusInfoView | 2 | 2 |
 | `CurriculumTree` | `apps/mobile/src/components/curriculum-tree.tsx` | Native + Web | – | CurriculumTree | 2 | 2 |
 | `pane-mode` | `packages/ui/src/pane-mode.tsx` | Native + Web | – | PaneModeProvider, usePaneMode | 2 | 3 |
+| `SavedCredentialPanel` | `apps/mobile/src/components/saved-credentials.tsx` | Native + Web | – | SavedCredentialPanel | 2 | 2 |
 | `structure-row` | `apps/mobile/src/components/structure-row.tsx` | Native + Web | StructureRow, TreeChildren | StructureRow, TreeChildren | 2 | 1 |
 | `AmbientBackground` | `packages/ui/src/ambient-background.tsx` | Native + Web | – | AmbientBackground | 1 | 1 |
 | `ApiEntryDetail` | `apps/mobile/src/components/api-entry-detail.tsx` | Native + Web | – | ApiEntryDetail | 1 | 1 |
@@ -77,7 +78,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Category: Shared UI
 - Exports: `Button` (component), `Card` (component), `FieldLabel` (component), `InfoRow` (component), `Mark` (component), `Meter` (component), `Muted` (component), `Pill` (component), `Screen` (component), `SearchField` (component), `Section` (component), `Strong` (component), `listPosition` (helper)
 - Live preview in the app: `Button`, `Card`, `FieldLabel`, `InfoRow`, `Mark`, `Meter`, `Muted`, `Pill`, `SearchField`, `Section`, `Strong`
-- Usages: 622 references in 86 files
+- Usages: 623 references in 87 files
 
 - `apps/mobile/app/(tabs)/ilias.tsx`: 8 import `Button`; 8 import `Card`; 8 import `Screen`; 163 render `Screen`; 170 render `Screen`; 200 render `Screen`; 221 render `Card`; 224 render `Button`; 225 render `Button`
 - `apps/mobile/app/(tabs)/index.tsx`: 5 import `Card`; 5 import `InfoRow`; 5 import `Meter`; 5 import `Screen`; 5 import `Section`; 28 render `Card`; 34 render `Meter`; 40 render `Card`; 53 render `Section`; 56 render `InfoRow`; 65 render `Card`; 70 render `Section`; 72 render `InfoRow`; 81 render `Section`; 83 render `InfoRow`; 95 render `Screen`
@@ -112,7 +113,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/kurs/[id].tsx`: 8 import `Button`; 8 import `Card`; 8 import `InfoRow`; 8 import `Muted`; 8 import `Screen`; 33 render `Screen`; 35 render `Muted`; 48 render `Screen`; 50 render `Card`; 61 render `InfoRow`; 67 render `InfoRow`; 79 render `InfoRow`; 85 render `InfoRow`; 88 render `Button`
 - `apps/mobile/app/kurse.tsx`: 10 import `Button`; 10 import `Card`; 10 import `InfoRow`; 10 import `Muted`; 10 import `Pill`; 10 import `Screen`; 10 import `Section`; 165 render `Screen`; 175 render `Card`; 176 render `Muted`; 182 render `Card`; 191 render `Muted`; 195 render `Button`; 197 render `Button`; 232 render `Button`; 234 render `Button`; 240 render `Button`; 255 render `Pill`; 259 render `Pill`; 266 render `Pill`; 273 render `Section`; 276 render `InfoRow`
 - `apps/mobile/app/login-legacy.tsx`: 26 import `Button`; 26 import `Mark`; 147 render `Mark`; 183 render `Button`; 195 render `Button`; 204 render `Button`; 211 render `Button`; 231 render `Button`; 252 render `Button`
-- `apps/mobile/app/login.tsx`: 11 import `Button`; 11 import `Mark`; 58 render `Mark`; 117 render `Button`; 126 render `Button`; 133 render `Button`
+- `apps/mobile/app/login.tsx`: 12 import `Button`; 12 import `Mark`; 59 render `Mark`; 118 render `Button`
 - `apps/mobile/app/mail-nachricht.tsx`: 3 import `Screen`; 21 render `Screen`
 - `apps/mobile/app/mail-verbindung.tsx`: 14 import `Button`; 14 import `Card`; 14 import `Pill`; 14 import `Screen`; 71 render `Screen`; 78 render `Card`; 81 render `Pill`; 98 render `Button`; 102 render `Button`; 105 render `Card`
 - `apps/mobile/app/mail-verfassen.tsx`: 7 import `Button`; 7 import `Card`; 7 import `Pill`; 7 import `Screen`; 273 render `Screen`; 289 render `Button`; 301 render `Pill`; 310 render `Card`
@@ -131,7 +132,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/quiz/studio/index.tsx`: 6 import `Card`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 42 render `Card`; 49 render `Section`; 56 render `Card`; 62 render `Card`; 81 render `Screen`; 116 render `Pill`; 118 render `Pill`; 120 render `Pill`; 122 render `Pill`; 148 render `Card`
 - `apps/mobile/app/raum/[id].tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 18 render `Screen`; 27 render `Screen`; 29 render `Card`; 39 render `InfoRow`
 - `apps/mobile/app/reihenfolge.tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 4 import `Section`; 17 render `Screen`; 22 render `Card`; 32 render `Section`; 36 render `InfoRow`; 49 render `Card`
-- `apps/mobile/app/sicherheit.tsx`: 8 import `Button`; 8 import `Card`; 111 render `Card`; 129 render `Button`; 141 render `Button`
+- `apps/mobile/app/sicherheit.tsx`: 10 import `Button`; 10 import `Card`; 117 render `Card`; 135 render `Button`; 143 render `Card`; 160 render `Button`
 - `apps/mobile/app/sprache.tsx`: 4 import `Screen`; 13 render `Screen`
 - `apps/mobile/app/strukturen.tsx`: 21 import `Button`; 21 import `Card`; 21 import `InfoRow`; 21 import `Muted`; 21 import `Screen`; 21 import `Section`; 221 render `Screen`; 222 render `Card`; 223 render `Muted`; 233 render `Screen`; 234 render `Card`; 235 render `Muted`; 247 render `Screen`; 255 render `Section`; 256 render `Button`; 277 render `Section`; 303 render `Button`; 309 render `Muted`; 314 render `Muted`; 320 render `InfoRow`; 346 render `Section`; 348 render `Button`
 - `apps/mobile/app/studium.tsx`: 8 import `Card`; 8 import `InfoRow`; 8 import `Meter`; 8 import `Pill`; 8 import `Screen`; 8 import `Section`; 41 render `Screen`; 45 render `Pill`; 51 render `Card`; 55 render `Meter`; 73 render `Pill`; 78 render `Section`; 80 render `InfoRow`; 100 render `Card`
@@ -147,6 +148,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/src/components/curriculum-node-detail.tsx`: 7 import `Button`; 7 import `Card`; 7 import `InfoRow`; 7 import `Muted`; 7 import `Section`; 76 render `Section`; 77 render `Card`; 88 render `Section`; 90 render `Card`; 97 render `Section`; 105 render `Button`; 109 render `Muted`; 111 render `InfoRow`
 - `apps/mobile/src/components/curriculum-toolbar.tsx`: 4 import `Pill`; 4 import `SearchField`; 62 render `SearchField`; 70 render `Pill`; 73 render `Pill`; 76 render `Pill`; 79 render `Pill`; 82 render `Pill`; 90 render `Pill`; 94 render `Pill`; 102 render `Pill`
 - `apps/mobile/src/components/lecturers-list.tsx`: 4 import `InfoRow`; 4 import `Muted`; 13 render `Muted`; 15 render `InfoRow`
+- `apps/mobile/src/components/saved-credentials.tsx`: 5 import `Button`; 82 render `Button`; 84 render `Button`
 - `apps/mobile/src/components/structure-row.tsx`: 4 import `Pill`; 56 render `Pill`
 - `apps/mobile/src/components/study-cache-card.tsx`: 3 import `Button`; 3 import `Card`; 42 render `Card`; 55 render `Button`; 59 render `Button`; 64 render `Button`
 - `apps/mobile/src/components/tutorials-list.tsx`: 4 import `InfoRow`; 4 import `Muted`; 13 render `Muted`; 23 render `InfoRow`
@@ -175,7 +177,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 25 references in 6 files
 
 - `apps/mobile/app/login-legacy.tsx`: 24 import `Field`; 24 import `Footer`; 24 import `LanguagePicker`; 24 import `Meta`; 24 import `Notice`; 24 import `SectionTitle`; 160 render `LanguagePicker`; 179 render `SectionTitle`; 180 render `Notice`; 197 render `Footer`; 205 render `Field`; 222 render `Footer`; 225 render `SectionTitle`; 226 render `Notice`; 229 render `Meta`; 230 render `Meta`; 244 render `Footer`; 253 render `Footer`
-- `apps/mobile/app/login.tsx`: 9 import `Checkbox`; 9 import `Field`; 9 import `LanguagePicker`; 77 render `LanguagePicker`; 94 render `Field`; 102 render `Field`; 110 render `Checkbox`
+- `apps/mobile/app/login.tsx`: 9 import `Checkbox`; 9 import `Field`; 9 import `LanguagePicker`; 78 render `LanguagePicker`; 95 render `Field`; 103 render `Field`; 111 render `Checkbox`
 - `apps/mobile/src/components/campus-browser-modal.tsx`: 7 import `ErrorText`; 88 render `ErrorText`
 - `apps/mobile/src/components/campus-credentials-form.tsx`: 3 import `Chip`; 3 import `Field`; 3 import `Notice`; 3 import `SectionTitle`; 50 render `SectionTitle`; 51 render `Notice`; 54 render `Field`; 61 render `Field`; 70 render `Chip`; 72 render `Chip`
 - `apps/mobile/src/components/campus-headless-modal.tsx`: 9 import `ErrorText`; 104 render `ErrorText`
@@ -295,7 +297,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 5 references in 4 files
 
 - `apps/mobile/app/login-legacy.tsx`: 25 import `SigningIn`; 188 render `SigningIn`; 236 render `SigningIn`
-- `apps/mobile/app/login.tsx`: 10 import `SigningIn`; 140 render `SigningIn`
+- `apps/mobile/app/login.tsx`: 11 import `SigningIn`; 135 render `SigningIn`
 - `apps/mobile/src/components/campus-browser-modal.tsx`: 8 import `SigningIn`; 77 render `SigningIn`
 - `apps/mobile/src/components/campus-headless-modal.tsx`: 10 import `SigningIn`; 93 render `SigningIn`
 
@@ -318,7 +320,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 2 references in 2 files
 
 - `apps/mobile/app/login-legacy.tsx`: 20 import `CampusBrowserModal`; 257 render `CampusBrowserModal`
-- `apps/mobile/app/login.tsx`: 7 import `CampusBrowserModal`; 152 render `CampusBrowserModal`
+- `apps/mobile/app/login.tsx`: 7 import `CampusBrowserModal`; 147 render `CampusBrowserModal`
 
 ### CampusHeadlessModal
 
@@ -328,7 +330,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 2 references in 2 files
 
 - `apps/mobile/app/login-legacy.tsx`: 22 import `CampusHeadlessModal`; 272 render `CampusHeadlessModal`
-- `apps/mobile/app/login.tsx`: 8 import `CampusHeadlessModal`; 167 render `CampusHeadlessModal`
+- `apps/mobile/app/login.tsx`: 8 import `CampusHeadlessModal`; 162 render `CampusHeadlessModal`
 
 ### CampusInfoView
 
@@ -360,6 +362,16 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/(tabs)/mehr.tsx`: 9 import `PaneModeProvider`; 377 render `PaneModeProvider`
 - `packages/ui/src/index.ts`: 6 re-export `PaneModeProvider`; 6 re-export `usePaneMode`
 - `packages/ui/src/ui.tsx`: 7 import `usePaneMode`; 99 call `usePaneMode`
+
+### SavedCredentialPanel
+
+- File: `apps/mobile/src/components/saved-credentials.tsx`
+- Category: Shared UI
+- Exports: `SavedCredentialPanel` (component)
+- Usages: 2 references in 2 files
+
+- `apps/mobile/app/login.tsx`: 10 import `SavedCredentialPanel`; 127 render `SavedCredentialPanel`
+- `apps/mobile/app/sicherheit.tsx`: 9 import `SavedCredentialPanel`; 148 render `SavedCredentialPanel`
 
 ### structure-row
 
@@ -531,7 +543,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `WebDeviceLogin` (component)
 - Usages: 1 reference in 1 file
 
-- `apps/mobile/app/login.tsx`: 12 import `WebDeviceLogin`; 26 render `WebDeviceLogin`
+- `apps/mobile/app/login.tsx`: 13 import `WebDeviceLogin`; 27 render `WebDeviceLogin`
 
 ### WebHead
 
@@ -999,7 +1011,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/dev/onboarding.tsx`: 9 import `ONBOARDING_STORAGE_KEY`; 10 import `readStoredOnboardingPreferences`; 11 import `useOnboarding`; 38 call `useOnboarding`; 43 call `readStoredOnboardingPreferences`; 97 reference `ONBOARDING_STORAGE_KEY`
 - `apps/mobile/app/geraet-verknuepfen.tsx`: 16 import `useOnboarding`; 54 call `useOnboarding`
 - `apps/mobile/app/onboarding.tsx`: 12 import `useOnboarding`; 41 call `useOnboarding`
-- `apps/mobile/app/sicherheit.tsx`: 10 import `useOnboarding`; 33 call `useOnboarding`
+- `apps/mobile/app/sicherheit.tsx`: 12 import `useOnboarding`; 35 call `useOnboarding`
 
 ### progress
 

@@ -5,6 +5,8 @@ import { Linking, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useBiometricPrompt } from '@/src/auth/use-biometric-prompt';
+import { useSavedCampusCredentials } from '@/src/auth/use-saved-campus-credentials';
+import { SavedCredentialPanel } from '@/src/components/saved-credentials';
 import { Button, Card , useResponsive } from '@ua/ui';
 import { useRefreshOnFocus } from '@/src/hooks/use-refresh-on-focus';
 import { useOnboarding } from '@/src/onboarding/OnboardingState';
@@ -32,8 +34,12 @@ export default function SecurityScreen() {
     refreshBiometrics,
   } = useOnboarding();
   const biometrics = useBiometricPrompt();
+  const savedCredentials = useSavedCampusCredentials();
 
-  useRefreshOnFocus(refreshBiometrics);
+  useRefreshOnFocus(() => {
+    void refreshBiometrics();
+    void savedCredentials.refresh();
+  });
 
   async function toggleBiometrics(next: boolean) {
     if (biometrics.busy) return;
@@ -132,6 +138,19 @@ export default function SecurityScreen() {
                 onPress={() => void Linking.openSettings().catch(() => undefined)}
               />
             ) : null}
+          </Card>
+
+          <Card>
+            <View style={styles.settingCopy}>
+              <Text style={styles.settingTitle}>{tx(locale, 'savedCredentials.titel')}</Text>
+              <Text style={styles.settingHint}>{tx(locale, 'savedCredentials.hinweis')}</Text>
+            </View>
+            <SavedCredentialPanel
+              locale={locale}
+              saved={savedCredentials}
+              showEmpty
+              onForget={() => void savedCredentials.forget()}
+            />
           </Card>
 
           {detail || (!biometricsEnabled && !biometricsAvailable) ? (

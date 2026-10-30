@@ -112,25 +112,52 @@ export async function saveLogin(input: SaveLoginInput, prompt: string): Promise<
 }
 
 /**
+ * Outcome of a vault read that distinguishes "nothing stored" from "the OS
+ * prompt was dismissed". The caller needs that difference: a cancel must not
+ * be treated as a deleted credential, and only an actually missing entry may
+ * drop the hint.
+ */
+export type StoredLoginRead =
+  | { status: 'ok'; login: StoredLogin }
+  | { status: 'missing' }
+  | { status: 'cancelled' }
+  | { status: 'failed' };
+
+/**
  * Read the vault. `biometrics` comes from the non-secret hint: only a
  * biometric-gated entry is read with `requireAuthentication`, so an entry
- * without the gate never raises a prompt it does not need. A rejection for a
- * user cancel, a lockout, or an invalidated entry means "no stored login".
+ * without the gate never raises a prompt it does not need.
  */
-export async function readLogin(prompt: string, biometrics: boolean): Promise<StoredLogin | null> {
+export async function readLoginResult(prompt: string, biometrics: boolean): Promise<StoredLoginRead> {
   const module = await secureStore();
-  if (!module) return null;
+  if (!module) return { status: 'missing' };
   let raw: string | null = null;
   try {
     raw = await module.getItemAsync(KEY, biometrics ? { requireAuthentication: true, authenticationPrompt: prompt } : {});
-  } catch {
-    return null;
+  } catch (caught) {
+    return { status: isCancelled(caught) ? 'cancelled' : 'failed' };
   }
-  if (!raw) return null;
+  if (!raw) return { status: 'missing' };
   const parsed = parseLogin(raw);
-  if (parsed) return parsed;
+  if (parsed) return { status: 'ok', login: parsed };
   await module.deleteItemAsync(KEY).catch(() => undefined);
-  return null;
+  return { status: 'missing' };
+}
+
+/** Read the vault, or `null` for every non-success outcome. */
+export async function readLogin(prompt: string, biometrics: boolean): Promise<StoredLogin | null> {
+  const read = await readLoginResult(prompt, biometrics);
+  return read.status === 'ok' ? read.login : null;
+}
+
+/**
+ * Both native modules put "cancel" in the rejection message when the user
+ * dismisses the prompt (iOS `errSecUserCanceled`, Android `ERROR_USER_CANCELED`
+ * / `ERROR_NEGATIVE_BUTTON`). A lockout or an invalidated entry does not.
+ */
+function isCancelled(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  return /cancel/i.test(message);
 }
 
 function parseLogin(raw: string): StoredLogin | null {
@@ -153,6 +180,14 @@ export async function clearLogin(): Promise<void> {
   await AsyncStorage.removeItem(HINT_KEY).catch(() => undefined);
   if (!module) return;
   await module.deleteItemAsync(KEY).catch(() => undefined);
+}
+
+/**
+ * Drop only the non-secret hint, e.g. after the vault reported that the entry
+ * is gone. Unlike `clearLogin` this never touches a still-readable entry.
+ */
+export async function clearLoginHint(): Promise<void> {
+  await AsyncStorage.removeItem(HINT_KEY).catch(() => undefined);
 }
 
 /** Remember the portal session that `/v1/campus/credentials` just validated. */

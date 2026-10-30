@@ -78,17 +78,17 @@ export type ComponentCatalog = {
 export const COMPONENT_CATALOG: ComponentCatalog = {
   "generatedBy": "tools/generate-component-catalog.mjs",
   "stats": {
-    "components": 80,
-    "exports": 119,
-    "occurrences": 1352,
-    "usageCount": 839,
-    "files": 109,
+    "components": 81,
+    "exports": 120,
+    "occurrences": 1358,
+    "usageCount": 842,
+    "files": 110,
     "unused": 0,
     "onlyImported": 0,
     "platformVariants": 4,
     "previewable": 32,
     "categories": {
-      "shared": 36,
+      "shared": 37,
       "feature": 36,
       "provider": 8
     }
@@ -3406,42 +3406,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 11,
+          "line": 12,
           "kind": "import",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 11,
+          "line": 12,
           "kind": "import",
           "exportName": "Mark",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 58,
+          "line": 59,
           "kind": "render",
           "exportName": "Mark",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 117,
-          "kind": "render",
-          "exportName": "Button",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/login.tsx",
-          "line": 126,
-          "kind": "render",
-          "exportName": "Button",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/login.tsx",
-          "line": 133,
+          "line": 118,
           "kind": "render",
           "exportName": "Button",
           "count": 1
@@ -4799,35 +4785,42 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 8,
+          "line": 10,
           "kind": "import",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 8,
+          "line": 10,
           "kind": "import",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 111,
+          "line": 117,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 129,
+          "line": 135,
           "kind": "render",
           "exportName": "Button",
           "count": 1
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 141,
+          "line": 143,
+          "kind": "render",
+          "exportName": "Card",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/sicherheit.tsx",
+          "line": 160,
           "kind": "render",
           "exportName": "Button",
           "count": 1
@@ -6086,6 +6079,27 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "count": 1
         },
         {
+          "file": "apps/mobile/src/components/saved-credentials.tsx",
+          "line": 5,
+          "kind": "import",
+          "exportName": "Button",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/src/components/saved-credentials.tsx",
+          "line": 82,
+          "kind": "render",
+          "exportName": "Button",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/src/components/saved-credentials.tsx",
+          "line": 84,
+          "kind": "render",
+          "exportName": "Button",
+          "count": 1
+        },
+        {
           "file": "apps/mobile/src/components/structure-row.tsx",
           "line": 4,
           "kind": "import",
@@ -6729,6 +6743,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         "apps/mobile/src/components/curriculum-node-detail.tsx",
         "apps/mobile/src/components/curriculum-toolbar.tsx",
         "apps/mobile/src/components/lecturers-list.tsx",
+        "apps/mobile/src/components/saved-credentials.tsx",
         "apps/mobile/src/components/structure-row.tsx",
         "apps/mobile/src/components/study-cache-card.tsx",
         "apps/mobile/src/components/tutorials-list.tsx",
@@ -6748,9 +6763,9 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         "packages/features/quiz/src/ui/components/diagram-figure.tsx",
         "packages/ui/src/index.ts"
       ],
-      "usageCount": 622,
-      "importCount": 287,
-      "renderCount": 619,
+      "usageCount": 623,
+      "importCount": 288,
+      "renderCount": 620,
       "callCount": 3,
       "referenceCount": 0,
       "onlyImported": false,
@@ -6990,28 +7005,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 77,
+          "line": 78,
           "kind": "render",
           "exportName": "LanguagePicker",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 94,
+          "line": 95,
           "kind": "render",
           "exportName": "Field",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 102,
+          "line": 103,
           "kind": "render",
           "exportName": "Field",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 110,
+          "line": 111,
           "kind": "render",
           "exportName": "Checkbox",
           "count": 1
@@ -8274,14 +8289,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 10,
+          "line": 11,
           "kind": "import",
           "exportName": "SigningIn",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 140,
+          "line": 135,
           "kind": "render",
           "exportName": "SigningIn",
           "count": 1
@@ -8462,7 +8477,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 152,
+          "line": 147,
           "kind": "render",
           "exportName": "CampusBrowserModal",
           "count": 1
@@ -8530,7 +8545,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 167,
+          "line": 162,
           "kind": "render",
           "exportName": "CampusHeadlessModal",
           "count": 1
@@ -8769,6 +8784,74 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "importCount": 2,
       "renderCount": 1,
       "callCount": 1,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
+      "id": "apps/mobile/src/components/saved-credentials",
+      "name": "SavedCredentialPanel",
+      "category": "shared",
+      "file": "apps/mobile/src/components/saved-credentials.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "apps/mobile/src/components/saved-credentials.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "SavedCredentialPanel",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "apps/mobile/app/login.tsx",
+          "line": 10,
+          "kind": "import",
+          "exportName": "SavedCredentialPanel",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/login.tsx",
+          "line": 127,
+          "kind": "render",
+          "exportName": "SavedCredentialPanel",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/sicherheit.tsx",
+          "line": 9,
+          "kind": "import",
+          "exportName": "SavedCredentialPanel",
+          "count": 1
+        },
+        {
+          "file": "apps/mobile/app/sicherheit.tsx",
+          "line": 148,
+          "kind": "render",
+          "exportName": "SavedCredentialPanel",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "apps/mobile/app/login.tsx",
+        "apps/mobile/app/sicherheit.tsx"
+      ],
+      "usageCount": 2,
+      "importCount": 2,
+      "renderCount": 2,
+      "callCount": 0,
       "referenceCount": 0,
       "onlyImported": false,
       "unused": false
@@ -9766,14 +9849,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 12,
+          "line": 13,
           "kind": "import",
           "exportName": "WebDeviceLogin",
           "count": 1
         },
         {
           "file": "apps/mobile/app/login.tsx",
-          "line": 26,
+          "line": 27,
           "kind": "render",
           "exportName": "WebDeviceLogin",
           "count": 1
@@ -12715,14 +12798,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 10,
+          "line": 12,
           "kind": "import",
           "exportName": "useOnboarding",
           "count": 1
         },
         {
           "file": "apps/mobile/app/sicherheit.tsx",
-          "line": 33,
+          "line": 35,
           "kind": "call",
           "exportName": "useOnboarding",
           "count": 1
