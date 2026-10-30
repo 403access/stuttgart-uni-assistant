@@ -1,21 +1,22 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { Animated, Easing, Pressable, Text, View } from 'react-native';
+import { useState, type ComponentProps } from 'react';
+import { Animated, Pressable, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 
-import { useReducedMotion } from '@ua/ui';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
 import type { ArticulationSound } from '@ua/quiz-content/types';
 import {
+  ARTICULATION_SLAB,
   HEAD_VIEW_BOX,
   VELUM_HINGE,
   airflowLane,
   articulationBackdrop,
   articulationFocus,
   articulationRegions,
+  clampArticulationAngle,
   cordOutlines,
   lipOutlines,
   pointPercent,
@@ -24,289 +25,182 @@ import {
   velumOutlines,
 } from '@ua/quiz-content/figures/articulation';
 import { DiagramCanvas, diagramAspect, diagramTone } from './diagram';
+import { ArticulationFigure3D } from './articulation-3d';
+import {
+  STAGES,
+  airstreamCenter,
+  useArticulationRings,
+  useArticulationTimeline,
+  wave,
+  type Stage,
+} from './articulation-timeline';
 
 /**
  * How a sound is produced, animated on the same sagittal head the diagram
- * questions use. The static anatomy comes from the quiz figure; the movable
- * articulators, the airstream and the voicing pulses are layered on top.
- *
- * The timeline tells the story in three beats: air rises from the lungs, the
- * vocal cords join in (or stay apart), then the articulators shape the stream.
+ * questions use. `ArticulationFigure` is the flat cutaway; `ArticulationFigure3D`
+ * turns the same model into a block. Both share one timeline, so the stage
+ * strip, the airstream and the voicing stay in sync when the learner switches.
  */
-const CYCLE_MS = 5200;
-const AIR_END = 0.4;
-const VOICE_END = 0.62;
-
-const STAGES = ['airflow', 'voice', 'articulation'] as const;
-type Stage = (typeof STAGES)[number];
-
 const STAGE_ICONS: Record<Stage, ComponentProps<typeof MaterialIcons>['name']> = {
   airflow: 'air',
   voice: 'graphic-eq',
   articulation: 'my-location',
 };
 
-function stageAt(value: number): number {
-  if (value < AIR_END) return 0;
-  if (value < VOICE_END) return 1;
-  return 2;
-}
-
-/** Triangular highlight along the timeline, sampled so `interpolate` can use it. */
-function wave(center: number, width = 0.07): { inputRange: number[]; outputRange: number[] } {
-  const steps = 60;
-  const inputRange: number[] = [];
-  const outputRange: number[] = [];
-  for (let index = 0; index <= steps; index += 1) {
-    const value = index / steps;
-    inputRange.push(value);
-    const distance = Math.abs(value - center);
-    outputRange.push(distance < width ? 1 - distance / width : 0);
-  }
-  return { inputRange, outputRange };
-}
-
-/** Air lights up twice: on the way up, and on the way out through mouth or nose. */
-function airstreamCenter(position: number): number {
-  if (position <= 0.5) return 0.04 + (position / 0.5) * 0.3;
-  return 0.64 + ((position - 0.5) / 0.5) * 0.3;
-}
+type Timeline = ReturnType<typeof useArticulationTimeline>;
 
 export function ArticulationFigure({
-  sound,
   locale,
-  playing = true,
+  timeline,
 }: {
-  sound: ArticulationSound;
   locale: Locale;
-  playing?: boolean;
+  timeline: Timeline;
 }) {
-  const reduced = useReducedMotion();
-  const active = playing && !reduced;
-  const clock = useRef(new Animated.Value(0)).current;
-  const fade = useRef(new Animated.Value(1)).current;
-  const [phase, setPhase] = useState(0);
-  const [displayed, setDisplayed] = useState(sound);
-  const latest = useRef(sound);
-
-  // Cross-fade the articulators when the learner picks another sound, so the
-  // tongue never jumps from one position to the next.
-  useEffect(() => {
-    latest.current = sound;
-    if (displayed.id === sound.id) return;
-    fade.stopAnimation();
-    Animated.timing(fade, {
-      toValue: 0,
-      duration: 150,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (!finished) return;
-      setDisplayed(latest.current);
-      Animated.timing(fade, {
-        toValue: 1,
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    });
-  }, [sound, displayed.id, fade]);
-
-  useEffect(() => {
-    if (!active) {
-      clock.stopAnimation();
-      clock.setValue(0);
-      setPhase(0);
-      return;
-    }
-    clock.setValue(0);
-    const listener = clock.addListener(({ value }) => {
-      const next = stageAt(value);
-      setPhase((current) => (current === next ? current : next));
-    });
-    const loop = Animated.loop(
-      Animated.timing(clock, {
-        toValue: 1,
-        duration: CYCLE_MS,
-        easing: Easing.linear,
-        useNativeDriver: false,
-      }),
-    );
-    loop.start();
-    return () => {
-      loop.stop();
-      clock.removeListener(listener);
-    };
-    // Restart the story whenever the animated sound changes.
-  }, [active, clock, displayed.id]);
-
+  const { clock, fade, displayed } = timeline;
+  const { focusOpacity, focusScale } = useArticulationRings(clock);
   const pose = displayed.pose;
-  const lane = useMemo(() => airflowLane(pose.airflow, pose), [pose]);
-  const dots = useMemo(
-    () =>
-      lane
-        .map((point, index) => ({
-          key: `${index}`,
-          ...pointPercent(point),
-          ...wave(airstreamCenter(index / (lane.length - 1))),
-        }))
-        .filter((dot, index) => index > 0 && index < lane.length - 2),
-    [lane],
-  );
 
-  const focus = pointPercent(articulationFocus(displayed));
-  const larynx = pointPercent([652, 762]);
-  const tongue = tongueOutline(pose.tongue);
-  const lips = lipOutlines(pose.lips);
-  const cords = cordOutlines(displayed.voiced);
-  const focusOpacity = clock.interpolate({
-    inputRange: [0, VOICE_END, VOICE_END + 0.06, 0.9, 1],
-    outputRange: [0, 0, 0.95, 0.75, 0],
-  });
-  const focusScale = clock.interpolate({
-    inputRange: [0, 0.68, 1],
-    outputRange: [0.75, 1.35, 1.35],
-  });
+  const lane = airflowLane(pose.airflow, pose);
+  const dots = lane
+    .slice(1, -1)
+    .map((point, index, list) => ({
+      key: `${index}`,
+      ...pointPercent(point, HEAD_VIEW_BOX),
+      ...wave(airstreamCenter(index / (list.length - 1))),
+    }));
+
+  const focus = pointPercent(articulationFocus(displayed), HEAD_VIEW_BOX);
+  const larynx = pointPercent([652, 762], HEAD_VIEW_BOX);
 
   return (
-    <View style={styles.figure}>
-      <View style={[styles.canvas, { aspectRatio: diagramAspect(HEAD_VIEW_BOX) }]}>
-        <DiagramCanvas
-          mode="plain"
-          viewBox={HEAD_VIEW_BOX}
-          backdrop={articulationBackdrop}
-          regions={articulationRegions}
-          locale={locale}
-        />
+    <View style={[styles.canvas, { aspectRatio: diagramAspect(HEAD_VIEW_BOX) }]}>
+      <DiagramCanvas
+        mode="plain"
+        viewBox={HEAD_VIEW_BOX}
+        backdrop={articulationBackdrop}
+        regions={articulationRegions}
+        locale={locale}
+      />
 
-        <Animated.View style={[styles.layer, { opacity: fade }]} pointerEvents="none">
-          <Svg width="100%" height="100%" viewBox={HEAD_VIEW_BOX}>
-            <G transform={`rotate(${velumAngle(pose.velum)} ${VELUM_HINGE.x} ${VELUM_HINGE.y})`}>
-              {velumOutlines.map((path, index) => (
-                <Path
-                  key={`velum-${index}`}
-                  d={path}
-                  fill={diagramTone('violet').fill}
-                  stroke={diagramTone('violet').stroke}
-                  strokeWidth={3}
-                  strokeLinejoin="round"
-                />
-              ))}
-            </G>
-            <Path
-              d={tongue}
-              fill={diagramTone('tongue').fill}
-              stroke={diagramTone('tongue').stroke}
-              strokeWidth={3}
-              strokeLinejoin="round"
-            />
-            {lips.map((path, index) => (
+      <Animated.View style={[styles.layer, { opacity: fade }]} pointerEvents="none">
+        <Svg width="100%" height="100%" viewBox={HEAD_VIEW_BOX}>
+          <G transform={`rotate(${velumAngle(pose.velum)} ${VELUM_HINGE.x} ${VELUM_HINGE.y})`}>
+            {velumOutlines.map((path, index) => (
               <Path
-                key={`lips-${index}`}
+                key={`velum-${index}`}
                 d={path}
-                fill={diagramTone('lip').fill}
-                stroke={diagramTone('lip').stroke}
+                fill={diagramTone('violet').fill}
+                stroke={diagramTone('violet').stroke}
                 strokeWidth={3}
                 strokeLinejoin="round"
               />
             ))}
-            {cords.map((path, index) => (
-              <Path
-                key={`cords-${index}`}
-                d={path}
-                fill={diagramTone('cords').fill}
-                stroke={diagramTone('cords').stroke}
-                strokeWidth={2}
-                strokeLinejoin="round"
-              />
-            ))}
-          </Svg>
-        </Animated.View>
-
-        <View style={styles.layer} pointerEvents="none">
-          {dots.map((dot) => (
-            <Animated.View
-              key={dot.key}
-              style={[
-                styles.puff,
-                {
-                  left: dot.left,
-                  top: dot.top,
-                  opacity: clock.interpolate({
-                    inputRange: dot.inputRange,
-                    outputRange: dot.outputRange.map((value) => value * 0.85),
-                  }),
-                  transform: [
-                    {
-                      scale: clock.interpolate({
-                        inputRange: dot.inputRange,
-                        outputRange: dot.outputRange.map((value) => 0.55 + value * 0.65),
-                      }),
-                    },
-                  ],
-                },
-              ]}
+          </G>
+          <Path
+            d={tongueOutline(pose.tongue)}
+            fill={diagramTone('tongue').fill}
+            stroke={diagramTone('tongue').stroke}
+            strokeWidth={3}
+            strokeLinejoin="round"
+          />
+          {lipOutlines(pose.lips).map((path, index) => (
+            <Path
+              key={`lips-${index}`}
+              d={path}
+              fill={diagramTone('lip').fill}
+              stroke={diagramTone('lip').stroke}
+              strokeWidth={3}
+              strokeLinejoin="round"
             />
           ))}
+          {cordOutlines(displayed.voiced).map((path, index) => (
+            <Path
+              key={`cords-${index}`}
+              d={path}
+              fill={diagramTone('cords').fill}
+              stroke={diagramTone('cords').stroke}
+              strokeWidth={2}
+              strokeLinejoin="round"
+            />
+          ))}
+        </Svg>
+      </Animated.View>
 
-          {displayed.voiced ? (
-            <>
-              {[0, 0.07].map((offset) => (
-                <Animated.View
-                  key={`voice-${offset}`}
-                  style={[
-                    styles.ring,
-                    styles.voiceRing,
-                    {
-                      left: larynx.left,
-                      top: larynx.top,
-                      opacity: clock.interpolate({
-                        inputRange: [0.3 + offset, 0.38 + offset, 0.58 + offset, 0.66 + offset],
-                        outputRange: [0, 0.55, 0.4, 0],
-                        extrapolate: 'clamp',
-                      }),
-                      transform: [
-                        {
-                          scale: clock.interpolate({
-                            inputRange: [0.3 + offset, 0.66 + offset],
-                            outputRange: [0.7, 2.1],
-                            extrapolate: 'clamp',
-                          }),
-                        },
-                      ],
-                    },
-                  ]}
-                />
-              ))}
-            </>
-          ) : null}
-
+      <View style={styles.layer} pointerEvents="none">
+        {dots.map((dot) => (
           <Animated.View
+            key={dot.key}
             style={[
-              styles.ring,
-              styles.focusRing,
-              focus,
+              styles.puff,
               {
-                opacity: focusOpacity,
-                transform: [{ scale: focusScale }],
+                left: dot.left,
+                top: dot.top,
+                opacity: clock.interpolate({
+                  inputRange: dot.inputRange,
+                  outputRange: dot.outputRange.map((value) => value * 0.85),
+                }),
+                transform: [
+                  {
+                    scale: clock.interpolate({
+                      inputRange: dot.inputRange,
+                      outputRange: dot.outputRange.map((value) => 0.55 + value * 0.65),
+                    }),
+                  },
+                ],
               },
             ]}
           />
-        </View>
+        ))}
 
-        <View style={styles.airBadge} pointerEvents="none">
-          <MaterialIcons
-            name={displayed.pose.airflow === 'nasal' ? 'south' : 'east'}
-            size={12}
-            color={colors.blue}
-          />
-          <Text style={styles.airBadgeText}>
-            {tx(locale, displayed.pose.airflow === 'nasal' ? 'quiz.studio.via_nose' : 'quiz.studio.via_mouth')}
-          </Text>
-        </View>
+        {displayed.voiced
+          ? [0, 0.07].map((offset) => (
+              <Animated.View
+                key={`voice-${offset}`}
+                style={[
+                  styles.ring,
+                  styles.voiceRing,
+                  larynx,
+                  {
+                    opacity: clock.interpolate({
+                      inputRange: [0.3 + offset, 0.38 + offset, 0.58 + offset, 0.66 + offset],
+                      outputRange: [0, 0.55, 0.4, 0],
+                      extrapolate: 'clamp',
+                    }),
+                    transform: [
+                      {
+                        scale: clock.interpolate({
+                          inputRange: [0.3 + offset, 0.66 + offset],
+                          outputRange: [0.7, 2.1],
+                          extrapolate: 'clamp',
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+            ))
+          : null}
+
+        <Animated.View
+          style={[
+            styles.ring,
+            styles.focusRing,
+            focus,
+            { opacity: focusOpacity, transform: [{ scale: focusScale }] },
+          ]}
+        />
       </View>
 
-      <StageStrip locale={locale} phase={phase} active={active} />
+      <View style={styles.airBadge} pointerEvents="none">
+        <MaterialIcons
+          name={pose.airflow === 'nasal' ? 'south' : 'east'}
+          size={12}
+          color={colors.blue}
+        />
+        <Text style={styles.airBadgeText}>
+          {tx(locale, pose.airflow === 'nasal' ? 'quiz.studio.via_nose' : 'quiz.studio.via_mouth')}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -318,11 +212,7 @@ function StageStrip({ locale, phase, active }: { locale: Locale; phase: number; 
         const current = active && phase === index;
         return (
           <View key={stage} style={[styles.stage, current && styles.stageActive]}>
-            <MaterialIcons
-              name={STAGE_ICONS[stage]}
-              size={13}
-              color={current ? colors.blue : colors.mute}
-            />
+            <MaterialIcons name={STAGE_ICONS[stage]} size={13} color={current ? colors.blue : colors.mute} />
             <Text style={[styles.stageLabel, current && styles.stageLabelActive]}>
               {tx(locale, `quiz.studio.stage.${stage}`)}
             </Text>
@@ -333,43 +223,103 @@ function StageStrip({ locale, phase, active }: { locale: Locale; phase: number; 
   );
 }
 
-/** Figure plus a play/pause control and the three-step story. */
-export function ArticulationPlayer({
-  sound,
-  locale,
-}: {
-  sound: ArticulationSound;
-  locale: Locale;
-}) {
-  const reduced = useReducedMotion();
+/** Figure, view switch and a play/pause control. */
+export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound; locale: Locale }) {
   const [playing, setPlaying] = useState(true);
+  const [threeD, setThreeD] = useState(false);
+  const [angle, setAngle] = useState<number>(ARTICULATION_SLAB.defaultAngle);
+  const timeline = useArticulationTimeline(sound, playing);
+  const { reduced, active, phase, displayed } = timeline;
+  const clamped = clampArticulationAngle(angle);
 
   return (
     <View style={styles.player}>
-      <ArticulationFigure sound={sound} locale={locale} playing={playing && !reduced} />
+      {threeD ? (
+        <ArticulationFigure3D locale={locale} timeline={timeline} angle={clamped} />
+      ) : (
+        <ArticulationFigure locale={locale} timeline={timeline} />
+      )}
+
+      <StageStrip locale={locale} phase={phase} active={active} />
+
       <View style={styles.controls}>
         {reduced ? (
           <Text style={styles.playerNote}>{tx(locale, 'quiz.studio.reduced_motion')}</Text>
         ) : (
-          <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, playing ? 'quiz.studio.pause' : 'quiz.studio.play')}
+            onPress={() => setPlaying((value) => !value)}
+            style={({ pressed }) => [styles.playButton, pressed && styles.pressed]}
+          >
+            <MaterialIcons name={playing ? 'pause' : 'play-arrow'} size={20} color={colors.blue} />
+            <Text style={styles.playLabel}>
+              {tx(locale, playing ? 'quiz.studio.pause' : 'quiz.studio.play')}
+            </Text>
+          </Pressable>
+        )}
+
+        <View style={styles.viewToggle}>
+          {[false, true].map((isThreeD) => (
             <Pressable
+              key={isThreeD ? '3d' : '2d'}
               accessibilityRole="button"
-              accessibilityLabel={tx(locale, playing ? 'quiz.studio.pause' : 'quiz.studio.play')}
-              onPress={() => setPlaying((value) => !value)}
-              style={({ pressed }) => [styles.playButton, pressed && styles.pressed]}
+              accessibilityState={{ selected: threeD === isThreeD }}
+              accessibilityLabel={tx(locale, isThreeD ? 'quiz.studio.view.3d_a11y' : 'quiz.studio.view.2d_a11y')}
+              onPress={() => setThreeD(isThreeD)}
+              style={({ pressed }) => [
+                styles.viewOption,
+                threeD === isThreeD && styles.viewOptionActive,
+                pressed && styles.pressed,
+              ]}
             >
-              <MaterialIcons name={playing ? 'pause' : 'play-arrow'} size={20} color={colors.blue} />
-              <Text style={styles.playLabel}>
-                {tx(locale, playing ? 'quiz.studio.pause' : 'quiz.studio.play')}
+              <MaterialIcons
+                name={isThreeD ? '3d-rotation' : 'aspect-ratio'}
+                size={13}
+                color={threeD === isThreeD ? colors.blue : colors.mute}
+              />
+              <Text style={[styles.viewLabel, threeD === isThreeD && styles.viewLabelActive]}>
+                {tx(locale, isThreeD ? 'quiz.studio.view.3d' : 'quiz.studio.view.2d')}
               </Text>
             </Pressable>
-            <Text style={styles.playerNote}>
-              {pick(sound.word, locale)} ·{' '}
-              {tx(locale, sound.voiced ? 'quiz.studio.voiced' : 'quiz.studio.voiceless')}
-            </Text>
-          </>
-        )}
+          ))}
+        </View>
       </View>
+
+      {threeD ? (
+        <View style={styles.turnRow}>
+          <Text style={styles.turnLabel}>{tx(locale, 'quiz.studio.turn')}</Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, 'quiz.studio.turn_left')}
+            disabled={clamped <= ARTICULATION_SLAB.minAngle}
+            onPress={() => setAngle((value) => clampArticulationAngle(value - ARTICULATION_SLAB.step))}
+            style={({ pressed }) => [
+              styles.turnButton,
+              clamped <= ARTICULATION_SLAB.minAngle && styles.disabled,
+              pressed && styles.pressed,
+            ]}
+          >
+            <MaterialIcons name="rotate-left" size={18} color={colors.blue} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, 'quiz.studio.turn_right')}
+            disabled={clamped >= ARTICULATION_SLAB.maxAngle}
+            onPress={() => setAngle((value) => clampArticulationAngle(value + ARTICULATION_SLAB.step))}
+            style={({ pressed }) => [
+              styles.turnButton,
+              clamped >= ARTICULATION_SLAB.maxAngle && styles.disabled,
+              pressed && styles.pressed,
+            ]}
+          >
+            <MaterialIcons name="rotate-right" size={18} color={colors.blue} />
+          </Pressable>
+          <Text style={styles.turnValue}>
+            {pick(displayed.word, locale)} · {`${Math.round(clamped)}°`}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -424,7 +374,7 @@ const styles = themedStyles((colors) => ({
     paddingVertical: 3,
   },
   airBadgeText: { color: colors.blue, fontSize: 10, fontWeight: '700' },
-  figure: { gap: 8 },
+  player: { gap: 10 },
   stages: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stage: {
     flexDirection: 'row',
@@ -438,8 +388,7 @@ const styles = themedStyles((colors) => ({
   stageActive: { backgroundColor: colors.blueSoft },
   stageLabel: { color: colors.mute, fontSize: 10, fontWeight: '700' },
   stageLabelActive: { color: colors.blue },
-  player: { gap: 10 },
-  controls: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  controls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   playButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -452,6 +401,47 @@ const styles = themedStyles((colors) => ({
     paddingVertical: 6,
   },
   playLabel: { color: colors.blue, fontSize: 12, fontWeight: '700' },
-  playerNote: { flex: 1, color: colors.inkSoft, fontSize: 12, textAlign: 'right' },
+  playerNote: { flex: 1, color: colors.inkSoft, fontSize: 12 },
+  viewToggle: {
+    marginLeft: 'auto',
+    flexDirection: 'row',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    padding: 2,
+    gap: 2,
+  },
+  viewOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  viewOptionActive: { backgroundColor: colors.blueSoft },
+  viewLabel: { color: colors.mute, fontSize: 11, fontWeight: '700' },
+  viewLabelActive: { color: colors.blue },
+  turnRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  turnLabel: {
+    color: colors.mute,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  turnButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  turnValue: { marginLeft: 'auto', color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
+  disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },
 }));

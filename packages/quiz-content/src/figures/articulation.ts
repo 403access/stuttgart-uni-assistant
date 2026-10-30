@@ -57,6 +57,90 @@ export function cordOutlines(voiced: boolean): string[] {
   return ['M624 744 L678 752 L678 756 L624 748 Z', 'M624 762 L678 770 L678 774 L624 766 Z'];
 }
 
+/**
+ * 3D view model. The sagittal section is drawn as one solid block that turns
+ * around the vertical axis, with the movable articulators raised slightly in
+ * front of it — the classic layered anatomy model. Values are in figure units.
+ */
+export const ARTICULATION_SLAB = {
+  /** How far the head block extends behind the cut plane. */
+  thickness: 54,
+  /** How far the raised plates float in front of the cut plane. */
+  tongue: 22,
+  velum: 28,
+  lips: 34,
+  cords: 12,
+  /** Tangent of the camera elevation; gives the block its slight tilt. */
+  elevation: 0.18,
+  minAngle: -42,
+  maxAngle: 42,
+  step: 14,
+  defaultAngle: 28,
+} as const;
+
+/** Clip an angle to the range the model was built for. */
+export function clampArticulationAngle(angle: number): number {
+  return Math.max(ARTICULATION_SLAB.minAngle, Math.min(ARTICULATION_SLAB.maxAngle, angle));
+}
+
+/** Padded frame for the 3D view: the turned block needs room for its side wall. */
+export const ARTICULATION_3D_VIEW_BOX = '120 20 800 990';
+
+export interface ArticulationTurn {
+  /** Horizontal compression of the cut plane. */
+  cos: number;
+  /** Depth direction of the turned block. */
+  sin: number;
+  /** Vertical shear that makes the turn read as a tilt. */
+  skew: number;
+}
+
+export function articulationTurn(angle: number): ArticulationTurn {
+  const radians = (clampArticulationAngle(angle) * Math.PI) / 180;
+  return {
+    cos: Math.cos(radians),
+    sin: Math.sin(radians),
+    skew: Math.tan(ARTICULATION_SLAB.elevation) * Math.sin(radians),
+  };
+}
+
+/**
+ * Position of a point on the turned block, for overlays that live outside the
+ * SVG (air puffs, rings). `lift` raises the point towards the viewer.
+ */
+export function projectArticulationPoint(
+  point: readonly [number, number],
+  angle: number,
+  lift = 0,
+): { x: number; y: number } {
+  const turn = articulationTurn(angle);
+  const [minX, , width] = HEAD_VIEW_BOX.split(/[\s,]+/).map(Number);
+  const centerX = minX + width / 2;
+  return {
+    x: centerX + (point[0] - centerX) * turn.cos + lift * turn.sin * turn.cos,
+    y: point[1] + (point[0] - centerX + lift * turn.sin) * turn.skew,
+  };
+}
+
+/** Mix a hex colour towards ink, for the extruded side walls. */
+export function shadeColor(color: string, amount = 0.32): string {
+  const value = color.replace('#', '');
+  const full =
+    value.length === 3
+      ? value
+          .split('')
+          .map((part) => part + part)
+          .join('')
+      : value;
+  const ink = [0x24, 0x34, 0x47];
+  const mixed = [0, 2, 4].map((offset, index) => {
+    const channel = Number.parseInt(full.slice(offset, offset + 2), 16);
+    return Math.round(channel + (ink[index] - channel) * amount);
+  });
+  return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+}
+
+
 type Point = readonly [number, number];
 
 interface TongueAnchors {
@@ -311,9 +395,14 @@ export function airflowLane(lane: AirflowLane, pose: ArticulationPose): Point[] 
 }
 
 /** Fraction of the figure width/height for a point, for absolutely placed overlays. */
-export function pointPercent(point: Point): { left: string; top: string } {
-  const [minX, minY, width, height] = HEAD_VIEW_BOX.split(/[\s,]+/).map(Number);
-  const left = ((point[0] - minX) / width) * 100;
-  const top = ((point[1] - minY) / height) * 100;
+export function pointPercent(
+  point: Point | { x: number; y: number },
+  viewBox: string = HEAD_VIEW_BOX,
+): { left: string; top: string } {
+  const [minX, minY, width, height] = viewBox.split(/[\s,]+/).map(Number);
+  const x = 'x' in point ? point.x : point[0];
+  const y = 'x' in point ? point.y : point[1];
+  const left = ((x - minX) / width) * 100;
+  const top = ((y - minY) / height) * 100;
   return { left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%` };
 }

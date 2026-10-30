@@ -1,4 +1,5 @@
 export { ArticulationFigure, ArticulationPlayer } from './ui/components/articulation';
+export { ArticulationFigure3D } from './ui/components/articulation-3d';
 export { ClozeView } from './ui/components/cloze';
 export { DiagramFigureCard } from './ui/components/diagram-figure';
 export { DiagramCanvas, DiagramView } from './ui/components/diagram';

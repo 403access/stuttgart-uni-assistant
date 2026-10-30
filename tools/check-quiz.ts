@@ -9,9 +9,15 @@ import {
   studioSoundForTopic,
 } from '@ua/quiz-content/articulation';
 import {
+  ARTICULATION_3D_VIEW_BOX,
+  ARTICULATION_SLAB,
   airflowLane,
   articulationFocus,
+  articulationTurn,
+  clampArticulationAngle,
   lipOutlines,
+  projectArticulationPoint,
+  shadeColor,
   tongueOutline,
 } from '@ua/quiz-content/figures/articulation';
 import { generatedTopics } from '@ua/quiz-content/content/generated';
@@ -386,6 +392,53 @@ expect(
 for (const [topicId, soundId] of Object.entries(studioSoundForTopic)) {
   expect(Boolean(quizTopics.find((topic) => topic.id === topicId)), `studio link targets a topic: ${topicId}`);
   expect(Boolean(findArticulationSound(soundId)), `studio link targets a sound: ${topicId} -> ${soundId}`);
+}
+
+// The 3D view turns the same figure into a block. At the extreme angles every
+// airstream point still has to land inside the padded frame, otherwise the
+// model would be clipped while the learner rotates it.
+const box = ARTICULATION_3D_VIEW_BOX.split(' ').map(Number);
+const [boxX, boxY, boxWidth, boxHeight] = box;
+const extremeAngles = [
+  ARTICULATION_SLAB.minAngle,
+  ARTICULATION_SLAB.defaultAngle,
+  ARTICULATION_SLAB.maxAngle,
+];
+expect(
+  extremeAngles.every((angle) => {
+    const turn = articulationTurn(angle);
+    return Number.isFinite(turn.cos) && Number.isFinite(turn.sin) && Number.isFinite(turn.skew);
+  }),
+  'articulation 3D turn is finite at every angle',
+);
+expect(
+  ARTICULATION_SLAB.minAngle < ARTICULATION_SLAB.defaultAngle &&
+    ARTICULATION_SLAB.defaultAngle < ARTICULATION_SLAB.maxAngle,
+  'articulation 3D default angle sits inside the range',
+);
+expect(clampArticulationAngle(180) === ARTICULATION_SLAB.maxAngle, 'articulation 3D clamps above the range');
+expect(clampArticulationAngle(-180) === ARTICULATION_SLAB.minAngle, 'articulation 3D clamps below the range');
+expect(shadeColor('#FFFDF9') !== '#FFFDF9', 'articulation 3D shades the side wall');
+expect(/^#[0-9a-f]{6}$/.test(shadeColor('#FFFDF9')), 'articulation 3D shading is a hex colour');
+
+for (const sound of articulationSounds) {
+  for (const angle of extremeAngles) {
+    const lift = ARTICULATION_SLAB.lips;
+    const points = [
+      ...airflowLane(sound.pose.airflow, sound.pose),
+      articulationFocus(sound),
+    ].map((point) => projectArticulationPoint(point, angle, lift));
+    expect(
+      points.every(
+        (point) =>
+          point.x >= boxX &&
+          point.x <= boxX + boxWidth &&
+          point.y >= boxY &&
+          point.y <= boxY + boxHeight,
+      ),
+      `articulation 3D stays inside the frame: ${sound.id} at ${angle}°`,
+    );
+  }
 }
 
 const english = quizModules[0].topics[0];

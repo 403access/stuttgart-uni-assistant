@@ -1,6 +1,6 @@
 # The daily screens
 
-These are the tabs a student opens most days: **Heute (Today)**, **Kalender (Calendar)**, **Chat**, and the deadline screen.
+These are the tabs a student opens most days: **Heute (Today)**, **Kalender (Calendar)**, **Chat**, **Lernquiz (Quiz)**, and the deadline screen.
 
 ## Heute (Today)
 
@@ -45,6 +45,28 @@ The calendar tab works over the cached appointments of your courses, loaded from
 Tapping an appointment opens the course's own screen. On web the course opens in a side panel so the calendar stays visible.
 
 The official ICS/CSV pull and the database sync are not on this tab: they live on the Campus tab as **Kalender-Import**, together with the import history (see [campus-calendar-export](../engineering/campus-calendar-export.md)).
+
+## Lernquiz (Quiz)
+
+The practice tab. Modules are grouped by degree program; every module opens its topics, and every topic opens a round.
+
+| Block | What you see | What you can tap |
+| --- | --- | --- |
+| Progress | Securely answered questions against the total, the hit rate, and the last round | The topic of the last round |
+| Lernwerkzeuge (learning tools) | The articulation studio | The studio |
+| Module tiles | Each module with its semester, topic and question count, and a progress ring | The module and its topics |
+
+A topic offers **Alle Fragen (all)**, **Schnelltest (quick)**, **Fehler wiederholen (review)**, and for a whole degree program a **Gemischte Runde (mixed)**. Ten question kinds appear: single and multiple choice, true/false, free text, matching, ordering, cloze, map, diagram, and flashcards.
+
+Your progress lives on the device. With a session, checked answers and completed rounds are also synced to the account; signing out clears the queue.
+
+### Lernwerkzeuge: Artikulationsstudio
+
+The studio animates how a sound is produced on the same head cross-section the diagram questions use: the airstream rises from the lungs, the vocal cords vibrate or stay apart, and the tongue, lips, and velum take the pose of the sound. Pick from 24 sounds — stops, nasals, fricatives, approximants, and vowels — each with an IPA symbol, an example word, and a one-line explanation.
+
+**2D / 3D** switches between the flat cutaway and a turnable block of the same anatomy. **Drehen (turning)** steps the model left and right, and the airstream and voicing rings travel with it. Both views tell the same three-step story: **Luftstrom (airstream)**, **Stimme (voice)**, **Artikulation (articulation)**.
+
+The studio opens from the quiz tab, from any phonetics topic (**Im Artikulationsstudio ansehen**), and from **Campus → Studium**. With the system's reduce-motion setting the model stands still and the player says so.
 
 ## Fristen (Deadlines)
 

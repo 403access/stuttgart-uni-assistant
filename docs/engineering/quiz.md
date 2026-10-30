@@ -43,13 +43,33 @@ then layers the movable articulators on top. The pose geometry lives in
   surface so the air never disappears inside the dorsum.
 - `articulationFocus(sound)` is the point the focus ring pulses on.
 
-`ArticulationFigure` / `ArticulationPlayer` (`packages/features/quiz/src/ui/components/articulation.tsx`)
-drive one `Animated.Value` from 0 to 1 every 5.2 s and derive everything from it:
-air puffs travel the lane, voicing rings pulse at the larynx, the focus ring
-marks the stricture, and the three stage chips (airstream, voice, articulation)
-light up in order. Switching sounds cross-fades the pose layer. With the
-platform's reduce-motion setting on, the figure stays static, the player hides
-the play button and says so.
+`useArticulationTimeline` (`packages/features/quiz/src/ui/components/articulation-timeline.ts`)
+drives one `Animated.Value` from 0 to 1 every 5.2 s. The flat and the 3D figure
+both consume it, so air puffs travel the lane, voicing rings pulse at the
+larynx, the focus ring marks the stricture, and the three stage chips
+(airstream, voice, articulation) light up in order in either view. Switching
+sounds cross-fades the pose layer. With the platform's reduce-motion setting on,
+the figure stays static, the player hides the play button and says so.
+
+### 3D view
+
+The player's 2D/3D switch turns the same anatomy into a block. The cut plane is
+compressed by the view angle (`cos`), the head silhouette is extruded behind it
+along the depth direction (`sin`), and a small vertical shear gives the block
+its tilt. The tongue, lips, velum and vocal cords are raised a few units in
+front of the cut plane, so the model reads as a layered anatomy model rather
+than a skewed drawing.
+
+`articulationTurn(angle)` returns `cos`/`sin`/`skew`; `ARTICULATION_SLAB` holds
+the thickness, the per-organ lift and the ±42° range. `projectArticulationPoint`
+maps a point (plus its lift) into the turned frame, which is how the airstream
+and the rings stay on the model. The rotate buttons step 14° at a time; the
+`3D` badge and the angle readout make the state explicit.
+
+It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
+works offline and looks the same on iOS, Android and the web. `tools/check-quiz.ts`
+asserts that every airstream point still lands inside the padded 3D frame at the
+extreme angles, so the model can never be clipped while turning.
 
 The sound catalog is `packages/quiz-content/src/articulation.ts`. Adding a sound
 is a data-only change: pick a `manner`, an optional `place` (vowels use `shape`
