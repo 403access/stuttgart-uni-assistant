@@ -1,8 +1,17 @@
 import type { ArticulationCamera, ArticulationSceneLayer } from '../core';
-import { ARTICULATION_PIVOT, ARTICULATION_SHELL, shadeColor } from '../core';
+import {
+  ARTICULATION_DEPTH,
+  ARTICULATION_PIVOT,
+  ARTICULATION_SHELL,
+  VELUM_HINGE,
+  shadeColor,
+} from '../core';
 
-/** How many slices make a volume look rounded. */
-export const SCENE_SLICES = 9;
+/** How many cross-sections make a volume look rounded. */
+export const SCENE_SLICES = 32;
+
+/** Roughly how far an outline reaches from the depth centre, in scene units. */
+const VOLUME_REACH = 420;
 
 const rad = (degrees: number) => (degrees * Math.PI) / 180;
 
@@ -55,45 +64,81 @@ export function sceneOrder(
   const v = Math.sin(rad(camera.yaw));
   const w = Math.sin(rad(camera.pitch));
   const q = Math.cos(rad(camera.pitch));
-  return [...layers].sort((left, right) => {
-    const depth = (layer: ArticulationSceneLayer) => {
-      const [ax, ay] = layer.anchor;
-      const front = layer.z + layer.depth / 2;
-      return w * (ay - ARTICULATION_PIVOT.y) + q * (-v * (ax - ARTICULATION_PIVOT.x) + u * front);
-    };
-    // Coplanar cut faces keep the familiar 2-D layering.
-    return depth(left) - depth(right) || left.order - right.order;
-  });
+  const [ax, ay] = [ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y];
+  const depth = (layer: ArticulationSceneLayer) =>
+    w * (ay - ARTICULATION_PIVOT.y) +
+    q * (-v * (ax - ARTICULATION_PIVOT.x) + u * (layer.z + layer.depth / 2));
+  return [...layers].sort((left, right) => depth(left) - depth(right) || left.order - right.order);
+}
+
+/**
+ * The cut faces, in the order the flat figure paints them. Every face sits on
+ * the same plane, so the anatomical order is the only correct one — and all
+ * faces are drawn on top of all bodies, since a cut face is the frontmost
+ * surface wherever it exists.
+ */
+export function faceOrder(layers: ArticulationSceneLayer[]): ArticulationSceneLayer[] {
+  return [...layers].sort((left, right) => left.order - right.order);
 }
 
 export interface VolumeSlice {
   matrix: string;
-  fill: string;
+  /** 0 just under the cut face, 1 at the far side of the organ. */
+  back: number;
 }
 
-/** The shaded slices of a volume, from its back to just under its face. */
-export function volumeSlices(layer: ArticulationSceneLayer, camera: ArticulationCamera): VolumeSlice[] {
+/**
+ * The cross-sections of a volume, far to near. Each one is smaller than the
+ * last — an organ is a lobe, not a prism — so the swept body has a shape of its
+ * own instead of repeating the 2-D outline.
+ */
+export function volumeSlices(
+  layer: ArticulationSceneLayer,
+  camera: ArticulationCamera,
+  count: number = SCENE_SLICES,
+): VolumeSlice[] {
   const slices: VolumeSlice[] = [];
-  for (let index = 0; index < SCENE_SLICES; index += 1) {
-    const along = index / SCENE_SLICES;
-    const z = layer.z - layer.depth / 2 + layer.depth * along;
-    const scale = 0.9 + 0.1 * along;
+  for (let index = 0; index < count; index += 1) {
+    const back = 1 - index / count;
+    const scale = 1 - layer.taper * back ** 1.2;
     slices.push({
-      matrix: sliceMatrix(layer.anchor, scale, z, camera),
-      fill: shadeColor(layer.fill, 0.08 + 0.34 * (1 - along)),
+      matrix: sliceMatrix(
+        [ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y],
+        scale,
+        layer.z + layer.depth / 2 - layer.depth * back,
+        camera,
+      ),
+      back,
     });
   }
   return slices;
 }
 
+/**
+ * How far one cross-section lands from the next, in scene units. Drawing the
+ * bands that wide fuses them into a surface instead of leaving slivers, and it
+ * shrinks to nothing head-on, where there are no gaps to close.
+ */
+export function volumeBandWidth(
+  layer: ArticulationSceneLayer,
+  camera: ArticulationCamera,
+  count: number = SCENE_SLICES,
+): number {
+  const yaw = rad(camera.yaw);
+  const pitch = rad(camera.pitch);
+  const spread = Math.hypot(Math.sin(yaw), Math.sin(pitch) * Math.cos(yaw));
+  // The projected depth step, plus the inward step of the taper.
+  return ((layer.depth / count) * spread + (layer.taper * VOLUME_REACH) / count) * 2.2;
+}
+
 /** Transform of the lit face, which sits at the near side of the volume. */
 export function faceMatrix(layer: ArticulationSceneLayer, camera: ArticulationCamera): string {
-  return sliceMatrix(layer.anchor, 1, layer.z + layer.depth / 2, camera);
+  return sliceMatrix([ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y], 1, layer.z + layer.depth / 2, camera);
 }
 
 /** Rotation of the outline inside its plane, e.g. the velum swing. */
 export function layerRotation(layer: ArticulationSceneLayer): string {
-  return layer.rotate ? `rotate(${layer.rotate} ${layer.anchor[0]} ${layer.anchor[1]})` : '';
+  return layer.rotate ? `rotate(${layer.rotate} ${VELUM_HINGE.x} ${VELUM_HINGE.y})` : '';
 }
 
 /** One cross-section of the head shell, from the cut plane back to the crown. */
@@ -122,7 +167,7 @@ export function shellRim(
     // Round the far edge instead of tapering to a point.
     const scale = 1 - ARTICULATION_SHELL.taper * back ** 1.4;
     slices.push({
-      matrix: sliceMatrix(ARTICULATION_SHELL.anchor, scale, -depth * back, camera),
+      matrix: sliceMatrix([ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y], scale, -depth * back, camera),
       scale,
       z: -depth * back,
       back,

@@ -29,10 +29,13 @@ export interface ArticulationSceneLayer {
   stroke: string;
   /** Depth of the slab centre, positive towards the viewer. */
   z: number;
-  /** Extrusion thickness of the volume. */
+  /** How far the organ reaches behind the cut plane. */
   depth: number;
-  /** Point the volume is scaled and depth-sorted around. */
-  anchor: readonly [number, number];
+  /**
+   * How much smaller the cross-section is at the far side. A lobe like the
+   * tongue narrows a lot; a shelf like the hard palate hardly at all.
+   */
+  taper: number;
   /** Extra rotation of the outline inside its plane (velum swing). */
   rotate?: number;
   /** 2-D paint order; coplanar cut faces fall back to it. */
@@ -64,14 +67,20 @@ export const ARTICULATION_SHELL = {
   rim: 26,
   /** How much narrower the far side is than the cut face. */
   taper: 0.26,
-  /** The taper pivots near the back of the skull, so the face narrows most. */
-  anchor: [640, 540] as const,
   /** How far the neck runs on below the 2-D cut, so the 3-D bands get clipped. */
   neck: 320,
 } as const;
 
 /** The model turns around the middle of the head, not around the origin. */
 export const ARTICULATION_PIVOT = { x: 540, y: 515 } as const;
+
+/**
+ * Where the anatomy narrows as it recedes. Every organ's cross-sections shrink
+ * towards the core of the head — near the back of the skull, not towards their
+ * own centre — so a turned body recedes into the head instead of sliding
+ * forwards with the camera.
+ */
+export const ARTICULATION_DEPTH = { x: 640, y: 540 } as const;
 
 /**
  * The user turns the model on one axis only. The pitch is the camera's fixed
@@ -108,20 +117,20 @@ export function withArticulationAxis(
  */
 interface Placement {
   depth: number;
-  anchor: [number, number];
+  taper: number;
   order: number;
 }
 
 const STATIC: Record<string, Placement> = {
-  'nasal-cavity': { depth: 90, anchor: [450, 360], order: 10 },
-  pharynx: { depth: 90, anchor: [640, 560], order: 20 },
-  'oral-cavity': { depth: 80, anchor: [430, 565], order: 30 },
-  'hard-palate': { depth: 100, anchor: [400, 430], order: 50 },
-  'alveolar-ridge': { depth: 70, anchor: [312, 452], order: 60 },
-  teeth: { depth: 55, anchor: [290, 500], order: 70 },
-  'lower-jaw': { depth: 110, anchor: [420, 700], order: 110 },
-  larynx: { depth: 80, anchor: [658, 750], order: 120 },
-  trachea: { depth: 45, anchor: [670, 890], order: 140 },
+  'nasal-cavity': { depth: 110, taper: 0.22, order: 10 },
+  pharynx: { depth: 110, taper: 0.28, order: 20 },
+  'oral-cavity': { depth: 100, taper: 0.25, order: 30 },
+  'hard-palate': { depth: 130, taper: 0.1, order: 50 },
+  'alveolar-ridge': { depth: 90, taper: 0.16, order: 60 },
+  teeth: { depth: 80, taper: 0.1, order: 70 },
+  'lower-jaw': { depth: 170, taper: 0.14, order: 110 },
+  larynx: { depth: 90, taper: 0.32, order: 120 },
+  trachea: { depth: 60, taper: 0.12, order: 140 },
 };
 
 /** A volume starts at the cut plane and recedes by its depth. */
@@ -156,27 +165,27 @@ export function articulationPoseLayers(
       id: 'vocal-cords',
       paths: cordOutlines(voiced),
       ...tone('cords'),
-      depth: 30,
-      z: behind(30),
-      anchor: [652, 755],
+      depth: 45,
+      taper: 0.3,
+      z: behind(45),
       order: 130,
     },
     {
       id: 'tongue',
       paths: [tongueOutline(pose.tongue)],
       ...tone('tongue'),
-      depth: 90,
-      z: behind(90),
-      anchor: [470, 560],
+      depth: 120,
+      taper: 0.28,
+      z: behind(120),
       order: 40,
     },
     {
       id: 'velum',
       paths: velumOutlines,
       ...tone('violet'),
-      depth: 70,
-      z: behind(70),
-      anchor: [545, 440],
+      depth: 90,
+      taper: 0.3,
+      z: behind(90),
       order: 90,
       rotate: velumAngle(pose.velum),
     },
@@ -184,9 +193,9 @@ export function articulationPoseLayers(
       id: 'lips',
       paths: lipOutlines(pose.lips),
       ...tone('lip'),
-      depth: 70,
-      z: behind(70),
-      anchor: [245, 545],
+      depth: 90,
+      taper: 0.4,
+      z: behind(90),
       order: 80,
     },
   ];

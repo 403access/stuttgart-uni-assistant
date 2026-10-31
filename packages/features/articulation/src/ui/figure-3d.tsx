@@ -9,6 +9,7 @@ import type { Locale } from '@ua/core/domain/types';
 
 import {
   ARTICULATION_3D_VIEW_BOX,
+  ARTICULATION_DEPTH,
   ARTICULATION_SURFACE,
   airflowFocusT,
   airflowLane,
@@ -28,7 +29,16 @@ import {
   type ArticulationGridTone,
 } from '../core';
 import { aspectOf } from './aspect';
-import { faceMatrix, layerRotation, sceneOrder, shellRim, volumeSlices } from './scene';
+import {
+  SCENE_SLICES,
+  faceMatrix,
+  faceOrder,
+  layerRotation,
+  sceneOrder,
+  shellRim,
+  volumeBandWidth,
+  volumeSlices,
+} from './scene';
 import {
   airstreamOpacity,
   ringColor,
@@ -45,6 +55,10 @@ const SHELL_TONE = 0.2;
 const SHELL_BAND_WIDTH = (ARTICULATION_SHELL.depth / ARTICULATION_SHELL.rim) * 2;
 /** The shell's shading runs from the far side of the head to the cut face. */
 const SHELL_SHADE = 'shell-shade';
+/** How dark an organ's body gets. */
+const SIDE_TONE = 0.3;
+/** Cross-sections per organ while a drag is in progress. */
+const COARSE_SLICES = 10;
 
 /** Screen axes: X to the right, Y down, Z towards the viewer. */
 const AXES = [
@@ -77,6 +91,7 @@ export function ArticulationFigure3D({
   hint,
   canvas = ARTICULATION_SURFACE.canvas,
   gridTone = ARTICULATION_SURFACE.grid,
+  coarse = false,
   showAxes = false,
   showGrid = false,
 }: {
@@ -88,6 +103,8 @@ export function ArticulationFigure3D({
   canvas?: ArticulationCanvas;
   /** Colour of the reference grid. */
   gridTone?: ArticulationGridTone;
+  /** Fewer slices while the finger is down, so a drag stays smooth. */
+  coarse?: boolean;
   /** Draw the orientation gizmo in the corner. */
   showAxes?: boolean;
   /** Draw the reference grid on the cut plane. */
@@ -101,11 +118,13 @@ export function ArticulationFigure3D({
     () => sceneOrder([...articulationStaticLayers(), ...articulationPoseLayers(pose, displayed.voiced)], camera),
     [pose, displayed.voiced, camera],
   );
-  const rim = useMemo(() => shellRim(camera), [camera]);
+  const slices = coarse ? COARSE_SLICES : SCENE_SLICES;
+  const rim = useMemo(() => shellRim(camera, coarse ? COARSE_SLICES : ARTICULATION_SHELL.rim), [camera, coarse]);
+  const depthAxis: readonly [number, number] = [ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y];
   // The gradient is painted in scene space, so every band samples the same
   // continuous surface tone instead of carrying its own flat fill.
   const [shellFar, shellNear] = useMemo(() => {
-    const anchor = ARTICULATION_SHELL.anchor;
+    const anchor: readonly [number, number] = [ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y];
     return [
       projectScenePoint(anchor, -ARTICULATION_SHELL.depth, camera),
       projectScenePoint(anchor, 0, camera),
@@ -181,6 +200,24 @@ export function ArticulationFigure3D({
               <Stop offset="1" stopColor="#FFFDF9" />
             </LinearGradient>
           </Defs>
+          {layers.map((layer) => {
+            const far = projectScenePoint(depthAxis, -layer.depth, camera);
+            const near = projectScenePoint(depthAxis, 0, camera);
+            return (
+              <LinearGradient
+                key={`organ-shade-${layer.id}`}
+                id={`organ-shade-${layer.id}`}
+                gradientUnits="userSpaceOnUse"
+                x1={far.x}
+                y1={far.y}
+                x2={near.x}
+                y2={near.y}
+              >
+                <Stop offset="0" stopColor={shadeColor(layer.fill, 0.46)} />
+                <Stop offset="1" stopColor={shadeColor(layer.fill, SIDE_TONE)} />
+              </LinearGradient>
+            );
+          })}
           {[...rim].reverse().map((slice) => {
             const front = slice.back === 0;
             const shade = `url(#${SHELL_SHADE})`;
@@ -210,24 +247,42 @@ export function ArticulationFigure3D({
             />
           ))}
 
-          {/* Organs, far to near. */}
+          {/* Organ bodies, far to near. Each one is a swept body: its
+              cross-sections narrow as they recede into the head and share one
+              gradient, so it reads as a solid lobe instead of a stack of
+              copies of the 2-D outline. */}
           {layers.map((layer) => {
             const rotation = layerRotation(layer);
+            const side = shadeColor(layer.fill, SIDE_TONE);
+            const band = volumeBandWidth(layer, camera, slices);
             return (
-              <G key={layer.id}>
-                {volumeSlices(layer, camera).map((slice, index) =>
-                  layer.paths.map((d, pathIndex) => (
+              <G key={`body-${layer.id}`}>
+                {volumeSlices(layer, camera, slices).map((slice, index) => {
+                  // One flat body tone: re-transforming a gradient on every
+                  // copy would leave a tone seam at each cross-section. Only
+                  // the far shell carries the gradient.
+                  const fill = index === 0 ? `url(#organ-shade-${layer.id})` : side;
+                  return layer.paths.map((d, pathIndex) => (
                     <Path
                       key={`${layer.id}-slice-${index}-${pathIndex}`}
                       d={d}
                       transform={`${slice.matrix}${rotation ? ` ${rotation}` : ''}`}
-                      fill={slice.fill}
-                      stroke={slice.fill}
-                      strokeWidth={0.8}
+                      fill={fill}
+                      stroke={fill}
+                      strokeWidth={band}
                       strokeLinejoin="round"
                     />
-                  )),
-                )}
+                  ));
+                })}
+              </G>
+            );
+          })}
+
+          {/* Cut faces last: every face is the frontmost surface of its organ. */}
+          {faceOrder(layers).map((layer) => {
+            const rotation = layerRotation(layer);
+            return (
+              <G key={`face-${layer.id}`}>
                 {layer.paths.map((d, pathIndex) => (
                   <Path
                     key={`${layer.id}-face-${pathIndex}`}

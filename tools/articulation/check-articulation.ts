@@ -5,6 +5,7 @@ import {
   ARTICULATION_3D_VIEW_BOX,
   ARTICULATION_CAMERA,
   ARTICULATION_CANVASES,
+  ARTICULATION_DEPTH,
   ARTICULATION_GRID_TONES,
   ARTICULATION_SURFACE,
   articulationStage,
@@ -237,7 +238,7 @@ for (const sound of articulationSounds) {
         ...([[186, 500], [600, 68], [900, 486], [806, 986], [258, 660]] as const).flatMap((corner) =>
           [0, 0.5, 1].map((back) => {
             const scale = 1 - ARTICULATION_SHELL.taper * back ** 1.4;
-            const [ax, ay] = ARTICULATION_SHELL.anchor;
+            const [ax, ay] = [ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y];
             return projectScenePoint(
               [ax + (corner[0] - ax) * scale, ay + (corner[1] - ay) * scale],
               -ARTICULATION_SHELL.depth * back,

@@ -25,6 +25,7 @@ export { mannerLabels, placeLabels } from './labels';
 export { buildArticulationSiteData } from './site';
 export {
   ARTICULATION_CAMERA,
+  ARTICULATION_DEPTH,
   ARTICULATION_PIVOT,
   ARTICULATION_GRID,
   ARTICULATION_SHELL,

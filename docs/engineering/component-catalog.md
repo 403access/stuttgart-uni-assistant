@@ -629,7 +629,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AngleRow` (component), `AxisPicker` (component), `OverlayToggle` (component), `PlayButton` (component), `SpeedRow` (component), `StageColors` (component), `ViewToggle` (component), `SPEEDS` (constant), `formatAngle` (helper), `formatSpeed` (helper)
 - Usages: 8 references in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 24 import `AngleRow`; 25 import `OverlayToggle`; 26 import `PlayButton`; 27 import `SpeedRow`; 28 import `StageColors`; 29 import `ViewToggle`; 30 import `formatAngle`; 156 render `PlayButton`; 160 render `OverlayToggle`; 166 render `OverlayToggle`; 174 render `ViewToggle`; 177 render `SpeedRow`; 180 render `AngleRow`; 186 call `formatAngle`; 191 render `StageColors`
+- `packages/features/articulation/src/ui/player.tsx`: 24 import `AngleRow`; 25 import `OverlayToggle`; 26 import `PlayButton`; 27 import `SpeedRow`; 28 import `StageColors`; 29 import `ViewToggle`; 30 import `formatAngle`; 161 render `PlayButton`; 165 render `OverlayToggle`; 171 render `OverlayToggle`; 179 render `ViewToggle`; 182 render `SpeedRow`; 185 render `AngleRow`; 191 call `formatAngle`; 196 render `StageColors`
 
 ### mail-skeletons
 
@@ -778,7 +778,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 32 import `ArticulationFigure`; 139 render `ArticulationFigure`
+- `packages/features/articulation/src/ui/player.tsx`: 32 import `ArticulationFigure`; 144 render `ArticulationFigure`
 
 ### ArticulationFigure3D
 
@@ -787,7 +787,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure3D` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 33 import `ArticulationFigure3D`; 127 render `ArticulationFigure3D`
+- `packages/features/articulation/src/ui/player.tsx`: 33 import `ArticulationFigure3D`; 131 render `ArticulationFigure3D`
 
 ### AttachmentList
 
@@ -960,7 +960,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `PhaseStrip` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 34 import `PhaseStrip`; 142 render `PhaseStrip`
+- `packages/features/articulation/src/ui/player.tsx`: 34 import `PhaseStrip`; 147 render `PhaseStrip`
 
 ### QuestionFeedback
 

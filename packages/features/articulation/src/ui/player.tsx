@@ -51,6 +51,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [axis, setAxis] = useState<ArticulationAxis>('y');
   const [canvas, setCanvas] = useState<ArticulationCanvas>(ARTICULATION_SURFACE.canvas);
   const [gridTone, setGridTone] = useState<ArticulationGridTone>(ARTICULATION_SURFACE.grid);
+  const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing, speed);
   const { reduced, phaseIndex, phaseWindow } = timeline;
   const angle = articulationAxisAngle(camera, axis);
@@ -90,7 +91,10 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           Math.abs(gesture.dx) > 4 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
         onPanResponderGrant: () => {
           dragStart.current = angleRef.current;
+          setDragging(true);
         },
+        onPanResponderRelease: () => setDragging(false),
+        onPanResponderTerminate: () => setDragging(false),
         onPanResponderMove: (_event, gesture) => {
           schedule(wrapArticulationAngle(dragStart.current + gesture.dx * 0.55));
         },
@@ -131,6 +135,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
             hint={tx(locale, 'quiz.studio.drag_hint')}
             canvas={canvas}
             gridTone={gridTone}
+            coarse={dragging}
             showAxes={showAxes}
             showGrid={showGrid}
           />

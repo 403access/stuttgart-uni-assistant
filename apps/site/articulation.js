@@ -9,7 +9,11 @@
   if (!data || !root) return;
 
   const CYCLE = 6400;
-  const SLICES = 9;
+  const SLICES = 32;
+  /** Roughly how far an outline reaches from the depth centre. */
+  const VOLUME_REACH = 420;
+  /** How dark an organ gets on its far side. */
+  const SIDE_TONE = 0.3;
   const AIR_Z = 10;
   const FOCUS_Z = 20;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -322,36 +326,75 @@
     const v = Math.sin(rad(camera.yaw));
     const w = Math.sin(rad(camera.pitch));
     const q = Math.cos(rad(camera.pitch));
-    const [ax, ay] = layer.anchor;
-    return (
-      w * (ay - PIVOT.y) + q * (-v * (ax - PIVOT.x) + u * (layer.z + layer.depth / 2))
-    );
+    const ax = data.scene.depth.x;
+    const ay = data.scene.depth.y;
+    return w * (ay - PIVOT.y) + q * (-v * (ax - PIVOT.x) + u * (layer.z + layer.depth / 2));
   };
 
+  /** How far one cross-section lands from the next, in scene units. */
+  const layerBandWidth = (layer) => {
+    const spread = Math.hypot(
+      Math.sin(rad(camera.yaw)),
+      Math.sin(rad(camera.pitch)) * Math.cos(rad(camera.yaw)),
+    );
+    // One slice lands this far from the next: the projected depth step plus the
+    // inward step of the taper. A stroke that wide fuses them into a surface.
+    return ((layer.depth / SLICES) * spread + (layer.taper * VOLUME_REACH) / SLICES) * 2.2;
+  };
+
+  /** One gradient per organ, painted in scene space from its far side inward. */
+  const organDefs = (layers) =>
+    layers
+      .map((layer) => {
+        const far = project([DEPTH().x, DEPTH().y], -layer.depth);
+        const near = project([DEPTH().x, DEPTH().y], 0);
+        return `<linearGradient id="organ-${layer.id}" gradientUnits="userSpaceOnUse" x1="${far.x.toFixed(
+          1,
+        )}" y1="${far.y.toFixed(1)}" x2="${near.x.toFixed(1)}" y2="${near.y.toFixed(
+          1,
+        )}"><stop offset="0" stop-color="${shade(layer.fill, 0.46)}"/><stop offset="1" stop-color="${shade(
+          layer.fill,
+          SIDE_TONE,
+        )}"/></linearGradient>`;
+      })
+      .join('');
+
+  const DEPTH = () => data.scene.depth;
+  const HINGE = () => data.scene.hinge;
+
   function sceneLayer(layer) {
-    const rotation = layer.rotate ? ` rotate(${layer.rotate} ${layer.anchor[0]} ${layer.anchor[1]})` : '';
+    const rotation = layer.rotate ? ` rotate(${layer.rotate} ${HINGE().x} ${HINGE().y})` : '';
+    const band = layerBandWidth(layer);
+    // One flat side tone for the whole body: copies of one gradient would each
+    // be transformed differently and leave tone seams.
+    const side = shade(layer.fill, SIDE_TONE);
     let svg = '';
     for (let index = 0; index < SLICES; index += 1) {
-      const along = index / SLICES;
-      const z = layer.z - layer.depth / 2 + layer.depth * along;
-      const matrix = sceneMatrix(layer.anchor, 0.9 + 0.1 * along, z);
-      const fill = shade(layer.fill, 0.08 + 0.34 * (1 - along));
+      // A lobe, not a prism: every cross-section is smaller than the last.
+      const back = 1 - index / SLICES;
+      const z = layer.z + layer.depth / 2 - layer.depth * back;
+      const matrix = sceneMatrix([DEPTH().x, DEPTH().y], 1 - layer.taper * back ** 1.2, z);
+      const fill = index === 0 ? `url(#organ-${layer.id})` : side;
       svg += layer.paths
-        .map((d) => `<path d="${d}" transform="${matrix}${rotation}" fill="${fill}" stroke="${fill}" stroke-width="0.8"/>`)
+        .map(
+          (d) =>
+            `<path d="${d}" transform="${matrix}${rotation}" fill="${fill}" stroke="${fill}" stroke-width="${band.toFixed(
+              2,
+            )}"/>`,
+        )
         .join('');
     }
-    const face = sceneMatrix(layer.anchor, 1, layer.z + layer.depth / 2);
+    const face = sceneMatrix([DEPTH().x, DEPTH().y], 1, layer.z + layer.depth / 2);
     return {
       depth: sceneDepth(layer),
       order: layer.order ?? 0,
-      svg:
-        svg +
-        layer.paths
-          .map(
-            (d) =>
-              `<path d="${d}" transform="${face}${rotation}" fill="${layer.fill}" stroke="${layer.stroke}" stroke-width="2.4" stroke-linejoin="round"/>`,
-          )
-          .join(''),
+      body: svg,
+      face: layer.paths
+        .map(
+          (d) =>
+            `<path d="${d}" transform="${face}${rotation}" fill="${layer.fill}" stroke="${layer.stroke}" stroke-width="2.4" stroke-linejoin="round"/>`,
+        )
+        .join(''),
     };
   }
 
@@ -408,14 +451,16 @@
 
   function figure3d() {
     const shell = data.scene.shell;
-    const far = project(shell.anchor, -shell.depth);
-    const near = project(shell.anchor, 0);
+    const far = project([data.scene.depth.x, data.scene.depth.y], -shell.depth);
+    const near = project([data.scene.depth.x, data.scene.depth.y], 0);
     const shadeId = 'studioShellShade';
     const defs = `<defs><linearGradient id="${shadeId}" gradientUnits="userSpaceOnUse" x1="${far.x.toFixed(
       1,
     )}" y1="${far.y.toFixed(1)}" x2="${near.x.toFixed(1)}" y2="${near.y.toFixed(
       1,
-    )}"><stop offset="0" stop-color="${shade('#FFFDF9', 0.2)}"/><stop offset="1" stop-color="#FFFDF9"/></linearGradient></defs>`;
+    )}"><stop offset="0" stop-color="${shade('#FFFDF9', 0.2)}"/><stop offset="1" stop-color="#FFFDF9"/></linearGradient>${organDefs(
+      [...data.scene.layers, ...sound.poseLayers],
+    )}</defs>`;
     const parts = [defs];
     // The cut face is the section; the rest of the head recedes behind it and
     // narrows towards the side of the head, so a turned model reads as a solid
@@ -425,7 +470,7 @@
     for (let index = shell.rim; index >= 0; index -= 1) {
       const back = index / shell.rim;
       const scale = 1 - shell.taper * back ** 1.4;
-      const matrix = sceneMatrix(shell.anchor, scale, -shell.depth * back);
+      const matrix = sceneMatrix([data.scene.depth.x, data.scene.depth.y], scale, -shell.depth * back);
       const front = back === 0;
       const fill = front ? '#FFFDF9' : `url(#${shadeId})`;
       parts.push(
@@ -438,10 +483,13 @@
       );
     }
     if (showGrid) parts.push(gridSvg());
-    const layers = [...data.scene.layers, ...sound.poseLayers]
-      .map((layer) => sceneLayer(layer))
-      .sort((left, right) => left.depth - right.depth || left.order - right.order);
-    parts.push(...layers.map((layer) => layer.svg));
+    const layers = [...data.scene.layers, ...sound.poseLayers].map((layer) => sceneLayer(layer));
+    // Bodies first, far to near; then every cut face, in the order the flat
+    // figure paints them — a face is the frontmost surface of its organ.
+    const bodies = [...layers].sort((left, right) => left.depth - right.depth || left.order - right.order);
+    const faces = [...layers].sort((left, right) => left.order - right.order);
+    parts.push(...bodies.map((layer) => layer.body));
+    parts.push(...faces.map((layer) => layer.face));
     return `<svg viewBox="${data.view3d}" role="img" aria-label="${esc(
       copy().canvas(sound),
     )}" preserveAspectRatio="xMidYMid meet">${parts.join('')}</svg>`;

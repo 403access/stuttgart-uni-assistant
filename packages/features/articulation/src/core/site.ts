@@ -23,11 +23,13 @@ import {
   articulationBackdrop,
   articulationRegions,
   HEAD_VIEW_BOX,
+  VELUM_HINGE,
 } from './geometry';
 import { diagramPalette } from '@ua/quiz-content/figures/palette';
 import { ARTICULATION_3D_VIEW_BOX, ARTICULATION_TURN } from './view3d';
 import {
   ARTICULATION_CAMERA,
+  ARTICULATION_DEPTH,
   ARTICULATION_SHELL,
   articulationPoseLayers,
   articulationShellOutline,
@@ -94,6 +96,10 @@ export interface ArticulationSiteData {
     shell: typeof ARTICULATION_SHELL;
     layers: ArticulationSceneLayer[];
     camera: typeof ARTICULATION_CAMERA;
+    /** Where the anatomy narrows as it recedes. */
+    depth: typeof ARTICULATION_DEPTH;
+    /** Pivot of the velum swing. */
+    hinge: typeof VELUM_HINGE;
   };
   /** Stage colours: the canvas choices, the grid tones and their defaults. */
   surface: {
@@ -139,6 +145,8 @@ export function buildArticulationSiteData(): ArticulationSiteData {
       shell: ARTICULATION_SHELL,
       layers: articulationStaticLayers(),
       camera: ARTICULATION_CAMERA,
+      depth: ARTICULATION_DEPTH,
+      hinge: VELUM_HINGE,
     },
     surface: {
       canvases: ARTICULATION_CANVASES,

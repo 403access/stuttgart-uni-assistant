@@ -108,16 +108,22 @@ anatomy model (`packages/features/articulation/src/core/scene3d.ts`):
 - The neck runs on past the frame (`articulationShellOutline`). The 2-D figure
   ends it on a flat cut; in 3-D that cut would turn the receding bands into a
   staircase, so the shell's neck is carried below the bottom edge.
-- Every organ is a **volume of its own** — depth, thickness and pivot in
-  `articulationScene`/`articulationPoseLayers`. The renderer draws nine shaded
-  slices per volume (darker towards the back) and then its lit face, which is
-  what gives the tongue, palate and lips real thickness instead of a paper-cut
-  look. The organs sit inside the shell, so their depth is a fraction of the
-  head's.
-- The layers are **painter-sorted** by their projected depth, so a turn
-  actually reveals the volumes behind one another. All cut faces are coplanar,
-  so ties fall back to each layer's `order`, which keeps the familiar 2-D
-  layering of the anatomical figure.
+- Every organ is a **swept body of its own** — depth and taper in
+  `articulationScene`/`articulationPoseLayers`. Its cross-sections narrow as
+  they recede towards the core of the head (`ARTICULATION_DEPTH`, near the back
+  of the skull, not the organ's own centre), so a turned body recedes into the
+  skull instead of sliding forwards with the camera. A lobe such as the tongue
+  tapers more than a shelf such as the hard palate.
+- The body is drawn as `SCENE_SLICES` (32) cross-sections, each stroked as wide
+  as the distance to the next one so the copies fuse into one surface — a thin
+  end would otherwise read as a stack of cutouts. The body carries **one flat
+  side tone**; only the far shell gets a gradient, because a gradient that is
+  re-transformed per copy leaves a visible tone seam at every cross-section.
+  While a drag is in progress the studio drops to ten slices.
+- The layers are drawn in **two passes**: all bodies far to near, then all cut
+  faces in the figure's 2-D `order`. Every face sits on the same plane and is
+  the frontmost surface of its organ, so a body must never paint over another
+  organ's section.
 - `projectScenePoint` is an orthographic camera with a **yaw** (turn) and a
   **pitch** (tilt); `ARTICULATION_PIVOT` keeps the model centred while it
   turns. `ui/scene.ts` turns the same projection into one SVG `matrix` per
