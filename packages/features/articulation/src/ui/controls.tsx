@@ -6,7 +6,10 @@ import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import { ARTICULATION_TURN } from '../core';
+import { ARTICULATION_TURN, type ArticulationAxis } from '../core';
+
+/** The axes the model can turn around. */
+const AXES: ArticulationAxis[] = ['x', 'y', 'z'];
 
 /** True minus sign, because a hyphen reads like a dash in a number. */
 export function formatAngle(value: number): string {
@@ -65,21 +68,62 @@ export function ViewToggle({
   );
 }
 
+/** Which axis the drag turns the model around. */
+export function AxisPicker({
+  locale,
+  axis,
+  onSelect,
+}: {
+  locale: Locale;
+  axis: ArticulationAxis;
+  onSelect: (axis: ArticulationAxis) => void;
+}) {
+  return (
+    <View style={styles.axisGroup}>
+      {AXES.map((value) => {
+        const selected = value === axis;
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, 'quiz.studio.axis_value', [value.toUpperCase()])}
+            accessibilityState={{ selected }}
+            onPress={() => onSelect(value)}
+            style={({ pressed }) => [
+              styles.axisChip,
+              selected && styles.axisChipActive,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={[styles.axisLabel, selected && styles.axisLabelActive]}>
+              {value.toUpperCase()}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 /** Preset angles next to the current one; dragging covers everything between. */
 export function AngleRow({
   locale,
+  axis,
+  onAxis,
   angle,
   onSelect,
   caption,
 }: {
   locale: Locale;
+  axis: ArticulationAxis;
+  onAxis: (axis: ArticulationAxis) => void;
   angle: number;
   onSelect: (value: number) => void;
   caption: string;
 }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{tx(locale, 'quiz.studio.turn')}</Text>
+      <AxisPicker locale={locale} axis={axis} onSelect={onAxis} />
       {ARTICULATION_TURN.presets.map((preset) => {
         const selected = Math.round(angle) === preset;
         return (
@@ -135,6 +179,25 @@ const styles = themedStyles((colors) => ({
   toggleLabel: { color: colors.mute, fontSize: 11, fontWeight: '700' },
   toggleLabelActive: { color: colors.blue },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  axisGroup: {
+    flexDirection: 'row',
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    padding: 2,
+    gap: 2,
+  },
+  axisChip: {
+    width: 26,
+    height: 24,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  axisChipActive: { backgroundColor: colors.blueSoft },
+  axisLabel: { color: colors.mute, fontSize: 11, fontWeight: '700' },
+  axisLabelActive: { color: colors.blue },
   rowLabel: {
     color: colors.mute,
     fontSize: 10,

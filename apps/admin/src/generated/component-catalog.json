@@ -2,7 +2,7 @@
   "generatedBy": "tools/codegen/generate-component-catalog.mjs",
   "stats": {
     "components": 86,
-    "exports": 131,
+    "exports": 132,
     "occurrences": 1363,
     "usageCount": 843,
     "files": 111,
@@ -10061,6 +10061,12 @@
           "isReExport": false
         },
         {
+          "name": "AxisPicker",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
           "name": "OverlayToggle",
           "kind": "component",
           "isDefault": false,
@@ -10108,91 +10114,91 @@
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 16,
           "kind": "import",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 16,
           "kind": "import",
           "exportName": "formatAngle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 16,
           "kind": "import",
           "exportName": "OverlayToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 16,
           "kind": "import",
           "exportName": "PlayButton",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 16,
           "kind": "import",
           "exportName": "SpeedRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 16,
           "kind": "import",
           "exportName": "ViewToggle",
-          "count": 1
-        },
-        {
-          "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 132,
-          "kind": "render",
-          "exportName": "PlayButton",
-          "count": 1
-        },
-        {
-          "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 136,
-          "kind": "render",
-          "exportName": "OverlayToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
           "line": 142,
           "kind": "render",
+          "exportName": "PlayButton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 146,
+          "kind": "render",
           "exportName": "OverlayToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 150,
+          "line": 152,
+          "kind": "render",
+          "exportName": "OverlayToggle",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 160,
           "kind": "render",
           "exportName": "ViewToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 153,
+          "line": 163,
           "kind": "render",
           "exportName": "SpeedRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 156,
+          "line": 166,
           "kind": "render",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 160,
+          "line": 172,
           "kind": "call",
           "exportName": "formatAngle",
           "count": 1
@@ -11321,14 +11327,14 @@
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 11,
+          "line": 17,
           "kind": "import",
           "exportName": "ArticulationFigure",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 115,
+          "line": 125,
           "kind": "render",
           "exportName": "ArticulationFigure",
           "count": 1
@@ -11374,14 +11380,14 @@
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 12,
+          "line": 18,
           "kind": "import",
           "exportName": "ArticulationFigure3D",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 104,
+          "line": 114,
           "kind": "render",
           "exportName": "ArticulationFigure3D",
           "count": 1
@@ -12403,14 +12409,14 @@
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 13,
+          "line": 19,
           "kind": "import",
           "exportName": "PhaseStrip",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 118,
+          "line": 128,
           "kind": "render",
           "exportName": "PhaseStrip",
           "count": 1

@@ -5,8 +5,14 @@ import { themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import type { ArticulationCamera, ArticulationSound } from '../core';
-import { ARTICULATION_CAMERA, ARTICULATION_TURN, wrapArticulationAngle } from '../core';
+import type { ArticulationAxis, ArticulationCamera, ArticulationSound } from '../core';
+import {
+  ARTICULATION_CAMERA,
+  ARTICULATION_TURN,
+  articulationAxisAngle,
+  withArticulationAxis,
+  wrapArticulationAngle,
+} from '../core';
 import { AngleRow, OverlayToggle, PlayButton, SpeedRow, ViewToggle, formatAngle } from './controls';
 import { ArticulationFigure } from './figure-2d';
 import { ArticulationFigure3D } from './figure-3d';
@@ -26,21 +32,19 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [threeD, setThreeD] = useState(false);
   const [showAxes, setShowAxes] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
-  const [yaw, setYaw] = useState<number>(ARTICULATION_CAMERA.yaw);
+  const [camera, setCamera] = useState<ArticulationCamera>(ARTICULATION_CAMERA);
+  const [axis, setAxis] = useState<ArticulationAxis>('y');
   const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing, speed);
   const { reduced, phaseIndex, phaseWindow } = timeline;
-  const camera = useMemo<ArticulationCamera>(
-    () => ({ yaw, pitch: ARTICULATION_CAMERA.pitch }),
-    [yaw],
-  );
+  const angle = articulationAxisAngle(camera, axis);
 
-  // Dragging turns the model freely. One frame per gesture move, and a coarser
-  // shell while the finger is down, keeps the SVG light.
-  const yawRef = useRef(yaw);
-  yawRef.current = yaw;
-  const dragStart = useRef(yaw);
-  const pending = useRef(yaw);
+  // Dragging turns the model around the selected axis. One frame per gesture
+  // move, and a coarser shell while the finger is down, keeps the SVG light.
+  const angleRef = useRef(angle);
+  angleRef.current = angle;
+  const dragStart = useRef(angle);
+  const pending = useRef(angle);
   const frame = useRef<number | null>(null);
 
   const schedule = (next: number) => {
@@ -48,7 +52,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
     if (frame.current !== null) return;
     frame.current = requestAnimationFrame(() => {
       frame.current = null;
-      setYaw(pending.current);
+      setCamera((current) => withArticulationAxis(current, axisRef.current, pending.current));
     });
   };
 
@@ -59,6 +63,9 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
     [],
   );
 
+  const axisRef = useRef(axis);
+  axisRef.current = axis;
+
   const responder = useMemo(
     () =>
       PanResponder.create({
@@ -66,7 +73,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
         onMoveShouldSetPanResponder: (_event, gesture) =>
           Math.abs(gesture.dx) > 4 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
         onPanResponderGrant: () => {
-          dragStart.current = yawRef.current;
+          dragStart.current = angleRef.current;
           setDragging(true);
         },
         onPanResponderMove: (_event, gesture) => {
@@ -79,7 +86,10 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
     [],
   );
 
-  const stepYaw = (delta: number) => setYaw((current) => wrapArticulationAngle(current + delta));
+  const stepAxis = (delta: number) =>
+    setCamera((current) =>
+      withArticulationAxis(current, axis, wrapArticulationAngle(articulationAxisAngle(current, axis) + delta)),
+    );
 
   return (
     <View style={styles.player}>
@@ -91,12 +101,12 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           accessibilityValue={{
             min: ARTICULATION_TURN.minAngle,
             max: ARTICULATION_TURN.maxAngle,
-            now: Math.round(yaw),
-            text: tx(locale, 'quiz.studio.angle', [`${Math.round(yaw)}°`]),
+            now: Math.round(angle),
+            text: tx(locale, 'quiz.studio.angle', [`${Math.round(angle)}°`]),
           }}
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={(event) =>
-            stepYaw(
+            stepAxis(
               event.nativeEvent.actionName === 'increment' ? ARTICULATION_TURN.step : -ARTICULATION_TURN.step,
             )
           }
@@ -155,9 +165,11 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
       {threeD ? (
         <AngleRow
           locale={locale}
-          angle={yaw}
-          onSelect={setYaw}
-          caption={formatAngle(yaw)}
+          axis={axis}
+          onAxis={setAxis}
+          angle={angle}
+          onSelect={(value) => setCamera((current) => withArticulationAxis(current, axis, value))}
+          caption={`${axis.toUpperCase()} ${formatAngle(angle)}`}
         />
       ) : null}
     </View>

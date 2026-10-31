@@ -157,7 +157,7 @@ const extremeAngles = [
 ];
 expect(
   extremeAngles.every((angle) => {
-    const point = projectScenePoint([540, 515], 0, { yaw: angle, pitch: ARTICULATION_CAMERA.pitch });
+    const point = projectScenePoint([540, 515], 0, { yaw: angle, pitch: ARTICULATION_CAMERA.pitch, roll: 0 });
     return Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.depth);
   }),
   'articulation 3D camera is finite at every angle',
@@ -181,14 +181,15 @@ for (const sound of articulationSounds) {
   for (const yaw of extremeAngles) {
     {
       const pitch = ARTICULATION_CAMERA.pitch;
+      const roll = 0;
       const lane = airflowLane(sound.pose.airflow, sound.pose);
       const focus = articulationFocus(sound);
       const points = [
-        ...lane.map((point) => projectScenePoint(point, 10, { yaw, pitch })),
-        projectScenePoint(focus, 20, { yaw, pitch }),
+        ...lane.map((point) => projectScenePoint(point, 10, { yaw, pitch, roll })),
+        projectScenePoint(focus, 20, { yaw, pitch, roll }),
         // points on the head shell, which is the outer bound of the model
         ...([[186, 500], [600, 68], [900, 486], [806, 986], [258, 660]] as const).map((corner) =>
-          projectScenePoint(corner, ARTICULATION_SHELL.z, { yaw, pitch }),
+          projectScenePoint(corner, ARTICULATION_SHELL.z, { yaw, pitch, roll }),
         ),
       ];
       expect(

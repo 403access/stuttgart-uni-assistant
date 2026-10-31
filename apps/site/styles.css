@@ -1065,6 +1065,8 @@ p { margin: 0; }
 .studio-seg button[aria-pressed="true"] { background: var(--blue-soft); color: var(--blue); }
 .studio-turn { display: flex; align-items: center; gap: 6px; color: var(--mute); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .studio-turn button { min-width: 42px; min-height: 30px; padding: 0 8px; justify-content: center; }
+.studio-turn .studio-axis-group { display: inline-flex; gap: 2px; }
+.studio-turn .studio-axis-group button { min-width: 30px; padding: 0 6px; font-size: 0.72rem; }
 .studio-turn button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
 .studio-turn em { margin-left: auto; font-style: normal; color: var(--ink-soft); letter-spacing: 0; text-transform: none; }
 

@@ -111,13 +111,20 @@ anatomy model (`packages/features/articulation/src/core/scene3d.ts`):
   turns. `ui/scene.ts` turns the same projection into one SVG `matrix` per
   slice, so the path data never changes — only the transform does.
 
-The model turns on **one axis**: dragging wraps the yaw at ±180°, and three
-presets (front, left and right three-quarter) sit next to it. The camera's
-pitch is a fixed elevation (`ARTICULATION_CAMERA.pitch`) — it is what gives a
-turned view depth and is deliberately not a control. The drag schedules at most
-one React render per frame and the shell drops from ten rim slices to five while
-the finger is down. The canvas reports itself as an adjustable control, so
-screen readers can turn it too.
+The model turns on **one axis at a time**, and the axis is selectable:
+
+- **X** — nod the head forward/back (the camera pitch),
+- **Y** — turn it left/right (the yaw, the default),
+- **Z** — roll the picture in the view plane (the roll).
+
+The three presets (0°, 28°, −28°) apply to the selected axis, and switching axes
+keeps the other two angles, so the chosen view is never lost. A drag only ever
+changes that one angle; it wraps at ±180°. The camera starts at yaw 28°,
+pitch 22° and roll 0°, which is the three-quarter view that reads best.
+
+The drag schedules at most one React render per frame and the shell drops from
+ten rim slices to five while the finger is down. The canvas reports itself as an
+adjustable control for the selected axis, so screen readers can turn it too.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web.

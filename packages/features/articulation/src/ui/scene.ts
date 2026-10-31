@@ -23,19 +23,27 @@ export function sliceMatrix(
   const v = Math.sin(rad(camera.yaw));
   const w = Math.sin(rad(camera.pitch));
   const q = Math.cos(rad(camera.pitch));
+  const cr = Math.cos(rad(camera.roll));
+  const sr = Math.sin(rad(camera.roll));
   const [cx, cy] = anchor;
   const px = ARTICULATION_PIVOT.x;
   const py = ARTICULATION_PIVOT.y;
-  const a = scale * u;
-  const b = scale * v * w;
-  const d = scale * q;
-  const e = px * (1 - scale * u) + u * (cx - px) * (1 - scale) + v * z;
-  const f =
-    py * (1 - scale * q) -
-    scale * v * w * (cx - px) +
-    q * (cy - py) * (1 - scale) -
-    w * u * z;
-  return `matrix(${a.toFixed(4)} ${b.toFixed(4)} 0 ${d.toFixed(4)} ${e.toFixed(2)} ${f.toFixed(2)})`;
+  // The outline is scaled around its anchor, turned and tilted; the roll then
+  // rotates the finished image around the pivot.
+  const x0 = cx - px - scale * cx;
+  const y0 = cy - py - scale * cy;
+  const a0 = scale * u;
+  const b0 = scale * v * w;
+  const d0 = scale * q;
+  const e0 = px + u * x0 + v * z;
+  const f0 = py + q * y0 + w * v * x0 - w * u * z;
+  const a = cr * a0 - sr * b0;
+  const b = sr * a0 + cr * b0;
+  const c = -sr * d0;
+  const d = cr * d0;
+  const e = px + cr * (e0 - px) - sr * (f0 - py);
+  const f = py + sr * (e0 - px) + cr * (f0 - py);
+  return `matrix(${a.toFixed(4)} ${b.toFixed(4)} ${c.toFixed(4)} ${d.toFixed(4)} ${e.toFixed(2)} ${f.toFixed(2)})`;
 }
 
 /** Layers from far to near, so the painter's algorithm draws them correctly. */

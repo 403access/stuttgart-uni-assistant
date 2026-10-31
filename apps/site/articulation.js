@@ -56,6 +56,7 @@
   let showAxes = false;
   let showGrid = false;
   let camera = { ...data.scene.camera };
+  let axis = 'y';
   let speed = 1;
   let playing = !reducedMotion;
   let elapsed = 0;
@@ -249,10 +250,15 @@
     const v = Math.sin(rad(camera.yaw));
     const w = Math.sin(rad(camera.pitch));
     const q = Math.cos(rad(camera.pitch));
+    const cr = Math.cos(rad(camera.roll));
+    const sr = Math.sin(rad(camera.roll));
     const dx = point[0] - PIVOT.x;
     const dy = point[1] - PIVOT.y;
+    const x1 = u * dx + v * z;
     const z1 = -v * dx + u * z;
-    return { x: PIVOT.x + u * dx + v * z, y: PIVOT.y + q * dy - w * z1 };
+    const x2 = x1;
+    const y2 = q * dy - w * z1;
+    return { x: PIVOT.x + cr * x2 - sr * y2, y: PIVOT.y + sr * x2 + cr * y2 };
   }
 
   function percent(point) {
@@ -282,17 +288,23 @@
     const v = Math.sin(rad(camera.yaw));
     const w = Math.sin(rad(camera.pitch));
     const q = Math.cos(rad(camera.pitch));
+    const cr = Math.cos(rad(camera.roll));
+    const sr = Math.sin(rad(camera.roll));
     const [cx, cy] = anchor;
-    const a = scale * u;
-    const b = scale * v * w;
-    const d = scale * q;
-    const e = PIVOT.x * (1 - scale * u) + u * (cx - PIVOT.x) * (1 - scale) + v * z;
-    const f =
-      PIVOT.y * (1 - scale * q) -
-      scale * v * w * (cx - PIVOT.x) +
-      q * (cy - PIVOT.y) * (1 - scale) -
-      w * u * z;
-    return `matrix(${a.toFixed(4)} ${b.toFixed(4)} 0 ${d.toFixed(4)} ${e.toFixed(2)} ${f.toFixed(2)})`;
+    const x0 = cx - PIVOT.x - scale * cx;
+    const y0 = cy - PIVOT.y - scale * cy;
+    const a0 = scale * u;
+    const b0 = scale * v * w;
+    const d0 = scale * q;
+    const e0 = PIVOT.x + u * x0 + v * z;
+    const f0 = PIVOT.y + q * y0 + w * v * x0 - w * u * z;
+    const a = cr * a0 - sr * b0;
+    const b = sr * a0 + cr * b0;
+    const c = -sr * d0;
+    const d = cr * d0;
+    const e = PIVOT.x + cr * (e0 - PIVOT.x) - sr * (f0 - PIVOT.y);
+    const f = PIVOT.y + sr * (e0 - PIVOT.x) + cr * (f0 - PIVOT.y);
+    return `matrix(${a.toFixed(4)} ${b.toFixed(4)} ${c.toFixed(4)} ${d.toFixed(4)} ${e.toFixed(2)} ${f.toFixed(2)})`;
   };
 
   const sceneDepth = (layer) => {
@@ -371,6 +383,13 @@
       .join('');
   }
 
+  const axisAngle = () => (axis === 'x' ? camera.pitch : axis === 'z' ? camera.roll : camera.yaw);
+  const withAxis = (value) => {
+    if (axis === 'x') return { ...camera, pitch: value };
+    if (axis === 'z') return { ...camera, roll: value };
+    return { ...camera, yaw: value };
+  };
+
   function figure3d() {
     const shell = data.scene.shell;
     const headSide = shade('#FFFDF9', 0.22);
@@ -413,9 +432,15 @@
         [0, 0, 1],
       ]
         .map(([dx, dy, dz], index) => {
-          const x = u * dx + v * dz;
-          const y = q * dy + v * w * dx - u * w * dz;
-          const depth = w * dy + q * (-v * dx + u * dz);
+          const cr = Math.cos(rad(camera.roll));
+          const sr = Math.sin(rad(camera.roll));
+          const x1 = u * dx + v * dz;
+          const z1 = -v * dx + u * dz;
+          const x2 = x1;
+          const y2 = q * dy - w * z1;
+          const x = cr * x2 - sr * y2;
+          const y = sr * x2 + cr * y2;
+          const depth = w * dy + q * z1;
           const color = colors[index];
           return `<g opacity="${depth > 0 ? 1 : 0.5}">
             <line x1="36" y1="36" x2="${(36 + x * 24).toFixed(1)}" y2="${(36 + y * 24).toFixed(1)}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>
@@ -691,16 +716,25 @@
       ${
         threeD
           ? `<div class="studio-turn">
-              <span>${esc(copy().turn)}</span>
+              <span class="studio-axis-group">
+                ${['x', 'y', 'z']
+                  .map(
+                    (value) =>
+                      `<button type="button" data-axis="${value}" aria-pressed="${axis === value}" aria-label="${
+                        lang === 'en' ? 'Axis' : 'Achse'
+                      } ${value.toUpperCase()}">${value.toUpperCase()}</button>`,
+                  )
+                  .join('')}
+              </span>
               ${data.turn.presets
                 .map(
                   (preset) =>
                     `<button type="button" data-angle="${preset}" aria-pressed="${
-                      Math.round(camera.yaw) === preset
+                      Math.round(axisAngle()) === preset
                     }">${fmt(preset)}</button>`,
                 )
                 .join('')}
-              <em>${fmt(camera.yaw)}</em>
+              <em>${axis.toUpperCase()} ${fmt(axisAngle())}</em>
             </div>`
           : ''
       }`;
@@ -741,9 +775,16 @@
         renderBar();
       });
     });
+    bar.querySelectorAll('[data-axis]').forEach((button) => {
+      button.addEventListener('click', () => {
+        axis = button.dataset.axis;
+        renderBar();
+        drawStatic();
+      });
+    });
     bar.querySelectorAll('[data-angle]').forEach((button) => {
       button.addEventListener('click', () => {
-        camera = { ...camera, yaw: Number(button.dataset.angle) };
+        camera = withAxis(Number(button.dataset.angle));
         renderBar();
         drawStatic();
       });
@@ -754,15 +795,12 @@
     const canvas = document.getElementById('studio-canvas');
     canvas.addEventListener('pointerdown', (event) => {
       if (!threeD || event.button !== 0) return;
-      drag = { x: event.clientX, camera: { ...camera } };
+      drag = { x: event.clientX, angle: axisAngle() };
       canvas.setPointerCapture(event.pointerId);
     });
     canvas.addEventListener('pointermove', (event) => {
       if (!drag) return;
-      camera = {
-        ...camera,
-        yaw: wrapAngle(drag.camera.yaw + (event.clientX - drag.x) * 0.55),
-      };
+      camera = withAxis(wrapAngle(drag.angle + (event.clientX - drag.x) * 0.55));
       scheduleDraw();
     });
     const end = () => {
@@ -783,7 +821,7 @@
       drawFrame = 0;
       drawStatic();
       const readout = document.querySelector('.studio-turn em');
-      if (readout) readout.textContent = fmt(camera.yaw);
+      if (readout) readout.textContent = `${axis.toUpperCase()} ${fmt(axisAngle())}`;
     });
   }
 

@@ -1025,6 +1025,7 @@ export const de = {
   "quiz.study_module_count": "{0} Module",
   "quiz.study_module_count_one": "1 Modul",
   "quiz.studio.angle": "Winkel {0}",
+  "quiz.studio.axis_value": "Achse {0}",
   "quiz.studio.axes": "Achsen",
   "quiz.studio.axes_a11y": "Achsen anzeigen",
   "quiz.studio.grid": "Gitter",

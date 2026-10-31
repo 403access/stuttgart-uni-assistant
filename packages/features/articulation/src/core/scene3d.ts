@@ -37,10 +37,15 @@ export interface ArticulationSceneLayer {
   rotate?: number;
 }
 
+/** The three axes the learner can turn the model around. */
+export type ArticulationAxis = 'x' | 'y' | 'z';
+
 export interface ArticulationCamera {
-  /** Horizontal turn, degrees. */
+  /** Roll around the view axis, degrees. */
+  roll: number;
+  /** Turn around the vertical axis, degrees. */
   yaw: number;
-  /** Vertical tilt, degrees. */
+  /** Tilt around the horizontal axis, degrees. */
   pitch: number;
 }
 
@@ -57,7 +62,26 @@ export const ARTICULATION_PIVOT = { x: 540, y: 515 } as const;
 export const ARTICULATION_CAMERA: ArticulationCamera = {
   yaw: ARTICULATION_TURN.defaultAngle,
   pitch: 22,
+  roll: 0,
 };
+
+/** Read the camera angle that belongs to one axis. */
+export function articulationAxisAngle(camera: ArticulationCamera, axis: ArticulationAxis): number {
+  if (axis === 'x') return camera.pitch;
+  if (axis === 'z') return camera.roll;
+  return camera.yaw;
+}
+
+/** Write one axis angle without touching the other two. */
+export function withArticulationAxis(
+  camera: ArticulationCamera,
+  axis: ArticulationAxis,
+  angle: number,
+): ArticulationCamera {
+  if (axis === 'x') return { ...camera, pitch: angle };
+  if (axis === 'z') return { ...camera, roll: angle };
+  return { ...camera, yaw: angle };
+}
 
 /** Placement of the fixed organs: depth, thickness and pivot. */
 const STATIC: Record<string, { z: number; depth: number; anchor: [number, number] }> = {
@@ -183,15 +207,20 @@ export function projectSceneDirection(
 ): { x: number; y: number } {
   const yaw = (camera.yaw * Math.PI) / 180;
   const pitch = (camera.pitch * Math.PI) / 180;
+  const roll = (camera.roll * Math.PI) / 180;
   const u = Math.cos(yaw);
   const v = Math.sin(yaw);
   const w = Math.sin(pitch);
   const q = Math.cos(pitch);
+  const cr = Math.cos(roll);
+  const sr = Math.sin(roll);
   const [dx, dy, dz] = direction;
-  return {
-    x: u * dx + v * dz,
-    y: q * dy + v * w * dx - u * w * dz,
-  };
+  // turn, then tilt, then roll the finished image around the view axis
+  const x1 = u * dx + v * dz;
+  const z1 = -v * dx + u * dz;
+  const x2 = x1;
+  const y2 = q * dy - w * z1;
+  return { x: cr * x2 - sr * y2, y: sr * x2 + cr * y2 };
 }
 
 /**
@@ -205,19 +234,25 @@ export function projectScenePoint(
 ): { x: number; y: number; depth: number } {
   const yaw = (camera.yaw * Math.PI) / 180;
   const pitch = (camera.pitch * Math.PI) / 180;
+  const roll = (camera.roll * Math.PI) / 180;
   const u = Math.cos(yaw);
   const v = Math.sin(yaw);
   const w = Math.sin(pitch);
   const q = Math.cos(pitch);
+  const cr = Math.cos(roll);
+  const sr = Math.sin(roll);
   const cx = ARTICULATION_PIVOT.x;
   const cy = ARTICULATION_PIVOT.y;
   const dx = point[0] - cx;
   const dy = point[1] - cy;
+  // turn and tilt, then roll the finished image around the view axis
   const x1 = u * dx + v * z;
   const z1 = -v * dx + u * z;
+  const x2 = x1;
+  const y2 = q * dy - w * z1;
   return {
-    x: cx + x1,
-    y: cy + q * dy - w * z1,
+    x: cx + cr * x2 - sr * y2,
+    y: cy + sr * x2 + cr * y2,
     depth: w * dy + q * z1,
   };
 }

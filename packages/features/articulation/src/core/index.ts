@@ -28,7 +28,9 @@ export {
   ARTICULATION_PIVOT,
   ARTICULATION_GRID,
   ARTICULATION_SHELL,
+  articulationAxisAngle,
   articulationGrid,
+  withArticulationAxis,
   articulationScene,
   articulationPoseLayers,
   articulationStaticLayers,
@@ -36,6 +38,7 @@ export {
   projectScenePoint,
 } from './scene3d';
 export type {
+  ArticulationAxis,
   ArticulationCamera,
   ArticulationGridLine,
   ArticulationSceneLayer,

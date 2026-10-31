@@ -1026,6 +1026,7 @@ export const en: Record<TranslationKey, string> = {
   "quiz.study_module_count": "{0} modules",
   "quiz.study_module_count_one": "1 module",
   "quiz.studio.angle": "Angle {0}",
+  "quiz.studio.axis_value": "Axis {0}",
   "quiz.studio.axes": "Axes",
   "quiz.studio.axes_a11y": "Show axes",
   "quiz.studio.grid": "Grid",
