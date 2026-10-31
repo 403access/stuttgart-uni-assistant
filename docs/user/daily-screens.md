@@ -64,7 +64,9 @@ Your progress lives on the device. With a session, checked answers and completed
 
 The studio animates how a sound is produced on the same head cross-section the diagram questions use: the airstream rises from the lungs, the vocal cords vibrate or stay apart, and the tongue, lips, and velum take the pose of the sound. Pick from 24 sounds — stops, nasals, fricatives, approximants, and vowels — each with an IPA symbol, an example word, and a one-line explanation.
 
-**2D / 3D** switches between the flat cutaway and a turnable block of the same anatomy. In 3D you can **drag the model** to any angle, or tap one of the preset views (front, left three-quarter, right three-quarter); the airstream and voicing rings travel with it. Both views tell the same three-step story: **Luftstrom (airstream)**, **Stimme (voice)**, **Artikulation (articulation)**.
+**2D / 3D** switches between the flat cutaway and a turnable block of the same anatomy. In 3D you can **drag the model** to any angle, or tap one of the preset views (front, left three-quarter, right three-quarter); the airstream follows.
+
+Under the figure, the sound's own stages light up in order: for **t** that is **Annäherung (approach)** — the tongue moves into place while the air rises — **Verschluss (closure)**, where the air is trapped and the pressure builds, **Lösung (release)**, the little burst, and **Behauchung (aspiration)**, the puff of air before the next sound voices. Nasals close the mouth but let the air out through the nose; fricatives keep a narrow gap and let the air hiss.
 
 The studio opens from the quiz tab, from any phonetics topic (**Im Artikulationsstudio ansehen**), and from **Campus → Studium**. With the system's reduce-motion setting the model stands still and the player says so.
 

@@ -1,5 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 
@@ -7,11 +7,12 @@ import { colors, themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import type { ArticulationSound } from '@ua/quiz-content/types';
+import type { ArticulationPose, ArticulationSound } from '@ua/quiz-content/types';
 import {
   ARTICULATION_SLAB,
   HEAD_VIEW_BOX,
   VELUM_HINGE,
+  airflowFocusT,
   airflowLane,
   articulationBackdrop,
   articulationFocus,
@@ -27,31 +28,92 @@ import {
 import { DiagramCanvas, diagramAspect, diagramTone } from './diagram';
 import { ArticulationFigure3D } from './articulation-3d';
 import {
-  STAGES,
-  airstreamCenter,
-  useArticulationRings,
+  airstreamOpacity,
+  poseProgress,
+  ringOpacity,
+  ringScale,
+  sampleCurve,
+  windowAt,
   useArticulationTimeline,
-  wave,
-  type Stage,
+  type ArticulationTimeline,
 } from './articulation-timeline';
 
 /**
  * How a sound is produced, animated on the same sagittal head the diagram
  * questions use. `ArticulationFigure` is the flat cutaway; `ArticulationFigure3D`
- * turns the same model into a block. Both share one timeline, so the stage
- * strip, the airstream and the voicing stay in sync when the learner switches.
+ * turns the same model into a block. Both share one phase timeline, so the
+ * airstream, the pressure ring and the pose stay in sync.
  */
-const STAGE_ICONS: Record<Stage, ComponentProps<typeof MaterialIcons>['name']> = {
-  airflow: 'air',
-  voice: 'graphic-eq',
-  articulation: 'my-location',
+const APPROACH_POSE: ArticulationPose = {
+  tongue: 'rest',
+  lips: 'open',
+  velum: 'raised',
+  airflow: 'oral',
 };
 
-type Timeline = ReturnType<typeof useArticulationTimeline>;
+/** Colour of the focus ring for the phase that is running. */
+function ringColor(airflow: string): string {
+  switch (airflow) {
+    case 'blocked':
+      return '#B7791F';
+    case 'free':
+      return '#2F6B52';
+    case 'nasal':
+      return '#2F6B52';
+    default:
+      return colors.blue;
+  }
+}
 
 /** Turn angles read better with a true minus sign than with a hyphen. */
 function formatAngle(value: number): string {
-  return `${Math.round(value)}°`.replace('-', '−');
+  return `${Math.round(value)}\u00b0`.replace('-', '\u2212');
+}
+
+function PoseArt({ pose, voiced }: { pose: ArticulationPose; voiced: boolean }) {
+  return (
+    <Svg width="100%" height="100%" viewBox={HEAD_VIEW_BOX}>
+      <G transform={`rotate(${velumAngle(pose.velum)} ${VELUM_HINGE.x} ${VELUM_HINGE.y})`}>
+        {velumOutlines.map((path, index) => (
+          <Path
+            key={`velum-${index}`}
+            d={path}
+            fill={diagramTone('violet').fill}
+            stroke={diagramTone('violet').stroke}
+            strokeWidth={3}
+            strokeLinejoin="round"
+          />
+        ))}
+      </G>
+      <Path
+        d={tongueOutline(pose.tongue)}
+        fill={diagramTone('tongue').fill}
+        stroke={diagramTone('tongue').stroke}
+        strokeWidth={3}
+        strokeLinejoin="round"
+      />
+      {lipOutlines(pose.lips).map((path, index) => (
+        <Path
+          key={`lips-${index}`}
+          d={path}
+          fill={diagramTone('lip').fill}
+          stroke={diagramTone('lip').stroke}
+          strokeWidth={3}
+          strokeLinejoin="round"
+        />
+      ))}
+      {cordOutlines(voiced).map((path, index) => (
+        <Path
+          key={`cords-${index}`}
+          d={path}
+          fill={diagramTone('cords').fill}
+          stroke={diagramTone('cords').stroke}
+          strokeWidth={2}
+          strokeLinejoin="round"
+        />
+      ))}
+    </Svg>
+  );
 }
 
 export function ArticulationFigure({
@@ -59,23 +121,44 @@ export function ArticulationFigure({
   timeline,
 }: {
   locale: Locale;
-  timeline: Timeline;
+  timeline: ArticulationTimeline;
 }) {
-  const { clock, fade, displayed } = timeline;
-  const { focusOpacity, focusScale } = useArticulationRings(clock);
+  const { clock, fade, displayed, windows, phaseWindow } = timeline;
   const pose = displayed.pose;
 
-  const lane = airflowLane(pose.airflow, pose);
-  const dots = lane
-    .slice(1, -1)
-    .map((point, index, list) => ({
-      key: `${index}`,
-      ...pointPercent(point, HEAD_VIEW_BOX),
-      ...wave(airstreamCenter(index / (list.length - 1))),
-    }));
+  const lane = useMemo(() => airflowLane(pose.airflow, pose), [pose]);
+  const focus = useMemo(() => articulationFocus(displayed), [displayed]);
+  const focusT = useMemo(() => airflowFocusT(lane, focus), [lane, focus]);
 
-  const focus = pointPercent(articulationFocus(displayed), HEAD_VIEW_BOX);
-  const larynx = pointPercent([652, 762], HEAD_VIEW_BOX);
+  const dots = useMemo(
+    () =>
+      lane.slice(1, -1).map((point, index, list) => {
+        const position = index / (list.length - 1);
+        const strength = sampleCurve((value) => airstreamOpacity(windows, focusT, position, value));
+        return {
+          key: `${index}`,
+          ...pointPercent(point, HEAD_VIEW_BOX),
+          opacity: clock.interpolate({
+            inputRange: strength.inputRange,
+            outputRange: strength.outputRange.map((value) => value * 0.85),
+          }),
+          scale: clock.interpolate({
+            inputRange: strength.inputRange,
+            outputRange: strength.outputRange.map((value) => 0.55 + value * 0.65),
+          }),
+        };
+      }),
+    [lane, windows, focusT, clock],
+  );
+
+  const restOpacity = clock.interpolate(sampleCurve((value) => 1 - poseProgress(windows, value)));
+  const poseOpacity = clock.interpolate(sampleCurve((value) => poseProgress(windows, value)));
+  const focusOpacity = clock.interpolate(
+    sampleCurve((value) => ringOpacity(windowAt(windows, value), value)),
+  );
+  const focusScale = clock.interpolate(
+    sampleCurve((value) => ringScale(windowAt(windows, value), value)),
+  );
 
   return (
     <View style={[styles.canvas, { aspectRatio: diagramAspect(HEAD_VIEW_BOX) }]}>
@@ -88,47 +171,12 @@ export function ArticulationFigure({
       />
 
       <Animated.View style={[styles.layer, { opacity: fade }]} pointerEvents="none">
-        <Svg width="100%" height="100%" viewBox={HEAD_VIEW_BOX}>
-          <G transform={`rotate(${velumAngle(pose.velum)} ${VELUM_HINGE.x} ${VELUM_HINGE.y})`}>
-            {velumOutlines.map((path, index) => (
-              <Path
-                key={`velum-${index}`}
-                d={path}
-                fill={diagramTone('violet').fill}
-                stroke={diagramTone('violet').stroke}
-                strokeWidth={3}
-                strokeLinejoin="round"
-              />
-            ))}
-          </G>
-          <Path
-            d={tongueOutline(pose.tongue)}
-            fill={diagramTone('tongue').fill}
-            stroke={diagramTone('tongue').stroke}
-            strokeWidth={3}
-            strokeLinejoin="round"
-          />
-          {lipOutlines(pose.lips).map((path, index) => (
-            <Path
-              key={`lips-${index}`}
-              d={path}
-              fill={diagramTone('lip').fill}
-              stroke={diagramTone('lip').stroke}
-              strokeWidth={3}
-              strokeLinejoin="round"
-            />
-          ))}
-          {cordOutlines(displayed.voiced).map((path, index) => (
-            <Path
-              key={`cords-${index}`}
-              d={path}
-              fill={diagramTone('cords').fill}
-              stroke={diagramTone('cords').stroke}
-              strokeWidth={2}
-              strokeLinejoin="round"
-            />
-          ))}
-        </Svg>
+        <Animated.View style={[styles.layer, { opacity: restOpacity }]}>
+          <PoseArt pose={APPROACH_POSE} voiced={displayed.voiced} />
+        </Animated.View>
+        <Animated.View style={[styles.layer, { opacity: poseOpacity }]}>
+          <PoseArt pose={pose} voiced={displayed.voiced} />
+        </Animated.View>
       </Animated.View>
 
       <View style={styles.layer} pointerEvents="none">
@@ -137,61 +185,21 @@ export function ArticulationFigure({
             key={dot.key}
             style={[
               styles.puff,
-              {
-                left: dot.left,
-                top: dot.top,
-                opacity: clock.interpolate({
-                  inputRange: dot.inputRange,
-                  outputRange: dot.outputRange.map((value) => value * 0.85),
-                }),
-                transform: [
-                  {
-                    scale: clock.interpolate({
-                      inputRange: dot.inputRange,
-                      outputRange: dot.outputRange.map((value) => 0.55 + value * 0.65),
-                    }),
-                  },
-                ],
-              },
+              { left: dot.left, top: dot.top, opacity: dot.opacity, transform: [{ scale: dot.scale }] },
             ]}
           />
         ))}
 
-        {displayed.voiced
-          ? [0, 0.07].map((offset) => (
-              <Animated.View
-                key={`voice-${offset}`}
-                style={[
-                  styles.ring,
-                  styles.voiceRing,
-                  larynx,
-                  {
-                    opacity: clock.interpolate({
-                      inputRange: [0.3 + offset, 0.38 + offset, 0.58 + offset, 0.66 + offset],
-                      outputRange: [0, 0.55, 0.4, 0],
-                      extrapolate: 'clamp',
-                    }),
-                    transform: [
-                      {
-                        scale: clock.interpolate({
-                          inputRange: [0.3 + offset, 0.66 + offset],
-                          outputRange: [0.7, 2.1],
-                          extrapolate: 'clamp',
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              />
-            ))
-          : null}
-
         <Animated.View
           style={[
             styles.ring,
-            styles.focusRing,
-            focus,
-            { opacity: focusOpacity, transform: [{ scale: focusScale }] },
+            {
+              left: pointPercent(focus, HEAD_VIEW_BOX).left,
+              top: pointPercent(focus, HEAD_VIEW_BOX).top,
+              borderColor: ringColor(phaseWindow.phase.airflow),
+              opacity: focusOpacity,
+              transform: [{ scale: focusScale }],
+            },
           ]}
         />
       </View>
@@ -210,16 +218,29 @@ export function ArticulationFigure({
   );
 }
 
-function StageStrip({ locale, phase, active }: { locale: Locale; phase: number; active: boolean }) {
+function PhaseStrip({
+  locale,
+  windows,
+  phaseIndex,
+  active,
+}: {
+  locale: Locale;
+  windows: ArticulationTimeline['windows'];
+  phaseIndex: number;
+  active: boolean;
+}) {
   return (
-    <View style={styles.stages}>
-      {STAGES.map((stage, index) => {
-        const current = active && phase === index;
+    <View style={styles.phases}>
+      {windows.map((window, index) => {
+        const current = active && index === phaseIndex;
         return (
-          <View key={stage} style={[styles.stage, current && styles.stageActive]}>
-            <MaterialIcons name={STAGE_ICONS[stage]} size={13} color={current ? colors.blue : colors.mute} />
-            <Text style={[styles.stageLabel, current && styles.stageLabelActive]}>
-              {tx(locale, `quiz.studio.stage.${stage}`)}
+          <View
+            key={`${window.phase.id}-${index}`}
+            style={[styles.phase, current && styles.phaseActive]}
+          >
+            <View style={[styles.phaseDot, current && styles.phaseDotActive]} />
+            <Text style={[styles.phaseLabel, current && styles.phaseLabelActive]}>
+              {pick(window.phase.label, locale)}
             </Text>
           </View>
         );
@@ -228,14 +249,14 @@ function StageStrip({ locale, phase, active }: { locale: Locale; phase: number; 
   );
 }
 
-/** Figure, view switch and a play/pause control. */
+/** Figure, phase strip, view switch and a play/pause control. */
 export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound; locale: Locale }) {
   const [playing, setPlaying] = useState(true);
   const [threeD, setThreeD] = useState(false);
   const [angle, setAngle] = useState<number>(ARTICULATION_SLAB.defaultAngle);
   const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing);
-  const { reduced, active, phase, displayed } = timeline;
+  const { reduced, active, phaseIndex, phaseWindow, displayed } = timeline;
   const clamped = clampArticulationAngle(angle);
 
   // Dragging turns the block freely inside the range that still reads as a
@@ -247,14 +268,14 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const pendingAngle = useRef(clamped);
   const frame = useRef<number | null>(null);
 
-  const schedule = useCallback((next: number) => {
+  const schedule = (next: number) => {
     pendingAngle.current = next;
     if (frame.current !== null) return;
     frame.current = requestAnimationFrame(() => {
       frame.current = null;
       setAngle(pendingAngle.current);
     });
-  }, []);
+  };
 
   useEffect(
     () => () => {
@@ -280,10 +301,11 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
         onPanResponderTerminate: () => setDragging(false),
         onPanResponderTerminationRequest: () => false,
       }),
-    [schedule],
+    [],
   );
 
   const stepAngle = (delta: number) => setAngle((value) => clampArticulationAngle(value + delta));
+
 
   return (
     <View style={styles.player}>
@@ -300,7 +322,9 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           }}
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={(event) =>
-            stepAngle(event.nativeEvent.actionName === 'increment' ? ARTICULATION_SLAB.step : -ARTICULATION_SLAB.step)
+            stepAngle(
+              event.nativeEvent.actionName === 'increment' ? ARTICULATION_SLAB.step : -ARTICULATION_SLAB.step,
+            )
           }
         >
           <ArticulationFigure3D
@@ -315,7 +339,10 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
         <ArticulationFigure locale={locale} timeline={timeline} />
       )}
 
-      <StageStrip locale={locale} phase={phase} active={active} />
+      <PhaseStrip locale={locale} windows={timeline.windows} phaseIndex={phaseIndex} active={active} />
+      <Text style={styles.phaseDetail} numberOfLines={3}>
+        {pick(phaseWindow.phase.detail, locale)}
+      </Text>
 
       <View style={styles.controls}>
         {reduced ? (
@@ -421,16 +448,6 @@ const styles = themedStyles((colors) => ({
     height: 26,
     borderRadius: 13,
   },
-  voiceRing: { borderColor: '#2F6B52' },
-  focusRing: {
-    borderColor: colors.blue,
-    borderWidth: 3,
-    marginLeft: -17,
-    marginTop: -17,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-  },
   airBadge: {
     position: 'absolute',
     left: 8,
@@ -445,19 +462,22 @@ const styles = themedStyles((colors) => ({
   },
   airBadgeText: { color: colors.blue, fontSize: 10, fontWeight: '700' },
   player: { gap: 10 },
-  stages: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  stage: {
+  phases: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  phase: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     backgroundColor: colors.mist,
     borderRadius: 8,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  stageActive: { backgroundColor: colors.blueSoft },
-  stageLabel: { color: colors.mute, fontSize: 10, fontWeight: '700' },
-  stageLabelActive: { color: colors.blue },
+  phaseActive: { backgroundColor: colors.blueSoft },
+  phaseDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.mute },
+  phaseDotActive: { backgroundColor: colors.blue },
+  phaseLabel: { color: colors.mute, fontSize: 11, fontWeight: '700' },
+  phaseLabelActive: { color: colors.blue },
+  phaseDetail: { color: colors.inkSoft, fontSize: 12, lineHeight: 17, minHeight: 51 },
   controls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   playButton: {
     flexDirection: 'row',
@@ -516,6 +536,5 @@ const styles = themedStyles((colors) => ({
   presetLabel: { color: colors.inkSoft, fontSize: 12, fontWeight: '700' },
   presetLabelActive: { color: colors.blue },
   turnValue: { marginLeft: 'auto', color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
-  disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },
 }));

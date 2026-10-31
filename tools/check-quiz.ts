@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 import { mixedTopic, quizModules, quizStudies, quizTopics, studyMixedTopics } from '@ua/quiz-content';
 import {
   articulationGroups,
+  articulationPhaseWindows,
+  articulationPhases,
   articulationSounds,
   findArticulationSound,
   studioSoundForTopic,
@@ -380,6 +382,50 @@ for (const sound of articulationSounds) {
   expect(
     Number.isFinite(focus[0]) && Number.isFinite(focus[1]),
     `articulation focus is numeric: ${sound.id}`,
+  );
+
+  // The studio tells the production story in phases, so every sound needs a
+  // complete, well-formed set: approach first, a closure for a stop, and a
+  // weighable duration per phase (the player normalises the weights).
+  const phases = articulationPhases(sound);
+  expect(phases.length > 0, `articulation phases exist: ${sound.id}`);
+  expect(
+    phases.every((phase) => phase.weight > 0),
+    `articulation phase weights are positive: ${sound.id}`,
+  );
+  expect(
+    phases.every((phase) => Boolean(phase.label.de && phase.label.en && phase.detail.de && phase.detail.en)),
+    `articulation phases are bilingual: ${sound.id}`,
+  );
+  expect(phases[0].id === 'approach' || phases[0].id === 'flow', `articulation starts with movement or flow: ${sound.id}`);
+  if (sound.manner === 'stop' || sound.manner === 'nasal') {
+    expect(
+      phases.some((phase) => phase.id === 'closure'),
+      `stop and nasal sounds close the tract: ${sound.id}`,
+    );
+  }
+  if (sound.manner === 'stop') {
+    expect(
+      phases.some((phase) => phase.id === 'release'),
+      `stop sounds release the closure: ${sound.id}`,
+    );
+    expect(
+      phases.some((phase) => phase.id === 'aspiration') === !sound.voiced,
+      `only voiceless stops aspirate: ${sound.id}`,
+    );
+  }
+  if (sound.manner === 'nasal') {
+    expect(
+      phases.find((phase) => phase.id === 'closure')?.airflow === 'nasal',
+      `nasal closure routes the air through the nose: ${sound.id}`,
+    );
+  }
+  const windows = articulationPhaseWindows(sound);
+  expect(
+    windows.length === phases.length &&
+      Math.abs(windows[windows.length - 1].end - 1) < 1e-9 &&
+      windows.every((window, index) => index === 0 || Math.abs(window.start - windows[index - 1].end) < 1e-9),
+    `articulation phase windows tile the cycle: ${sound.id}`,
   );
 }
 

@@ -2,7 +2,7 @@ import type { Localized } from '@ua/core/domain/types';
 
 import type { ArticulationManner, ArticulationPlace, ArticulationSound } from './types';
 
-import { articulationGroups, articulationSounds } from './articulation';
+import { articulationGroups, articulationPhases, articulationSounds } from './articulation';
 import {
   ARTICULATION_3D_VIEW_BOX,
   ARTICULATION_SLAB,
@@ -27,6 +27,14 @@ import { diagramPalette } from './figures/palette';
  * `bun run site:articulation` writes this into `apps/site/assets/articulation.js`
  * and `bun run check:quiz` fails when the file is stale.
  */
+export interface ArticulationSitePhase {
+  id: string;
+  label: Localized;
+  detail: Localized;
+  airflow: string;
+  weight: number;
+}
+
 export interface ArticulationSiteSound {
   id: string;
   glyph: string;
@@ -38,6 +46,8 @@ export interface ArticulationSiteSound {
   shape?: Localized;
   voiced: boolean;
   airflow: 'oral' | 'nasal';
+  /** The phases this sound runs through, in order. */
+  phases: ArticulationSitePhase[];
   summary: Localized;
   pose: {
     tongue: string;
@@ -57,6 +67,8 @@ export interface ArticulationSiteData {
   silhouette: { d: string; fill: string; stroke: string }[];
   regions: { d: string; fill: string; stroke: string }[];
   velum: string[];
+  /** The neutral articulators the approach phase starts from. */
+  rest: { tongue: string; lips: string[] };
   manners: { id: ArticulationManner; label: Localized }[];
   sounds: ArticulationSiteSound[];
 }
@@ -108,6 +120,7 @@ export function buildArticulationSiteData(): ArticulationSiteData {
         : [],
     ),
     velum: velumOutlines,
+    rest: { tongue: tongueOutline('rest'), lips: lipOutlines('open') },
     manners: articulationGroups.map((group) => ({
       id: group.manner,
       label: MANNER_LABELS[group.manner],
@@ -122,6 +135,13 @@ export function buildArticulationSiteData(): ArticulationSiteData {
       ...(sound.shape ? { shape: sound.shape } : {}),
       voiced: sound.voiced,
       airflow: sound.pose.airflow,
+      phases: articulationPhases(sound).map((phase) => ({
+        id: phase.id,
+        label: phase.label,
+        detail: phase.detail,
+        airflow: phase.airflow,
+        weight: phase.weight,
+      })),
       summary: sound.summary,
       pose: pose(sound),
     })),

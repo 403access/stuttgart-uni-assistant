@@ -44,12 +44,36 @@ then layers the movable articulators on top. The pose geometry lives in
 - `articulationFocus(sound)` is the point the focus ring pulses on.
 
 `useArticulationTimeline` (`packages/features/quiz/src/ui/components/articulation-timeline.ts`)
-drives one `Animated.Value` from 0 to 1 every 5.2 s. The flat and the 3D figure
-both consume it, so air puffs travel the lane, voicing rings pulse at the
-larynx, the focus ring marks the stricture, and the three stage chips
-(airstream, voice, articulation) light up in order in either view. Switching
-sounds cross-fades the pose layer. With the platform's reduce-motion setting on,
-the figure stays static, the player hides the play button and says so.
+drives one clock from 0 to 1 over the sound's phases. The flat and the 3D figure
+both consume it, so the airstream, the pressure/burst ring and the pose always
+show the same phase. Switching sounds cross-fades the pose layer. With the
+platform's reduce-motion setting on, the figure stays static, the player hides
+the play button and says so.
+
+### Phases
+
+A sound is not one still image, so `articulationPhases(sound)` returns the
+stages it runs through, each with a label, a one-line explanation, a relative
+weight and an airflow behaviour:
+
+| Phase | What the studio shows |
+| --- | --- |
+| `approach` | The tongue and lips move from the neutral pose into the target pose while air rises from the lungs — no sound yet. |
+| `closure` | The seal is complete. The lungs keep pushing, but the air cannot escape: air puffs stop at the stricture and the focus ring pulses as a pressure marker. Nasals use a `nasal` closure instead, where the air leaves through the nose. |
+| `release` | The seal opens: the ring expands as a burst and the puffs leave through the stricture. |
+| `aspiration` | English voiceless stops hold the vocal cords apart a little longer, so a puff of air follows the burst before the next sound voices. |
+| `stricture` | Fricatives and approximants keep the tract narrow: air streams through with (`turbulent`) or without (`free`) friction noise. |
+| `flow` | Vowels: the tract is open and the air flows freely. |
+
+The sets come from the manner (and, for stops, the voicing), so `p`, `t` and `k`
+run approach → closure → release → aspiration, while `b`, `d` and `g` stop after
+the release. A common misunderstanding is worth stating in the copy: during the
+closure the lungs *do* keep pushing air — it simply cannot escape, which is what
+builds the pressure. The sound appears at the release.
+
+The weights are relative; `articulationPhaseWindows(sound)` normalises them into
+tiling 0–1 windows that the timeline and the website both use. The player renders
+the phases as a chip strip plus the active phase's explanation.
 
 ### 3D view
 

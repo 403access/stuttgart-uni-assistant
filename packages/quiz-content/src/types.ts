@@ -232,6 +232,32 @@ export type ArticulationPlace =
   | 'velar'
   | 'glottal';
 
+/**
+ * The stages a sound goes through. A stop is built in phases (approach,
+ * closure, release, and — for English voiceless stops — aspiration), while
+ * fricatives and vowels simply keep air flowing.
+ */
+export type ArticulationPhaseId =
+  | 'approach'
+  | 'closure'
+  | 'release'
+  | 'aspiration'
+  | 'stricture'
+  | 'flow';
+
+/** What the airstream does during a phase. */
+export type ArticulationAirflow = 'none' | 'rising' | 'blocked' | 'burst' | 'turbulent' | 'free' | 'nasal';
+
+export interface ArticulationPhase {
+  id: ArticulationPhaseId;
+  label: Localized;
+  /** One line on what happens in this phase. */
+  detail: Localized;
+  /** Relative duration; the studio normalises the weights to its cycle. */
+  weight: number;
+  airflow: ArticulationAirflow;
+}
+
 export interface ArticulationPose {
   tongue: TonguePose;
   lips: LipPose;
