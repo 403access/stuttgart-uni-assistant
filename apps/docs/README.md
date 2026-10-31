@@ -48,6 +48,6 @@ is served as-is, so Jekyll no longer renders `docs/`.
 | `docusaurus.config.js` | Site metadata, navbar, footer, theme, and the `DOCS_*` environment overrides |
 | `sidebars.js` | Sidebar tree mirroring the four sections of `docs/README.md` |
 | `src/pages/index.js` | Redirects `/` to `/docs/` when the docs are served on their own |
-| `src/css/custom.css` | Theme accents, light and dark |
+| `src/css/custom.css` | The marketing-site design system: brand tokens, navbar, sidebar, content, and footer in light and dark |
 
 Notes: filename number prefixes are stripped from URLs by Docusaurus (`docs/sdlc/01-initiation.md` is `/docs/sdlc/initiation`). Relative `.md` links between docs are rewritten to site routes automatically. `bun.lock` here is separate from the app's, on purpose — the Expo dependency tree is untouched.

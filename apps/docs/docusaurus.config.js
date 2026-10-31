@@ -12,7 +12,7 @@ const legalBase = `${siteUrl.replace(/\/$/, '')}${basePath}`;
 const config = /** @type {import('@docusaurus/types').Config} */ ({
   title: 'University Assistant',
   tagline: 'A study assistant for University of Stuttgart students',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   // Full URL and path prefix. Set in the Pages workflow; overridden for local runs.
   url: siteUrl,
@@ -59,12 +59,22 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      // The marketing site is light by default and stores its own choice;
+      // match that instead of following the OS setting.
       colorMode: {
         defaultMode: 'light',
-        respectPrefersColorScheme: true,
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
       },
       navbar: {
         title: 'University Assistant',
+        logo: {
+          alt: 'University Assistant',
+          src: 'img/logo.svg',
+          srcDark: 'img/logo-dark.svg',
+          width: 28,
+          height: 28,
+        },
         items: [
           { to: '/docs', label: 'Product', position: 'left' },
           { to: '/docs/sdlc/overview', label: 'Lifecycle', position: 'left' },
@@ -112,8 +122,10 @@ const config = /** @type {import('@docusaurus/types').Config} */ ({
         copyright: `Copyright © ${new Date().getFullYear()} Oliver Molnar. University Assistant is a student demonstration and not affiliated with the University of Stuttgart. The German legal notice and privacy policy are authoritative.`,
       },
       prism: {
-        theme: require('prism-react-renderer').themes.githubLight,
-        darkTheme: require('prism-react-renderer').themes.githubDark,
+        // Dark code blocks in both modes, like the anthracite surfaces of the
+        // marketing site; the token palette stays the same so copy/paste is stable.
+        theme: require('prism-react-renderer').themes.oneDark,
+        darkTheme: require('prism-react-renderer').themes.oneDark,
       },
     }),
 });
