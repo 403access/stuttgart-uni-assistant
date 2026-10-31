@@ -97,6 +97,10 @@ export function ArticulationFigure3D({
 
   const headSide = shadeColor('#FFFDF9', 0.19);
   const block = articulationBlockTransform(angle);
+  // Past 90° the front of the slab faces away: show its back instead, and hide
+  // the articulator plates, which sit on the front.
+  const frontFacing = turn.cos > 0;
+  const frontness = Math.max(0, Math.min(1, turn.cos / 0.25));
   const focusPoint = pointPercent(
     projectArticulationPoint(focus, clamped, ARTICULATION_SLAB.lips),
     ARTICULATION_3D_VIEW_BOX,
@@ -118,26 +122,44 @@ export function ArticulationFigure3D({
             </G>
           ))}
 
-          {/* Cut plane: the anatomy, exactly as in the flat figure. */}
-          {articulationBackdrop.map((d, index) => (
-            <Path key={`backdrop-${index}`} d={d} fill="#FFFDF9" stroke="#243447" strokeWidth={2.6} strokeLinejoin="round" />
-          ))}
-          {articulationRegions.map((region, index) =>
-            region.path ? (
-              <Path
-                key={`region-${index}`}
-                d={region.path}
-                fill={diagramTone(region.tone ?? 'rose').fill}
-                stroke={diagramTone(region.tone ?? 'rose').stroke}
-                strokeWidth={2.4}
-                strokeLinejoin="round"
-              />
-            ) : null,
+          {/* Cut plane, or the plain back of the block when it faces away. */}
+          {frontFacing ? (
+            <G opacity={frontness}>
+              {articulationBackdrop.map((d, index) => (
+                <Path key={`backdrop-${index}`} d={d} fill="#FFFDF9" stroke="#243447" strokeWidth={2.6} strokeLinejoin="round" />
+              ))}
+              {articulationRegions.map((region, index) =>
+                region.path ? (
+                  <Path
+                    key={`region-${index}`}
+                    d={region.path}
+                    fill={diagramTone(region.tone ?? 'rose').fill}
+                    stroke={diagramTone(region.tone ?? 'rose').stroke}
+                    strokeWidth={2.4}
+                    strokeLinejoin="round"
+                  />
+                ) : null,
+              )}
+            </G>
+          ) : (
+            <G transform={`translate(${(-turn.sin * ARTICULATION_SLAB.thickness).toFixed(2)} 0)`}>
+              {articulationBackdrop.map((d, index) => (
+                <Path
+                  key={`back-${index}`}
+                  d={d}
+                  fill={headSide}
+                  stroke="#243447"
+                  strokeWidth={2.6}
+                  strokeLinejoin="round"
+                />
+              ))}
+            </G>
           )}
         </G>
       </Svg>
 
       <Animated.View style={[styles.layer, { opacity: fade }]} pointerEvents="none">
+        <View style={[styles.layer, { opacity: frontness }]}>
         <Animated.View style={[styles.layer, { opacity: restOpacity }]}>
           <Svg width="100%" height="100%" viewBox={ARTICULATION_3D_VIEW_BOX}>
             <G transform={block}>
@@ -152,9 +174,10 @@ export function ArticulationFigure3D({
             </G>
           </Svg>
         </Animated.View>
+        </View>
       </Animated.View>
 
-      <View style={styles.layer} pointerEvents="none">
+      <View style={[styles.layer, { opacity: frontness }]} pointerEvents="none">
         {dots.map((dot) => (
           <Animated.View
             key={dot.key}

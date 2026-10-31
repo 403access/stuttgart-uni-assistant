@@ -6,7 +6,7 @@ import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
 import type { ArticulationSound } from '../core';
-import { ARTICULATION_SLAB, clampArticulationAngle } from '../core';
+import { ARTICULATION_SLAB, clampArticulationAngle, wrapArticulationAngle } from '../core';
 import { AngleRow, PlayButton, ViewToggle, formatAngle } from './controls';
 import { ArticulationFigure } from './figure-2d';
 import { ArticulationFigure3D } from './figure-3d';
@@ -62,7 +62,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           setDragging(true);
         },
         onPanResponderMove: (_event, gesture) => {
-          schedule(clampArticulationAngle(dragStart.current + gesture.dx * 0.32));
+          schedule(wrapArticulationAngle(dragStart.current + gesture.dx * 0.55));
         },
         onPanResponderRelease: () => setDragging(false),
         onPanResponderTerminate: () => setDragging(false),

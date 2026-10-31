@@ -749,7 +749,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `Plates` (component)
 - Usages: 2 references in 1 file
 
-- `packages/features/articulation/src/ui/figure-3d.tsx`: 28 import `Plates`; 144 render `Plates`; 151 render `Plates`
+- `packages/features/articulation/src/ui/figure-3d.tsx`: 28 import `Plates`; 166 render `Plates`; 173 render `Plates`
 
 ### PoseArt
 

@@ -58,7 +58,10 @@
   const copy = () => COPY[lang];
   const local = (value) => (lang === 'en' ? value.en : value.de);
   const fmt = (value) => `${Math.round(value)}\u00b0`.replace('-', '\u2212');
-  const clampAngle = (value) => Math.max(data.slab.minAngle, Math.min(data.slab.maxAngle, value));
+  const wrapAngle = (value) => {
+    const wrapped = (((value + 180) % 360) + 360) % 360 - 180;
+    return wrapped === -180 ? 180 : wrapped;
+  };
 
   /* ---------- phases ---------- */
 
@@ -322,6 +325,8 @@
     const [minX, , width] = viewBoxOf(data.headViewBox);
     const centerX = minX + width / 2;
     const headSide = shade('#FFFDF9', 0.19);
+    const frontFacing = cos > 0;
+    const frontness = Math.max(0, Math.min(1, cos / 0.25));
     const parts = [];
     for (let step = 10; step >= 1; step -= 1) {
       const dx = (-sin * data.slab.thickness * (step / 10)).toFixed(2);
@@ -331,18 +336,30 @@
           .join('')}</g>`,
       );
     }
-    parts.push(
-      ...data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.6)),
-      ...data.regions.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4)),
-    );
+    if (frontFacing) {
+      parts.push(
+        `<g opacity="${frontness.toFixed(3)}">${[
+          ...data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.6)),
+          ...data.regions.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4)),
+        ].join('')}</g>`,
+      );
+    } else {
+      parts.push(
+        `<g transform="translate(${(-sin * data.slab.thickness).toFixed(2)} 0)">${data.silhouette
+          .map((shape) => path(shape.d, headSide, shape.stroke, 2.6))
+          .join('')}</g>`,
+      );
+    }
     const skew = ((Math.atan(tan) * 180) / Math.PI).toFixed(3);
     return `<svg viewBox="${data.view3d}" role="img" aria-label="${esc(
       copy().canvas(sound),
     )}" preserveAspectRatio="xMidYMid meet">
       <g transform="translate(${centerX} 0) scale(${cos.toFixed(4)} 1) skewY(${skew}) translate(${-centerX} 0)">
         ${parts.join('')}
-        <g id="studio-pose-rest">${plates({ ...rest, cords: sound.pose.cords })}</g>
-        <g id="studio-pose-target">${plates(target)}</g>
+        <g opacity="${frontness.toFixed(3)}">
+          <g id="studio-pose-rest">${plates({ ...rest, cords: sound.pose.cords })}</g>
+          <g id="studio-pose-target">${plates(target)}</g>
+        </g>
       </g>
     </svg>`;
   }
@@ -382,8 +399,9 @@
     const [, , width, height] = viewBox();
     canvas.style.aspectRatio = `${width} / ${height}`;
     canvas.classList.toggle('is-3d', threeD);
+    const frontness = threeD ? Math.max(0, Math.min(1, turn(angle).cos / 0.25)) : 1;
     canvas.innerHTML = `<div class="studio-figure">${figure()}</div>
-      <div class="studio-overlay"></div>
+      <div class="studio-overlay" style="opacity:${frontness.toFixed(3)}"></div>
       <span class="studio-badge">${esc(sound.airflow === 'nasal' ? copy().viaNose : copy().viaMouth)}</span>
       ${threeD ? `<span class="studio-hint">${esc(copy().drag)}</span>` : ''}`;
     buildOverlay();
@@ -611,7 +629,7 @@
     });
     canvas.addEventListener('pointermove', (event) => {
       if (!drag) return;
-      angle = clampAngle(drag.angle + (event.clientX - drag.x) * 0.32);
+      angle = wrapAngle(drag.angle + (event.clientX - drag.x) * 0.55);
       scheduleDraw();
     });
     const end = () => {

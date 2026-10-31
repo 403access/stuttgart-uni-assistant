@@ -18,6 +18,7 @@ import {
   projectArticulationPoint,
   shadeColor,
   studioSoundForTopic,
+  wrapArticulationAngle,
   tongueOutline,
 } from '@ua/feature-articulation';
 import { readArticulationSiteSnapshot } from './export-articulation-site.ts';
@@ -149,7 +150,9 @@ const box = ARTICULATION_3D_VIEW_BOX.split(' ').map(Number);
 const [boxX, boxY, boxWidth, boxHeight] = box;
 const extremeAngles = [
   ARTICULATION_SLAB.minAngle,
+  -90,
   ARTICULATION_SLAB.defaultAngle,
+  90,
   ARTICULATION_SLAB.maxAngle,
 ];
 expect(
@@ -164,8 +167,15 @@ expect(
     ARTICULATION_SLAB.defaultAngle < ARTICULATION_SLAB.maxAngle,
   'articulation 3D default angle sits inside the range',
 );
-expect(clampArticulationAngle(180) === ARTICULATION_SLAB.maxAngle, 'articulation 3D clamps above the range');
-expect(clampArticulationAngle(-180) === ARTICULATION_SLAB.minAngle, 'articulation 3D clamps below the range');
+expect(clampArticulationAngle(400) === ARTICULATION_SLAB.maxAngle, 'articulation 3D clamps above the range');
+expect(clampArticulationAngle(-400) === ARTICULATION_SLAB.minAngle, 'articulation 3D clamps below the range');
+expect(wrapArticulationAngle(370) === 10, 'articulation 3D wraps a full turn');
+expect(wrapArticulationAngle(-370) === -10, 'articulation 3D wraps backwards');
+expect(wrapArticulationAngle(180) === 180, 'articulation 3D keeps the half turn');
+expect(
+  Object.values(ARTICULATION_SLAB.presets).every((preset) => preset >= ARTICULATION_SLAB.minAngle && preset <= ARTICULATION_SLAB.maxAngle),
+  'articulation 3D presets sit inside the full turn',
+);
 expect(shadeColor('#FFFDF9') !== '#FFFDF9', 'articulation 3D shades the side wall');
 expect(/^#[0-9a-f]{6}$/.test(shadeColor('#FFFDF9')), 'articulation 3D shading is a hex colour');
 

@@ -49,6 +49,7 @@ export {
   articulationTurn,
   clampArticulationAngle,
   projectArticulationPoint,
+  wrapArticulationAngle,
   shadeColor,
 } from './view3d';
 export type { ArticulationTurn } from './view3d';

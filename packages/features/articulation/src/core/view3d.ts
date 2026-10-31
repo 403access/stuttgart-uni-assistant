@@ -15,9 +15,9 @@ export const ARTICULATION_SLAB = {
   cords: 12,
   /** Tangent of the camera elevation; gives the block its slight tilt. */
   elevation: 0.18,
-  minAngle: -42,
-  maxAngle: 42,
-  step: 14,
+  minAngle: -180,
+  maxAngle: 180,
+  step: 15,
   defaultAngle: 28,
   /** Angles that read well: front, and both three-quarter views. */
   presets: [0, 28, -28],
@@ -29,6 +29,15 @@ export const ARTICULATION_3D_VIEW_BOX = '120 20 800 990';
 /** Clip an angle to the range the model was built for. */
 export function clampArticulationAngle(angle: number): number {
   return Math.max(ARTICULATION_SLAB.minAngle, Math.min(ARTICULATION_SLAB.maxAngle, angle));
+}
+
+/**
+ * Fold any angle into (−180, 180], so a drag can spin the block through a full
+ * circle instead of stopping at a limit.
+ */
+export function wrapArticulationAngle(angle: number): number {
+  const wrapped = ((angle + 180) % 360 + 360) % 360 - 180;
+  return wrapped === -180 ? 180 : wrapped;
 }
 
 export interface ArticulationTurn {

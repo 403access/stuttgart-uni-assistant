@@ -96,12 +96,18 @@ the thickness, the per-organ lift, the ±42° range and the three preset angles
 (plus its lift) into the turned frame, which is how the airstream and the rings
 stay on the model.
 
-The model can be turned two ways: drag it horizontally for any angle inside the
-range, or tap a preset. The drag uses a `PanResponder`, schedules at most one
-React render per frame, and drops the extrusion from ten slices to five while
-the finger is down. The canvas reports itself as an adjustable control, so
-screen readers can step it as well. The `3D` badge, the drag hint and the angle
-readout make the state explicit.
+The model can be turned two ways: drag it horizontally through a full circle,
+or tap one of the three presets. A drag wraps at ±180° (`wrapArticulationAngle`)
+instead of stopping, so the block can be inspected from the front, the edge and
+the back. Past 90° the cut plane faces away, so the renderer draws the block's
+plain back face and fades out the articulator plates and the airstream — the
+anatomy is painted on the front only.
+
+The drag uses a `PanResponder`, schedules at most one React render per frame,
+and drops the extrusion from ten slices to five while the finger is down. The
+canvas reports itself as an adjustable control, so screen readers can step it as
+well. The `3D` badge, the drag hint and the angle readout make the state
+explicit.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web. `tools/check-articulation.ts`

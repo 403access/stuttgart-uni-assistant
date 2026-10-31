@@ -11148,14 +11148,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/articulation/src/ui/figure-3d.tsx",
-          "line": 144,
+          "line": 166,
           "kind": "render",
           "exportName": "Plates",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/figure-3d.tsx",
-          "line": 151,
+          "line": 173,
           "kind": "render",
           "exportName": "Plates",
           "count": 1
