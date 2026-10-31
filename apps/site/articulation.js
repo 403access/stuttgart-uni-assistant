@@ -22,6 +22,7 @@
       solid: '3D',
       turn: 'Drehen',
       axes: 'Achsen',
+      grid: 'Gitter',
       drag: 'Ziehen zum Drehen',
       viaMouth: 'Luft durch den Mund',
       viaNose: 'Luft durch die Nase',
@@ -37,6 +38,7 @@
       solid: '3D',
       turn: 'Turn',
       axes: 'Axes',
+      grid: 'Grid',
       drag: 'Drag to turn',
       viaMouth: 'Air through the mouth',
       viaNose: 'Air through the nose',
@@ -52,6 +54,7 @@
   let manner = sound.manner;
   let threeD = false;
   let showAxes = false;
+  let showGrid = false;
   let camera = { ...data.scene.camera };
   let speed = 1;
   let playing = !reducedMotion;
@@ -329,6 +332,45 @@
     };
   }
 
+  function gridLines() {
+    const step = 80;
+    const projected = (x, y, z = 0) => {
+      const u = Math.cos(rad(camera.yaw));
+      const v = Math.sin(rad(camera.yaw));
+      const w = Math.sin(rad(camera.pitch));
+      const q = Math.cos(rad(camera.pitch));
+      const dx = x - 540;
+      const dy = y - 515;
+      const z1 = -v * dx + u * z;
+      return { x: 540 + u * dx + v * z, y: 515 + q * dy - w * z1 };
+    };
+    const lines = [];
+    for (let x = 160; x <= 920; x += step) {
+      const top = projected(x, 40);
+      const bottom = projected(x, 990);
+      lines.push({ ...top, x2: bottom.x, y2: bottom.y, strong: x === 540 });
+    }
+    for (let y = 40; y <= 990; y += step) {
+      const left = projected(160, y);
+      const right = projected(920, y);
+      lines.push({ ...left, x2: right.x, y2: right.y, strong: y === 515 });
+    }
+    return lines;
+  }
+
+  function gridSvg() {
+    return gridLines()
+      .map(
+        (line) =>
+          `<line x1="${line.x.toFixed(1)}" y1="${line.y.toFixed(1)}" x2="${line.x2.toFixed(
+            1,
+          )}" y2="${line.y2.toFixed(1)}" stroke="${
+            line.strong ? '#BFD2E4' : '#DEE8F2'
+          }" stroke-width="${line.strong ? 1.4 : 1}"/>`,
+      )
+      .join('');
+  }
+
   function figure3d() {
     const shell = data.scene.shell;
     const headSide = shade('#FFFDF9', 0.22);
@@ -346,6 +388,7 @@
         ),
       );
     }
+    if (showGrid) parts.push(gridSvg());
     const layers = [...data.scene.layers, ...sound.poseLayers]
       .map((layer) => sceneLayer(layer))
       .sort((left, right) => left.depth - right.depth);
@@ -625,7 +668,10 @@
           threeD
             ? `<button type="button" class="studio-btn" data-axes aria-pressed="${showAxes}">${esc(
                 copy().axes,
-              )}</button>`
+              )}</button>
+               <button type="button" class="studio-btn" data-grid aria-pressed="${showGrid}">${esc(
+                 copy().grid,
+               )}</button>`
             : ''
         }
         <div class="studio-seg" role="group" aria-label="${lang === 'en' ? 'View' : 'Ansicht'}">
@@ -669,6 +715,13 @@
     bar.querySelectorAll('[data-axes]').forEach((button) => {
       button.addEventListener('click', () => {
         showAxes = !showAxes;
+        renderBar();
+        drawStatic();
+      });
+    });
+    bar.querySelectorAll('[data-grid]').forEach((button) => {
+      button.addEventListener('click', () => {
+        showGrid = !showGrid;
         renderBar();
         drawStatic();
       });

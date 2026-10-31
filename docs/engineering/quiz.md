@@ -85,10 +85,12 @@ resetting it, which is what makes stepping through a stop by hand practical.
 timeline, which multiplies the per-frame delta, so changing speed mid-flight
 never restarts the cycle or drops the current phase.
 
-**Axes** toggles an orientation gizmo in the corner of the 3D view: X red, Y
-green, Z blue, projected through the same camera, so it turns with the model.
-Axes pointing away from the viewer are dimmed. It is an orientation aid, not a
-control — it never affects the scene.
+Two overlay switches sit next to the play control and only appear in the 3D
+view. **Axes** draws an orientation gizmo in the corner — X red, Y green, Z blue,
+projected through the same camera, so it turns with the model; axes pointing
+away are dimmed. **Grid** draws a faint reference grid on the cut plane
+(`ARTICULATION_GRID`), with stronger lines through the pivot, which gives the
+model scale and a spatial frame. Both are aids: they never affect the scene.
 
 ### 3D view
 

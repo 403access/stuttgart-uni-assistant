@@ -1027,6 +1027,8 @@ export const de = {
   "quiz.studio.angle": "Winkel {0}",
   "quiz.studio.axes": "Achsen",
   "quiz.studio.axes_a11y": "Achsen anzeigen",
+  "quiz.studio.grid": "Gitter",
+  "quiz.studio.grid_a11y": "Gitter anzeigen",
   "quiz.studio.detail": "So entsteht der Laut",
   "quiz.studio.drag_hint": "Ziehen zum Drehen",
   "quiz.studio.intro": "Wähle einen Laut. Die Animation zeigt, wo der Luftstrom entsteht, ob die Stimmlippen schwingen und welche Artikulatoren den Laut formen.",

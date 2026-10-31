@@ -130,6 +130,46 @@ export function articulationScene(pose: ArticulationPose, voiced: boolean): Arti
   return [...articulationStaticLayers(), ...articulationPoseLayers(pose, voiced)];
 }
 
+/**
+ * A reference grid on the cut plane. It gives the turned model a spatial
+ * frame — scale, the pivot lines — without competing with the anatomy.
+ */
+export const ARTICULATION_GRID = {
+  step: 80,
+  minX: 160,
+  maxX: 920,
+  minY: 40,
+  maxY: 990,
+  z: 0,
+  pivotX: 540,
+  pivotY: 515,
+} as const;
+
+export interface ArticulationGridLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  strong: boolean;
+}
+
+/** Grid lines projected through the scene camera. */
+export function articulationGrid(camera: ArticulationCamera): ArticulationGridLine[] {
+  const grid = ARTICULATION_GRID;
+  const lines: ArticulationGridLine[] = [];
+  for (let x: number = grid.minX; x <= grid.maxX; x += grid.step) {
+    const top = projectScenePoint([x, grid.minY], grid.z, camera);
+    const bottom = projectScenePoint([x, grid.maxY], grid.z, camera);
+    lines.push({ x1: top.x, y1: top.y, x2: bottom.x, y2: bottom.y, strong: x === grid.pivotX });
+  }
+  for (let y: number = grid.minY; y <= grid.maxY; y += grid.step) {
+    const left = projectScenePoint([grid.minX, y], grid.z, camera);
+    const right = projectScenePoint([grid.maxX, y], grid.z, camera);
+    lines.push({ x1: left.x, y1: left.y, x2: right.x, y2: right.y, strong: y === grid.pivotY });
+  }
+  return lines;
+}
+
 /** The skull outline the shell is built from. */
 export { articulationBackdrop };
 

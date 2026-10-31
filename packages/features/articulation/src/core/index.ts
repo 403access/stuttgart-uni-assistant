@@ -26,14 +26,20 @@ export { buildArticulationSiteData } from './site';
 export {
   ARTICULATION_CAMERA,
   ARTICULATION_PIVOT,
+  ARTICULATION_GRID,
   ARTICULATION_SHELL,
+  articulationGrid,
   articulationScene,
   articulationPoseLayers,
   articulationStaticLayers,
   projectSceneDirection,
   projectScenePoint,
 } from './scene3d';
-export type { ArticulationCamera, ArticulationSceneLayer } from './scene3d';
+export type {
+  ArticulationCamera,
+  ArticulationGridLine,
+  ArticulationSceneLayer,
+} from './scene3d';
 export type { ArticulationSiteData, ArticulationSitePhase, ArticulationSiteSound } from './site';
 
 export {

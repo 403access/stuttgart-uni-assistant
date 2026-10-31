@@ -7,7 +7,7 @@ import type { Locale } from '@ua/core/domain/types';
 
 import type { ArticulationCamera, ArticulationSound } from '../core';
 import { ARTICULATION_CAMERA, ARTICULATION_TURN, wrapArticulationAngle } from '../core';
-import { AngleRow, AxesToggle, PlayButton, SpeedRow, ViewToggle, formatAngle } from './controls';
+import { AngleRow, OverlayToggle, PlayButton, SpeedRow, ViewToggle, formatAngle } from './controls';
 import { ArticulationFigure } from './figure-2d';
 import { ArticulationFigure3D } from './figure-3d';
 import { PhaseStrip } from './phase-strip';
@@ -25,6 +25,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [speed, setSpeed] = useState(1);
   const [threeD, setThreeD] = useState(false);
   const [showAxes, setShowAxes] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
   const [yaw, setYaw] = useState<number>(ARTICULATION_CAMERA.yaw);
   const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing, speed);
@@ -107,6 +108,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
             steps={dragging ? 5 : 10}
             hint={tx(locale, 'quiz.studio.drag_hint')}
             showAxes={showAxes}
+            showGrid={showGrid}
           />
         </View>
       ) : (
@@ -130,7 +132,20 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           <PlayButton locale={locale} playing={playing} onToggle={() => setPlaying((value) => !value)} />
         )}
         {threeD ? (
-          <AxesToggle locale={locale} active={showAxes} onToggle={() => setShowAxes((value) => !value)} />
+          <>
+            <OverlayToggle
+              icon="open-with"
+              label={tx(locale, 'quiz.studio.axes_a11y')}
+              active={showAxes}
+              onToggle={() => setShowAxes((value) => !value)}
+            />
+            <OverlayToggle
+              icon="grid-on"
+              label={tx(locale, 'quiz.studio.grid_a11y')}
+              active={showGrid}
+              onToggle={() => setShowGrid((value) => !value)}
+            />
+          </>
         ) : null}
         <ViewToggle locale={locale} threeD={threeD} onChange={setThreeD} />
       </View>

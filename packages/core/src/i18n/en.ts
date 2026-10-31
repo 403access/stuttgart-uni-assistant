@@ -1028,6 +1028,8 @@ export const en: Record<TranslationKey, string> = {
   "quiz.studio.angle": "Angle {0}",
   "quiz.studio.axes": "Axes",
   "quiz.studio.axes_a11y": "Show axes",
+  "quiz.studio.grid": "Grid",
+  "quiz.studio.grid_a11y": "Show grid",
   "quiz.studio.detail": "How the sound is made",
   "quiz.studio.drag_hint": "Drag to turn",
   "quiz.studio.intro": "Pick a sound. The animation shows where the airstream starts, whether the vocal cords vibrate, and which articulators shape the sound.",

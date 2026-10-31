@@ -14,6 +14,7 @@ import {
   airflowLane,
   articulationBackdrop,
   articulationFocus,
+  articulationGrid,
   articulationPoseLayers,
   articulationStaticLayers,
   pointPercent,
@@ -61,6 +62,7 @@ export function ArticulationFigure3D({
   steps = 10,
   hint,
   showAxes = false,
+  showGrid = false,
 }: {
   locale: Locale;
   timeline: ArticulationTimeline;
@@ -70,6 +72,8 @@ export function ArticulationFigure3D({
   hint?: string;
   /** Draw the orientation gizmo in the corner. */
   showAxes?: boolean;
+  /** Draw the reference grid on the cut plane. */
+  showGrid?: boolean;
 }) {
   const { clock, fade, displayed, windows, phaseWindow } = timeline;
   const pose = displayed.pose;
@@ -108,6 +112,7 @@ export function ArticulationFigure3D({
   );
 
   const ringPoint = pointPercent(projectScenePoint(focus, FOCUS_Z, camera), ARTICULATION_3D_VIEW_BOX);
+  const grid = showGrid ? articulationGrid(camera) : [];
   const axes = showAxes
     ? AXES.map((axis) => {
         const direction = projectSceneDirection(axis.direction, camera);
@@ -153,6 +158,19 @@ export function ArticulationFigure3D({
               />
             )),
           )}
+
+          {/* Reference grid on the cut plane. */}
+          {grid.map((line, index) => (
+            <Line
+              key={`grid-${index}`}
+              x1={line.x1}
+              y1={line.y1}
+              x2={line.x2}
+              y2={line.y2}
+              stroke={line.strong ? '#BFD2E4' : '#DEE8F2'}
+              strokeWidth={line.strong ? 1.4 : 1}
+            />
+          ))}
 
           {/* Organs, far to near. */}
           {layers.map((layer) => {
