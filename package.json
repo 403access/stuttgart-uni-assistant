@@ -34,6 +34,7 @@
     "check:tooling-tests": "node --test tools/set-campus-secret.test.mjs tools/tunnel-assistant.test.mjs tools/build-ios-ipa.test.mjs tools/xcode-accounts.test.mjs apps/dist/server.test.mjs",
     "quiz:from-pdf": "tsx tools/quiz-from-pdf.ts",
     "quiz:export-catalog": "tsx tools/export-quiz-catalog.ts",
+    "site:articulation": "tsx tools/export-articulation-site.ts",
     "assistant": "node apps/server/index.mjs",
     "assistant:tunnel": "node tools/tunnel-assistant.mjs",
     "assistant:local": "node tools/tunnel-assistant.mjs --clear",

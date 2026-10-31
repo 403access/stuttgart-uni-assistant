@@ -71,6 +71,16 @@ works offline and looks the same on iOS, Android and the web. `tools/check-quiz.
 asserts that every airstream point still lands inside the padded 3D frame at the
 extreme angles, so the model can never be clipped while turning.
 
+### The studio on the website
+
+The marketing page (`apps/site`) runs the same studio as a live demo in its
+**Lernwerkzeuge** section. It has no build step, so the geometry is committed as a
+snapshot: `bun run site:articulation` writes `apps/site/assets/articulation.js`
+from `packages/quiz-content/src/articulation-site.ts`, and
+`apps/site/articulation.js` renders it with plain SVG and a `requestAnimationFrame`
+timeline. The snapshot is checked by `tools/check-quiz.ts`, so a new sound cannot
+ship in the app while the website still shows the old set.
+
 The sound catalog is `packages/quiz-content/src/articulation.ts`. Adding a sound
 is a data-only change: pick a `manner`, an optional `place` (vowels use `shape`
 instead), `voiced`, and the `pose`. `tools/check-quiz.ts` verifies unique ids,

@@ -10018,7 +10018,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "name": "diagramTone",
           "kind": "helper",
           "isDefault": false,
-          "isReExport": false
+          "isReExport": true
         }
       ],
       "previews": [],

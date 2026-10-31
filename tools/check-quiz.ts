@@ -21,6 +21,8 @@ import {
   tongueOutline,
 } from '@ua/quiz-content/figures/articulation';
 import { generatedTopics } from '@ua/quiz-content/content/generated';
+import { buildArticulationSiteData } from '@ua/quiz-content/articulation-site';
+import { readArticulationSiteSnapshot } from './export-articulation-site.ts';
 import { describeGivenAnswer, evaluateAnswer, initialAnswer, isAnswerComplete, matchesAccepted, questionKindLabel, questionsForMode, statsForQuestions } from '@ua/feature-quiz';
 import type { QuestionProgress, QuizAnswer, QuizQuestion, QuizQuestionKind } from '@ua/quiz-content/types';
 
@@ -497,6 +499,18 @@ expect(
 expect(
   JSON.stringify(snapshot.modules) === JSON.stringify(quizModules),
   'server quiz snapshot modules match the bundled content (run npm run quiz:export-catalog)',
+);
+
+// The marketing site ships a committed snapshot of the studio (no build step),
+// so a content change without `bun run site:articulation` would leave the demo
+// showing sounds the app no longer has.
+const siteSnapshot = readArticulationSiteSnapshot(
+  readFileSync(resolve('apps/site/assets/articulation.js'), 'utf8'),
+);
+expect(Boolean(siteSnapshot), 'site articulation snapshot parses');
+expect(
+  JSON.stringify(siteSnapshot) === JSON.stringify(buildArticulationSiteData()),
+  'site articulation snapshot matches the studio content (run bun run site:articulation)',
 );
 
 const diagramQuestion = allQuestions.find((question) => question.kind === 'diagram');

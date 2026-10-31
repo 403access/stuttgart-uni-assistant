@@ -12,7 +12,8 @@
     "./maps/*": "./src/maps/*.ts",
     "./package.json": "./package.json",
     "./content/generated": "./src/content/generated/index.ts",
-    "./articulation": "./src/articulation.ts"
+    "./articulation": "./src/articulation.ts",
+    "./articulation-site": "./src/articulation-site.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

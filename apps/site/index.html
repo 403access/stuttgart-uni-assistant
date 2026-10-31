@@ -99,6 +99,7 @@
         </a>
         <nav class="nav" id="site-nav" aria-label="Hauptnavigation" data-i18n-aria="ariaNav">
           <a href="#funktionen" data-i18n="navFeatures">Funktionen</a>
+          <a href="#lernwerkzeuge" data-i18n="navStudio">Lernwerkzeuge</a>
           <a href="#assistent" data-i18n="navAssistant">Assistent</a>
           <a href="#einblicke" data-i18n="navGallery">Einblicke</a>
           <a href="#faq" data-i18n="navFaq">FAQ</a>
@@ -399,6 +400,37 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="section" id="lernwerkzeuge">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="eyebrow" data-i18n="studioKicker">Lernwerkzeuge</p>
+            <h2 data-i18n="studioTitle">Sieh zu, wie ein Laut entsteht</h2>
+            <p class="lead" data-i18n="studioLead">
+              Das Artikulationsstudio ist das erste Lernwerkzeug im Quiz: Wähle einen Laut und beobachte am
+              Kopf-Querschnitt, wie Luftstrom, Stimmlippen und Artikulatoren zusammenwirken — flach oder als drehbares
+              3D-Modell.
+            </p>
+          </div>
+
+          <div class="studio reveal" id="studio">
+            <div class="studio-stage">
+              <div class="studio-canvas" id="studio-canvas"></div>
+              <div class="studio-bar" id="studio-bar"></div>
+            </div>
+            <div class="studio-side">
+              <div class="studio-tabs" id="studio-tabs" role="tablist" aria-label="Artikulationsart"></div>
+              <div class="studio-chips" id="studio-chips"></div>
+              <div class="studio-detail" id="studio-detail"></div>
+            </div>
+          </div>
+
+          <p class="studio-note reveal" data-i18n="studioNote">
+            Derselbe Baustein steckt in der App: gleiche Anatomie, gleiche Laute. Dort öffnet er sich aus dem Quiz,
+            aus einem Phonetik-Thema oder über „Campus → Studium“.
+          </p>
         </div>
       </section>
 
@@ -734,6 +766,8 @@
 
     <p class="sr-only" id="lang-status" aria-live="polite"></p>
 
+    <script src="assets/articulation.js"></script>
+    <script src="articulation.js"></script>
     <script src="main.js?v=13"></script>
     <script src="theme.js?v=9"></script>
   </body>

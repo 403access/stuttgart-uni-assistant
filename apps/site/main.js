@@ -25,6 +25,7 @@
   const en = {
     skipLink: 'Skip to content',
     navFeatures: 'Features',
+    navStudio: 'Learning tools',
     navAssistant: 'Assistant',
     navGallery: 'Screens',
     navStatus: 'Status',
@@ -72,6 +73,13 @@
     f7Body: 'Peer ratings, shared notes and topics from earlier exams.',
     f8Title: 'Campus services',
     f8Body: 'PaperCut printing and network access, explained step by step.',
+
+    studioKicker: 'Learning tools',
+    studioTitle: 'Watch a sound being made',
+    studioLead:
+      'The articulation studio is the first learning tool in the quiz: pick a sound and watch the airstream, the vocal cords and the articulators work together on the head cross-section — flat or as a turnable 3D model.',
+    studioNote:
+      'The same component ships in the app: same anatomy, same sounds. It opens from the quiz, from a phonetics topic, or via “Campus → Studies”.',
 
     aKicker: 'Assistant',
     aTitle: 'The assistant knows where you stand',
@@ -231,6 +239,7 @@
     document.title = lang === 'en' ? enTitle : deTitle;
     if (metaDescription) metaDescription.setAttribute('content', lang === 'en' ? enDescription : deDescription);
     document.documentElement.lang = lang;
+    document.dispatchEvent(new CustomEvent('ua:langchange', { detail: { lang } }));
     document.querySelectorAll('.lang button').forEach((button) => {
       button.setAttribute('aria-pressed', String(button.dataset.lang === lang));
     });

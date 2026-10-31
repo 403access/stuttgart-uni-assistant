@@ -12,30 +12,9 @@ import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
 import type { DiagramQuestion, DiagramRegion, DiagramTone } from '@ua/quiz-content/types';
+import { diagramPalette as TONES, diagramTone } from '@ua/quiz-content/figures/palette';
 
-/**
- * Fixed illustration palette. The figure keeps its paper look in both themes,
- * so the anatomy stays readable on a dark screen as well.
- */
-const TONES: Record<DiagramTone, { fill: string; stroke: string }> = {
-  blue: { fill: '#DBE8F5', stroke: '#7C9BB8' },
-  violet: { fill: '#E7DDF3', stroke: '#9C86C0' },
-  rose: { fill: '#F7DDE3', stroke: '#C98698' },
-  tongue: { fill: '#EF9AA6', stroke: '#B95B6B' },
-  sand: { fill: '#F3D8AD', stroke: '#B98B47' },
-  bone: { fill: '#F6E3C4', stroke: '#B98B47' },
-  teeth: { fill: '#FFFFFF', stroke: '#9AA7B4' },
-  larynx: { fill: '#CFDCE8', stroke: '#5E7F9C' },
-  cords: { fill: '#5E7F9C', stroke: '#243447' },
-  trachea: { fill: '#E3EDF6', stroke: '#5E7F9C' },
-  lip: { fill: '#E98A9B', stroke: '#B95B6B' },
-  mouth: { fill: '#7D3F4A', stroke: '#7D3F4A' },
-};
-
-/** Fixed illustration palette, shared with the animated articulation figure. */
-export function diagramTone(tone: DiagramTone): { fill: string; stroke: string } {
-  return TONES[tone];
-}
+export { diagramTone };
 
 const INK = '#243447';
 const PAPER = '#FFFDF9';

@@ -11,6 +11,7 @@ site/
 ├── 404.html                # Pages 404 for the composed site
 ├── styles.css              # light/dark design tokens follow the app: anthracite, mid blue, light blue
 ├── main.js                 # DE/EN toggle, mobile nav, scroll reveal, screenshot lightbox
+├── articulation.js         # the interactive articulation studio in the "Lernwerkzeuge" section
 ├── theme.js                # persisted light/dark toggle (default light)
 ├── robots.txt
 ├── manifest.webmanifest
@@ -19,8 +20,26 @@ site/
     ├── favicon.svg / favicon-32.png / favicon.png / apple-touch-icon.png
     ├── icon.png / icon-192.png / icon-512.png
     ├── og.jpg              # 1200 × 630 social preview
+    ├── articulation.js     # generated snapshot of the studio's sounds and geometry
     └── shots/              # phone screenshots from the demonstration profile
 ```
+
+## The articulation studio
+
+The **Lernwerkzeuge** section runs a real, working demo of the app's articulation studio: pick
+a sound, play the airstream, switch between the flat cutaway and the turnable 3D block. It is
+plain JavaScript and SVG with no dependencies and no network requests; `articulation.js` renders
+it, and everything it needs comes from `assets/articulation.js`.
+
+That asset is generated from the app's own content, so the demo can never drift from the quiz:
+
+```bash
+bun run site:articulation   # rewrite assets/articulation.js
+bun run check:quiz          # fails when the snapshot is stale
+```
+
+Run the export after changing sounds or poses in `packages/quiz-content/src/articulation.ts`.
+The site itself keeps its no-build-step promise: the snapshot is committed like any other asset.
 
 ## Serve it
 
