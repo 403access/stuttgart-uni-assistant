@@ -50,9 +50,14 @@ export const ARTICULATION_SHELL = { z: -44, rim: 10, rimWidth: 4 } as const;
 /** The model turns around the middle of the head, not around the origin. */
 export const ARTICULATION_PIVOT = { x: 540, y: 515 } as const;
 
-export const ARTICULATION_CAMERA: ArticulationCamera = { yaw: ARTICULATION_TURN.defaultAngle, pitch: 22 };
-
-export const ARTICULATION_PITCH = { min: -32, max: 32, step: 10 } as const;
+/**
+ * The user turns the model on one axis only. The pitch is the camera's fixed
+ * elevation: it is what makes a turned view read as 3D, and it never changes.
+ */
+export const ARTICULATION_CAMERA: ArticulationCamera = {
+  yaw: ARTICULATION_TURN.defaultAngle,
+  pitch: 22,
+};
 
 /** Placement of the fixed organs: depth, thickness and pivot. */
 const STATIC: Record<string, { z: number; depth: number; anchor: [number, number] }> = {

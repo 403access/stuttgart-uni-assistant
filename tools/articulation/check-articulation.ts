@@ -4,7 +4,6 @@ import { resolve } from 'node:path';
 import {
   ARTICULATION_3D_VIEW_BOX,
   ARTICULATION_CAMERA,
-  ARTICULATION_PITCH,
   ARTICULATION_SHELL,
   ARTICULATION_TURN,
   airflowLane,
@@ -157,12 +156,10 @@ const extremeAngles = [
   ARTICULATION_TURN.maxAngle,
 ];
 expect(
-  extremeAngles.every((angle) =>
-    [0, 10, -10].every((pitch) => {
-      const point = projectScenePoint([540, 515], 0, { yaw: angle, pitch });
-      return Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.depth);
-    }),
-  ),
+  extremeAngles.every((angle) => {
+    const point = projectScenePoint([540, 515], 0, { yaw: angle, pitch: ARTICULATION_CAMERA.pitch });
+    return Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.depth);
+  }),
   'articulation 3D camera is finite at every angle',
 );
 expect(
@@ -182,7 +179,8 @@ expect(/^#[0-9a-f]{6}$/.test(shadeColor('#FFFDF9')), 'articulation 3D shading is
 
 for (const sound of articulationSounds) {
   for (const yaw of extremeAngles) {
-    for (const pitch of [ARTICULATION_PITCH.min, ARTICULATION_CAMERA.pitch, ARTICULATION_PITCH.max]) {
+    {
+      const pitch = ARTICULATION_CAMERA.pitch;
       const lane = airflowLane(sound.pose.airflow, sound.pose);
       const focus = articulationFocus(sound);
       const points = [
@@ -201,7 +199,7 @@ for (const sound of articulationSounds) {
             point.y >= boxY &&
             point.y <= boxY + boxHeight,
         ),
-        `articulation 3D stays inside the frame: ${sound.id} at ${yaw}°/${pitch}°`,
+        `articulation 3D stays inside the frame: ${sound.id} at ${yaw}°`,
       );
     }
   }

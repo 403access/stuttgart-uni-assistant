@@ -147,7 +147,11 @@ export function sampleCurve(fn: (value: number) => number, steps = CURVE_STEPS) 
   return { inputRange, outputRange };
 }
 
-export function useArticulationTimeline(sound: ArticulationSound, playing: boolean) {
+export function useArticulationTimeline(
+  sound: ArticulationSound,
+  playing: boolean,
+  speed = 1,
+) {
   const reduced = useReducedMotion();
   const active = playing && !reduced;
   const clock = useRef(new Animated.Value(0)).current;
@@ -158,6 +162,9 @@ export function useArticulationTimeline(sound: ArticulationSound, playing: boole
   const windows = useMemo(() => articulationPhaseWindows(displayed), [displayed]);
   /** Where the clock stands, 0–1. The loop advances it; `seek` moves it. */
   const elapsed = useRef(0);
+  /** Playback speed; a ref so changing it never restarts the loop. */
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
 
   // Cross-fade the articulators when the learner picks another sound, so the
   // tongue never jumps from one position to the next.
@@ -200,7 +207,7 @@ export function useArticulationTimeline(sound: ArticulationSound, playing: boole
     let last = 0;
     const tick = (now: number) => {
       if (!last) last = now;
-      elapsed.current = (elapsed.current + (now - last) / CYCLE_MS) % 1;
+      elapsed.current = (elapsed.current + ((now - last) / CYCLE_MS) * speedRef.current) % 1;
       last = now;
       const value = elapsed.current;
       clock.setValue(value);

@@ -79,8 +79,8 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
   "generatedBy": "tools/codegen/generate-component-catalog.mjs",
   "stats": {
     "components": 86,
-    "exports": 127,
-    "occurrences": 1358,
+    "exports": 130,
+    "occurrences": 1360,
     "usageCount": 841,
     "files": 111,
     "unused": 1,
@@ -10144,13 +10144,31 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "isReExport": false
         },
         {
+          "name": "SpeedRow",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
           "name": "ViewToggle",
           "kind": "component",
           "isDefault": false,
           "isReExport": false
         },
         {
+          "name": "SPEEDS",
+          "kind": "constant",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
           "name": "formatAngle",
+          "kind": "helper",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "formatSpeed",
           "kind": "helper",
           "isDefault": false,
           "isReExport": false
@@ -10161,68 +10179,82 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 15,
+          "line": 10,
           "kind": "import",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 15,
+          "line": 10,
           "kind": "import",
           "exportName": "formatAngle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 15,
+          "line": 10,
           "kind": "import",
           "exportName": "PlayButton",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 15,
+          "line": 10,
+          "kind": "import",
+          "exportName": "SpeedRow",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 10,
           "kind": "import",
           "exportName": "ViewToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 152,
+          "line": 128,
           "kind": "render",
           "exportName": "PlayButton",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 154,
+          "line": 130,
           "kind": "render",
           "exportName": "ViewToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 158,
+          "line": 133,
+          "kind": "render",
+          "exportName": "SpeedRow",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 136,
           "kind": "render",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 164,
+          "line": 140,
           "kind": "call",
           "exportName": "formatAngle",
-          "count": 2
+          "count": 1
         }
       ],
       "usedBy": [
         "packages/features/articulation/src/ui/player.tsx"
       ],
       "usageCount": 5,
-      "importCount": 4,
-      "renderCount": 3,
-      "callCount": 2,
+      "importCount": 5,
+      "renderCount": 4,
+      "callCount": 1,
       "referenceCount": 0,
       "onlyImported": false,
       "unused": false
@@ -11339,14 +11371,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 16,
+          "line": 11,
           "kind": "import",
           "exportName": "ArticulationFigure",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 135,
+          "line": 111,
           "kind": "render",
           "exportName": "ArticulationFigure",
           "count": 1
@@ -11392,14 +11424,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 17,
+          "line": 12,
           "kind": "import",
           "exportName": "ArticulationFigure3D",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 126,
+          "line": 102,
           "kind": "render",
           "exportName": "ArticulationFigure3D",
           "count": 1
@@ -12421,14 +12453,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 18,
+          "line": 13,
           "kind": "import",
           "exportName": "PhaseStrip",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 138,
+          "line": 114,
           "kind": "render",
           "exportName": "PhaseStrip",
           "count": 1

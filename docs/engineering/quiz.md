@@ -81,6 +81,10 @@ the clock to that window without restarting the loop, so the learner can jump
 between stages while the animation runs. Pausing keeps the frame instead of
 resetting it, which is what makes stepping through a stop by hand practical.
 
+**Speed** is a separate row (0.5×, 1×, 1.5×, 2×). The player passes it to the
+timeline, which multiplies the per-frame delta, so changing speed mid-flight
+never restarts the cycle or drops the current phase.
+
 ### 3D view
 
 A sagittal section is flat by nature, so the 3D view is built like a cutaway
@@ -100,13 +104,13 @@ anatomy model (`packages/features/articulation/src/core/scene3d.ts`):
   turns. `ui/scene.ts` turns the same projection into one SVG `matrix` per
   slice, so the path data never changes — only the transform does.
 
-Dragging turns the model freely — the yaw wraps at ±180° — and three presets
-(front, left and right three-quarter) sit next to it. Tilt is stepped with two
-buttons instead of a vertical drag, because a vertical drag inside the screen
-belongs to the page scroll. The drag schedules at most one React render per
-frame and the shell drops from ten rim slices to five while the finger is down.
-The canvas reports itself as an adjustable control with extra tilt actions, so
-screen readers can turn and tilt it too; the pitch stays inside ±32°.
+The model turns on **one axis**: dragging wraps the yaw at ±180°, and three
+presets (front, left and right three-quarter) sit next to it. The camera's
+pitch is a fixed elevation (`ARTICULATION_CAMERA.pitch`) — it is what gives a
+turned view depth and is deliberately not a control. The drag schedules at most
+one React render per frame and the shell drops from ten rim slices to five while
+the finger is down. The canvas reports itself as an adjustable control, so
+screen readers can turn it too.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web.

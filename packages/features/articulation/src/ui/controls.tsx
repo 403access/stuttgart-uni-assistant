@@ -68,16 +68,12 @@ export function ViewToggle({
 export function AngleRow({
   locale,
   angle,
-  pitch,
   onSelect,
-  onTilt,
   caption,
 }: {
   locale: Locale;
   angle: number;
-  pitch: number;
   onSelect: (value: number) => void;
-  onTilt: (delta: number) => void;
   caption: string;
 }) {
   return (
@@ -98,22 +94,6 @@ export function AngleRow({
           </Pressable>
         );
       })}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={tx(locale, 'quiz.studio.tilt_up')}
-        onPress={() => onTilt(1)}
-        style={({ pressed }) => [styles.tilt, pressed && styles.pressed]}
-      >
-        <MaterialIcons name="expand-less" size={16} color={colors.blue} />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={tx(locale, 'quiz.studio.tilt_down')}
-        onPress={() => onTilt(-1)}
-        style={({ pressed }) => [styles.tilt, pressed && styles.pressed]}
-      >
-        <MaterialIcons name="expand-more" size={16} color={colors.blue} />
-      </Pressable>
       <Text style={styles.caption}>{caption}</Text>
     </View>
   );
@@ -175,16 +155,48 @@ const styles = themedStyles((colors) => ({
   presetActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
   presetLabel: { color: colors.inkSoft, fontSize: 12, fontWeight: '700' },
   presetLabelActive: { color: colors.blue },
-  tilt: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.paper,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   caption: { marginLeft: 'auto', color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
   pressed: { opacity: 0.7 },
 }));
+
+/** Playback speeds the studio offers. */
+export const SPEEDS = [0.5, 1, 1.5, 2] as const;
+
+/** German writes decimals with a comma, English with a point. */
+export function formatSpeed(value: number, locale: Locale): string {
+  const text = Number.isInteger(value) ? String(value) : value.toFixed(1);
+  return `${locale === 'de' ? text.replace('.', ',') : text}\u00d7`;
+}
+
+export function SpeedRow({
+  locale,
+  speed,
+  onSelect,
+}: {
+  locale: Locale;
+  speed: number;
+  onSelect: (value: number) => void;
+}) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{tx(locale, 'quiz.studio.speed')}</Text>
+      {SPEEDS.map((value) => {
+        const selected = speed === value;
+        return (
+          <Pressable
+            key={value}
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, 'quiz.studio.speed_value', [formatSpeed(value, locale)])}
+            accessibilityState={{ selected }}
+            onPress={() => onSelect(value)}
+            style={({ pressed }) => [styles.preset, selected && styles.presetActive, pressed && styles.pressed]}
+          >
+            <Text style={[styles.presetLabel, selected && styles.presetLabelActive]}>
+              {formatSpeed(value, locale)}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}

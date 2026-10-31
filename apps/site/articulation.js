@@ -50,6 +50,7 @@
   let manner = sound.manner;
   let threeD = false;
   let camera = { ...data.scene.camera };
+  let speed = 1;
   let playing = !reducedMotion;
   let elapsed = 0;
   let frame = 0;
@@ -61,6 +62,11 @@
   const copy = () => COPY[lang];
   const local = (value) => (lang === 'en' ? value.en : value.de);
   const fmt = (value) => `${Math.round(value)}\u00b0`.replace('-', '\u2212');
+  const SPEEDS = [0.5, 1, 1.5, 2];
+  const fmtSpeed = (value) => {
+    const text = Number.isInteger(value) ? String(value) : value.toFixed(1);
+    return `${lang === 'de' ? text.replace('.', ',') : text}\u00d7`;
+  };
   const rad = (degrees) => (degrees * Math.PI) / 180;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const wrapAngle = (value) => {
@@ -455,7 +461,7 @@
   function tick(now) {
     if (!playing) return;
     if (!last) last = now;
-    elapsed = (elapsed + (now - last) / CYCLE) % 1;
+    elapsed = (elapsed + ((now - last) / CYCLE) * speed) % 1;
     last = now;
     update(elapsed);
     frame = requestAnimationFrame(tick);
@@ -588,6 +594,15 @@
           <button type="button" data-view="solid" aria-pressed="${threeD}">${esc(copy().solid)}</button>
         </div>
       </div>
+      <div class="studio-turn">
+        <span>${lang === 'en' ? 'Speed' : 'Tempo'}</span>
+        ${SPEEDS.map(
+          (value) =>
+            `<button type="button" data-speed="${value}" aria-pressed="${speed === value}">${fmtSpeed(
+              value,
+            )}</button>`,
+        ).join('')}
+      </div>
       ${
         threeD
           ? `<div class="studio-turn">
@@ -600,9 +615,7 @@
                     }">${fmt(preset)}</button>`,
                 )
                 .join('')}
-              <button type="button" data-tilt="1" aria-label="${lang === 'en' ? 'Tilt up' : 'Nach oben neigen'}">&#9650;</button>
-              <button type="button" data-tilt="-1" aria-label="${lang === 'en' ? 'Tilt down' : 'Nach unten neigen'}">&#9660;</button>
-              <em>${fmt(camera.yaw)} / ${fmt(camera.pitch)}</em>
+              <em>${fmt(camera.yaw)}</em>
             </div>`
           : ''
       }`;
@@ -623,23 +636,15 @@
         drawStatic();
       });
     });
+    bar.querySelectorAll('[data-speed]').forEach((button) => {
+      button.addEventListener('click', () => {
+        speed = Number(button.dataset.speed);
+        renderBar();
+      });
+    });
     bar.querySelectorAll('[data-angle]').forEach((button) => {
       button.addEventListener('click', () => {
         camera = { ...camera, yaw: Number(button.dataset.angle) };
-        renderBar();
-        drawStatic();
-      });
-    });
-    bar.querySelectorAll('[data-tilt]').forEach((button) => {
-      button.addEventListener('click', () => {
-        camera = {
-          ...camera,
-          pitch: clamp(
-            camera.pitch + Number(button.dataset.tilt) * data.scene.pitch.step,
-            data.scene.pitch.min,
-            data.scene.pitch.max,
-          ),
-        };
         renderBar();
         drawStatic();
       });
@@ -679,7 +684,7 @@
       drawFrame = 0;
       drawStatic();
       const readout = document.querySelector('.studio-turn em');
-      if (readout) readout.textContent = `${fmt(camera.yaw)} / ${fmt(camera.pitch)}`;
+      if (readout) readout.textContent = fmt(camera.yaw);
     });
   }
 

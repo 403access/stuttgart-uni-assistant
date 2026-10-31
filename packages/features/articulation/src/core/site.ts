@@ -21,7 +21,6 @@ import { diagramPalette } from '@ua/quiz-content/figures/palette';
 import { ARTICULATION_3D_VIEW_BOX, ARTICULATION_TURN } from './view3d';
 import {
   ARTICULATION_CAMERA,
-  ARTICULATION_PITCH,
   ARTICULATION_SHELL,
   articulationPoseLayers,
   articulationStaticLayers,
@@ -34,7 +33,7 @@ import {
  * ship a zero-dependency demo that stays in step with the app.
  *
  * `bun run site:articulation` writes this into `apps/site/assets/articulation.js`
- * and `tools/check-articulation.ts` fails when the file is stale.
+ * and `tools/articulation/check-articulation.ts` fails when the file is stale.
  */
 export interface ArticulationSitePhase {
   id: string;
@@ -85,7 +84,6 @@ export interface ArticulationSiteData {
     shell: typeof ARTICULATION_SHELL;
     layers: ArticulationSceneLayer[];
     camera: typeof ARTICULATION_CAMERA;
-    pitch: typeof ARTICULATION_PITCH;
   };
   manners: { id: ArticulationManner; label: Localized }[];
   sounds: ArticulationSiteSound[];
@@ -124,7 +122,6 @@ export function buildArticulationSiteData(): ArticulationSiteData {
       shell: ARTICULATION_SHELL,
       layers: articulationStaticLayers(),
       camera: ARTICULATION_CAMERA,
-      pitch: ARTICULATION_PITCH,
     },
     manners: articulationGroups.map((group) => ({
       id: group.manner,
