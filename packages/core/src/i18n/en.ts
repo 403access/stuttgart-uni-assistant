@@ -1057,6 +1057,8 @@ export const en: Record<TranslationKey, string> = {
   "quiz.studio.subtitle": "How air becomes a sound – animated on a cross-section of the head.",
   "quiz.studio.title": "Articulation studio",
   "quiz.studio.tool_detail": "Sounds animated – airstream, voice, articulators.",
+  "quiz.studio.tilt_down": "Tilt down",
+  "quiz.studio.tilt_up": "Tilt up",
   "quiz.studio.turn": "Turn",
   "quiz.studio.tools": "Learning tools",
   "quiz.studio.view.2d": "2D",

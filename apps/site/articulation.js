@@ -9,6 +9,9 @@
   if (!data || !root) return;
 
   const CYCLE = 6400;
+  const SLICES = 9;
+  const AIR_Z = 10;
+  const FOCUS_Z = 20;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const COPY = {
@@ -46,7 +49,7 @@
   let sound = data.sounds.find((entry) => entry.id === 't') || data.sounds[0];
   let manner = sound.manner;
   let threeD = false;
-  let angle = data.slab.defaultAngle;
+  let camera = { ...data.scene.camera };
   let playing = !reducedMotion;
   let elapsed = 0;
   let frame = 0;
@@ -58,6 +61,8 @@
   const copy = () => COPY[lang];
   const local = (value) => (lang === 'en' ? value.en : value.de);
   const fmt = (value) => `${Math.round(value)}\u00b0`.replace('-', '\u2212');
+  const rad = (degrees) => (degrees * Math.PI) / 180;
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const wrapAngle = (value) => {
     const wrapped = (((value + 180) % 360) + 360) % 360 - 180;
     return wrapped === -180 ? 180 : wrapped;
@@ -110,8 +115,7 @@
     if (position < from || position > to) return 0;
     const span = Math.max(0.0001, to - from);
     const along = (position - from) / span;
-    const progress = windowProgress(window, value);
-    const phase = (progress * passes(window)) % 1;
+    const phase = (windowProgress(window, value) * passes(window)) % 1;
     const distance = Math.abs(phase - along);
     const wrapped = Math.min(distance, 1 - distance);
     return Math.max(0, 1 - wrapped / 0.15);
@@ -224,27 +228,19 @@
     return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  function turn(degrees) {
-    const radians = (degrees * Math.PI) / 180;
-    return {
-      cos: Math.cos(radians),
-      sin: Math.sin(radians),
-      tan: Math.tan(data.slab.elevation) * Math.sin(radians),
-    };
-  }
-
   const viewBox = () => (threeD ? data.view3d : data.headViewBox).split(' ').map(Number);
-  const viewBoxOf = (source) => source.split(' ').map(Number);
 
-  function project(point, lift = 0) {
+  /** Projection of a point at depth `z`; the 2D view ignores depth. */
+  function project(point, z = 0) {
     if (!threeD) return { x: point[0], y: point[1] };
-    const { cos, sin, tan } = turn(angle);
-    const [minX, , width] = viewBoxOf(data.headViewBox);
-    const centerX = minX + width / 2;
-    return {
-      x: centerX + (point[0] - centerX) * cos + lift * sin * cos,
-      y: point[1] + (point[0] - centerX + lift * sin) * tan,
-    };
+    const u = Math.cos(rad(camera.yaw));
+    const v = Math.sin(rad(camera.yaw));
+    const w = Math.sin(rad(camera.pitch));
+    const q = Math.cos(rad(camera.pitch));
+    const dx = point[0] - PIVOT.x;
+    const dy = point[1] - PIVOT.y;
+    const z1 = -v * dx + u * z;
+    return { x: PIVOT.x + u * dx + v * z, y: PIVOT.y + q * dy - w * z1 };
   }
 
   function percent(point) {
@@ -265,104 +261,117 @@
   const path = (d, fill, stroke, width) =>
     `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${width}" stroke-linejoin="round"/>`;
 
-  /** The neutral pose: tongue down, lips open, velum raised. */
-  const rest = { tongue: data.rest.tongue, lips: data.rest.lips, velum: 0 };
+  /* ---------- 3D scene ---------- */
+
+  const PIVOT = { x: 540, y: 515 };
+
+  const sceneMatrix = (anchor, scale, z) => {
+    const u = Math.cos(rad(camera.yaw));
+    const v = Math.sin(rad(camera.yaw));
+    const w = Math.sin(rad(camera.pitch));
+    const q = Math.cos(rad(camera.pitch));
+    const [cx, cy] = anchor;
+    const a = scale * u;
+    const b = scale * v * w;
+    const d = scale * q;
+    const e = PIVOT.x * (1 - scale * u) + u * (cx - PIVOT.x) * (1 - scale) + v * z;
+    const f =
+      PIVOT.y * (1 - scale * q) -
+      scale * v * w * (cx - PIVOT.x) +
+      q * (cy - PIVOT.y) * (1 - scale) -
+      w * u * z;
+    return `matrix(${a.toFixed(4)} ${b.toFixed(4)} 0 ${d.toFixed(4)} ${e.toFixed(2)} ${f.toFixed(2)})`;
+  };
+
+  const sceneDepth = (layer) => {
+    const u = Math.cos(rad(camera.yaw));
+    const v = Math.sin(rad(camera.yaw));
+    const w = Math.sin(rad(camera.pitch));
+    const q = Math.cos(rad(camera.pitch));
+    const [ax, ay] = layer.anchor;
+    return (
+      w * (ay - PIVOT.y) + q * (-v * (ax - PIVOT.x) + u * (layer.z + layer.depth / 2))
+    );
+  };
+
+  function sceneLayer(layer) {
+    const rotation = layer.rotate ? ` rotate(${layer.rotate} ${layer.anchor[0]} ${layer.anchor[1]})` : '';
+    let svg = '';
+    for (let index = 0; index < SLICES; index += 1) {
+      const along = index / SLICES;
+      const z = layer.z - layer.depth / 2 + layer.depth * along;
+      const matrix = sceneMatrix(layer.anchor, 0.9 + 0.1 * along, z);
+      const fill = shade(layer.fill, 0.08 + 0.34 * (1 - along));
+      svg += layer.paths
+        .map((d) => `<path d="${d}" transform="${matrix}${rotation}" fill="${fill}" stroke="${fill}" stroke-width="0.8"/>`)
+        .join('');
+    }
+    const face = sceneMatrix(layer.anchor, 1, layer.z + layer.depth / 2);
+    return {
+      depth: sceneDepth(layer),
+      svg:
+        svg +
+        layer.paths
+          .map(
+            (d) =>
+              `<path d="${d}" transform="${face}${rotation}" fill="${layer.fill}" stroke="${layer.stroke}" stroke-width="2.4" stroke-linejoin="round"/>`,
+          )
+          .join(''),
+    };
+  }
+
+  function figure3d() {
+    const shell = data.scene.shell;
+    const headSide = shade('#FFFDF9', 0.22);
+    const parts = [];
+    parts.push(
+      ...data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4).replace('<path', `<path transform="${sceneMatrix([540, 520], 1, shell.z)}"`)),
+    );
+    for (let index = 1; index <= shell.rim; index += 1) {
+      const z = shell.z + ((0 - shell.z) * index) / shell.rim;
+      const matrix = sceneMatrix([540, 520], 1, z);
+      parts.push(
+        ...data.silhouette.map(
+          (shape) =>
+            `<path d="${shape.d}" transform="${matrix}" fill="none" stroke="${headSide}" stroke-width="${shell.rimWidth}" stroke-linejoin="round"/>`,
+        ),
+      );
+    }
+    const layers = [...data.scene.layers, ...sound.poseLayers]
+      .map((layer) => sceneLayer(layer))
+      .sort((left, right) => left.depth - right.depth);
+    parts.push(...layers.map((layer) => layer.svg));
+    return `<svg viewBox="${data.view3d}" role="img" aria-label="${esc(
+      copy().canvas(sound),
+    )}" preserveAspectRatio="xMidYMid meet">${parts.join('')}</svg>`;
+  }
+
+  function figure2d() {
+    const target = sound.pose;
+    return `<svg viewBox="${data.headViewBox}" role="img" aria-label="${esc(
+      copy().canvas(sound),
+    )}" preserveAspectRatio="xMidYMid meet">
+      ${data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 3)).join('')}
+      ${data.regions.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4)).join('')}
+      <g id="studio-pose-rest" opacity="1">${poseArt({ ...data.rest, cords: target.cords, velum: 0 })}</g>
+      <g id="studio-pose-target" opacity="0">${poseArt(target)}</g>
+    </svg>`;
+  }
 
   function poseArt(pose) {
-    return `<g class="studio-velum" transform="rotate(${pose.velum} 492 405)">${data.velum
+    return `<g transform="rotate(${pose.velum} 492 405)">${data.velum
       .map((d) => path(d, '#E7DDF3', '#9C86C0', 2.6))
       .join('')}</g>
       ${path(pose.tongue, '#EF9AA6', '#B95B6B', 2.6)}
       ${pose.lips.map((d) => path(d, '#E98A9B', '#B95B6B', 2.6)).join('')}
-      ${(pose.cords || []).map((d) => path(d, '#5E7F9C', '#243447', 2)).join('')}`;
+      ${pose.cords.map((d) => path(d, '#5E7F9C', '#243447', 2)).join('')}`;
   }
 
-  function plates(pose) {
-    const { sin } = turn(angle);
-    const plate = (paths, lift, thickness, fill, stroke, rotate) => {
-      const side = shade(fill, 0.3);
-      const dx = (lift * sin).toFixed(2);
-      const walls = [];
-      for (let step = 4; step >= 1; step -= 1) {
-        const offset = (-sin * thickness * (step / 4)).toFixed(2);
-        walls.push(
-          ...paths.map((d) => `<g transform="translate(${offset} 0)">${path(d, side, side, 1)}</g>`),
-        );
-      }
-      return `<g transform="translate(${dx} 0)${rotate ? ` ${rotate}` : ''}">${walls.join('')}${paths
-        .map((d) => path(d, fill, stroke, 2.4))
-        .join('')}</g>`;
-    };
-    return [
-      plate(pose.cords, data.slab.cords, 6, '#5E7F9C', '#243447'),
-      plate([pose.tongue], data.slab.tongue, 14, '#EF9AA6', '#B95B6B'),
-      plate(data.velum, data.slab.velum, 8, '#E7DDF3', '#9C86C0', `rotate(${pose.velum} 492 405)`),
-      plate(pose.lips, data.slab.lips, 10, '#E98A9B', '#B95B6B'),
-    ].join('');
-  }
-
-  /* ---------- the figure ---------- */
+  /* ---------- overlays ---------- */
 
   let poseNodes = null;
   let dots = [];
   let focusRing = null;
-
-  function figure() {
-    const target = { ...sound.pose, velum: sound.pose.velum };
-
-    if (!threeD) {
-      return `<svg viewBox="${data.headViewBox}" role="img" aria-label="${esc(
-        copy().canvas(sound),
-      )}" preserveAspectRatio="xMidYMid meet">
-        ${data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 3)).join('')}
-        ${data.regions.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4)).join('')}
-        <g id="studio-pose-rest">${poseArt({ ...rest, cords: sound.pose.cords })}</g>
-        <g id="studio-pose-target">${poseArt(target)}</g>
-      </svg>`;
-    }
-
-    const { cos, sin, tan } = turn(angle);
-    const [minX, , width] = viewBoxOf(data.headViewBox);
-    const centerX = minX + width / 2;
-    const headSide = shade('#FFFDF9', 0.19);
-    const frontFacing = cos > 0;
-    const frontness = Math.max(0, Math.min(1, cos / 0.25));
-    const parts = [];
-    for (let step = 10; step >= 1; step -= 1) {
-      const dx = (-sin * data.slab.thickness * (step / 10)).toFixed(2);
-      parts.push(
-        `<g transform="translate(${dx} 0)">${data.silhouette
-          .map((shape) => path(shape.d, headSide, headSide, 1.4))
-          .join('')}</g>`,
-      );
-    }
-    if (frontFacing) {
-      parts.push(
-        `<g opacity="${frontness.toFixed(3)}">${[
-          ...data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.6)),
-          ...data.regions.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4)),
-        ].join('')}</g>`,
-      );
-    } else {
-      parts.push(
-        `<g transform="translate(${(-sin * data.slab.thickness).toFixed(2)} 0)">${data.silhouette
-          .map((shape) => path(shape.d, headSide, shape.stroke, 2.6))
-          .join('')}</g>`,
-      );
-    }
-    const skew = ((Math.atan(tan) * 180) / Math.PI).toFixed(3);
-    return `<svg viewBox="${data.view3d}" role="img" aria-label="${esc(
-      copy().canvas(sound),
-    )}" preserveAspectRatio="xMidYMid meet">
-      <g transform="translate(${centerX} 0) scale(${cos.toFixed(4)} 1) skewY(${skew}) translate(${-centerX} 0)">
-        ${parts.join('')}
-        <g opacity="${frontness.toFixed(3)}">
-          <g id="studio-pose-rest">${plates({ ...rest, cords: sound.pose.cords })}</g>
-          <g id="studio-pose-target">${plates(target)}</g>
-        </g>
-      </g>
-    </svg>`;
-  }
 
   function buildOverlay() {
     const canvas = document.getElementById('studio-canvas');
@@ -373,7 +382,7 @@
     lane.slice(1, -1).forEach((point, index, list) => {
       const node = document.createElement('span');
       node.className = 'studio-puff';
-      const position = percent(project(point));
+      const position = percent(project(point, threeD ? AIR_Z : 0));
       node.style.left = position.left;
       node.style.top = position.top;
       overlay.appendChild(node);
@@ -382,16 +391,18 @@
 
     const ring = document.createElement('span');
     ring.className = 'studio-ring studio-ring-focus';
-    const ringPoint = percent(project(sound.pose.focus, threeD ? data.slab.lips : 0));
+    const ringPoint = percent(project(sound.pose.focus, threeD ? FOCUS_Z : 0));
     ring.style.left = ringPoint.left;
     ring.style.top = ringPoint.top;
     overlay.appendChild(ring);
     focusRing = ring;
 
-    poseNodes = {
-      rest: canvas.querySelector('#studio-pose-rest'),
-      target: canvas.querySelector('#studio-pose-target'),
-    };
+    poseNodes = threeD
+      ? null
+      : {
+          rest: canvas.querySelector('#studio-pose-rest'),
+          target: canvas.querySelector('#studio-pose-target'),
+        };
   }
 
   function drawStatic() {
@@ -399,9 +410,8 @@
     const [, , width, height] = viewBox();
     canvas.style.aspectRatio = `${width} / ${height}`;
     canvas.classList.toggle('is-3d', threeD);
-    const frontness = threeD ? Math.max(0, Math.min(1, turn(angle).cos / 0.25)) : 1;
-    canvas.innerHTML = `<div class="studio-figure">${figure()}</div>
-      <div class="studio-overlay" style="opacity:${frontness.toFixed(3)}"></div>
+    canvas.innerHTML = `<div class="studio-figure">${threeD ? figure3d() : figure2d()}</div>
+      <div class="studio-overlay"></div>
       <span class="studio-badge">${esc(sound.airflow === 'nasal' ? copy().viaNose : copy().viaMouth)}</span>
       ${threeD ? `<span class="studio-hint">${esc(copy().drag)}</span>` : ''}`;
     buildOverlay();
@@ -582,15 +592,17 @@
         threeD
           ? `<div class="studio-turn">
               <span>${esc(copy().turn)}</span>
-              ${data.slab.presets
+              ${data.turn.presets
                 .map(
                   (preset) =>
                     `<button type="button" data-angle="${preset}" aria-pressed="${
-                      Math.round(angle) === preset
+                      Math.round(camera.yaw) === preset
                     }">${fmt(preset)}</button>`,
                 )
                 .join('')}
-              <em>${fmt(angle)}</em>
+              <button type="button" data-tilt="1" aria-label="${lang === 'en' ? 'Tilt up' : 'Nach oben neigen'}">&#9650;</button>
+              <button type="button" data-tilt="-1" aria-label="${lang === 'en' ? 'Tilt down' : 'Nach unten neigen'}">&#9660;</button>
+              <em>${fmt(camera.yaw)} / ${fmt(camera.pitch)}</em>
             </div>`
           : ''
       }`;
@@ -613,7 +625,21 @@
     });
     bar.querySelectorAll('[data-angle]').forEach((button) => {
       button.addEventListener('click', () => {
-        angle = Number(button.dataset.angle);
+        camera = { ...camera, yaw: Number(button.dataset.angle) };
+        renderBar();
+        drawStatic();
+      });
+    });
+    bar.querySelectorAll('[data-tilt]').forEach((button) => {
+      button.addEventListener('click', () => {
+        camera = {
+          ...camera,
+          pitch: clamp(
+            camera.pitch + Number(button.dataset.tilt) * data.scene.pitch.step,
+            data.scene.pitch.min,
+            data.scene.pitch.max,
+          ),
+        };
         renderBar();
         drawStatic();
       });
@@ -624,12 +650,15 @@
     const canvas = document.getElementById('studio-canvas');
     canvas.addEventListener('pointerdown', (event) => {
       if (!threeD || event.button !== 0) return;
-      drag = { x: event.clientX, angle };
+      drag = { x: event.clientX, camera: { ...camera } };
       canvas.setPointerCapture(event.pointerId);
     });
     canvas.addEventListener('pointermove', (event) => {
       if (!drag) return;
-      angle = wrapAngle(drag.angle + (event.clientX - drag.x) * 0.55);
+      camera = {
+        ...camera,
+        yaw: wrapAngle(drag.camera.yaw + (event.clientX - drag.x) * 0.55),
+      };
       scheduleDraw();
     });
     const end = () => {
@@ -650,7 +679,7 @@
       drawFrame = 0;
       drawStatic();
       const readout = document.querySelector('.studio-turn em');
-      if (readout) readout.textContent = fmt(angle);
+      if (readout) readout.textContent = `${fmt(camera.yaw)} / ${fmt(camera.pitch)}`;
     });
   }
 

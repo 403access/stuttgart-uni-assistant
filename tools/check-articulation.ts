@@ -3,19 +3,20 @@ import { resolve } from 'node:path';
 
 import {
   ARTICULATION_3D_VIEW_BOX,
-  ARTICULATION_SLAB,
+  ARTICULATION_CAMERA,
+  ARTICULATION_PITCH,
+  ARTICULATION_SHELL,
+  ARTICULATION_TURN,
   airflowLane,
   articulationFocus,
   articulationGroups,
   articulationPhaseWindows,
   articulationPhases,
   articulationSounds,
-  articulationTurn,
   buildArticulationSiteData,
-  clampArticulationAngle,
   findArticulationSound,
   lipOutlines,
-  projectArticulationPoint,
+  projectScenePoint,
   shadeColor,
   studioSoundForTopic,
   wrapArticulationAngle,
@@ -149,53 +150,60 @@ expect(
 const box = ARTICULATION_3D_VIEW_BOX.split(' ').map(Number);
 const [boxX, boxY, boxWidth, boxHeight] = box;
 const extremeAngles = [
-  ARTICULATION_SLAB.minAngle,
+  ARTICULATION_TURN.minAngle,
   -90,
-  ARTICULATION_SLAB.defaultAngle,
+  ARTICULATION_TURN.defaultAngle,
   90,
-  ARTICULATION_SLAB.maxAngle,
+  ARTICULATION_TURN.maxAngle,
 ];
 expect(
-  extremeAngles.every((angle) => {
-    const turn = articulationTurn(angle);
-    return Number.isFinite(turn.cos) && Number.isFinite(turn.sin) && Number.isFinite(turn.skew);
-  }),
-  'articulation 3D turn is finite at every angle',
+  extremeAngles.every((angle) =>
+    [0, 10, -10].every((pitch) => {
+      const point = projectScenePoint([540, 515], 0, { yaw: angle, pitch });
+      return Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.depth);
+    }),
+  ),
+  'articulation 3D camera is finite at every angle',
 );
 expect(
-  ARTICULATION_SLAB.minAngle < ARTICULATION_SLAB.defaultAngle &&
-    ARTICULATION_SLAB.defaultAngle < ARTICULATION_SLAB.maxAngle,
+  ARTICULATION_TURN.minAngle < ARTICULATION_TURN.defaultAngle &&
+    ARTICULATION_TURN.defaultAngle < ARTICULATION_TURN.maxAngle,
   'articulation 3D default angle sits inside the range',
 );
-expect(clampArticulationAngle(400) === ARTICULATION_SLAB.maxAngle, 'articulation 3D clamps above the range');
-expect(clampArticulationAngle(-400) === ARTICULATION_SLAB.minAngle, 'articulation 3D clamps below the range');
 expect(wrapArticulationAngle(370) === 10, 'articulation 3D wraps a full turn');
 expect(wrapArticulationAngle(-370) === -10, 'articulation 3D wraps backwards');
 expect(wrapArticulationAngle(180) === 180, 'articulation 3D keeps the half turn');
 expect(
-  Object.values(ARTICULATION_SLAB.presets).every((preset) => preset >= ARTICULATION_SLAB.minAngle && preset <= ARTICULATION_SLAB.maxAngle),
+  Object.values(ARTICULATION_TURN.presets).every((preset) => preset >= ARTICULATION_TURN.minAngle && preset <= ARTICULATION_TURN.maxAngle),
   'articulation 3D presets sit inside the full turn',
 );
 expect(shadeColor('#FFFDF9') !== '#FFFDF9', 'articulation 3D shades the side wall');
 expect(/^#[0-9a-f]{6}$/.test(shadeColor('#FFFDF9')), 'articulation 3D shading is a hex colour');
 
 for (const sound of articulationSounds) {
-  for (const angle of extremeAngles) {
-    const lift = ARTICULATION_SLAB.lips;
-    const points = [
-      ...airflowLane(sound.pose.airflow, sound.pose),
-      articulationFocus(sound),
-    ].map((point) => projectArticulationPoint(point, angle, lift));
-    expect(
-      points.every(
-        (point) =>
-          point.x >= boxX &&
-          point.x <= boxX + boxWidth &&
-          point.y >= boxY &&
-          point.y <= boxY + boxHeight,
-      ),
-      `articulation 3D stays inside the frame: ${sound.id} at ${angle}°`,
-    );
+  for (const yaw of extremeAngles) {
+    for (const pitch of [ARTICULATION_PITCH.min, ARTICULATION_CAMERA.pitch, ARTICULATION_PITCH.max]) {
+      const lane = airflowLane(sound.pose.airflow, sound.pose);
+      const focus = articulationFocus(sound);
+      const points = [
+        ...lane.map((point) => projectScenePoint(point, 10, { yaw, pitch })),
+        projectScenePoint(focus, 20, { yaw, pitch }),
+        // points on the head shell, which is the outer bound of the model
+        ...([[186, 500], [600, 68], [900, 486], [806, 986], [258, 660]] as const).map((corner) =>
+          projectScenePoint(corner, ARTICULATION_SHELL.z, { yaw, pitch }),
+        ),
+      ];
+      expect(
+        points.every(
+          (point) =>
+            point.x >= boxX &&
+            point.x <= boxX + boxWidth &&
+            point.y >= boxY &&
+            point.y <= boxY + boxHeight,
+        ),
+        `articulation 3D stays inside the frame: ${sound.id} at ${yaw}°/${pitch}°`,
+      );
+    }
   }
 }
 

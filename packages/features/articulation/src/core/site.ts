@@ -18,7 +18,15 @@ import {
   HEAD_VIEW_BOX,
 } from './geometry';
 import { diagramPalette } from '@ua/quiz-content/figures/palette';
-import { ARTICULATION_3D_VIEW_BOX, ARTICULATION_SLAB } from './view3d';
+import { ARTICULATION_3D_VIEW_BOX, ARTICULATION_TURN } from './view3d';
+import {
+  ARTICULATION_CAMERA,
+  ARTICULATION_PITCH,
+  ARTICULATION_SHELL,
+  articulationPoseLayers,
+  articulationStaticLayers,
+  type ArticulationSceneLayer,
+} from './scene3d';
 
 /**
  * Everything the static website needs to render the articulation studio, as
@@ -59,17 +67,26 @@ export interface ArticulationSiteSound {
     lane: number[][];
     focus: number[];
   };
+  /** The articulators as 3D volumes for this pose. */
+  poseLayers: ArticulationSceneLayer[];
 }
 
 export interface ArticulationSiteData {
   headViewBox: string;
   view3d: string;
-  slab: typeof ARTICULATION_SLAB;
+  turn: typeof ARTICULATION_TURN;
   silhouette: { d: string; fill: string; stroke: string }[];
   regions: { d: string; fill: string; stroke: string }[];
   velum: string[];
   /** The neutral articulators the approach phase starts from. */
   rest: { tongue: string; lips: string[] };
+  /** 3D scene: the open head shell, the fixed organs and the camera defaults. */
+  scene: {
+    shell: typeof ARTICULATION_SHELL;
+    layers: ArticulationSceneLayer[];
+    camera: typeof ARTICULATION_CAMERA;
+    pitch: typeof ARTICULATION_PITCH;
+  };
   manners: { id: ArticulationManner; label: Localized }[];
   sounds: ArticulationSiteSound[];
 }
@@ -89,7 +106,7 @@ export function buildArticulationSiteData(): ArticulationSiteData {
   return {
     headViewBox: HEAD_VIEW_BOX,
     view3d: ARTICULATION_3D_VIEW_BOX,
-    slab: ARTICULATION_SLAB,
+    turn: ARTICULATION_TURN,
     silhouette: articulationBackdrop.map((d) => ({ d, fill: '#FFFDF9', stroke: '#243447' })),
     regions: articulationRegions.flatMap((region) =>
       region.path
@@ -103,6 +120,12 @@ export function buildArticulationSiteData(): ArticulationSiteData {
     ),
     velum: velumOutlines,
     rest: { tongue: tongueOutline('rest'), lips: lipOutlines('open') },
+    scene: {
+      shell: ARTICULATION_SHELL,
+      layers: articulationStaticLayers(),
+      camera: ARTICULATION_CAMERA,
+      pitch: ARTICULATION_PITCH,
+    },
     manners: articulationGroups.map((group) => ({
       id: group.manner,
       label: mannerLabels[group.manner],
@@ -126,6 +149,7 @@ export function buildArticulationSiteData(): ArticulationSiteData {
       })),
       summary: sound.summary,
       pose: pose(sound),
+      poseLayers: articulationPoseLayers(sound.pose, sound.voiced),
     })),
   };
 }

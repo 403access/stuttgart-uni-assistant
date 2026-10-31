@@ -37,7 +37,7 @@ const sound = findArticulationSound('t') ?? findArticulationSound(studioSoundFor
 <ArticulationPlayer sound={sound} locale={locale} />;
 ```
 
-The player owns the timeline, the 2D/3D switch and the angle controls; the 3D block turns a full circle (drag) or jumps to one of three presets. Its phase chips seek:
+The player owns the timeline, the 2D/3D switch and the camera controls; the 3D view is a cutaway head of shaded volumes; dragging turns it through a full circle, the tilt buttons look from above or below, and three presets cover the useful turns. Its phase chips seek:
 `timeline.seekPhase(index)` jumps to a stage without restarting the loop, and pausing keeps the
 current frame. `ArticulationFigure` and `ArticulationFigure3D` are exported for compositions that
 need their own controls.

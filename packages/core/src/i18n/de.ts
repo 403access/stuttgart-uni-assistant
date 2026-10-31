@@ -1056,6 +1056,8 @@ export const de = {
   "quiz.studio.subtitle": "Wie aus Luft ein Laut wird – animiert am Querschnitt durch den Kopf.",
   "quiz.studio.title": "Artikulationsstudio",
   "quiz.studio.tool_detail": "Laute animiert – Luftstrom, Stimme, Artikulatoren.",
+  "quiz.studio.tilt_down": "Nach unten neigen",
+  "quiz.studio.tilt_up": "Nach oben neigen",
   "quiz.studio.turn": "Drehen",
   "quiz.studio.tools": "Lernwerkzeuge",
   "quiz.studio.view.2d": "2D",

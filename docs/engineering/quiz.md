@@ -83,36 +83,36 @@ resetting it, which is what makes stepping through a stop by hand practical.
 
 ### 3D view
 
-The player's 2D/3D switch turns the same anatomy into a block. The cut plane is
-compressed by the view angle (`cos`), the head silhouette is extruded behind it
-along the depth direction (`sin`), and a small vertical shear gives the block
-its tilt. The tongue, lips, velum and vocal cords are raised a few units in
-front of the cut plane, so the model reads as a layered anatomy model rather
-than a skewed drawing.
+A sagittal section is flat by nature, so the 3D view is built like a cutaway
+anatomy model (`packages/features/articulation/src/core/scene3d.ts`):
 
-`articulationTurn(angle)` returns `cos`/`sin`/`skew`; `ARTICULATION_SLAB` holds
-the thickness, the per-organ lift, the ±42° range and the three preset angles
-(front, and both three-quarter views). `projectArticulationPoint` maps a point
-(plus its lift) into the turned frame, which is how the airstream and the rings
-stay on the model.
+- The head is an **open shell**: a back plate plus a swept rim, with the cut
+  plane left open so the organs stay visible.
+- Every organ is a **volume of its own** — depth, thickness and pivot in
+  `articulationScene`/`articulationPoseLayers`. The renderer draws nine shaded
+  slices per volume (darker towards the back) and then its lit face, which is
+  what gives the tongue, palate and lips real thickness instead of a paper-cut
+  look.
+- The layers are **painter-sorted** by their projected depth, so a turn
+  actually reveals the volumes behind one another.
+- `projectScenePoint` is an orthographic camera with a **yaw** (turn) and a
+  **pitch** (tilt); `ARTICULATION_PIVOT` keeps the model centred while it
+  turns. `ui/scene.ts` turns the same projection into one SVG `matrix` per
+  slice, so the path data never changes — only the transform does.
 
-The model can be turned two ways: drag it horizontally through a full circle,
-or tap one of the three presets. A drag wraps at ±180° (`wrapArticulationAngle`)
-instead of stopping, so the block can be inspected from the front, the edge and
-the back. Past 90° the cut plane faces away, so the renderer draws the block's
-plain back face and fades out the articulator plates and the airstream — the
-anatomy is painted on the front only.
-
-The drag uses a `PanResponder`, schedules at most one React render per frame,
-and drops the extrusion from ten slices to five while the finger is down. The
-canvas reports itself as an adjustable control, so screen readers can step it as
-well. The `3D` badge, the drag hint and the angle readout make the state
-explicit.
+Dragging turns the model freely — the yaw wraps at ±180° — and three presets
+(front, left and right three-quarter) sit next to it. Tilt is stepped with two
+buttons instead of a vertical drag, because a vertical drag inside the screen
+belongs to the page scroll. The drag schedules at most one React render per
+frame and the shell drops from ten rim slices to five while the finger is down.
+The canvas reports itself as an adjustable control with extra tilt actions, so
+screen readers can turn and tilt it too; the pitch stays inside ±32°.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
-works offline and looks the same on iOS, Android and the web. `tools/check-articulation.ts`
-asserts that every airstream point still lands inside the padded 3D frame at the
-extreme angles, so the model can never be clipped while turning.
+works offline and looks the same on iOS, Android and the web.
+`tools/check-articulation.ts` projects the airstream, the focus point and the
+shell outline through the camera at the extreme angles and asserts that they
+stay inside the padded frame.
 
 ### The studio on the website
 

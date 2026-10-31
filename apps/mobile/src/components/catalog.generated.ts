@@ -78,18 +78,18 @@ export type ComponentCatalog = {
 export const COMPONENT_CATALOG: ComponentCatalog = {
   "generatedBy": "tools/generate-component-catalog.mjs",
   "stats": {
-    "components": 87,
-    "exports": 128,
-    "occurrences": 1361,
-    "usageCount": 842,
-    "files": 112,
+    "components": 86,
+    "exports": 127,
+    "occurrences": 1358,
+    "usageCount": 841,
+    "files": 111,
     "unused": 1,
     "onlyImported": 0,
     "platformVariants": 4,
     "previewable": 32,
     "categories": {
       "shared": 37,
-      "feature": 42,
+      "feature": 41,
       "provider": 8
     }
   },
@@ -10161,68 +10161,68 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 15,
           "kind": "import",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 15,
           "kind": "import",
           "exportName": "formatAngle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 15,
           "kind": "import",
           "exportName": "PlayButton",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 10,
+          "line": 15,
           "kind": "import",
           "exportName": "ViewToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 120,
+          "line": 152,
           "kind": "render",
           "exportName": "PlayButton",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 122,
+          "line": 154,
           "kind": "render",
           "exportName": "ViewToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 126,
+          "line": 158,
           "kind": "render",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 130,
+          "line": 164,
           "kind": "call",
           "exportName": "formatAngle",
-          "count": 1
+          "count": 2
         }
       ],
       "usedBy": [
         "packages/features/articulation/src/ui/player.tsx"
       ],
-      "usageCount": 4,
+      "usageCount": 5,
       "importCount": 4,
       "renderCount": 3,
-      "callCount": 1,
+      "callCount": 2,
       "referenceCount": 0,
       "onlyImported": false,
       "unused": false
@@ -11113,66 +11113,6 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "packages/features/articulation/src/ui/plates",
-      "name": "Plates",
-      "category": "feature",
-      "file": "packages/features/articulation/src/ui/plates.tsx",
-      "variants": [
-        {
-          "platform": "shared",
-          "file": "packages/features/articulation/src/ui/plates.tsx"
-        }
-      ],
-      "platforms": [
-        "native",
-        "web"
-      ],
-      "hasPlatformVariants": false,
-      "exports": [
-        {
-          "name": "Plates",
-          "kind": "component",
-          "isDefault": false,
-          "isReExport": false
-        }
-      ],
-      "previews": [],
-      "defaultExport": null,
-      "occurrences": [
-        {
-          "file": "packages/features/articulation/src/ui/figure-3d.tsx",
-          "line": 28,
-          "kind": "import",
-          "exportName": "Plates",
-          "count": 1
-        },
-        {
-          "file": "packages/features/articulation/src/ui/figure-3d.tsx",
-          "line": 166,
-          "kind": "render",
-          "exportName": "Plates",
-          "count": 1
-        },
-        {
-          "file": "packages/features/articulation/src/ui/figure-3d.tsx",
-          "line": 173,
-          "kind": "render",
-          "exportName": "Plates",
-          "count": 1
-        }
-      ],
-      "usedBy": [
-        "packages/features/articulation/src/ui/figure-3d.tsx"
-      ],
-      "usageCount": 2,
-      "importCount": 1,
-      "renderCount": 2,
-      "callCount": 0,
-      "referenceCount": 0,
-      "onlyImported": false,
-      "unused": false
-    },
-    {
       "id": "packages/features/articulation/src/ui/pose-art",
       "name": "PoseArt",
       "category": "feature",
@@ -11399,14 +11339,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 11,
+          "line": 16,
           "kind": "import",
           "exportName": "ArticulationFigure",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 103,
+          "line": 135,
           "kind": "render",
           "exportName": "ArticulationFigure",
           "count": 1
@@ -11452,14 +11392,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 12,
+          "line": 17,
           "kind": "import",
           "exportName": "ArticulationFigure3D",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 94,
+          "line": 126,
           "kind": "render",
           "exportName": "ArticulationFigure3D",
           "count": 1
@@ -12481,14 +12421,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 13,
+          "line": 18,
           "kind": "import",
           "exportName": "PhaseStrip",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 106,
+          "line": 138,
           "kind": "render",
           "exportName": "PhaseStrip",
           "count": 1

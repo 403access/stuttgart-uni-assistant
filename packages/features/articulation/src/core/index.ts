@@ -23,6 +23,17 @@ export {
 } from './sounds';
 export { mannerLabels, placeLabels } from './labels';
 export { buildArticulationSiteData } from './site';
+export {
+  ARTICULATION_CAMERA,
+  ARTICULATION_PITCH,
+  ARTICULATION_PIVOT,
+  ARTICULATION_SHELL,
+  articulationScene,
+  articulationPoseLayers,
+  articulationStaticLayers,
+  projectScenePoint,
+} from './scene3d';
+export type { ArticulationCamera, ArticulationSceneLayer } from './scene3d';
 export type { ArticulationSiteData, ArticulationSitePhase, ArticulationSiteSound } from './site';
 
 export {
@@ -44,12 +55,7 @@ export {
 
 export {
   ARTICULATION_3D_VIEW_BOX,
-  ARTICULATION_SLAB,
-  articulationBlockTransform,
-  articulationTurn,
-  clampArticulationAngle,
-  projectArticulationPoint,
+  ARTICULATION_TURN,
   wrapArticulationAngle,
   shadeColor,
 } from './view3d';
-export type { ArticulationTurn } from './view3d';

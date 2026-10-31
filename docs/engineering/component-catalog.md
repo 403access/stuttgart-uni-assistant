@@ -18,16 +18,16 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Metric | Value |
 | --- | ---: |
-| Components | 87 |
-| Exports | 128 |
-| Usage references | 842 |
-| Files with occurrences | 112 |
+| Components | 86 |
+| Exports | 127 |
+| Usage references | 841 |
+| Files with occurrences | 111 |
 | Unused components | 1 |
 | Imported but never used | 0 |
 | Components with platform files | 4 |
 | Components with live previews | 32 |
 | Shared UI | 37 |
-| Feature components | 42 |
+| Feature components | 41 |
 | App-wide providers | 8 |
 
 ## Shared UI
@@ -568,7 +568,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
 | `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 9 | 4 |
-| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, PlayButton, ViewToggle, formatAngle | 4 | 1 |
+| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, PlayButton, ViewToggle, formatAngle | 5 | 1 |
 | `mail-skeletons` | `packages/features/mail/src/ui/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 3 |
 | `OptionRow` | `packages/features/quiz/src/ui/components/option-row.tsx` | Native + Web | OptionRow | OptionRow | 4 | 4 |
 | `ProfileSummary` | `apps/mobile/src/profile/profile-summary.tsx` | Native + Web | ProfileSummary | ProfileSummary | 4 | 4 |
@@ -579,7 +579,6 @@ Every component under `src/` with its exports, platform files, and every place i
 | `MailMessageList` | `apps/mobile/src/mail/components/mail-message-list.tsx` | Native + Web | – | MailMessageList | 2 | 1 |
 | `MailReader` | `apps/mobile/src/mail/components/mail-reader.tsx` | Native + Web | – | MailReader | 2 | 2 |
 | `MemberAvatar` | `apps/mobile/src/ilias/components/member-avatar.tsx` | Native + Web | MemberAvatar | MemberAvatar | 2 | 2 |
-| `Plates` | `packages/features/articulation/src/ui/plates.tsx` | Native + Web | – | Plates | 2 | 1 |
 | `PoseArt` | `packages/features/articulation/src/ui/pose-art.tsx` | Native + Web | – | PoseArt | 2 | 1 |
 | `ProfilePreview` | `apps/mobile/src/profile/profile-preview.tsx` | Native + Web | ProfilePreview | ProfilePreview | 2 | 2 |
 | `StudioLinkCard` | `apps/mobile/src/quiz/studio-link.tsx` | Native + Web | – | StudioLinkCard | 2 | 2 |
@@ -628,9 +627,9 @@ Every component under `src/` with its exports, platform files, and every place i
 - File: `packages/features/articulation/src/ui/controls.tsx`
 - Category: Feature components
 - Exports: `AngleRow` (component), `PlayButton` (component), `ViewToggle` (component), `formatAngle` (helper)
-- Usages: 4 references in 1 file
+- Usages: 5 references in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 10 import `AngleRow`; 10 import `formatAngle`; 10 import `PlayButton`; 10 import `ViewToggle`; 120 render `PlayButton`; 122 render `ViewToggle`; 126 render `AngleRow`; 130 call `formatAngle`
+- `packages/features/articulation/src/ui/player.tsx`: 15 import `AngleRow`; 15 import `formatAngle`; 15 import `PlayButton`; 15 import `ViewToggle`; 152 render `PlayButton`; 154 render `ViewToggle`; 158 render `AngleRow`; 164 call `formatAngle` ×2
 
 ### mail-skeletons
 
@@ -742,15 +741,6 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/ilias/[refId].tsx`: 10 import `MemberAvatar`; 69 render `MemberAvatar`
 - `apps/mobile/app/ilias/mitglied.tsx`: 8 import `MemberAvatar`; 82 render `MemberAvatar`
 
-### Plates
-
-- File: `packages/features/articulation/src/ui/plates.tsx`
-- Category: Feature components
-- Exports: `Plates` (component)
-- Usages: 2 references in 1 file
-
-- `packages/features/articulation/src/ui/figure-3d.tsx`: 28 import `Plates`; 166 render `Plates`; 173 render `Plates`
-
 ### PoseArt
 
 - File: `packages/features/articulation/src/ui/pose-art.tsx`
@@ -788,7 +778,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 11 import `ArticulationFigure`; 103 render `ArticulationFigure`
+- `packages/features/articulation/src/ui/player.tsx`: 16 import `ArticulationFigure`; 135 render `ArticulationFigure`
 
 ### ArticulationFigure3D
 
@@ -797,7 +787,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure3D` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 12 import `ArticulationFigure3D`; 94 render `ArticulationFigure3D`
+- `packages/features/articulation/src/ui/player.tsx`: 17 import `ArticulationFigure3D`; 126 render `ArticulationFigure3D`
 
 ### AttachmentList
 
@@ -970,7 +960,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `PhaseStrip` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 13 import `PhaseStrip`; 106 render `PhaseStrip`
+- `packages/features/articulation/src/ui/player.tsx`: 18 import `PhaseStrip`; 138 render `PhaseStrip`
 
 ### QuestionFeedback
 

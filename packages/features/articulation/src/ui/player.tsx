@@ -5,13 +5,21 @@ import { themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import type { ArticulationSound } from '../core';
-import { ARTICULATION_SLAB, clampArticulationAngle, wrapArticulationAngle } from '../core';
+import type { ArticulationCamera, ArticulationSound } from '../core';
+import {
+  ARTICULATION_CAMERA,
+  ARTICULATION_PITCH,
+  ARTICULATION_TURN,
+  wrapArticulationAngle,
+} from '../core';
 import { AngleRow, PlayButton, ViewToggle, formatAngle } from './controls';
 import { ArticulationFigure } from './figure-2d';
 import { ArticulationFigure3D } from './figure-3d';
 import { PhaseStrip } from './phase-strip';
 import { useArticulationTimeline } from './timeline';
+
+const clampPitch = (value: number) =>
+  Math.max(ARTICULATION_PITCH.min, Math.min(ARTICULATION_PITCH.max, value));
 
 /**
  * Figure, phase strip and the controls. The flat and the 3D view share one
@@ -20,27 +28,25 @@ import { useArticulationTimeline } from './timeline';
 export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound; locale: Locale }) {
   const [playing, setPlaying] = useState(true);
   const [threeD, setThreeD] = useState(false);
-  const [angle, setAngle] = useState<number>(ARTICULATION_SLAB.defaultAngle);
+  const [camera, setCamera] = useState<ArticulationCamera>(ARTICULATION_CAMERA);
   const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing);
   const { reduced, phaseIndex, phaseWindow, displayed } = timeline;
-  const clamped = clampArticulationAngle(angle);
 
-  // Dragging turns the block freely inside the range that still reads as a
-  // cutaway. One frame per gesture move, and a coarser extrusion while the
-  // finger is down, keeps the SVG light.
-  const angleRef = useRef(clamped);
-  angleRef.current = clamped;
-  const dragStart = useRef(clamped);
-  const pendingAngle = useRef(clamped);
+  // Dragging turns and tilts the model freely. One frame per gesture move, and
+  // a coarser shell while the finger is down, keeps the SVG light.
+  const cameraRef = useRef(camera);
+  cameraRef.current = camera;
+  const dragStart = useRef(camera);
+  const pending = useRef(camera);
   const frame = useRef<number | null>(null);
 
-  const schedule = (next: number) => {
-    pendingAngle.current = next;
+  const schedule = (next: ArticulationCamera) => {
+    pending.current = next;
     if (frame.current !== null) return;
     frame.current = requestAnimationFrame(() => {
       frame.current = null;
-      setAngle(pendingAngle.current);
+      setCamera(pending.current);
     });
   };
 
@@ -55,14 +61,18 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => false,
+        // Horizontal only: a vertical drag belongs to the page scroll.
         onMoveShouldSetPanResponder: (_event, gesture) =>
           Math.abs(gesture.dx) > 4 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
         onPanResponderGrant: () => {
-          dragStart.current = angleRef.current;
+          dragStart.current = cameraRef.current;
           setDragging(true);
         },
         onPanResponderMove: (_event, gesture) => {
-          schedule(wrapArticulationAngle(dragStart.current + gesture.dx * 0.55));
+          schedule({
+            yaw: wrapArticulationAngle(dragStart.current.yaw + gesture.dx * 0.55),
+            pitch: dragStart.current.pitch,
+          });
         },
         onPanResponderRelease: () => setDragging(false),
         onPanResponderTerminate: () => setDragging(false),
@@ -71,7 +81,11 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
     [],
   );
 
-  const stepAngle = (delta: number) => setAngle((value) => clampArticulationAngle(value + delta));
+  const setYaw = (yaw: number) => setCamera((current) => ({ ...current, yaw }));
+  const stepYaw = (delta: number) =>
+    setCamera((current) => ({ ...current, yaw: wrapArticulationAngle(current.yaw + delta) }));
+  const stepPitch = (delta: number) =>
+    setCamera((current) => ({ ...current, pitch: clampPitch(current.pitch + delta) }));
 
   return (
     <View style={styles.player}>
@@ -81,20 +95,38 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           accessibilityRole="adjustable"
           accessibilityLabel={tx(locale, 'quiz.studio.turn')}
           accessibilityValue={{
-            min: ARTICULATION_SLAB.minAngle,
-            max: ARTICULATION_SLAB.maxAngle,
-            now: Math.round(clamped),
-            text: tx(locale, 'quiz.studio.angle', [`${Math.round(clamped)}°`]),
+            min: ARTICULATION_TURN.minAngle,
+            max: ARTICULATION_TURN.maxAngle,
+            now: Math.round(camera.yaw),
+            text: tx(locale, 'quiz.studio.angle', [`${Math.round(camera.yaw)}°`]),
           }}
-          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-          onAccessibilityAction={(event) =>
-            stepAngle(event.nativeEvent.actionName === 'increment' ? ARTICULATION_SLAB.step : -ARTICULATION_SLAB.step)
-          }
+          accessibilityActions={[
+            { name: 'increment' },
+            { name: 'decrement' },
+            { name: 'tiltUp', label: tx(locale, 'quiz.studio.tilt_up') },
+            { name: 'tiltDown', label: tx(locale, 'quiz.studio.tilt_down') },
+          ]}
+          onAccessibilityAction={(event) => {
+            switch (event.nativeEvent.actionName) {
+              case 'increment':
+                stepYaw(ARTICULATION_TURN.step);
+                break;
+              case 'decrement':
+                stepYaw(-ARTICULATION_TURN.step);
+                break;
+              case 'tiltUp':
+                stepPitch(ARTICULATION_PITCH.step);
+                break;
+              case 'tiltDown':
+                stepPitch(-ARTICULATION_PITCH.step);
+                break;
+            }
+          }}
         >
           <ArticulationFigure3D
             locale={locale}
             timeline={timeline}
-            angle={clamped}
+            camera={camera}
             steps={dragging ? 5 : 10}
             hint={tx(locale, 'quiz.studio.drag_hint')}
           />
@@ -125,9 +157,11 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
       {threeD ? (
         <AngleRow
           locale={locale}
-          angle={clamped}
-          onSelect={setAngle}
-          caption={`${pick(displayed.word, locale)} · ${formatAngle(clamped)}`}
+          angle={camera.yaw}
+          pitch={camera.pitch}
+          onSelect={setYaw}
+          onTilt={(direction) => stepPitch(direction * ARTICULATION_PITCH.step)}
+          caption={`${formatAngle(camera.yaw)} / ${formatAngle(camera.pitch)}`}
         />
       ) : null}
     </View>

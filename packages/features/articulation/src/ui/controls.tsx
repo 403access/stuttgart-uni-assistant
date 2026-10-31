@@ -5,7 +5,7 @@ import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import { ARTICULATION_SLAB } from '../core';
+import { ARTICULATION_TURN } from '../core';
 
 /** True minus sign, because a hyphen reads like a dash in a number. */
 export function formatAngle(value: number): string {
@@ -68,18 +68,22 @@ export function ViewToggle({
 export function AngleRow({
   locale,
   angle,
+  pitch,
   onSelect,
+  onTilt,
   caption,
 }: {
   locale: Locale;
   angle: number;
+  pitch: number;
   onSelect: (value: number) => void;
+  onTilt: (delta: number) => void;
   caption: string;
 }) {
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{tx(locale, 'quiz.studio.turn')}</Text>
-      {ARTICULATION_SLAB.presets.map((preset) => {
+      {ARTICULATION_TURN.presets.map((preset) => {
         const selected = Math.round(angle) === preset;
         return (
           <Pressable
@@ -94,6 +98,22 @@ export function AngleRow({
           </Pressable>
         );
       })}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tx(locale, 'quiz.studio.tilt_up')}
+        onPress={() => onTilt(1)}
+        style={({ pressed }) => [styles.tilt, pressed && styles.pressed]}
+      >
+        <MaterialIcons name="expand-less" size={16} color={colors.blue} />
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={tx(locale, 'quiz.studio.tilt_down')}
+        onPress={() => onTilt(-1)}
+        style={({ pressed }) => [styles.tilt, pressed && styles.pressed]}
+      >
+        <MaterialIcons name="expand-more" size={16} color={colors.blue} />
+      </Pressable>
       <Text style={styles.caption}>{caption}</Text>
     </View>
   );
@@ -155,6 +175,16 @@ const styles = themedStyles((colors) => ({
   presetActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
   presetLabel: { color: colors.inkSoft, fontSize: 12, fontWeight: '700' },
   presetLabelActive: { color: colors.blue },
+  tilt: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   caption: { marginLeft: 'auto', color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
   pressed: { opacity: 0.7 },
 }));
