@@ -1056,6 +1056,12 @@ p { margin: 0; }
 .studio-turn button:disabled { opacity: 0.35; cursor: default; }
 .studio-seg { display: inline-flex; gap: 2px; margin-left: auto; padding: 2px; border: 1px solid var(--line); border-radius: 9px; }
 .studio-seg button { border: 0; min-height: 28px; color: var(--mute); }
+.studio-btn.studio-toggle[aria-pressed="true"] {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.studio-btn.studio-toggle[aria-pressed="false"] { color: var(--ink-soft); }
 .studio-seg button[aria-pressed="true"] { background: var(--blue-soft); color: var(--blue); }
 .studio-turn { display: flex; align-items: center; gap: 6px; color: var(--mute); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
 .studio-turn button { min-width: 42px; min-height: 30px; padding: 0 8px; justify-content: center; }

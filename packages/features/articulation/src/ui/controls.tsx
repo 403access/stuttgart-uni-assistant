@@ -167,7 +167,7 @@ const styles = themedStyles((colors) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  overlayActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
+  overlayActive: { borderColor: colors.blue, borderWidth: 2, backgroundColor: colors.blueSoft },
   pressed: { opacity: 0.7 },
 }));
 

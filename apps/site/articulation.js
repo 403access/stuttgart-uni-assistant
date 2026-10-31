@@ -666,10 +666,10 @@
         </button>
         ${
           threeD
-            ? `<button type="button" class="studio-btn" data-axes aria-pressed="${showAxes}">${esc(
+            ? `<button type="button" class="studio-btn studio-toggle" data-axes aria-pressed="${showAxes}">${esc(
                 copy().axes,
               )}</button>
-               <button type="button" class="studio-btn" data-grid aria-pressed="${showGrid}">${esc(
+               <button type="button" class="studio-btn studio-toggle" data-grid aria-pressed="${showGrid}">${esc(
                  copy().grid,
                )}</button>`
             : ''
