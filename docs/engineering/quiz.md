@@ -76,6 +76,11 @@ The weights are relative; `articulationPhaseWindows(sound)` normalises them into
 tiling 0–1 windows that the timeline and the website both use. The player renders
 the phases as a chip strip plus the active phase's explanation.
 
+The chips are controls, not a legend: tapping one calls `seekPhase`, which moves
+the clock to that window without restarting the loop, so the learner can jump
+between stages while the animation runs. Pausing keeps the frame instead of
+resetting it, which is what makes stepping through a stop by hand practical.
+
 ### 3D view
 
 The player's 2D/3D switch turns the same anatomy into a block. The cut plane is

@@ -37,8 +37,10 @@ const sound = findArticulationSound('t') ?? findArticulationSound(studioSoundFor
 <ArticulationPlayer sound={sound} locale={locale} />;
 ```
 
-The player owns the timeline, the 2D/3D switch and the angle controls. `ArticulationFigure` and
-`ArticulationFigure3D` are exported for compositions that need their own controls.
+The player owns the timeline, the 2D/3D switch and the angle controls. Its phase chips seek:
+`timeline.seekPhase(index)` jumps to a stage without restarting the loop, and pausing keeps the
+current frame. `ArticulationFigure` and `ArticulationFigure3D` are exported for compositions that
+need their own controls.
 
 ## Content
 

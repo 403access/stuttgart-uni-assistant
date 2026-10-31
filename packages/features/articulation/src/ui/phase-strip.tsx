@@ -1,34 +1,44 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { themedStyles } from '@ua/ui/theme';
-import { pick } from '@ua/core/format';
+import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
 import type { ArticulationPhaseWindow } from '../core';
 
-/** The sound's own stages, with the one that is running highlighted. */
+/**
+ * The sound's own stages. The chip that is running is highlighted, and tapping
+ * any chip jumps the animation to that phase — no need to wait for the loop.
+ */
 export function PhaseStrip({
   locale,
   windows,
   phaseIndex,
-  active,
+  onSelect,
 }: {
   locale: Locale;
   windows: ArticulationPhaseWindow[];
   phaseIndex: number;
-  active: boolean;
+  onSelect?: (index: number) => void;
 }) {
   return (
     <View style={styles.strip}>
       {windows.map((window, index) => {
-        const current = active && index === phaseIndex;
+        const current = index === phaseIndex;
         return (
-          <View key={`${window.phase.id}-${index}`} style={[styles.phase, current && styles.phaseActive]}>
+          <Pressable
+            key={`${window.phase.id}-${index}`}
+            accessibilityRole="button"
+            accessibilityLabel={tx(locale, 'quiz.studio.jump_phase', [pick(window.phase.label, locale)])}
+            accessibilityState={{ selected: current }}
+            onPress={() => onSelect?.(index)}
+            style={({ pressed }) => [styles.phase, current && styles.phaseActive, pressed && styles.pressed]}
+          >
             <View style={[styles.dot, current && styles.dotActive]} />
             <Text style={[styles.label, current && styles.labelActive]}>
               {pick(window.phase.label, locale)}
             </Text>
-          </View>
+          </Pressable>
         );
       })}
     </View>
@@ -51,4 +61,5 @@ const styles = themedStyles((colors) => ({
   dotActive: { backgroundColor: colors.blue },
   label: { color: colors.mute, fontSize: 11, fontWeight: '700' },
   labelActive: { color: colors.blue },
+  pressed: { opacity: 0.7 },
 }));

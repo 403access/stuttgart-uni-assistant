@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 
 import { useReducedMotion } from '@ua/ui';
@@ -156,6 +156,8 @@ export function useArticulationTimeline(sound: ArticulationSound, playing: boole
   const [displayed, setDisplayed] = useState(sound);
   const latest = useRef(sound);
   const windows = useMemo(() => articulationPhaseWindows(displayed), [displayed]);
+  /** Where the clock stands, 0–1. The loop advances it; `seek` moves it. */
+  const elapsed = useRef(0);
 
   // Cross-fade the articulators when the learner picks another sound, so the
   // tongue never jumps from one position to the next.
@@ -180,21 +182,27 @@ export function useArticulationTimeline(sound: ArticulationSound, playing: boole
     });
   }, [sound, displayed.id, fade]);
 
+  // A new sound starts its story at the beginning. Pausing keeps the frame.
   useEffect(() => {
-    if (!active) {
-      clock.setValue(0);
-      setPhaseIndex(0);
-      return;
-    }
+    elapsed.current = 0;
+    clock.setValue(0);
+    setPhaseIndex(0);
+  }, [clock, displayed.id]);
+
+  useEffect(() => {
+    if (!active) return;
 
     // The clock is advanced from our own frame loop instead of Animated.loop:
     // the loop stops silently on react-native-web when the 3D subtree mounts,
     // and a plain requestAnimationFrame cannot be stopped behind our back.
+    // Starting from the current `elapsed` also makes seeking seamless.
     let frame = 0;
-    let started = 0;
-    const tick = () => {
-      if (!started) started = Date.now();
-      const value = ((Date.now() - started) % CYCLE_MS) / CYCLE_MS;
+    let last = 0;
+    const tick = (now: number) => {
+      if (!last) last = now;
+      elapsed.current = (elapsed.current + (now - last) / CYCLE_MS) % 1;
+      last = now;
+      const value = elapsed.current;
       clock.setValue(value);
       const next = windowAt(windows, value).index;
       setPhaseIndex((current) => (current === next ? current : next));
@@ -205,8 +213,27 @@ export function useArticulationTimeline(sound: ArticulationSound, playing: boole
     return () => {
       cancelAnimationFrame(frame);
     };
-    // Restart the story whenever the animated sound changes.
-  }, [active, clock, displayed.id, windows]);
+  }, [active, clock, windows]);
+
+  /** Jump to a point in the cycle without restarting it. */
+  const seek = useCallback(
+    (value: number) => {
+      const next = Math.max(0, Math.min(0.9999, value));
+      elapsed.current = next;
+      clock.setValue(next);
+      setPhaseIndex(windowAt(windows, next).index);
+    },
+    [clock, windows],
+  );
+
+  /** Jump to the start of a phase; the loop continues from there. */
+  const seekPhase = useCallback(
+    (index: number) => {
+      const window = windows[Math.max(0, Math.min(windows.length - 1, index))];
+      seek(window.start + 0.001);
+    },
+    [seek, windows],
+  );
 
   return {
     clock,
@@ -217,6 +244,8 @@ export function useArticulationTimeline(sound: ArticulationSound, playing: boole
     phaseWindow: windows[Math.min(phaseIndex, windows.length - 1)],
     active,
     reduced,
+    seek,
+    seekPhase,
   };
 }
 

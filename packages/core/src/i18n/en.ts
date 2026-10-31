@@ -1029,6 +1029,7 @@ export const en: Record<TranslationKey, string> = {
   "quiz.studio.detail": "How the sound is made",
   "quiz.studio.drag_hint": "Drag to turn",
   "quiz.studio.intro": "Pick a sound. The animation shows where the airstream starts, whether the vocal cords vibrate, and which articulators shape the sound.",
+  "quiz.studio.jump_phase": "Jump to {0}",
   "quiz.studio.kicker": "Learning tools",
   "quiz.studio.manner.approximant": "Approximant",
   "quiz.studio.manner.fricative": "Fricative",

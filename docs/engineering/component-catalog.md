@@ -630,7 +630,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AngleRow` (component), `PlayButton` (component), `ViewToggle` (component), `formatAngle` (helper)
 - Usages: 4 references in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 10 import `AngleRow`; 10 import `formatAngle`; 10 import `PlayButton`; 10 import `ViewToggle`; 115 render `PlayButton`; 117 render `ViewToggle`; 121 render `AngleRow`; 125 call `formatAngle`
+- `packages/features/articulation/src/ui/player.tsx`: 10 import `AngleRow`; 10 import `formatAngle`; 10 import `PlayButton`; 10 import `ViewToggle`; 120 render `PlayButton`; 122 render `ViewToggle`; 126 render `AngleRow`; 130 call `formatAngle`
 
 ### mail-skeletons
 

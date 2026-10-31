@@ -415,7 +415,10 @@
     if (window.index !== activePhase) {
       activePhase = window.index;
       const chips = document.querySelectorAll('.studio-phase-chip');
-      chips.forEach((chip, index) => chip.classList.toggle('is-active', playing && index === activePhase));
+      chips.forEach((chip, index) => {
+        chip.classList.toggle('is-active', index === activePhase);
+        chip.setAttribute('aria-pressed', String(index === activePhase));
+      });
       const detail = document.getElementById('studio-phase-detail');
       if (detail) detail.textContent = local(window.phase.detail);
     }
@@ -502,11 +505,20 @@
     strip.innerHTML = windows
       .map(
         (window, index) =>
-          `<span class="studio-phase-chip${playing && index === 0 ? ' is-active' : ''}"><i aria-hidden="true"></i>${esc(
-            local(window.phase.label),
-          )}</span>`,
+          `<button type="button" class="studio-phase-chip" data-phase="${index}" aria-pressed="${
+            index === 0
+          }"><i aria-hidden="true"></i>${esc(local(window.phase.label))}</button>`,
       )
       .join('');
+    strip.querySelectorAll('[data-phase]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const window = windows[Number(button.dataset.phase)];
+        if (!window) return;
+        elapsed = window.start + 0.001;
+        activePhase = -1;
+        update(elapsed);
+      });
+    });
     const detail = document.getElementById('studio-phase-detail');
     detail.textContent = local(windows[0].phase.detail);
     activePhase = -1;

@@ -1028,6 +1028,7 @@ export const de = {
   "quiz.studio.detail": "So entsteht der Laut",
   "quiz.studio.drag_hint": "Ziehen zum Drehen",
   "quiz.studio.intro": "Wähle einen Laut. Die Animation zeigt, wo der Luftstrom entsteht, ob die Stimmlippen schwingen und welche Artikulatoren den Laut formen.",
+  "quiz.studio.jump_phase": "Zu {0} springen",
   "quiz.studio.kicker": "Lernwerkzeuge",
   "quiz.studio.manner.approximant": "Approximant",
   "quiz.studio.manner.fricative": "Frikativ",

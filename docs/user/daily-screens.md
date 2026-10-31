@@ -66,7 +66,7 @@ The studio animates how a sound is produced on the same head cross-section the d
 
 **2D / 3D** switches between the flat cutaway and a turnable block of the same anatomy. In 3D you can **drag the model** to any angle, or tap one of the preset views (front, left three-quarter, right three-quarter); the airstream follows.
 
-Under the figure, the sound's own stages light up in order: for **t** that is **Annäherung (approach)** — the tongue moves into place while the air rises — **Verschluss (closure)**, where the air is trapped and the pressure builds, **Lösung (release)**, the little burst, and **Behauchung (aspiration)**, the puff of air before the next sound voices. Nasals close the mouth but let the air out through the nose; fricatives keep a narrow gap and let the air hiss.
+Under the figure, the sound's own stages light up in order: for **t** that is **Annäherung (approach)** — the tongue moves into place while the air rises — **Verschluss (closure)**, where the air is trapped and the pressure builds, **Lösung (release)**, the little burst, and **Behauchung (aspiration)**, the puff of air before the next sound voices. **Tap a stage to jump straight to it** instead of waiting for the loop; **Pause** freezes the current frame. Nasals close the mouth but let the air out through the nose; fricatives keep a narrow gap and let the air hiss.
 
 The studio opens from the quiz tab, from any phonetics topic (**Im Artikulationsstudio ansehen**), and from **Campus → Studium**. With the system's reduce-motion setting the model stands still and the player says so.
 

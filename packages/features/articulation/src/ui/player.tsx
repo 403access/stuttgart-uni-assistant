@@ -23,7 +23,7 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [angle, setAngle] = useState<number>(ARTICULATION_SLAB.defaultAngle);
   const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing);
-  const { reduced, active, phaseIndex, phaseWindow, displayed } = timeline;
+  const { reduced, phaseIndex, phaseWindow, displayed } = timeline;
   const clamped = clampArticulationAngle(angle);
 
   // Dragging turns the block freely inside the range that still reads as a
@@ -103,7 +103,12 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
         <ArticulationFigure locale={locale} timeline={timeline} />
       )}
 
-      <PhaseStrip locale={locale} windows={timeline.windows} phaseIndex={phaseIndex} active={active} />
+      <PhaseStrip
+        locale={locale}
+        windows={timeline.windows}
+        phaseIndex={phaseIndex}
+        onSelect={timeline.seekPhase}
+      />
       <Text style={styles.detail} numberOfLines={3}>
         {pick(phaseWindow.phase.detail, locale)}
       </Text>
