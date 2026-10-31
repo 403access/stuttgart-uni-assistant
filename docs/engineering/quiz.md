@@ -61,10 +61,17 @@ front of the cut plane, so the model reads as a layered anatomy model rather
 than a skewed drawing.
 
 `articulationTurn(angle)` returns `cos`/`sin`/`skew`; `ARTICULATION_SLAB` holds
-the thickness, the per-organ lift and the ±42° range. `projectArticulationPoint`
-maps a point (plus its lift) into the turned frame, which is how the airstream
-and the rings stay on the model. The rotate buttons step 14° at a time; the
-`3D` badge and the angle readout make the state explicit.
+the thickness, the per-organ lift, the ±42° range and the three preset angles
+(front, and both three-quarter views). `projectArticulationPoint` maps a point
+(plus its lift) into the turned frame, which is how the airstream and the rings
+stay on the model.
+
+The model can be turned two ways: drag it horizontally for any angle inside the
+range, or tap a preset. The drag uses a `PanResponder`, schedules at most one
+React render per frame, and drops the extrusion from ten slices to five while
+the finger is down. The canvas reports itself as an adjustable control, so
+screen readers can step it as well. The `3D` badge, the drag hint and the angle
+readout make the state explicit.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web. `tools/check-quiz.ts`

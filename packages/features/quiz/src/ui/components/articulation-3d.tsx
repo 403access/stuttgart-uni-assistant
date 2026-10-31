@@ -49,10 +49,15 @@ export function ArticulationFigure3D({
   locale,
   timeline,
   angle,
+  steps = 10,
+  hint,
 }: {
   locale: Locale;
   timeline: Timeline;
   angle: number;
+  /** Extrusion copies; dragging lowers this to keep the SVG light. */
+  steps?: number;
+  hint?: string;
 }) {
   const { clock, fade, displayed } = timeline;
   const { focusOpacity, focusScale } = useArticulationRings(clock);
@@ -102,10 +107,10 @@ export function ArticulationFigure3D({
           ).toFixed(3)}) translate(${-centerX} 0)`}
         >
           {/* Side wall: the head block, drawn behind the cut plane. */}
-          {Array.from({ length: 10 }, (_, index) => 10 - index).map((step) => (
+          {Array.from({ length: steps }, (_, index) => steps - index).map((step) => (
             <G
               key={`side-${step}`}
-              transform={`translate(${(-turn.sin * ARTICULATION_SLAB.thickness * (step / 10)).toFixed(2)} 0)`}
+              transform={`translate(${(-turn.sin * ARTICULATION_SLAB.thickness * (step / steps)).toFixed(2)} 0)`}
             >
               {backdrop.map((shape, index) => (
                 <Path
@@ -282,7 +287,7 @@ export function ArticulationFigure3D({
         <Text style={styles.badgeText}>{tx(locale, 'quiz.studio.view.3d')}</Text>
       </View>
       <Text style={styles.sideNote} pointerEvents="none">
-        {`${Math.round(clamped)}°`}
+        {hint ?? `${Math.round(clamped)}°`}
       </Text>
     </View>
   );
@@ -342,8 +347,14 @@ const styles = themedStyles((colors) => ({
     position: 'absolute',
     right: 8,
     bottom: 8,
-    color: colors.mute,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderWidth: 1,
+    borderColor: colors.line,
+    color: colors.inkSoft,
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 }));

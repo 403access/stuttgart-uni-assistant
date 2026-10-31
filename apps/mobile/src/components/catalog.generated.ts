@@ -10054,28 +10054,21 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 90,
+          "line": 95,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 2
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 96,
+          "line": 101,
           "kind": "call",
           "exportName": "diagramAspect",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 144,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 145,
+          "line": 149,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
@@ -10085,18 +10078,18 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "line": 150,
           "kind": "call",
           "exportName": "diagramTone",
-          "count": 2
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 161,
-          "kind": "call",
-          "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 162,
+          "line": 155,
+          "kind": "call",
+          "exportName": "diagramTone",
+          "count": 2
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
+          "line": 166,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
@@ -10106,46 +10099,46 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "line": 167,
           "kind": "call",
           "exportName": "diagramTone",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
+          "line": 172,
+          "kind": "call",
+          "exportName": "diagramTone",
           "count": 2
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 180,
+          "line": 185,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 181,
+          "line": 186,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 188,
+          "line": 193,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 189,
+          "line": 194,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 205,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 206,
+          "line": 210,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
@@ -10155,6 +10148,13 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "line": 211,
           "kind": "call",
           "exportName": "diagramTone",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
+          "line": 216,
+          "kind": "call",
+          "exportName": "diagramTone",
           "count": 2
         },
         {
@@ -10180,70 +10180,70 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 76,
+          "line": 81,
           "kind": "call",
           "exportName": "diagramAspect",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 77,
+          "line": 82,
           "kind": "render",
           "exportName": "DiagramCanvas",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 92,
+          "line": 97,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 93,
+          "line": 98,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 101,
+          "line": 106,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 102,
+          "line": 107,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 110,
+          "line": 115,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 111,
+          "line": 116,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 120,
+          "line": 125,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 121,
+          "line": 126,
           "kind": "call",
           "exportName": "diagramTone",
           "count": 1
@@ -11466,7 +11466,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 238,
+          "line": 306,
           "kind": "render",
           "exportName": "ArticulationFigure3D",
           "count": 1

@@ -27,7 +27,8 @@ site/
 ## The articulation studio
 
 The **Lernwerkzeuge** section runs a real, working demo of the app's articulation studio: pick
-a sound, play the airstream, switch between the flat cutaway and the turnable 3D block. It is
+a sound, play the airstream, switch between the flat cutaway and the turnable 3D block, and drag
+the block (or tap a preset angle) to look at it from the side. It is
 plain JavaScript and SVG with no dependencies and no network requests; `articulation.js` renders
 it, and everything it needs comes from `assets/articulation.js`.
 

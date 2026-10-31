@@ -1,6 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState, type ComponentProps } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { Animated, PanResponder, Pressable, Text, View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 
 import { colors, themedStyles } from '@ua/ui/theme';
@@ -48,6 +48,11 @@ const STAGE_ICONS: Record<Stage, ComponentProps<typeof MaterialIcons>['name']> =
 };
 
 type Timeline = ReturnType<typeof useArticulationTimeline>;
+
+/** Turn angles read better with a true minus sign than with a hyphen. */
+function formatAngle(value: number): string {
+  return `${Math.round(value)}°`.replace('-', '−');
+}
 
 export function ArticulationFigure({
   locale,
@@ -228,14 +233,84 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [playing, setPlaying] = useState(true);
   const [threeD, setThreeD] = useState(false);
   const [angle, setAngle] = useState<number>(ARTICULATION_SLAB.defaultAngle);
+  const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing);
   const { reduced, active, phase, displayed } = timeline;
   const clamped = clampArticulationAngle(angle);
 
+  // Dragging turns the block freely inside the range that still reads as a
+  // cutaway. A frame is scheduled per gesture move, and the block drops to a
+  // coarser extrusion while dragging so the SVG stays light.
+  const angleRef = useRef(clamped);
+  angleRef.current = clamped;
+  const dragStart = useRef(clamped);
+  const pendingAngle = useRef(clamped);
+  const frame = useRef<number | null>(null);
+
+  const schedule = useCallback((next: number) => {
+    pendingAngle.current = next;
+    if (frame.current !== null) return;
+    frame.current = requestAnimationFrame(() => {
+      frame.current = null;
+      setAngle(pendingAngle.current);
+    });
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current);
+    },
+    [],
+  );
+
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onMoveShouldSetPanResponder: (_event, gesture) =>
+          Math.abs(gesture.dx) > 4 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderGrant: () => {
+          dragStart.current = angleRef.current;
+          setDragging(true);
+        },
+        onPanResponderMove: (_event, gesture) => {
+          schedule(clampArticulationAngle(dragStart.current + gesture.dx * 0.32));
+        },
+        onPanResponderRelease: () => setDragging(false),
+        onPanResponderTerminate: () => setDragging(false),
+        onPanResponderTerminationRequest: () => false,
+      }),
+    [schedule],
+  );
+
+  const stepAngle = (delta: number) => setAngle((value) => clampArticulationAngle(value + delta));
+
   return (
     <View style={styles.player}>
       {threeD ? (
-        <ArticulationFigure3D locale={locale} timeline={timeline} angle={clamped} />
+        <View
+          {...responder.panHandlers}
+          accessibilityRole="adjustable"
+          accessibilityLabel={tx(locale, 'quiz.studio.turn')}
+          accessibilityValue={{
+            min: ARTICULATION_SLAB.minAngle,
+            max: ARTICULATION_SLAB.maxAngle,
+            now: Math.round(clamped),
+            text: tx(locale, 'quiz.studio.angle', [`${Math.round(clamped)}°`]),
+          }}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={(event) =>
+            stepAngle(event.nativeEvent.actionName === 'increment' ? ARTICULATION_SLAB.step : -ARTICULATION_SLAB.step)
+          }
+        >
+          <ArticulationFigure3D
+            locale={locale}
+            timeline={timeline}
+            angle={clamped}
+            steps={dragging ? 5 : 10}
+            hint={tx(locale, 'quiz.studio.drag_hint')}
+          />
+        </View>
       ) : (
         <ArticulationFigure locale={locale} timeline={timeline} />
       )}
@@ -289,34 +364,29 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
       {threeD ? (
         <View style={styles.turnRow}>
           <Text style={styles.turnLabel}>{tx(locale, 'quiz.studio.turn')}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tx(locale, 'quiz.studio.turn_left')}
-            disabled={clamped <= ARTICULATION_SLAB.minAngle}
-            onPress={() => setAngle((value) => clampArticulationAngle(value - ARTICULATION_SLAB.step))}
-            style={({ pressed }) => [
-              styles.turnButton,
-              clamped <= ARTICULATION_SLAB.minAngle && styles.disabled,
-              pressed && styles.pressed,
-            ]}
-          >
-            <MaterialIcons name="rotate-left" size={18} color={colors.blue} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={tx(locale, 'quiz.studio.turn_right')}
-            disabled={clamped >= ARTICULATION_SLAB.maxAngle}
-            onPress={() => setAngle((value) => clampArticulationAngle(value + ARTICULATION_SLAB.step))}
-            style={({ pressed }) => [
-              styles.turnButton,
-              clamped >= ARTICULATION_SLAB.maxAngle && styles.disabled,
-              pressed && styles.pressed,
-            ]}
-          >
-            <MaterialIcons name="rotate-right" size={18} color={colors.blue} />
-          </Pressable>
+          {ARTICULATION_SLAB.presets.map((preset) => {
+            const selected = Math.round(clamped) === preset;
+            return (
+              <Pressable
+                key={preset}
+                accessibilityRole="button"
+                accessibilityLabel={tx(locale, 'quiz.studio.angle', [formatAngle(preset)])}
+                accessibilityState={{ selected }}
+                onPress={() => setAngle(preset)}
+                style={({ pressed }) => [
+                  styles.presetChip,
+                  selected && styles.presetChipActive,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={[styles.presetLabel, selected && styles.presetLabelActive]}>
+                  {formatAngle(preset)}
+                </Text>
+              </Pressable>
+            );
+          })}
           <Text style={styles.turnValue}>
-            {pick(displayed.word, locale)} · {`${Math.round(clamped)}°`}
+            {pick(displayed.word, locale)} · {formatAngle(clamped)}
           </Text>
         </View>
       ) : null}
@@ -431,9 +501,10 @@ const styles = themedStyles((colors) => ({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
-  turnButton: {
-    width: 30,
+  presetChip: {
+    minWidth: 44,
     height: 30,
+    paddingHorizontal: 8,
     borderRadius: 9,
     borderWidth: 1,
     borderColor: colors.line,
@@ -441,6 +512,9 @@ const styles = themedStyles((colors) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  presetChipActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
+  presetLabel: { color: colors.inkSoft, fontSize: 12, fontWeight: '700' },
+  presetLabelActive: { color: colors.blue },
   turnValue: { marginLeft: 'auto', color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },

@@ -19,8 +19,7 @@
       flat: '2D',
       solid: '3D',
       turn: 'Drehen',
-      turnLeft: 'Nach links drehen',
-      turnRight: 'Nach rechts drehen',
+      drag: 'Ziehen zum Drehen',
       viaMouth: 'Luft durch den Mund',
       viaNose: 'Luft durch die Nase',
       voiced: 'stimmhaft',
@@ -36,8 +35,7 @@
       flat: '2D',
       solid: '3D',
       turn: 'Turn',
-      turnLeft: 'Turn left',
-      turnRight: 'Turn right',
+      drag: 'Drag to turn',
       viaMouth: 'Air through the mouth',
       viaNose: 'Air through the nose',
       voiced: 'voiced',
@@ -58,6 +56,8 @@
   let elapsed = 0;
   let frame = 0;
   let last = 0;
+  let drag = null;
+  let drawFrame = 0;
 
   const copy = () => COPY[lang];
   const local = (value) => (lang === 'en' ? value.en : value.de);
@@ -240,13 +240,31 @@
     focusRing = focus;
   }
 
+  const fmt = (value) => `${Math.round(value)}\u00b0`.replace('-', '\u2212');
+
+  const clampAngle = (value) =>
+    Math.max(data.slab.minAngle, Math.min(data.slab.maxAngle, value));
+
+  /** Coalesce pointer moves into one SVG rebuild per frame. */
+  function scheduleDraw() {
+    if (drawFrame) return;
+    drawFrame = requestAnimationFrame(() => {
+      drawFrame = 0;
+      drawStatic();
+      const readout = document.querySelector('.studio-turn em');
+      if (readout) readout.textContent = fmt(angle);
+    });
+  }
+
   function drawStatic() {
     const canvas = document.getElementById('studio-canvas');
     const [, , width, height] = viewBox();
     canvas.style.aspectRatio = `${width} / ${height}`;
+    canvas.classList.toggle('is-3d', threeD);
     canvas.innerHTML = `<div class="studio-figure">${threeD ? figure3d() : figure2d()}</div>
       <div class="studio-overlay"></div>
-      <span class="studio-badge">${esc(sound.airflow === 'nasal' ? copy().viaNose : copy().viaMouth)}</span>`;
+      <span class="studio-badge">${esc(sound.airflow === 'nasal' ? copy().viaNose : copy().viaMouth)}</span>
+      ${threeD ? `<span class="studio-hint">${esc(copy().drag)}</span>` : ''}`;
     buildOverlay();
     update(elapsed);
   }
@@ -391,13 +409,15 @@
         threeD
           ? `<div class="studio-turn">
               <span>${esc(copy().turn)}</span>
-              <button type="button" data-turn="-1" aria-label="${esc(copy().turnLeft)}" ${angle <= data.slab.minAngle ? 'disabled' : ''}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a8 8 0 1 1 2.3 6.5"/><path d="M4 4v6h6"/></svg>
-              </button>
-              <button type="button" data-turn="1" aria-label="${esc(copy().turnRight)}" ${angle >= data.slab.maxAngle ? 'disabled' : ''}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10a8 8 0 1 0-2.3 6.5"/><path d="M20 4v6h-6"/></svg>
-              </button>
-              <em>${Math.round(angle)}°</em>
+              ${data.slab.presets
+                .map(
+                  (preset) =>
+                    `<button type="button" data-angle="${preset}" aria-pressed="${Math.round(angle) === preset}">${fmt(
+                      preset,
+                    )}</button>`,
+                )
+                .join('')}
+              <em>${fmt(angle)}</em>
             </div>`
           : ''
       }`;
@@ -417,16 +437,36 @@
         drawStatic();
       });
     });
-    bar.querySelectorAll('[data-turn]').forEach((button) => {
+    bar.querySelectorAll('[data-angle]').forEach((button) => {
       button.addEventListener('click', () => {
-        angle = Math.max(
-          data.slab.minAngle,
-          Math.min(data.slab.maxAngle, angle + Number(button.dataset.turn) * data.slab.step),
-        );
+        angle = Number(button.dataset.angle);
         renderBar();
         drawStatic();
       });
     });
+  }
+
+  function wireDrag() {
+    const canvas = document.getElementById('studio-canvas');
+    canvas.addEventListener('pointerdown', (event) => {
+      if (!threeD || event.button !== 0) return;
+      drag = { x: event.clientX, angle };
+      canvas.setPointerCapture(event.pointerId);
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      if (!drag) return;
+      angle = clampAngle(drag.angle + (event.clientX - drag.x) * 0.32);
+      scheduleDraw();
+    });
+    const end = () => {
+      if (!drag) return;
+      drag = null;
+      renderBar();
+      drawStatic();
+    };
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointercancel', end);
+    canvas.addEventListener('lostpointercapture', end);
   }
 
   function renderAll() {
@@ -443,5 +483,6 @@
     renderAll();
   });
 
+  wireDrag();
   renderAll();
 })();

@@ -613,8 +613,8 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 32 references in 5 files
 
 - `packages/features/quiz/src/ui.ts`: 5 re-export `DiagramCanvas`; 5 re-export `DiagramView`
-- `packages/features/quiz/src/ui/components/articulation-3d.tsx`: 29 import `diagramAspect`; 29 import `diagramTone`; 90 call `diagramTone` ×2; 96 call `diagramAspect`; 144 call `diagramTone`; 145 call `diagramTone`; 150 call `diagramTone` ×2; 161 call `diagramTone`; 162 call `diagramTone`; 167 call `diagramTone` ×2; 180 call `diagramTone`; 181 call `diagramTone`; 188 call `diagramTone`; 189 call `diagramTone`; 205 call `diagramTone`; 206 call `diagramTone`; 211 call `diagramTone` ×2
-- `packages/features/quiz/src/ui/components/articulation.tsx`: 27 import `diagramAspect`; 27 import `DiagramCanvas`; 27 import `diagramTone`; 76 call `diagramAspect`; 77 render `DiagramCanvas`; 92 call `diagramTone`; 93 call `diagramTone`; 101 call `diagramTone`; 102 call `diagramTone`; 110 call `diagramTone`; 111 call `diagramTone`; 120 call `diagramTone`; 121 call `diagramTone`
+- `packages/features/quiz/src/ui/components/articulation-3d.tsx`: 29 import `diagramAspect`; 29 import `diagramTone`; 95 call `diagramTone` ×2; 101 call `diagramAspect`; 149 call `diagramTone`; 150 call `diagramTone`; 155 call `diagramTone` ×2; 166 call `diagramTone`; 167 call `diagramTone`; 172 call `diagramTone` ×2; 185 call `diagramTone`; 186 call `diagramTone`; 193 call `diagramTone`; 194 call `diagramTone`; 210 call `diagramTone`; 211 call `diagramTone`; 216 call `diagramTone` ×2
+- `packages/features/quiz/src/ui/components/articulation.tsx`: 27 import `diagramAspect`; 27 import `DiagramCanvas`; 27 import `diagramTone`; 81 call `diagramAspect`; 82 render `DiagramCanvas`; 97 call `diagramTone`; 98 call `diagramTone`; 106 call `diagramTone`; 107 call `diagramTone`; 115 call `diagramTone`; 116 call `diagramTone`; 125 call `diagramTone`; 126 call `diagramTone`
 - `packages/features/quiz/src/ui/components/diagram-figure.tsx`: 9 import `diagramAspect`; 9 import `DiagramCanvas`; 29 call `diagramAspect`; 30 render `DiagramCanvas`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 5 import `DiagramView`; 120 render `DiagramView`
 
@@ -769,7 +769,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `packages/features/quiz/src/ui.ts`: 2 re-export `ArticulationFigure3D`
-- `packages/features/quiz/src/ui/components/articulation.tsx`: 28 import `ArticulationFigure3D`; 238 render `ArticulationFigure3D`
+- `packages/features/quiz/src/ui/components/articulation.tsx`: 28 import `ArticulationFigure3D`; 306 render `ArticulationFigure3D`
 
 ### AttachmentList
 

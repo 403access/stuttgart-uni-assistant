@@ -76,6 +76,8 @@ export const ARTICULATION_SLAB = {
   maxAngle: 42,
   step: 14,
   defaultAngle: 28,
+  /** Angles that read well: front, and both three-quarter views. */
+  presets: [0, 28, -28],
 } as const;
 
 /** Clip an angle to the range the model was built for. */
