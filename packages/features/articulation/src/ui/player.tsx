@@ -34,13 +34,12 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [showGrid, setShowGrid] = useState(false);
   const [camera, setCamera] = useState<ArticulationCamera>(ARTICULATION_CAMERA);
   const [axis, setAxis] = useState<ArticulationAxis>('y');
-  const [dragging, setDragging] = useState(false);
   const timeline = useArticulationTimeline(sound, playing, speed);
   const { reduced, phaseIndex, phaseWindow } = timeline;
   const angle = articulationAxisAngle(camera, axis);
 
   // Dragging turns the model around the selected axis. One frame per gesture
-  // move, and a coarser shell while the finger is down, keeps the SVG light.
+  // move keeps the SVG light.
   const angleRef = useRef(angle);
   angleRef.current = angle;
   const dragStart = useRef(angle);
@@ -74,13 +73,10 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           Math.abs(gesture.dx) > 4 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
         onPanResponderGrant: () => {
           dragStart.current = angleRef.current;
-          setDragging(true);
         },
         onPanResponderMove: (_event, gesture) => {
           schedule(wrapArticulationAngle(dragStart.current + gesture.dx * 0.55));
         },
-        onPanResponderRelease: () => setDragging(false),
-        onPanResponderTerminate: () => setDragging(false),
         onPanResponderTerminationRequest: () => false,
       }),
     [],
@@ -115,7 +111,6 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
             locale={locale}
             timeline={timeline}
             camera={camera}
-            steps={dragging ? 5 : 10}
             hint={tx(locale, 'quiz.studio.drag_hint')}
             showAxes={showAxes}
             showGrid={showGrid}

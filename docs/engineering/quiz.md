@@ -97,15 +97,27 @@ model scale and a spatial frame. Both are aids: they never affect the scene.
 A sagittal section is flat by nature, so the 3D view is built like a cutaway
 anatomy model (`packages/features/articulation/src/core/scene3d.ts`):
 
-- The head is an **open shell**: a back plate plus a swept rim, with the cut
-  plane left open so the organs stay visible.
+- The head is a **solid shell**, not a plate. The section is the cut face at
+  `z = 0`; behind it the head recedes `ARTICULATION_SHELL.depth` (260 units,
+  the 75 mm half-width of a real head scaled to the drawing) and narrows
+  towards the side of the head, pivoting near the back of the skull so the face
+  tapers most. The far side is drawn as `SHELL_SLICES` receding bands sharing
+  one scene-space gradient, each stroked in that gradient: the bands fuse into
+  one continuous surface — even edge-on, where a band collapses to a line —
+  which is what makes a turned model read as a head instead of a sheet.
+- The neck runs on past the frame (`articulationShellOutline`). The 2-D figure
+  ends it on a flat cut; in 3-D that cut would turn the receding bands into a
+  staircase, so the shell's neck is carried below the bottom edge.
 - Every organ is a **volume of its own** — depth, thickness and pivot in
   `articulationScene`/`articulationPoseLayers`. The renderer draws nine shaded
   slices per volume (darker towards the back) and then its lit face, which is
   what gives the tongue, palate and lips real thickness instead of a paper-cut
-  look.
+  look. The organs sit inside the shell, so their depth is a fraction of the
+  head's.
 - The layers are **painter-sorted** by their projected depth, so a turn
-  actually reveals the volumes behind one another.
+  actually reveals the volumes behind one another. All cut faces are coplanar,
+  so ties fall back to each layer's `order`, which keeps the familiar 2-D
+  layering of the anatomical figure.
 - `projectScenePoint` is an orthographic camera with a **yaw** (turn) and a
   **pitch** (tilt); `ARTICULATION_PIVOT` keeps the model centred while it
   turns. `ui/scene.ts` turns the same projection into one SVG `matrix` per
@@ -122,9 +134,9 @@ keeps the other two angles, so the chosen view is never lost. A drag only ever
 changes that one angle; it wraps at ±180°. The camera starts at yaw 28°,
 pitch 22° and roll 0°, which is the three-quarter view that reads best.
 
-The drag schedules at most one React render per frame and the shell drops from
-ten rim slices to five while the finger is down. The canvas reports itself as an
-adjustable control for the selected axis, so screen readers can turn it too.
+The drag schedules at most one React render per frame. The canvas reports
+itself as an adjustable control for the selected axis, so screen readers can
+turn it too.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web.

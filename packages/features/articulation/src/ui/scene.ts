@@ -61,7 +61,8 @@ export function sceneOrder(
       const front = layer.z + layer.depth / 2;
       return w * (ay - ARTICULATION_PIVOT.y) + q * (-v * (ax - ARTICULATION_PIVOT.x) + u * front);
     };
-    return depth(left) - depth(right);
+    // Coplanar cut faces keep the familiar 2-D layering.
+    return depth(left) - depth(right) || left.order - right.order;
   });
 }
 
@@ -95,11 +96,38 @@ export function layerRotation(layer: ArticulationSceneLayer): string {
   return layer.rotate ? `rotate(${layer.rotate} ${layer.anchor[0]} ${layer.anchor[1]})` : '';
 }
 
-/** Depth slices of the head shell: a swept rim that keeps the cut plane open. */
-export function shellRim(camera: ArticulationCamera, rim: number, backZ = ARTICULATION_SHELL.z): string[] {
-  const matrices: string[] = [];
-  for (let index = 0; index <= rim; index += 1) {
-    matrices.push(sliceMatrix([540, 520], 1, backZ + ((0 - backZ) * index) / rim, camera));
-  }
-  return matrices;
+/** One cross-section of the head shell, from the cut plane back to the crown. */
+export interface ShellSlice {
+  matrix: string;
+  /** How much the outline shrank at this depth; 1 on the cut plane. */
+  scale: number;
+  z: number;
+  /** 0 on the cut plane, 1 at the far side of the head. */
+  back: number;
 }
+
+/**
+ * Depth slices of the head shell. The section is the cut face at `z = 0`; the
+ * rest of the head recedes behind it and narrows towards the side of the head,
+ * so a turned model reads as a solid head instead of a sheet.
+ */
+export function shellRim(
+  camera: ArticulationCamera,
+  steps: number = ARTICULATION_SHELL.rim,
+  depth: number = ARTICULATION_SHELL.depth,
+): ShellSlice[] {
+  const slices: ShellSlice[] = [];
+  for (let index = 0; index <= steps; index += 1) {
+    const back = index / steps;
+    // Round the far edge instead of tapering to a point.
+    const scale = 1 - ARTICULATION_SHELL.taper * back ** 1.4;
+    slices.push({
+      matrix: sliceMatrix(ARTICULATION_SHELL.anchor, scale, -depth * back, camera),
+      scale,
+      z: -depth * back,
+      back,
+    });
+  }
+  return slices;
+}
+

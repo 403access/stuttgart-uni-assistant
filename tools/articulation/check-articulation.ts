@@ -187,9 +187,18 @@ for (const sound of articulationSounds) {
       const points = [
         ...lane.map((point) => projectScenePoint(point, 10, { yaw, pitch, roll })),
         projectScenePoint(focus, 20, { yaw, pitch, roll }),
-        // points on the head shell, which is the outer bound of the model
-        ...([[186, 500], [600, 68], [900, 486], [806, 986], [258, 660]] as const).map((corner) =>
-          projectScenePoint(corner, ARTICULATION_SHELL.z, { yaw, pitch, roll }),
+        // points on the head shell, which is the outer bound of the model:
+        // the cut face and the far side of the skull
+        ...([[186, 500], [600, 68], [900, 486], [806, 986], [258, 660]] as const).flatMap((corner) =>
+          [0, 0.5, 1].map((back) => {
+            const scale = 1 - ARTICULATION_SHELL.taper * back ** 1.4;
+            const [ax, ay] = ARTICULATION_SHELL.anchor;
+            return projectScenePoint(
+              [ax + (corner[0] - ax) * scale, ay + (corner[1] - ay) * scale],
+              -ARTICULATION_SHELL.depth * back,
+              { yaw, pitch, roll },
+            );
+          }),
         ),
       ];
       expect(

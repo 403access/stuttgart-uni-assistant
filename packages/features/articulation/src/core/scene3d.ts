@@ -35,6 +35,8 @@ export interface ArticulationSceneLayer {
   anchor: readonly [number, number];
   /** Extra rotation of the outline inside its plane (velum swing). */
   rotate?: number;
+  /** 2-D paint order; coplanar cut faces fall back to it. */
+  order: number;
 }
 
 /** The three axes the learner can turn the model around. */
@@ -49,8 +51,24 @@ export interface ArticulationCamera {
   pitch: number;
 }
 
-/** The head shell: an open back plate plus the swept rim that closes it. */
-export const ARTICULATION_SHELL = { z: -44, rim: 10, rimWidth: 4 } as const;
+/**
+ * The head shell. A real head is about 150 mm wide and 195 mm long, and this
+ * drawing is 714 units long, so the half head behind the cut plane is roughly
+ * 270 units deep. The far half narrows towards the side of the head — most of
+ * all at the face — which is what makes the turned model read as a head
+ * instead of a sheet.
+ */
+export const ARTICULATION_SHELL = {
+  depth: 260,
+  /** Tone bands between the cut face and the far side of the head. */
+  rim: 26,
+  /** How much narrower the far side is than the cut face. */
+  taper: 0.26,
+  /** The taper pivots near the back of the skull, so the face narrows most. */
+  anchor: [640, 540] as const,
+  /** How far the neck runs on below the 2-D cut, so the 3-D bands get clipped. */
+  neck: 320,
+} as const;
 
 /** The model turns around the middle of the head, not around the origin. */
 export const ARTICULATION_PIVOT = { x: 540, y: 515 } as const;
@@ -83,18 +101,31 @@ export function withArticulationAxis(
   return { ...camera, yaw: angle };
 }
 
-/** Placement of the fixed organs: depth, thickness and pivot. */
-const STATIC: Record<string, { z: number; depth: number; anchor: [number, number] }> = {
-  'nasal-cavity': { z: -10, depth: 16, anchor: [450, 360] },
-  pharynx: { z: -12, depth: 16, anchor: [640, 560] },
-  'oral-cavity': { z: -14, depth: 16, anchor: [430, 565] },
-  'hard-palate': { z: 4, depth: 10, anchor: [400, 430] },
-  'alveolar-ridge': { z: 6, depth: 8, anchor: [312, 452] },
-  teeth: { z: 8, depth: 8, anchor: [290, 500] },
-  'lower-jaw': { z: 0, depth: 14, anchor: [420, 700] },
-  larynx: { z: -6, depth: 18, anchor: [658, 750] },
-  trachea: { z: -10, depth: 16, anchor: [670, 890] },
+/**
+ * Placement of the fixed organs: how deep the tissue reaches behind the cut
+ * plane, the pivot, and the 2-D paint order (all cut faces sit on the plane, so
+ * ties are resolved by that order).
+ */
+interface Placement {
+  depth: number;
+  anchor: [number, number];
+  order: number;
+}
+
+const STATIC: Record<string, Placement> = {
+  'nasal-cavity': { depth: 90, anchor: [450, 360], order: 10 },
+  pharynx: { depth: 90, anchor: [640, 560], order: 20 },
+  'oral-cavity': { depth: 80, anchor: [430, 565], order: 30 },
+  'hard-palate': { depth: 100, anchor: [400, 430], order: 50 },
+  'alveolar-ridge': { depth: 70, anchor: [312, 452], order: 60 },
+  teeth: { depth: 55, anchor: [290, 500], order: 70 },
+  'lower-jaw': { depth: 110, anchor: [420, 700], order: 110 },
+  larynx: { depth: 80, anchor: [658, 750], order: 120 },
+  trachea: { depth: 45, anchor: [670, 890], order: 140 },
 };
+
+/** A volume starts at the cut plane and recedes by its depth. */
+const behind = (depth: number) => -depth / 2;
 
 const tone = (name: keyof typeof diagramPalette) => diagramPalette[name];
 
@@ -103,7 +134,15 @@ export function articulationStaticLayers(): ArticulationSceneLayer[] {
   return articulationRegions.flatMap((region) => {
     const placement = STATIC[region.id];
     if (!placement || !region.path) return [];
-    return [{ id: region.id, paths: [region.path], ...tone(region.tone ?? 'rose'), ...placement }];
+    return [
+      {
+        id: region.id,
+        paths: [region.path],
+        ...tone(region.tone ?? 'rose'),
+        ...placement,
+        z: behind(placement.depth),
+      },
+    ];
   });
 }
 
@@ -117,34 +156,38 @@ export function articulationPoseLayers(
       id: 'vocal-cords',
       paths: cordOutlines(voiced),
       ...tone('cords'),
-      z: 4,
-      depth: 6,
+      depth: 30,
+      z: behind(30),
       anchor: [652, 755],
+      order: 130,
     },
     {
       id: 'tongue',
       paths: [tongueOutline(pose.tongue)],
       ...tone('tongue'),
-      z: 12,
-      depth: 30,
+      depth: 90,
+      z: behind(90),
       anchor: [470, 560],
+      order: 40,
     },
     {
       id: 'velum',
       paths: velumOutlines,
       ...tone('violet'),
-      z: 14,
-      depth: 10,
+      depth: 70,
+      z: behind(70),
       anchor: [545, 440],
+      order: 90,
       rotate: velumAngle(pose.velum),
     },
     {
       id: 'lips',
       paths: lipOutlines(pose.lips),
       ...tone('lip'),
-      z: 20,
-      depth: 15,
+      depth: 70,
+      z: behind(70),
       anchor: [245, 545],
+      order: 80,
     },
   ];
 }
@@ -196,6 +239,18 @@ export function articulationGrid(camera: ArticulationCamera): ArticulationGridLi
 
 /** The skull outline the shell is built from. */
 export { articulationBackdrop };
+
+/**
+ * The skull outline with the neck carried down past the 3D frame. The 2-D
+ * figure ends the neck on a flat cut, which would turn the shell's bands into a
+ * staircase as they recede; in 3D the neck simply runs out of the picture.
+ */
+export const articulationShellOutline: string[] = articulationBackdrop.map((d) =>
+  d.replace(
+    'L806 986',
+    `L526 ${986 + ARTICULATION_SHELL.neck} L806 ${986 + ARTICULATION_SHELL.neck} L806 986`,
+  ),
+);
 
 /**
  * Projection of a direction (no position), e.g. one axis of the gizmo. Same

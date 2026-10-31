@@ -33,6 +33,7 @@ export {
   withArticulationAxis,
   articulationScene,
   articulationPoseLayers,
+  articulationShellOutline,
   articulationStaticLayers,
   projectSceneDirection,
   projectScenePoint,

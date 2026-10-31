@@ -629,7 +629,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `AngleRow` (component), `AxisPicker` (component), `OverlayToggle` (component), `PlayButton` (component), `SpeedRow` (component), `ViewToggle` (component), `SPEEDS` (constant), `formatAngle` (helper), `formatSpeed` (helper)
 - Usages: 7 references in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 16 import `AngleRow`; 16 import `formatAngle`; 16 import `OverlayToggle`; 16 import `PlayButton`; 16 import `SpeedRow`; 16 import `ViewToggle`; 142 render `PlayButton`; 146 render `OverlayToggle`; 152 render `OverlayToggle`; 160 render `ViewToggle`; 163 render `SpeedRow`; 166 render `AngleRow`; 172 call `formatAngle`
+- `packages/features/articulation/src/ui/player.tsx`: 16 import `AngleRow`; 16 import `formatAngle`; 16 import `OverlayToggle`; 16 import `PlayButton`; 16 import `SpeedRow`; 16 import `ViewToggle`; 137 render `PlayButton`; 141 render `OverlayToggle`; 147 render `OverlayToggle`; 155 render `ViewToggle`; 158 render `SpeedRow`; 161 render `AngleRow`; 167 call `formatAngle`
 
 ### mail-skeletons
 
@@ -778,7 +778,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 17 import `ArticulationFigure`; 125 render `ArticulationFigure`
+- `packages/features/articulation/src/ui/player.tsx`: 17 import `ArticulationFigure`; 120 render `ArticulationFigure`
 
 ### ArticulationFigure3D
 
@@ -787,7 +787,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure3D` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 18 import `ArticulationFigure3D`; 114 render `ArticulationFigure3D`
+- `packages/features/articulation/src/ui/player.tsx`: 18 import `ArticulationFigure3D`; 110 render `ArticulationFigure3D`
 
 ### AttachmentList
 
@@ -960,7 +960,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `PhaseStrip` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 19 import `PhaseStrip`; 128 render `PhaseStrip`
+- `packages/features/articulation/src/ui/player.tsx`: 19 import `PhaseStrip`; 123 render `PhaseStrip`
 
 ### QuestionFeedback
 

@@ -10233,49 +10233,49 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 142,
+          "line": 137,
           "kind": "render",
           "exportName": "PlayButton",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 146,
+          "line": 141,
           "kind": "render",
           "exportName": "OverlayToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 152,
+          "line": 147,
           "kind": "render",
           "exportName": "OverlayToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 160,
+          "line": 155,
           "kind": "render",
           "exportName": "ViewToggle",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 163,
+          "line": 158,
           "kind": "render",
           "exportName": "SpeedRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 166,
+          "line": 161,
           "kind": "render",
           "exportName": "AngleRow",
           "count": 1
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 172,
+          "line": 167,
           "kind": "call",
           "exportName": "formatAngle",
           "count": 1
@@ -11411,7 +11411,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 125,
+          "line": 120,
           "kind": "render",
           "exportName": "ArticulationFigure",
           "count": 1
@@ -11464,7 +11464,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 114,
+          "line": 110,
           "kind": "render",
           "exportName": "ArticulationFigure3D",
           "count": 1
@@ -12493,7 +12493,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/articulation/src/ui/player.tsx",
-          "line": 128,
+          "line": 123,
           "kind": "render",
           "exportName": "PhaseStrip",
           "count": 1

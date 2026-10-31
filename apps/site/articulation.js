@@ -333,6 +333,7 @@
     const face = sceneMatrix(layer.anchor, 1, layer.z + layer.depth / 2);
     return {
       depth: sceneDepth(layer),
+      order: layer.order ?? 0,
       svg:
         svg +
         layer.paths
@@ -351,10 +352,14 @@
       const v = Math.sin(rad(camera.yaw));
       const w = Math.sin(rad(camera.pitch));
       const q = Math.cos(rad(camera.pitch));
+      const cr = Math.cos(rad(camera.roll));
+      const sr = Math.sin(rad(camera.roll));
       const dx = x - 540;
       const dy = y - 515;
       const z1 = -v * dx + u * z;
-      return { x: 540 + u * dx + v * z, y: 515 + q * dy - w * z1 };
+      const x2 = u * dx + v * z;
+      const y2 = q * dy - w * z1;
+      return { x: 540 + cr * x2 - sr * y2, y: 515 + sr * x2 + cr * y2 };
     };
     const lines = [];
     for (let x = 160; x <= 920; x += step) {
@@ -392,25 +397,39 @@
 
   function figure3d() {
     const shell = data.scene.shell;
-    const headSide = shade('#FFFDF9', 0.22);
-    const parts = [];
-    parts.push(
-      ...data.silhouette.map((shape) => path(shape.d, shape.fill, shape.stroke, 2.4).replace('<path', `<path transform="${sceneMatrix([540, 520], 1, shell.z)}"`)),
-    );
-    for (let index = 1; index <= shell.rim; index += 1) {
-      const z = shell.z + ((0 - shell.z) * index) / shell.rim;
-      const matrix = sceneMatrix([540, 520], 1, z);
+    const far = project(shell.anchor, -shell.depth);
+    const near = project(shell.anchor, 0);
+    const shadeId = 'studioShellShade';
+    const defs = `<defs><linearGradient id="${shadeId}" gradientUnits="userSpaceOnUse" x1="${far.x.toFixed(
+      1,
+    )}" y1="${far.y.toFixed(1)}" x2="${near.x.toFixed(1)}" y2="${near.y.toFixed(
+      1,
+    )}"><stop offset="0" stop-color="${shade('#FFFDF9', 0.2)}"/><stop offset="1" stop-color="#FFFDF9"/></linearGradient></defs>`;
+    const parts = [defs];
+    // The cut face is the section; the rest of the head recedes behind it and
+    // narrows towards the side of the head, so a turned model reads as a solid
+    // head and not as a sheet. The bands share one scene-space gradient and are
+    // stroked with it, so they fuse into a single surface from any angle.
+    const bandWidth = (shell.depth / shell.rim) * 2;
+    for (let index = shell.rim; index >= 0; index -= 1) {
+      const back = index / shell.rim;
+      const scale = 1 - shell.taper * back ** 1.4;
+      const matrix = sceneMatrix(shell.anchor, scale, -shell.depth * back);
+      const front = back === 0;
+      const fill = front ? '#FFFDF9' : `url(#${shadeId})`;
       parts.push(
-        ...data.silhouette.map(
+        ...data.shellOutline.map(
           (shape) =>
-            `<path d="${shape.d}" transform="${matrix}" fill="none" stroke="${headSide}" stroke-width="${shell.rimWidth}" stroke-linejoin="round"/>`,
+            `<path d="${shape.d}" transform="${matrix}" fill="${fill}" stroke="${
+              front ? shape.stroke : fill
+            }" stroke-width="${front ? 2.4 : bandWidth}" stroke-linejoin="round"/>`,
         ),
       );
     }
     if (showGrid) parts.push(gridSvg());
     const layers = [...data.scene.layers, ...sound.poseLayers]
       .map((layer) => sceneLayer(layer))
-      .sort((left, right) => left.depth - right.depth);
+      .sort((left, right) => left.depth - right.depth || left.order - right.order);
     parts.push(...layers.map((layer) => layer.svg));
     return `<svg viewBox="${data.view3d}" role="img" aria-label="${esc(
       copy().canvas(sound),

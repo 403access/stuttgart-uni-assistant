@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Animated, Text, View } from 'react-native';
-import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
@@ -9,13 +9,13 @@ import type { Locale } from '@ua/core/domain/types';
 
 import {
   ARTICULATION_3D_VIEW_BOX,
-  ARTICULATION_SHELL,
   airflowFocusT,
   airflowLane,
-  articulationBackdrop,
   articulationFocus,
   articulationGrid,
+  ARTICULATION_SHELL,
   articulationPoseLayers,
+  articulationShellOutline,
   articulationStaticLayers,
   pointPercent,
   projectSceneDirection,
@@ -35,7 +35,12 @@ import {
   type ArticulationTimeline,
 } from './timeline';
 
-const HEAD_SIDE = shadeColor('#FFFDF9', 0.22);
+/** How dark the far side of the head gets. */
+const SHELL_TONE = 0.2;
+/** Wide enough to bridge the gap between two shell bands at any angle. */
+const SHELL_BAND_WIDTH = (ARTICULATION_SHELL.depth / ARTICULATION_SHELL.rim) * 2;
+/** The shell's shading runs from the far side of the head to the cut face. */
+const SHELL_SHADE = 'shell-shade';
 
 /** Screen axes: X to the right, Y down, Z towards the viewer. */
 const AXES = [
@@ -59,7 +64,6 @@ export function ArticulationFigure3D({
   locale,
   timeline,
   camera,
-  steps = 10,
   hint,
   showAxes = false,
   showGrid = false,
@@ -67,8 +71,6 @@ export function ArticulationFigure3D({
   locale: Locale;
   timeline: ArticulationTimeline;
   camera: ArticulationCamera;
-  /** Rim slices of the shell; dragging lowers this to keep the SVG light. */
-  steps?: number;
   hint?: string;
   /** Draw the orientation gizmo in the corner. */
   showAxes?: boolean;
@@ -82,8 +84,16 @@ export function ArticulationFigure3D({
     () => sceneOrder([...articulationStaticLayers(), ...articulationPoseLayers(pose, displayed.voiced)], camera),
     [pose, displayed.voiced, camera],
   );
-  const rim = useMemo(() => shellRim(camera, steps, ARTICULATION_SHELL.z), [camera, steps]);
-  const backMatrix = rim[0];
+  const rim = useMemo(() => shellRim(camera), [camera]);
+  // The gradient is painted in scene space, so every band samples the same
+  // continuous surface tone instead of carrying its own flat fill.
+  const [shellFar, shellNear] = useMemo(() => {
+    const anchor = ARTICULATION_SHELL.anchor;
+    return [
+      projectScenePoint(anchor, -ARTICULATION_SHELL.depth, camera),
+      projectScenePoint(anchor, 0, camera),
+    ];
+  }, [camera]);
 
   const lane = useMemo(() => airflowLane(pose.airflow, pose), [pose]);
   const focus = useMemo(() => articulationFocus(displayed), [displayed]);
@@ -133,31 +143,37 @@ export function ArticulationFigure3D({
     <View style={[styles.canvas, { aspectRatio: aspectOf(ARTICULATION_3D_VIEW_BOX) }]}>
       <Animated.View style={[styles.fill, { opacity: fade }]} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox={ARTICULATION_3D_VIEW_BOX}>
-          {/* Open head shell: back plate plus the swept rim. */}
-          {articulationBackdrop.map((d, index) => (
-            <Path
-              key={`shell-back-${index}`}
-              d={d}
-              transform={backMatrix}
-              fill="#FFFDF9"
-              stroke="#243447"
-              strokeWidth={2.4}
-              strokeLinejoin="round"
-            />
-          ))}
-          {rim.slice(1).map((matrix, index) =>
-            articulationBackdrop.map((d, pathIndex) => (
+          {/* Cutaway head shell: the cut face, and the skull receding behind it.
+              The bands share one scene-space gradient and are stroked with it,
+              so they fuse into a single surface from any angle. */}
+          <Defs>
+            <LinearGradient
+              id={SHELL_SHADE}
+              gradientUnits="userSpaceOnUse"
+              x1={shellFar.x}
+              y1={shellFar.y}
+              x2={shellNear.x}
+              y2={shellNear.y}
+            >
+              <Stop offset="0" stopColor={shadeColor('#FFFDF9', SHELL_TONE)} />
+              <Stop offset="1" stopColor="#FFFDF9" />
+            </LinearGradient>
+          </Defs>
+          {[...rim].reverse().map((slice) => {
+            const front = slice.back === 0;
+            const shade = `url(#${SHELL_SHADE})`;
+            return articulationShellOutline.map((d, pathIndex) => (
               <Path
-                key={`shell-rim-${index}-${pathIndex}`}
+                key={`shell-${slice.back}-${pathIndex}`}
                 d={d}
-                transform={matrix}
-                fill="none"
-                stroke={HEAD_SIDE}
-                strokeWidth={ARTICULATION_SHELL.rimWidth}
+                transform={slice.matrix}
+                fill={front ? '#FFFDF9' : shade}
+                stroke={front ? '#243447' : shade}
+                strokeWidth={front ? 2.4 : SHELL_BAND_WIDTH}
                 strokeLinejoin="round"
               />
-            )),
-          )}
+            ));
+          })}
 
           {/* Reference grid on the cut plane. */}
           {grid.map((line, index) => (

@@ -23,6 +23,7 @@ import {
   ARTICULATION_CAMERA,
   ARTICULATION_SHELL,
   articulationPoseLayers,
+  articulationShellOutline,
   articulationStaticLayers,
   type ArticulationSceneLayer,
 } from './scene3d';
@@ -75,6 +76,8 @@ export interface ArticulationSiteData {
   view3d: string;
   turn: typeof ARTICULATION_TURN;
   silhouette: { d: string; fill: string; stroke: string }[];
+  /** The skull outline with the neck carried past the 3-D frame. */
+  shellOutline: { d: string; fill: string; stroke: string }[];
   regions: { d: string; fill: string; stroke: string }[];
   velum: string[];
   /** The neutral articulators the approach phase starts from. */
@@ -106,6 +109,7 @@ export function buildArticulationSiteData(): ArticulationSiteData {
     view3d: ARTICULATION_3D_VIEW_BOX,
     turn: ARTICULATION_TURN,
     silhouette: articulationBackdrop.map((d) => ({ d, fill: '#FFFDF9', stroke: '#243447' })),
+    shellOutline: articulationShellOutline.map((d) => ({ d, fill: '#FFFDF9', stroke: '#243447' })),
     regions: articulationRegions.flatMap((region) =>
       region.path
         ? [

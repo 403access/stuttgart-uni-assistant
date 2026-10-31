@@ -14,8 +14,8 @@ export const ARTICULATION_TURN = {
   presets: [0, 28, -28],
 } as const;
 
-/** Padded frame for the 3D view: the turned block needs room for its side wall. */
-export const ARTICULATION_3D_VIEW_BOX = '120 10 800 1060';
+/** Padded frame for the 3D view: the turned head needs room for its far side. */
+export const ARTICULATION_3D_VIEW_BOX = '100 0 840 1080';
 
 /**
  * Fold any angle into (−180, 180], so a drag can spin the block through a full
