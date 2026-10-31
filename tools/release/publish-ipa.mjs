@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { invokedDirectly } from './ios/cli.mjs';
 import { nativeVersion } from './ios/project.mjs';
 import { readIpaProfile } from './ios/provisioning.mjs';
-import { loadEnv } from '../apps/dist/env.mjs';
+import { loadEnv } from '../../apps/dist/env.mjs';
 
 // The service and this client read the same repository `.env`, so the token does
 // not have to be exported twice. `DIST_URL` is read below, so this runs first.
@@ -120,7 +120,7 @@ export function readIpaInfo(ipaPath) {
 }
 
 /** Newest `.ipa` in `apps/mobile/dist/ios`, so the common case needs no argument. */
-export function newestIpa(dir = fileURLToPath(new URL('../apps/mobile/dist/ios', import.meta.url))) {
+export function newestIpa(dir = fileURLToPath(new URL('../../apps/mobile/dist/ios', import.meta.url))) {
   let entries;
   try {
     entries = readdirSync(dir).filter((name) => name.endsWith('.ipa'));

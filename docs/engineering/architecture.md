@@ -21,7 +21,7 @@ apps/server/http.mjs              Body parsing, JSON and HTML responses, CORS
 apps/server/routes/               One module per group of paths
 ```
 
-`apps/mobile/src/data/` and `apps/mobile/src/domain/plan.ts` do not import React, so `tools/check-assistant.ts` can assert the catalog without starting Metro.
+`apps/mobile/src/data/` and `apps/mobile/src/domain/plan.ts` do not import React, so `tools/assistant/check-assistant.ts` can assert the catalog without starting Metro.
 
 ## Navigation
 

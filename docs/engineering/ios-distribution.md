@@ -218,7 +218,7 @@ build failure: unlock the iPhone and run the install/launch step again.
 ## Building the test build
 
 `npm run ios:ipa` does the whole thing: preflight, archive, export. It is
-`tools/build-ios-ipa.mjs` as orchestration, with the pieces in `tools/ios/`:
+`tools/release/build-ios-ipa.mjs` as orchestration, with the pieces in `tools/release/ios/`:
 `project.mjs` (paths, `app.json`, `Info.plist`, the team), `entitlements.mjs`,
 `provisioning.mjs` (reading the signature back), `artifact.mjs` (naming, export
 options, checksum) and `cli.mjs`.
@@ -400,13 +400,13 @@ Read out of this repository:
   only under its flag.
 - `apps/mobile/src/vpn/engine-config.ts` and `apps/mobile/src/vpn/engine-openvpn.ts` already pass an
   `OVPNEXT` bundle id that no target provides.
-- `tools/build-ios-ipa.test.mjs` covers the workflow's preflight and its
+- `tools/release/build-ios-ipa.test.mjs` covers the workflow's preflight and its
   archive/export sequence against a stand-in `xcodebuild`. It asserts that a
   tree carrying the VPN entitlements is refused **before** `xcodebuild` is
   called at all, that a clean tree produces one `.ipa` with the expected name,
   and that no scratch directory is left beside the archive. It runs as part of
   `npm run check`.
-- `tools/xcode-accounts.test.mjs` pins the account-and-team findings against a
+- `tools/release/xcode-accounts.test.mjs` pins the account-and-team findings against a
   fixture copied from a real `defaults export`: two accounts, one identifier,
   and a cached team list that contradicts the live one.
 - The account and team table above is `npm run ios:accounts` output, quoted

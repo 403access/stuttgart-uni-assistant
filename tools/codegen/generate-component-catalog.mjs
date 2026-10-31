@@ -676,7 +676,7 @@ const stats = {
 };
 
 const catalog = {
-  generatedBy: 'tools/generate-component-catalog.mjs',
+  generatedBy: 'tools/codegen/generate-component-catalog.mjs',
   stats,
   entries: finalized,
 };
@@ -794,7 +794,7 @@ function renderMarkdown() {
   lines.push('# Component catalog');
   lines.push('');
   lines.push(
-    'Every component under `src/` with its exports, platform files, and every place it is imported, rendered, called, or referenced. The page is generated from the TypeScript AST by `tools/generate-component-catalog.mjs`. The in-app view with live previews is **Dev → Komponenten** (`/dev/components`); the operator inventory is **Komponenten** (`/admin#/components`). The **Preview** column names the exports with a live demo; the admin page links them to the Expo web app on port 8081.',
+    'Every component under `src/` with its exports, platform files, and every place it is imported, rendered, called, or referenced. The page is generated from the TypeScript AST by `tools/codegen/generate-component-catalog.mjs`. The in-app view with live previews is **Dev → Komponenten** (`/dev/components`); the operator inventory is **Komponenten** (`/admin#/components`). The **Preview** column names the exports with a live demo; the admin page links them to the Expo web app on port 8081.',
   );
   lines.push('');
   lines.push(

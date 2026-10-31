@@ -28,7 +28,7 @@ Keep the demonstration true after the first build: the numbers, the disclaimer, 
 
 ## Changing the record
 
-The fictional student is a fixture, not a config file scattered through the UI. Change her semester, a grade, or a room in `apps/mobile/src/data`, then update `tools/check-assistant.ts` so the new fact is the one the answers assert. Screens should not need a parallel edit if they already read the catalog.
+The fictional student is a fixture, not a config file scattered through the UI. Change her semester, a grade, or a room in `apps/mobile/src/data`, then update `tools/assistant/check-assistant.ts` so the new fact is the one the answers assert. Screens should not need a parallel edit if they already read the catalog.
 
 ## Support posture
 

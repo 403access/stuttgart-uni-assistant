@@ -111,12 +111,17 @@ Arrows point from caller to dependency. No arrow points upward.
 │       ├── ilias/
 │       └── quiz/
 ├── tools/
-│   ├── codegen/                    catalogs, tokens, icons, site tokens
+│   ├── campus/                     C@MPUS probes, secrets, DB check, headless login
+│   ├── ilias/                      ILIAS probe and portal tests
+│   ├── quiz/                       quiz checks, catalog export, PDF pipeline
+│   ├── articulation/               articulation checks and site export
+│   ├── assistant/                  assistant checks and Cloudflare tunnel
+│   ├── app/                        app-module unit tests
+│   ├── codegen/                    catalogs, tokens, icons, site sitemap
 │   ├── release/                    iOS build, publish, Xcode accounts
-│   ├── dev/                        tunnel, secrets, headless login, ILIAS probe
 │   ├── product/                    beta forms and product utilities
-│   ├── quiz/                       PDF-to-quiz pipeline
-│   └── test-support/               fake AsyncStorage, fake SQLite, fixtures
+│   ├── testing/                    fake AsyncStorage, fake SQLite, fixtures
+│   └── admin-screenshots/          Playwright captures for the parity docs
 ├── docs/                           canonical documentation
 ├── patches/                        Bun patched dependencies
 ├── package.json                    workspace root and task runner
@@ -472,12 +477,12 @@ Temporary re-export files at old paths are allowed for one pull request per doma
 
 | Artifact | Producer | Consumers |
 | --- | --- | --- |
-| `packages/design-tokens/generated/*` | `tools/codegen/tokens.mjs` | All surfaces |
-| `apps/mobile/src/components/catalog.generated.ts` | `tools/codegen/component-catalog.mjs` | Dev screen |
+| `packages/design-tokens/generated/*` | `tools/codegen/generate-tokens.mjs` | All surfaces |
+| `apps/mobile/src/components/catalog.generated.ts` | `tools/codegen/generate-component-catalog.mjs` | Dev screen |
 | `apps/admin/src/generated/component-catalog.json` | same | Admin **Komponenten** page |
 | `docs/engineering/component-catalog.md` | same | Docs site |
-| `apps/server/data/quiz/catalog.json` | `tools/codegen/quiz-catalog.ts` | Server seed and admin quiz |
-| `apps/site/assets/tokens.css` | `tools/codegen/tokens.mjs` | Site |
+| `apps/server/data/quiz/catalog.json` | `tools/quiz/export-quiz-catalog.ts` | Server seed and admin quiz |
+| `apps/site/assets/tokens.css` | `tools/codegen/generate-tokens.mjs` | Site |
 
 The component catalog generator owns one in-memory model and writes the app, admin, and docs outputs. If a fourth consumer appears, emit one shared JSON and let each consumer adapt it. Do not hand-maintain the outputs.
 
@@ -544,7 +549,7 @@ The rewrite order is chosen by risk and value: shell + overview + system + logs 
 | `@ua/ui` | No unit tests initially; Dev → Komponenten previews and an Expo web export | `expo export` |
 | `@ua/ui-react` | Render, keyboard, focus, DataTable, form, theme | Vitest + Testing Library |
 | `@ua/feature-*` | Core logic; UI typecheck and app smoke | `node --test` / `tsc` |
-| `apps/mobile` | Typecheck, lint, web export; existing headless/Playwright checks stay in `tools/dev` | `tsc`, `expo export` |
+| `apps/mobile` | Typecheck, lint, web export; existing headless/Playwright checks stay in `tools/campus` | `tsc`, `expo export` |
 | `apps/server` | Existing 11 test files, moved with the code | `node --test` |
 | `apps/admin` | Route smoke tests with a mocked API client; component tests | Vitest + Testing Library |
 | `apps/dist` | Existing test plus a bundle smoke test | `node --test` |

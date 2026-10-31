@@ -21,19 +21,19 @@ Scripts in `package.json`:
 | `start` | `expo start` | Dev server, then Expo Go, a simulator, or the web UI |
 | `web` | `expo start --web` | Browser |
 | `ios` / `android` | `expo start --ios` / `--android` | Simulator or emulator |
-| `ios:ipa` | `node tools/build-ios-ipa.mjs` | Release `.ipa` for a tester's iPhone, signed by the Apple Account in Xcode. Refuses to archive an unsignable tree; see [ios-distribution.md](../engineering/ios-distribution.md) |
-| `ios:accounts` | `node tools/xcode-accounts.mjs` | The Apple Accounts and teams Xcode knows about, compared with this project's team. Read-only; `--json` for scripts |
+| `ios:ipa` | `node tools/release/build-ios-ipa.mjs` | Release `.ipa` for a tester's iPhone, signed by the Apple Account in Xcode. Refuses to archive an unsignable tree; see [ios-distribution.md](../engineering/ios-distribution.md) |
+| `ios:accounts` | `node tools/release/xcode-accounts.mjs` | The Apple Accounts and teams Xcode knows about, compared with this project's team. Read-only; `--json` for scripts |
 | `dist:serve` | `node apps/dist/server.mjs` | The standalone build-distribution service: history, `.ipa` hosting, install manifest. Needs `DIST_TOKEN`; see `apps/dist/README.md` |
-| `dist:publish` | `node tools/publish-ipa.mjs` | Upload the newest `.ipa` (or a named one) to that service |
+| `dist:publish` | `node tools/release/publish-ipa.mjs` | Upload the newest `.ipa` (or a named one) to that service |
 | `dist:tunnel` | `cloudflared --config apps/dist/tunnel.yml tunnel run` | Serves that service at a public HTTPS hostname through a named Cloudflare tunnel |
 | `tunnel` | `expo start --tunnel` | Dev server reachable from another network (Expo's ngrok tunnel) |
 | `typecheck` | `tsc --noEmit` | Types for the app and the check script |
-| `check` | `tsx tools/check-assistant.ts` + `tsx tools/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests, the assistant-tunnel helper tests |
+| `check` | `tsx tools/assistant/check-assistant.ts` + `tsx tools/campus/check-campus-db.ts` + `node --test` | Catalog totals, German answers, campus DB round-trips (real SQLite via node:sqlite, AsyncStorage faked), the OIDC and campus server tests, the secrets CLI tests, the assistant-tunnel helper tests |
 | `assistant` | `node apps/server/index.mjs` | Local Grok proxy on port 8787 |
-| `assistant:tunnel` | `node tools/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes the public URL into `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
-| `assistant:local` | `node tools/tunnel-assistant.mjs --clear` | Blank `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` after a tunnel was killed the hard way |
-| `campus:token` / `campus:session` | `node tools/set-campus-secret.mjs` | Write `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` into git-ignored `.env` |
-| `campus:secret` | `node tools/set-campus-secret.mjs` | `list` shows which secrets are set, masked; `--help` shows usage |
+| `assistant:tunnel` | `node tools/assistant/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes the public URL into `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
+| `assistant:local` | `node tools/assistant/tunnel-assistant.mjs --clear` | Blank `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` after a tunnel was killed the hard way |
+| `campus:token` / `campus:session` | `node tools/campus/set-campus-secret.mjs` | Write `CAMPUS_BEARER_TOKEN` / `CAMPUS_SESSION_COOKIE` into git-ignored `.env` |
+| `campus:secret` | `node tools/campus/set-campus-secret.mjs` | `list` shows which secrets are set, masked; `--help` shows usage |
 
 Sign in with **Mit SIAM anmelden** when `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` are in `.env`, or open the demonstration profile. There is no password field. The URLs and the TIK registration step are in [oidc-login.md](../engineering/oidc-login.md).
 

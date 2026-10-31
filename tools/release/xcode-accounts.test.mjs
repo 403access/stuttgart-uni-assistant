@@ -116,10 +116,10 @@ async function sandbox({ projectTeamId = 'QML5B57EMH' } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'xcode-accounts-'));
   sandboxes.push(dir);
 
-  await mkdir(join(dir, 'tools'), { recursive: true });
+  await mkdir(join(dir, 'tools', 'release'), { recursive: true });
   await mkdir(join(dir, 'apps', 'mobile'), { recursive: true });
-  await copyFile(scriptPath, join(dir, 'tools', 'xcode-accounts.mjs'));
-  await cp(join(dirname(scriptPath), 'ios'), join(dir, 'tools', 'ios'), { recursive: true });
+  await copyFile(scriptPath, join(dir, 'tools', 'release', 'xcode-accounts.mjs'));
+  await cp(join(dirname(scriptPath), 'ios'), join(dir, 'tools', 'release', 'ios'), { recursive: true });
 
   await mkdir(join(dir, 'apps', 'mobile', 'ios', 'UniversityAssistant.xcodeproj'), { recursive: true });
   await writeFile(join(dir, 'apps', 'mobile', 'ios', 'UniversityAssistant.xcodeproj', 'project.pbxproj'), TEAM_BLOCK(projectTeamId));
@@ -132,7 +132,7 @@ async function sandbox({ projectTeamId = 'QML5B57EMH' } = {}) {
 
 function run(dir, preferences, args) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [join(dir, 'tools', 'xcode-accounts.mjs'), ...args], {
+    const child = spawn(process.execPath, [join(dir, 'tools', 'release', 'xcode-accounts.mjs'), ...args], {
       cwd: dir,
       env: { ...process.env, XCODE_PREFS_XML_FILE: preferences },
       stdio: ['ignore', 'pipe', 'pipe'],

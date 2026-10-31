@@ -9,7 +9,7 @@
  *   npm run ios:ipa -- --team ABCDE12345
  *   npm run ios:ipa -- --out /tmp/ipa
  *
- * This file is the orchestration only. The pieces live in `tools/ios/`:
+ * This file is the orchestration only. The pieces live in `tools/release/ios/`:
  *
  *   project.mjs       paths, app.json, Info.plist, the team
  *   entitlements.mjs  the capabilities a free Account cannot sign

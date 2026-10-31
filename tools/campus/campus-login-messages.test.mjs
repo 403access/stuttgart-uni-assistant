@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildHarvest, diagnoseLines, mergeCookieStrings } from '../apps/mobile/src/auth/campus-harvest.ts';
-import { campusMessage, formatDump, hostOf, messageFor, parseHarvestMessage } from '../apps/mobile/src/auth/login-messages.ts';
+import { buildHarvest, diagnoseLines, mergeCookieStrings } from '../../apps/mobile/src/auth/campus-harvest.ts';
+import { campusMessage, formatDump, hostOf, messageFor, parseHarvestMessage } from '../../apps/mobile/src/auth/login-messages.ts';
 
 /**
  * The pure helpers the login screen and its two WebView hooks rely on. They are

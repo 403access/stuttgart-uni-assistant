@@ -8,7 +8,7 @@ hide_table_of_contents: true
 
 # Component catalog
 
-Every component under `src/` with its exports, platform files, and every place it is imported, rendered, called, or referenced. The page is generated from the TypeScript AST by `tools/generate-component-catalog.mjs`. The in-app view with live previews is **Dev → Komponenten** (`/dev/components`); the operator inventory is **Komponenten** (`/admin#/components`). The **Preview** column names the exports with a live demo; the admin page links them to the Expo web app on port 8081.
+Every component under `src/` with its exports, platform files, and every place it is imported, rendered, called, or referenced. The page is generated from the TypeScript AST by `tools/codegen/generate-component-catalog.mjs`. The in-app view with live previews is **Dev → Komponenten** (`/dev/components`); the operator inventory is **Komponenten** (`/admin#/components`). The **Preview** column names the exports with a live demo; the admin page links them to the Expo web app on port 8081.
 
 `render` is a JSX tag, `call` is a direct invocation, `reference` is an identifier passed as a value (for example `component={Screen}`), `import` and `type` are import statements, and `re-export` is a barrel line such as `src/state/AppState.tsx`. The catalog sources themselves are excluded so the counts do not include this page.
 

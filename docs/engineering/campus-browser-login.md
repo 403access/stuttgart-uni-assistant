@@ -4,7 +4,7 @@ Temporary workaround until the university approves the OIDC client: sign in with
 
 ## Automated sign-in (headless)
 
-`Automatisch anmelden` on the login screen takes the account id and the password, optionally stores them in the device vault ([vault.ts](../../apps/mobile/src/auth/vault.ts)), and runs the sign-in in a hidden `WebView`. The script builders live in [campus-browser-scripts.ts](../../apps/mobile/src/auth/campus-browser-scripts.ts), free of React Native imports so `tools/campus-headless.test.mjs` can drive them against fixtures in `jsdom`.
+`Automatisch anmelden` on the login screen takes the account id and the password, optionally stores them in the device vault ([vault.ts](../../apps/mobile/src/auth/vault.ts)), and runs the sign-in in a hidden `WebView`. The script builders live in [campus-browser-scripts.ts](../../apps/mobile/src/auth/campus-browser-scripts.ts), free of React Native imports so `tools/campus/campus-headless.test.mjs` can drive them against fixtures in `jsdom`.
 
 The C@MPUS shell presents **two** sign-ins on the same page: the realm's own account form, embedded in the shell document (the URL stays `/cusonline/`), and a link to the brokered university sign-in. A student's st-account only exists at the broker, so the script takes that entry first:
 
@@ -36,7 +36,7 @@ Every step posts back and is logged as `[campus-headless] <step> <url>`, with `u
 printf '%s' "$ST_PASSWORD" | npm run campus:headless -- --user st206509@stud.uni-stuttgart.de --password-stdin
 ```
 
-`tools/campus-headless-login.mjs` takes the credential per invocation — never from a file or the environment — and prints every step, the cookie names with their lengths, and a verdict. With `--password-stdin` and a terminal it prompts without echoing and reads a single line; with a pipe it reads to EOF, so `printf '%s' "$ST_PASSWORD" | …` also works and keeps the value out of the shell history entirely. The value is never printed (`mask`), never stored, and the process leaves nothing behind. `--verify` (the default) mints a bearer from the session cookie through `/ee/rest/auth/token/refresh` and hands cookie plus bearer to the running assistant server's `POST /v1/campus/credentials`, which is the same validation the app triggers; `--no-verify` stops after the login, and `--json` prints a machine-readable summary.
+`tools/campus/campus-headless-login.mjs` takes the credential per invocation — never from a file or the environment — and prints every step, the cookie names with their lengths, and a verdict. With `--password-stdin` and a terminal it prompts without echoing and reads a single line; with a pipe it reads to EOF, so `printf '%s' "$ST_PASSWORD" | …` also works and keeps the value out of the shell history entirely. The value is never printed (`mask`), never stored, and the process leaves nothing behind. `--verify` (the default) mints a bearer from the session cookie through `/ee/rest/auth/token/refresh` and hands cookie plus bearer to the running assistant server's `POST /v1/campus/credentials`, which is the same validation the app triggers; `--no-verify` stops after the login, and `--json` prints a machine-readable summary.
 
 Two engines:
 

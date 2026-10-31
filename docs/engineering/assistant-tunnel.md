@@ -59,12 +59,12 @@ The order matters. `EXPO_PUBLIC_*` is inlined into the bundle, so Expo has to st
 
 ## What `npm run assistant:tunnel` does
 
-`tools/tunnel-assistant.mjs`:
+`tools/assistant/tunnel-assistant.mjs`:
 
 1. Probes `http://127.0.0.1:8787/health` and warns when the assistant server is not up yet.
 2. Runs `cloudflared tunnel --url http://127.0.0.1:<port>`. The port is `PORT` or 8787, overridable with `npm run assistant:tunnel -- --port 9000`.
 3. Reads the `https://<words>.trycloudflare.com` hostname out of the `cloudflared` output, forwarding its log to stderr.
-4. Writes that hostname to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` in the git-ignored `.env`, through the same helper the C@MPUS secret writer uses (`tools/set-campus-secret.mjs`), and keeps the file at mode `600`. `EXPO_PUBLIC_ASSISTANT_URL` is left as it is.
+4. Writes that hostname to `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` in the git-ignored `.env`, through the same helper the C@MPUS secret writer uses (`tools/campus/set-campus-secret.mjs`), and keeps the file at mode `600`. `EXPO_PUBLIC_ASSISTANT_URL` is left as it is.
 5. Checks `GET /health` once more through the public URL.
 6. Blanks `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` again on Ctrl-C and on every exit path, so no dead hostname is left behind. A run that never got a hostname leaves `.env` untouched.
 

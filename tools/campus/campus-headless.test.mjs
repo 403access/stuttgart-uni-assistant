@@ -11,7 +11,7 @@ import {
   HEADLESS_MAX_SUBMITS_PER_RUN,
   headlessAutofillScript,
   headlessDumpScript,
-} from '../apps/mobile/src/auth/campus-browser-scripts.ts';
+} from '../../apps/mobile/src/auth/campus-browser-scripts.ts';
 
 /**
  * The injected scripts run against a DOM, so the fixtures below are reduced

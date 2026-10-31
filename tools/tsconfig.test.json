@@ -7,5 +7,5 @@
       "@react-native-async-storage/async-storage": ["./testing/fake-async-storage.mjs"]
     }
   },
-  "include": ["./check-campus-db.ts"]
+  "include": ["./campus/check-campus-db.ts"]
 }

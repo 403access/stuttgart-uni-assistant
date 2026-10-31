@@ -110,7 +110,7 @@ screen readers can turn and tilt it too; the pitch stays inside ±32°.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web.
-`tools/check-articulation.ts` projects the airstream, the focus point and the
+`tools/articulation/check-articulation.ts` projects the airstream, the focus point and the
 shell outline through the camera at the extreme angles and asserts that they
 stay inside the padded frame.
 
@@ -121,12 +121,12 @@ The marketing page (`apps/site`) runs the same studio as a live demo in its
 snapshot: `bun run site:articulation` writes `apps/site/assets/articulation.js`
 from `packages/features/articulation/src/core/site.ts`, and
 `apps/site/articulation.js` renders it with plain SVG and a `requestAnimationFrame`
-timeline. The snapshot is checked by `tools/check-articulation.ts`, so a new sound cannot
+timeline. The snapshot is checked by `tools/articulation/check-articulation.ts`, so a new sound cannot
 ship in the app while the website still shows the old set.
 
 The sound catalog lives in `packages/features/articulation/src/core/sounds/`. Adding a sound
 is a data-only change: pick a `manner`, an optional `place` (vowels use `shape`
-instead), `voiced`, and the `pose`. `tools/check-articulation.ts` verifies unique ids,
+instead), `voiced`, and the `pose`. `tools/articulation/check-articulation.ts` verifies unique ids,
 bilingual copy, manner/velum/airstream consistency, drawable paths and that
 `studioSoundForTopic` points at real topics and sounds.
 
@@ -224,7 +224,7 @@ module header.
 
 ### Generated topics from PDFs
 
-`tools/quiz-from-pdf.ts` turns PDFs into topics that are attached to an
+`tools/quiz/quiz-from-pdf.ts` turns PDFs into topics that are attached to an
 existing module. It reads embedded PDF text, asks xAI for a structured topic,
 validates it, and writes TypeScript source:
 
@@ -320,7 +320,7 @@ correctness, and text filters plus `attempts/export.csv`). Rounds are under
 Question-specific fields are edited as JSON on the dashboard. The server
 validates the shape for every kind before writing, so an invalid payload cannot
 reach the app. The bundled snapshot and the server catalog are checked for
-drift by `tools/check-quiz.ts`.
+drift by `tools/quiz/check-quiz.ts`.
 
 ## Rounds and progress
 
@@ -367,8 +367,8 @@ confirmation.
 
 ## Checks
 
-`tools/check-quiz.ts` verifies unique ids, answer shapes, bilingual copy,
+`tools/quiz/check-quiz.ts` verifies unique ids, answer shapes, bilingual copy,
 correct/incorrect evaluation, free-text tolerance, kind labels, and topic
-registration. `tools/check-quiz-pipeline.ts` checks slugging, normalization,
+registration. `tools/quiz/check-quiz-pipeline.ts` checks slugging, normalization,
 invalid drafts, source capping, the registry round-trip, and serializer
 escaping. Both run as part of `bun run check`.

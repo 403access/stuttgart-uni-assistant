@@ -13,7 +13,7 @@ import { PERSONAL_TEAM_MAX_DAYS, assessSignature, parseProvisioningProfile } fro
 import { findTeamId, nativeVersion, resolveTeamId } from './ios/project.mjs';
 
 const scriptPath = fileURLToPath(new URL('./build-ios-ipa.mjs', import.meta.url));
-const pluginPath = fileURLToPath(new URL('../apps/mobile/plugins/withVpnTunnel.js', import.meta.url));
+const pluginPath = fileURLToPath(new URL('../../apps/mobile/plugins/withVpnTunnel.js', import.meta.url));
 
 const TEAM = 'QML5B57EMH';
 const sandboxes = [];
@@ -109,10 +109,10 @@ async function sandbox({ entitlements = EMPTY_ENTITLEMENTS, appJson = APP_JSON }
   const dir = await mkdtemp(join(tmpdir(), 'ios-ipa-'));
   sandboxes.push(dir);
 
-  await mkdir(join(dir, 'tools'), { recursive: true });
+  await mkdir(join(dir, 'tools', 'release'), { recursive: true });
   await mkdir(join(dir, 'apps', 'mobile'), { recursive: true });
-  await copyFile(scriptPath, join(dir, 'tools', 'build-ios-ipa.mjs'));
-  await cp(join(dirname(scriptPath), 'ios'), join(dir, 'tools', 'ios'), { recursive: true });
+  await copyFile(scriptPath, join(dir, 'tools', 'release', 'build-ios-ipa.mjs'));
+  await cp(join(dirname(scriptPath), 'ios'), join(dir, 'tools', 'release', 'ios'), { recursive: true });
   await writeFile(join(dir, 'apps', 'mobile', 'app.json'), appJson);
 
   await mkdir(join(dir, 'apps', 'mobile', 'ios', 'UniversityAssistant'), { recursive: true });
@@ -147,7 +147,7 @@ function run(dir, args, log) {
     };
     delete env.APPLE_TEAM_ID;
     delete env[IOS_ENTITLEMENTS_FLAG];
-    const child = spawn(process.execPath, [join(dir, 'tools', 'build-ios-ipa.mjs'), ...args], {
+    const child = spawn(process.execPath, [join(dir, 'tools', 'release', 'build-ios-ipa.mjs'), ...args], {
       cwd: dir,
       env,
       stdio: ['ignore', 'pipe', 'pipe'],

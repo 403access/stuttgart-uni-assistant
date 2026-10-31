@@ -3,11 +3,11 @@
  * Creates the beta forms in Tally: the signup form, a German survey, an
  * English survey, and the separate interview signup.
  *
- *   node tools/create-beta-forms.mjs              create four drafts
- *   node tools/create-beta-forms.mjs --publish    publish the drafts
- *   node tools/create-beta-forms.mjs --force      create a new set
- *   node tools/create-beta-forms.mjs --signup     create or reuse the signup form only
- *   node tools/create-beta-forms.mjs --dry-run    print the block counts, no API call
+ *   node tools/product/create-beta-forms.mjs              create four drafts
+ *   node tools/product/create-beta-forms.mjs --publish    publish the drafts
+ *   node tools/product/create-beta-forms.mjs --force      create a new set
+ *   node tools/product/create-beta-forms.mjs --signup     create or reuse the signup form only
+ *   node tools/product/create-beta-forms.mjs --dry-run    print the block counts, no API call
  *
  * The key is read from TALLY_API_KEY, `~/.config/tally/api_key`, or the
  * git-ignored `.env`, in that order. It is never printed. The form ids are

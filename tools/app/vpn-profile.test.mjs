@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { looksLikeOpenVpn, openVpnHost, openVpnRemote } from '../apps/mobile/src/vpn/openvpn-config.ts';
+import { looksLikeOpenVpn, openVpnHost, openVpnRemote } from '../../apps/mobile/src/vpn/openvpn-config.ts';
 
 /**
  * The `.ovpn` parser decides whether an imported file is usable and where it

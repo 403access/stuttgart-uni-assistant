@@ -14,8 +14,8 @@ const sandboxes = [];
 async function sandbox(files = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'campus-secret-'));
   sandboxes.push(dir);
-  await mkdir(join(dir, 'scripts'), { recursive: true });
-  await copyFile(scriptPath, join(dir, 'scripts', 'set-campus-secret.mjs'));
+  await mkdir(join(dir, 'tools', 'campus'), { recursive: true });
+  await copyFile(scriptPath, join(dir, 'tools', 'campus', 'set-campus-secret.mjs'));
   for (const [name, content] of Object.entries(files)) await writeFile(join(dir, name), content);
   return dir;
 }
@@ -24,7 +24,7 @@ async function sandbox(files = {}) {
 // EOF to a stdin-reading child in this environment, so the CLI would hang.
 function run(dir, args, input) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [join(dir, 'scripts', 'set-campus-secret.mjs'), ...args], {
+    const child = spawn(process.execPath, [join(dir, 'tools', 'campus', 'set-campus-secret.mjs'), ...args], {
       cwd: dir,
       stdio: ['pipe', 'pipe', 'pipe'],
     });

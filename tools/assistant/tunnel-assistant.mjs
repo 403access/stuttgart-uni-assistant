@@ -25,10 +25,10 @@
 import { spawn } from 'node:child_process';
 import { chmodSync, existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { readValue, writeKey } from './set-campus-secret.mjs';
+import { readValue, writeKey } from '../campus/set-campus-secret.mjs';
 
-const envPath = new URL('../apps/mobile/.env', import.meta.url);
-const examplePath = new URL('../apps/mobile/.env.example', import.meta.url);
+const envPath = new URL('../../apps/mobile/.env', import.meta.url);
+const examplePath = new URL('../../apps/mobile/.env.example', import.meta.url);
 /** The base URL, set by hand. This script reads it but never writes it. */
 export const baseKey = 'EXPO_PUBLIC_ASSISTANT_URL';
 /** The public hostname while a tunnel is up. Blanked again when the tunnel stops. */

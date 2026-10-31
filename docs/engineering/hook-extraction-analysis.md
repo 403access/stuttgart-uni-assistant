@@ -761,7 +761,7 @@ export async function hydrateStudySnapshot(input: {
 hook stays usable from onboarding (which has no `setCurriculum` call).
 
 **Risk:** high. This is the critical data path. Cover it with the existing
-`tools/check-campus-db.ts` run plus manual verification of:
+`tools/campus/check-campus-db.ts` run plus manual verification of:
 - a full sync on a second device (server snapshot path),
 - cancelling mid-run,
 - switching study while a sync is in flight,

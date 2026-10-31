@@ -99,7 +99,7 @@ lists completed rounds. Each account detail also has a **Lernquiz** tab with its
 own answers and per-topic accuracy. Catalog mutations are recorded in the audit
 log.
 
-**Components:** the generated catalog from `tools/generate-component-catalog.mjs`,
+**Components:** the generated catalog from `tools/codegen/generate-component-catalog.mjs`,
 with search, category and platform filters, export lists, native/web file
 variants, and every import, render, call, reference, and re-export with its
 file and line. It is the same inventory as **Dev → Komponenten** in the app and

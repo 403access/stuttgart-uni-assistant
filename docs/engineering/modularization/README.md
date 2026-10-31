@@ -30,7 +30,7 @@ packages/
     mail/        @ua/feature-mail
     ilias/       @ua/feature-ilias
     quiz/        @ua/feature-quiz
-tools/           codegen, release, dev, product, quiz pipeline, test support
+tools/           campus, ilias, quiz, articulation, assistant, app, codegen, release, product, test support
 docs/            canonical documentation
 ```
 

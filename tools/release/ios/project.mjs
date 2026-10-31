@@ -10,8 +10,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** The repository root. This file is `tools/ios/`, so the root is two levels up. */
-export const ROOT = fileURLToPath(new URL('../..', import.meta.url));
+/** The repository root. This file is `tools/release/ios/`, so the root is three levels up. */
+export const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 
 export const APP_DIR = join(ROOT, 'apps', 'mobile');
 export const APP_JSON = join(APP_DIR, 'app.json');

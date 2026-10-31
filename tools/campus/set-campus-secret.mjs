@@ -14,8 +14,8 @@
 import { chmodSync, existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const envPath = new URL('../.env', import.meta.url);
-const examplePath = new URL('../.env.example', import.meta.url);
+const envPath = new URL('../../.env', import.meta.url);
+const examplePath = new URL('../../.env.example', import.meta.url);
 
 export const aliases = {
   token: { key: 'CAMPUS_BEARER_TOKEN', label: 'C@MPUS bearer token', kind: 'token' },

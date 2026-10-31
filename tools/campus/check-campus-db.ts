@@ -15,7 +15,7 @@ import {
   readApiLog,
   saveCourses,
   saveFullStructure,
-} from '../apps/mobile/src/campus/db';
+} from '../../apps/mobile/src/campus/db';
 import {
   appendApiCall as appendWebApiCall,
   appendElementCourses as appendWebElementCourses,
@@ -32,8 +32,8 @@ import {
   readApiLog as readWebApiLog,
   saveCourses as saveWebCourses,
   saveFullStructure as saveWebStructure,
-} from '../apps/mobile/src/campus/db.web';
-import type { BulkCourse, CurriculumNode } from '../apps/mobile/src/types';
+} from '../../apps/mobile/src/campus/db.web';
+import type { BulkCourse, CurriculumNode } from '../../apps/mobile/src/types';
 
 // Runs under tsx with the resolve hooks from tools/testing, which redirect
 // `expo-sqlite` to a real SQLite engine (node:sqlite, in-memory) and

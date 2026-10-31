@@ -7,7 +7,7 @@
  * the brand-blue ground the large disc is drawn white so it stays legible,
  * while the small disc keeps the light-blue accent (`colors.light`).
  *
- *   node tools/generate-icons.mjs
+ *   node tools/codegen/generate-icons.mjs
  *
  * Outputs (assets/images): icon.png, splash-icon.png, android-icon-foreground.png,
  * android-icon-background.png, android-icon-monochrome.png, favicon.png.

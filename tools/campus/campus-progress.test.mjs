@@ -7,7 +7,7 @@ import {
   isPhaseDone,
   phaseForStep,
   phaseIndexForStep,
-} from '../apps/mobile/src/auth/campus-progress.ts';
+} from '../../apps/mobile/src/auth/campus-progress.ts';
 
 /**
  * The waiting UI keeps its promise only if the phase mapping is right: a wrong

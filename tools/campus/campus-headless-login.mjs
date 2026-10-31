@@ -15,7 +15,7 @@ import { pathToFileURL } from 'node:url';
 
 import { JSDOM } from 'jsdom';
 
-import { headlessAutofillScript } from '../apps/mobile/src/auth/campus-browser-scripts.ts';
+import { headlessAutofillScript } from '../../apps/mobile/src/auth/campus-browser-scripts.ts';
 
 export const CAMPUS_LOGIN_START = 'https://campus.uni-stuttgart.de/cusonline/';
 export const REFRESH_URL = 'https://campus.uni-stuttgart.de/cusonline/ee/rest/auth/token/refresh';

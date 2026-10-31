@@ -82,7 +82,7 @@ bun run typecheck
 bun run check
 ```
 
-`bun run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary). It also verifies that the generated component catalog, docs page, and admin asset are current, runs the server tests, and runs the secrets CLI tests (`tools/set-campus-secret.test.mjs`), which exercise the token and session updater against a throwaway `.env` copy and assert the real one is never touched.
+`bun run check` asserts the 180 ECTS demonstration curriculum, the next-semester suggestion, and several German answers (credits, cafeteria, exam registration, Tuesday's lecture, a locked module, a slide summary). It also verifies that the generated component catalog, docs page, and admin asset are current, runs the server tests, and runs the secrets CLI tests (`tools/campus/set-campus-secret.test.mjs`), which exercise the token and session updater against a throwaway `.env` copy and assert the real one is never touched.
 
 ## Generate quiz content from PDFs
 
@@ -116,10 +116,10 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 | `apps/server/index.mjs` | Assistant server entry point. Loads `.env`, owns the listener, and dispatches to `apps/server/routes/` |
 | `apps/server/routes/` | Route modules for admin, health, auth, mail, C@MPUS, OIDC, and the Grok rewrite |
 | `packages/` | Shared workspace packages: `core`, `contracts`, `format`, `design-tokens`, `api-client`, `ui`, `ui-react`, `server-kit`, `quiz-content`, and `features/*` |
-| `tools/quiz-from-pdf.ts` | Builds quiz topics from PDF handouts; see [docs/engineering/quiz.md](docs/engineering/quiz.md) |
+| `tools/quiz/quiz-from-pdf.ts` | Builds quiz topics from PDF handouts; see [docs/engineering/quiz.md](docs/engineering/quiz.md) |
 | `packages/features/articulation/` | The articulation studio: sounds, phases, geometry and the 2D/3D player; see [its README](packages/features/articulation/README.md) |
-| `tools/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
-| `tools/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
+| `tools/assistant/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
+| `tools/campus/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |
 
 ## Documentation

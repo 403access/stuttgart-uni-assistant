@@ -32,7 +32,7 @@ Official names stay official in both languages: C@MPUS, ILIAS, SIAM, SDG Campus,
 
 `Mark` in `apps/mobile/src/components/ui.tsx` draws two circles: a mid-blue disc and a smaller light-blue disc. It is the splash and header motif. Do not replace it with the university logo.
 
-The icons under `assets/images/` are built from that same mark, not a template. `tools/generate-icons.mjs` (`bun run icons`) renders them with no image library: the large disc in white and the small disc in `colors.light`, on the `colors.blue` ground, so the pair stays legible on the splash and the adaptive background. The Android foreground and the theme monochrome keep the mark inside the launcher safe zone. It is an original mark, not the signet.
+The icons under `assets/images/` are built from that same mark, not a template. `tools/codegen/generate-icons.mjs` (`bun run icons`) renders them with no image library: the large disc in white and the small disc in `colors.light`, on the `colors.blue` ground, so the pair stays legible on the splash and the adaptive background. The Android foreground and the theme monochrome keep the mark inside the launcher safe zone. It is an original mark, not the signet.
 
 ## Type
 
@@ -124,7 +124,7 @@ A sign-in takes ten to thirty seconds when it runs in the hidden `WebView`, and 
   list spread down the sheet, with the action buttons in a footer. The active
   step carries a light-blue row, so the current phase is obvious at a glance.
 
-The phase mapping is pure and covered by `tools/campus-progress.test.mjs`, which `bun run check` runs: a mis-mapped step would show a finished sign-in as still connecting, or move the progress backwards.
+The phase mapping is pure and covered by `tools/campus/campus-progress.test.mjs`, which `bun run check` runs: a mis-mapped step would show a finished sign-in as still connecting, or move the progress backwards.
 
 ## Writing
 

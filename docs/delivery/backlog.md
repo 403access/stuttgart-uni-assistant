@@ -7,7 +7,7 @@ Status of the prototype on 20 October 2026. "Done" means the screen or script ex
 - Expo SDK 57 app, Expo Router, TypeScript, German and English.
 - Five tabs and the stack screens for modules, people, rooms, documents, notices, exams, platforms, deadlines, feed, requirements, sequence, tutorials, peers, recognition, and settings.
 - Fictional 180 ECTS Informatik record for Lena Hartmann, with locks, a 30 ECTS suggestion, deadlines, news, tutorials, reviews, and topic-only past exams.
-- Local assistant and the checks in `tools/check-assistant.ts`.
+- Local assistant and the checks in `tools/assistant/check-assistant.ts`.
 - Optional Grok proxy (`apps/server/index.mjs`, `grok-4.7`, `store: false`) with a campus fallback.
 - ILIAS-style local sync, text import, notes, on-device sharing, reader, extractive summary, export.
 - Schematic campus for Vaihingen and Stadtmitte.

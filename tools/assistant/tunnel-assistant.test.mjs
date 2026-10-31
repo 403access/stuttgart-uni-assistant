@@ -9,23 +9,24 @@ import { fileURLToPath } from 'node:url';
 import { extractHostname, parseArgs } from './tunnel-assistant.mjs';
 
 const scriptPath = fileURLToPath(new URL('./tunnel-assistant.mjs', import.meta.url));
-const dependencyPath = fileURLToPath(new URL('./set-campus-secret.mjs', import.meta.url));
+const dependencyPath = fileURLToPath(new URL('../campus/set-campus-secret.mjs', import.meta.url));
 const sandboxes = [];
 
 async function sandbox() {
   const dir = await mkdtemp(join(tmpdir(), 'assistant-tunnel-'));
   sandboxes.push(dir);
-  await mkdir(join(dir, 'tools'), { recursive: true });
+  await mkdir(join(dir, 'tools', 'assistant'), { recursive: true });
+  await mkdir(join(dir, 'tools', 'campus'), { recursive: true });
   await mkdir(join(dir, 'apps', 'mobile'), { recursive: true });
-  await copyFile(scriptPath, join(dir, 'tools', 'tunnel-assistant.mjs'));
-  await copyFile(dependencyPath, join(dir, 'tools', 'set-campus-secret.mjs'));
+  await copyFile(scriptPath, join(dir, 'tools', 'assistant', 'tunnel-assistant.mjs'));
+  await copyFile(dependencyPath, join(dir, 'tools', 'campus', 'set-campus-secret.mjs'));
   return dir;
 }
 
 // spawn with an explicitly closed stdin, like the secrets-CLI test.
 function run(dir, args, env = {}) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [join(dir, 'tools', 'tunnel-assistant.mjs'), ...args], {
+    const child = spawn(process.execPath, [join(dir, 'tools', 'assistant', 'tunnel-assistant.mjs'), ...args], {
       cwd: dir,
       env: { ...process.env, ...env },
       stdio: ['ignore', 'pipe', 'pipe'],

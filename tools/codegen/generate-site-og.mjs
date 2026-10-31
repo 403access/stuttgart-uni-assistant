@@ -2,12 +2,12 @@
 /**
  * Regenerate `site/assets/og.jpg` (1200 × 630) from the dashboard screenshot.
  *
- * Usage: node tools/generate-site-og.mjs
+ * Usage: node tools/codegen/generate-site-og.mjs
  */
 import { chromium } from 'playwright';
 import { readFile } from 'node:fs/promises';
 
-const dashboard = await readFile(new URL('../apps/site/assets/shots/dashboard.jpg', import.meta.url));
+const dashboard = await readFile(new URL('../../apps/site/assets/shots/dashboard.jpg', import.meta.url));
 const image = dashboard.toString('base64');
 
 const html = `<!doctype html><html><head><meta charset="utf-8"><style>
@@ -42,7 +42,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
   await page.setContent(html, { waitUntil: 'load' });
   await page.screenshot({
-    path: new URL('../apps/site/assets/og.jpg', import.meta.url).pathname,
+    path: new URL('../../apps/site/assets/og.jpg', import.meta.url).pathname,
     type: 'jpeg',
     quality: 85,
   });

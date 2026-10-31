@@ -73,7 +73,7 @@ Sessions use JavaScript weekday numbers, Monday = 1 through Friday = 5. The AI l
 2. Then fill by the largest remaining area gap. Ties follow `math`, `sq`, `project`, `elective`, `core`, `systems`, `practical`, `theory`, `thesis`. Inside an area, smaller ECTS, then code.
 3. Stop at 30 ECTS or when nothing unlocked fits.
 
-The result for this student is `num`, `hci`, `presentation`, `prakt`, `sec`, `ethics`. Machine Learning and the thesis are excluded because they are locked. `tools/check-assistant.ts` asserts that list.
+The result for this student is `num`, `hci`, `presentation`, `prakt`, `sec`, `ethics`. Machine Learning and the thesis are excluded because they are locked. `tools/assistant/check-assistant.ts` asserts that list.
 
 `plannedIds` on the device is a separate set. The suggestion does not read it, and planning a module does not change `totals`.
 

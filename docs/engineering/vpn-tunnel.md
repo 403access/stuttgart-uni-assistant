@@ -158,7 +158,7 @@ refuses to archive an unsignable tree, are in
 
 ## What is verified
 
-- TypeScript, lint, and `tools/vpn-profile.test.mjs` (the `.ovpn` parser and
+- TypeScript, lint, and `tools/app/vpn-profile.test.mjs` (the `.ovpn` parser and
   host/port extraction) pass.
 - The config plugin resolves under `expo config --type prebuild`, and its mods
   produce the entitlement, the app group, the permissions, the service and the

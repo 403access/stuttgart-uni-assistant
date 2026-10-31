@@ -135,7 +135,7 @@ No server route and no app screen calls the catalogue yet. It also returns 20 ro
 | `course_elements` | Which elements each course was seen on (a course can appear under several) |
 | `courses_sync` | Fetched element ids (JSON, for resume), course count, finish time, `complete` flag |
 
-`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's structure cache leaves its courses alone (and vice versa via `clearCachedCourses`); only the global `Alle Caches leeren` drops both. Round-trips on both backends are pinned by `tools/check-campus-db.ts` (real SQLite via node:sqlite, AsyncStorage faked), wired into `npm run check`.
+`saveCourses` replaces one study's rows; `loadCachedCourses` and `loadCachedCoursesByElement` read them back; `findCachedCourse` searches all studies for the detail screen. Clearing a study's structure cache leaves its courses alone (and vice versa via `clearCachedCourses`); only the global `Alle Caches leeren` drops both. Round-trips on both backends are pinned by `tools/campus/check-campus-db.ts` (real SQLite via node:sqlite, AsyncStorage faked), wired into `npm run check`.
 
 ## What this call does not return
 

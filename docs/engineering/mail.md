@@ -173,7 +173,7 @@ what the university already forwards to the mailbox.
   `{n}` literals, folded headers, RFC 2047 words, HTML preview flatten, LIST lines, the
   HTML sanitizer, BODYSTRUCTURE picking, quoted-printable decoding).
   `apps/server/mail-mime.test.mjs` covers address parsing, header encoding, MIME structure,
-  Bcc suppression, threading headers and dot-stuffing; `tools/mail-compose.test.mjs`
+  Bcc suppression, threading headers and dot-stuffing; `tools/app/mail-compose.test.mjs`
   covers recipient search and reply/forward prefill. No network in tests; the IMAP and
   SMTP session classes are exercised only in production against the real hosts.
 

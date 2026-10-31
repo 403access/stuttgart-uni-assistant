@@ -12,9 +12,9 @@
  */
 import { pathToFileURL } from 'node:url';
 
-import { ILIAS_LOGIN_URL, fetchIliasDashboard, iliasLoginError, loginIlias, looksLikeIliasLogin, mask, normalizeIliasCookie, parseIliasLoginForm } from '../apps/server/ilias.mjs';
+import { ILIAS_LOGIN_URL, fetchIliasDashboard, iliasLoginError, loginIlias, looksLikeIliasLogin, mask, normalizeIliasCookie, parseIliasLoginForm } from '../../apps/server/ilias.mjs';
 
-export { mask } from '../apps/server/ilias.mjs';
+export { mask } from '../../apps/server/ilias.mjs';
 
 export function parseArgs(argv) {
   const options = { user: '', password: '', passwordStdin: false, cookie: '', probe: false, json: false, url: ILIAS_LOGIN_URL, help: false };

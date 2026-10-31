@@ -276,7 +276,7 @@ Revert the Phase 1 commits. No logic changed, so the old tree is restored cleanl
 ### 4.3 `@ua/design-tokens`
 
 1. Create `tokens.json` with semantic colours, spacing, radii, typography, and mark geometry.
-2. Write `tools/codegen/tokens.mjs` with `--check`.
+2. Write `tools/codegen/generate-tokens.mjs` with `--check`.
 3. Generate `generated/theme.ts` with legacy aliases, `generated/tokens.css`, `generated/tokens.js` (CSS string), and `generated/tokens.d.ts`.
 4. Replace `src/theme.ts` with a thin adapter that exports the generated `colors`, `themedStyles`, and `ThemeColors`.
 5. Replace the dashboard's `:root` and `[data-theme="dark"]` blocks with the generated token CSS. In Phase 1–4 the vanilla dashboard can import the CSS file served by the server.
@@ -515,15 +515,15 @@ The user detail page is last because it has the most surface area: overview, cam
 | `npm run web` | `bun run web` |
 | `npm run assistant` | `bun run assistant` |
 | `npm run admin` | `bun run admin` (Vite dev server after Phase 5) |
-| `npm run assistant:tunnel` | `bun run tools/dev/tunnel-assistant.mjs` |
-| `npm run assistant:local` | `bun run tools/dev/tunnel-assistant.mjs --clear` |
+| `npm run assistant:tunnel` | `bun run tools/assistant/tunnel-assistant.mjs` |
+| `npm run assistant:local` | `bun run tools/assistant/tunnel-assistant.mjs --clear` |
 | `npm run dist:serve` | `bun run dist:serve` |
 | `npm run dist:publish` | `bun run dist:publish` |
 | `npm run dist:tunnel` | `bun run dist:tunnel` |
-| `npm run campus:token` | `bun run tools/dev/set-campus-secret.mjs token` |
-| `npm run campus:session` | `bun run tools/dev/set-campus-secret.mjs session` |
-| `npm run campus:headless` | `bun run tools/dev/campus-headless-login.mjs` |
-| `npm run ilias:login` | `bun run apps/server/bin/ilias-login.mjs` |
+| `npm run campus:token` | `bun run tools/campus/set-campus-secret.mjs token` |
+| `npm run campus:session` | `bun run tools/campus/set-campus-secret.mjs session` |
+| `npm run campus:headless` | `bun run tools/campus/campus-headless-login.mjs` |
+| `npm run ilias:login` | `bun run tools/ilias/ilias-login.mjs` |
 | `npm run quiz:from-pdf` | `bun run tools/quiz/quiz-from-pdf.ts` |
 | `npm run docs` | `bun run docs` (cd `apps/docs`) |
 | `npm run docs:build` | `bun run docs:build` |

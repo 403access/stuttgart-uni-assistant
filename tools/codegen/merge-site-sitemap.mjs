@@ -6,14 +6,14 @@
  * `sitemap.xml`, but it does not know about the landing page's legal pages.
  * This script adds them once, after the compose step.
  *
- * Usage: node tools/merge-site-sitemap.mjs public/sitemap.xml https://example.org/base/
+ * Usage: node tools/codegen/merge-site-sitemap.mjs public/sitemap.xml https://example.org/base/
  */
 import { readFile, writeFile } from 'node:fs/promises';
 
 const [, , file, rawBase] = process.argv;
 
 if (!file || !rawBase) {
-  console.error('Usage: node tools/merge-site-sitemap.mjs <sitemap.xml> <base-url>');
+  console.error('Usage: node tools/codegen/merge-site-sitemap.mjs <sitemap.xml> <base-url>');
   process.exit(1);
 }
 

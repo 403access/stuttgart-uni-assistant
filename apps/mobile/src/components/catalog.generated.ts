@@ -76,7 +76,7 @@ export type ComponentCatalog = {
 };
 
 export const COMPONENT_CATALOG: ComponentCatalog = {
-  "generatedBy": "tools/generate-component-catalog.mjs",
+  "generatedBy": "tools/codegen/generate-component-catalog.mjs",
   "stats": {
     "components": 86,
     "exports": 127,
