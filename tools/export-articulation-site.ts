@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { buildArticulationSiteData } from '@ua/quiz-content/articulation-site';
+import { buildArticulationSiteData } from '@ua/feature-articulation';
 
 /**
  * Writes the articulation studio snapshot for the static marketing site.

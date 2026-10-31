@@ -1,0 +1,25 @@
+{
+  "name": "@ua/feature-articulation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ui": "./src/ui.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@ua/core": "workspace:*",
+    "@ua/quiz-content": "workspace:*",
+    "@ua/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-svg": "15.16.0"
+  }
+}

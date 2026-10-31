@@ -37,10 +37,10 @@ That asset is generated from the app's own content, so the demo can never drift 
 
 ```bash
 bun run site:articulation   # rewrite assets/articulation.js
-bun run check:quiz          # fails when the snapshot is stale
+bun run check:articulation  # fails when the snapshot is stale
 ```
 
-Run the export after changing sounds or poses in `packages/quiz-content/src/articulation.ts`.
+Run the export after changing sounds or poses in `packages/features/articulation/src/core/sounds/`.
 The site itself keeps its no-build-step promise: the snapshot is committed like any other asset.
 
 ## Serve it

@@ -78,18 +78,18 @@ export type ComponentCatalog = {
 export const COMPONENT_CATALOG: ComponentCatalog = {
   "generatedBy": "tools/generate-component-catalog.mjs",
   "stats": {
-    "components": 82,
-    "exports": 121,
-    "occurrences": 1371,
-    "usageCount": 854,
-    "files": 111,
-    "unused": 0,
+    "components": 87,
+    "exports": 128,
+    "occurrences": 1361,
+    "usageCount": 842,
+    "files": 112,
+    "unused": 1,
     "onlyImported": 0,
     "platformVariants": 4,
     "previewable": 32,
     "categories": {
       "shared": 37,
-      "feature": 37,
+      "feature": 42,
       "provider": 8
     }
   },
@@ -4603,70 +4603,70 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 42,
+          "line": 43,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 49,
+          "line": 50,
           "kind": "render",
           "exportName": "Section",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 56,
+          "line": 57,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 62,
+          "line": 63,
           "kind": "render",
           "exportName": "Card",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 81,
+          "line": 82,
           "kind": "render",
           "exportName": "Screen",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 116,
+          "line": 117,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 118,
+          "line": 119,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 120,
+          "line": 121,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 122,
+          "line": 123,
           "kind": "render",
           "exportName": "Pill",
           "count": 1
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 148,
+          "line": 149,
           "kind": "render",
           "exportName": "Card",
           "count": 1
@@ -9980,284 +9980,6 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "packages/features/quiz/src/ui/components/diagram",
-      "name": "diagram",
-      "category": "feature",
-      "file": "packages/features/quiz/src/ui/components/diagram.tsx",
-      "variants": [
-        {
-          "platform": "shared",
-          "file": "packages/features/quiz/src/ui/components/diagram.tsx"
-        }
-      ],
-      "platforms": [
-        "native",
-        "web"
-      ],
-      "hasPlatformVariants": false,
-      "exports": [
-        {
-          "name": "DiagramCanvas",
-          "kind": "component",
-          "isDefault": false,
-          "isReExport": false
-        },
-        {
-          "name": "DiagramView",
-          "kind": "component",
-          "isDefault": false,
-          "isReExport": false
-        },
-        {
-          "name": "diagramAspect",
-          "kind": "helper",
-          "isDefault": false,
-          "isReExport": false
-        },
-        {
-          "name": "diagramTone",
-          "kind": "helper",
-          "isDefault": false,
-          "isReExport": true
-        }
-      ],
-      "previews": [],
-      "defaultExport": null,
-      "occurrences": [
-        {
-          "file": "packages/features/quiz/src/ui.ts",
-          "line": 5,
-          "kind": "re-export",
-          "exportName": "DiagramCanvas",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui.ts",
-          "line": 5,
-          "kind": "re-export",
-          "exportName": "DiagramView",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 31,
-          "kind": "import",
-          "exportName": "diagramAspect",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 31,
-          "kind": "import",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 130,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 2
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 131,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 2
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 136,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 137,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 140,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 2
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 215,
-          "kind": "call",
-          "exportName": "diagramAspect",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 250,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-          "line": 251,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 28,
-          "kind": "import",
-          "exportName": "diagramAspect",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 28,
-          "kind": "import",
-          "exportName": "DiagramCanvas",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 28,
-          "kind": "import",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 81,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 82,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 90,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 91,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 99,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 100,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 109,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 110,
-          "kind": "call",
-          "exportName": "diagramTone",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 164,
-          "kind": "call",
-          "exportName": "diagramAspect",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 165,
-          "kind": "render",
-          "exportName": "DiagramCanvas",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
-          "line": 9,
-          "kind": "import",
-          "exportName": "diagramAspect",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
-          "line": 9,
-          "kind": "import",
-          "exportName": "DiagramCanvas",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
-          "line": 29,
-          "kind": "call",
-          "exportName": "diagramAspect",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
-          "line": 30,
-          "kind": "render",
-          "exportName": "DiagramCanvas",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/question-view.tsx",
-          "line": 5,
-          "kind": "import",
-          "exportName": "DiagramView",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/question-view.tsx",
-          "line": 120,
-          "kind": "render",
-          "exportName": "DiagramView",
-          "count": 1
-        }
-      ],
-      "usedBy": [
-        "packages/features/quiz/src/ui.ts",
-        "packages/features/quiz/src/ui/components/articulation-3d.tsx",
-        "packages/features/quiz/src/ui/components/articulation.tsx",
-        "packages/features/quiz/src/ui/components/diagram-figure.tsx",
-        "packages/features/quiz/src/ui/components/question-view.tsx"
-      ],
-      "usageCount": 24,
-      "importCount": 8,
-      "renderCount": 3,
-      "callCount": 21,
-      "referenceCount": 0,
-      "onlyImported": false,
-      "unused": false
-    },
-    {
       "id": "packages/features/quiz/src/ui/components/quiz-button",
       "name": "QuizButton",
       "category": "feature",
@@ -10365,14 +10087,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 70,
+          "line": 71,
           "kind": "render",
           "exportName": "QuizButton",
           "count": 1
         },
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 15,
+          "line": 13,
           "kind": "re-export",
           "exportName": "QuizButton",
           "count": 1
@@ -10388,6 +10110,119 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "importCount": 3,
       "renderCount": 9,
       "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
+      "id": "packages/features/articulation/src/ui/controls",
+      "name": "controls",
+      "category": "feature",
+      "file": "packages/features/articulation/src/ui/controls.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "packages/features/articulation/src/ui/controls.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "AngleRow",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "PlayButton",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "ViewToggle",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "formatAngle",
+          "kind": "helper",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 10,
+          "kind": "import",
+          "exportName": "AngleRow",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 10,
+          "kind": "import",
+          "exportName": "formatAngle",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 10,
+          "kind": "import",
+          "exportName": "PlayButton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 10,
+          "kind": "import",
+          "exportName": "ViewToggle",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 115,
+          "kind": "render",
+          "exportName": "PlayButton",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 117,
+          "kind": "render",
+          "exportName": "ViewToggle",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 121,
+          "kind": "render",
+          "exportName": "AngleRow",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 125,
+          "kind": "call",
+          "exportName": "formatAngle",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "packages/features/articulation/src/ui/player.tsx"
+      ],
+      "usageCount": 4,
+      "importCount": 4,
+      "renderCount": 3,
+      "callCount": 1,
       "referenceCount": 0,
       "onlyImported": false,
       "unused": false
@@ -10562,7 +10397,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 11,
+          "line": 9,
           "kind": "re-export",
           "exportName": "OptionRow",
           "count": 1
@@ -10727,6 +10562,121 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "importCount": 4,
       "renderCount": 4,
       "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
+      "id": "packages/features/quiz/src/ui/components/diagram",
+      "name": "diagram",
+      "category": "feature",
+      "file": "packages/features/quiz/src/ui/components/diagram.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "packages/features/quiz/src/ui/components/diagram.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "DiagramCanvas",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "DiagramView",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "diagramAspect",
+          "kind": "helper",
+          "isDefault": false,
+          "isReExport": false
+        },
+        {
+          "name": "diagramTone",
+          "kind": "helper",
+          "isDefault": false,
+          "isReExport": true
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "packages/features/quiz/src/ui.ts",
+          "line": 3,
+          "kind": "re-export",
+          "exportName": "DiagramCanvas",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui.ts",
+          "line": 3,
+          "kind": "re-export",
+          "exportName": "DiagramView",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
+          "line": 9,
+          "kind": "import",
+          "exportName": "diagramAspect",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
+          "line": 9,
+          "kind": "import",
+          "exportName": "DiagramCanvas",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
+          "line": 29,
+          "kind": "call",
+          "exportName": "diagramAspect",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/diagram-figure.tsx",
+          "line": 30,
+          "kind": "render",
+          "exportName": "DiagramCanvas",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/question-view.tsx",
+          "line": 5,
+          "kind": "import",
+          "exportName": "DiagramView",
+          "count": 1
+        },
+        {
+          "file": "packages/features/quiz/src/ui/components/question-view.tsx",
+          "line": 120,
+          "kind": "render",
+          "exportName": "DiagramView",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "packages/features/quiz/src/ui.ts",
+        "packages/features/quiz/src/ui/components/diagram-figure.tsx",
+        "packages/features/quiz/src/ui/components/question-view.tsx"
+      ],
+      "usageCount": 3,
+      "importCount": 3,
+      "renderCount": 2,
+      "callCount": 1,
       "referenceCount": 0,
       "onlyImported": false,
       "unused": false
@@ -11163,6 +11113,126 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
+      "id": "packages/features/articulation/src/ui/plates",
+      "name": "Plates",
+      "category": "feature",
+      "file": "packages/features/articulation/src/ui/plates.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "packages/features/articulation/src/ui/plates.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "Plates",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "packages/features/articulation/src/ui/figure-3d.tsx",
+          "line": 28,
+          "kind": "import",
+          "exportName": "Plates",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/figure-3d.tsx",
+          "line": 144,
+          "kind": "render",
+          "exportName": "Plates",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/figure-3d.tsx",
+          "line": 151,
+          "kind": "render",
+          "exportName": "Plates",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "packages/features/articulation/src/ui/figure-3d.tsx"
+      ],
+      "usageCount": 2,
+      "importCount": 1,
+      "renderCount": 2,
+      "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
+      "id": "packages/features/articulation/src/ui/pose-art",
+      "name": "PoseArt",
+      "category": "feature",
+      "file": "packages/features/articulation/src/ui/pose-art.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "packages/features/articulation/src/ui/pose-art.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "PoseArt",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "packages/features/articulation/src/ui/figure-2d.tsx",
+          "line": 21,
+          "kind": "import",
+          "exportName": "PoseArt",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/figure-2d.tsx",
+          "line": 106,
+          "kind": "render",
+          "exportName": "PoseArt",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/figure-2d.tsx",
+          "line": 109,
+          "kind": "render",
+          "exportName": "PoseArt",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "packages/features/articulation/src/ui/figure-2d.tsx"
+      ],
+      "usageCount": 2,
+      "importCount": 1,
+      "renderCount": 2,
+      "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
       "id": "apps/mobile/src/profile/profile-preview",
       "name": "ProfilePreview",
       "category": "feature",
@@ -11301,14 +11371,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "packages/features/quiz/src/ui/components/articulation",
-      "name": "articulation",
+      "id": "packages/features/articulation/src/ui/figure-2d",
+      "name": "ArticulationFigure",
       "category": "feature",
-      "file": "packages/features/quiz/src/ui/components/articulation.tsx",
+      "file": "packages/features/articulation/src/ui/figure-2d.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx"
+          "file": "packages/features/articulation/src/ui/figure-2d.tsx"
         }
       ],
       "platforms": [
@@ -11322,49 +11392,28 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
           "kind": "component",
           "isDefault": false,
           "isReExport": false
-        },
-        {
-          "name": "ArticulationPlayer",
-          "kind": "component",
-          "isDefault": false,
-          "isReExport": false
         }
       ],
       "previews": [],
       "defaultExport": null,
       "occurrences": [
         {
-          "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 7,
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 11,
           "kind": "import",
-          "exportName": "ArticulationPlayer",
-          "count": 1
-        },
-        {
-          "file": "apps/mobile/app/quiz/studio/index.tsx",
-          "line": 43,
-          "kind": "render",
-          "exportName": "ArticulationPlayer",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui.ts",
-          "line": 1,
-          "kind": "re-export",
           "exportName": "ArticulationFigure",
           "count": 1
         },
         {
-          "file": "packages/features/quiz/src/ui.ts",
-          "line": 1,
-          "kind": "re-export",
-          "exportName": "ArticulationPlayer",
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 103,
+          "kind": "render",
+          "exportName": "ArticulationFigure",
           "count": 1
         }
       ],
       "usedBy": [
-        "apps/mobile/app/quiz/studio/index.tsx",
-        "packages/features/quiz/src/ui.ts"
+        "packages/features/articulation/src/ui/player.tsx"
       ],
       "usageCount": 1,
       "importCount": 1,
@@ -11375,14 +11424,14 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "unused": false
     },
     {
-      "id": "packages/features/quiz/src/ui/components/articulation-3d",
+      "id": "packages/features/articulation/src/ui/figure-3d",
       "name": "ArticulationFigure3D",
       "category": "feature",
-      "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx",
+      "file": "packages/features/articulation/src/ui/figure-3d.tsx",
       "variants": [
         {
           "platform": "shared",
-          "file": "packages/features/quiz/src/ui/components/articulation-3d.tsx"
+          "file": "packages/features/articulation/src/ui/figure-3d.tsx"
         }
       ],
       "platforms": [
@@ -11402,30 +11451,22 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "defaultExport": null,
       "occurrences": [
         {
-          "file": "packages/features/quiz/src/ui.ts",
-          "line": 2,
-          "kind": "re-export",
-          "exportName": "ArticulationFigure3D",
-          "count": 1
-        },
-        {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 29,
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 12,
           "kind": "import",
           "exportName": "ArticulationFigure3D",
           "count": 1
         },
         {
-          "file": "packages/features/quiz/src/ui/components/articulation.tsx",
-          "line": 330,
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 94,
           "kind": "render",
           "exportName": "ArticulationFigure3D",
           "count": 1
         }
       ],
       "usedBy": [
-        "packages/features/quiz/src/ui.ts",
-        "packages/features/quiz/src/ui/components/articulation.tsx"
+        "packages/features/articulation/src/ui/player.tsx"
       ],
       "usageCount": 1,
       "importCount": 1,
@@ -11529,7 +11570,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 3,
+          "line": 1,
           "kind": "re-export",
           "exportName": "ClozeView",
           "count": 1
@@ -11604,7 +11645,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 4,
+          "line": 2,
           "kind": "re-export",
           "exportName": "DiagramFigureCard",
           "count": 1
@@ -11653,7 +11694,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 6,
+          "line": 4,
           "kind": "re-export",
           "exportName": "FlashcardView",
           "count": 1
@@ -11714,7 +11755,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 7,
+          "line": 5,
           "kind": "re-export",
           "exportName": "FreeTextView",
           "count": 1
@@ -12196,7 +12237,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 8,
+          "line": 6,
           "kind": "re-export",
           "exportName": "MapView",
           "count": 1
@@ -12257,7 +12298,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 9,
+          "line": 7,
           "kind": "re-export",
           "exportName": "MatchingView",
           "count": 1
@@ -12318,7 +12359,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 10,
+          "line": 8,
           "kind": "re-export",
           "exportName": "MultipleChoiceView",
           "count": 1
@@ -12379,7 +12420,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 12,
+          "line": 10,
           "kind": "re-export",
           "exportName": "OrderingView",
           "count": 1
@@ -12402,6 +12443,59 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "usedBy": [
         "packages/features/quiz/src/ui.ts",
         "packages/features/quiz/src/ui/components/question-view.tsx"
+      ],
+      "usageCount": 1,
+      "importCount": 1,
+      "renderCount": 1,
+      "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": false
+    },
+    {
+      "id": "packages/features/articulation/src/ui/phase-strip",
+      "name": "PhaseStrip",
+      "category": "feature",
+      "file": "packages/features/articulation/src/ui/phase-strip.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "packages/features/articulation/src/ui/phase-strip.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "PhaseStrip",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 13,
+          "kind": "import",
+          "exportName": "PhaseStrip",
+          "count": 1
+        },
+        {
+          "file": "packages/features/articulation/src/ui/player.tsx",
+          "line": 106,
+          "kind": "render",
+          "exportName": "PhaseStrip",
+          "count": 1
+        }
+      ],
+      "usedBy": [
+        "packages/features/articulation/src/ui/player.tsx"
       ],
       "usageCount": 1,
       "importCount": 1,
@@ -12456,7 +12550,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 13,
+          "line": 11,
           "kind": "re-export",
           "exportName": "QuestionFeedback",
           "count": 1
@@ -12517,7 +12611,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 14,
+          "line": 12,
           "kind": "re-export",
           "exportName": "QuestionView",
           "count": 1
@@ -12580,7 +12674,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
         },
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 16,
+          "line": 14,
           "kind": "re-export",
           "exportName": "QuizToolbar",
           "count": 1
@@ -12629,7 +12723,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 17,
+          "line": 15,
           "kind": "re-export",
           "exportName": "SingleChoiceView",
           "count": 1
@@ -12753,7 +12847,7 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "occurrences": [
         {
           "file": "packages/features/quiz/src/ui.ts",
-          "line": 18,
+          "line": 16,
           "kind": "re-export",
           "exportName": "TrueFalseView",
           "count": 1
@@ -12784,6 +12878,42 @@ export const COMPONENT_CATALOG: ComponentCatalog = {
       "referenceCount": 0,
       "onlyImported": false,
       "unused": false
+    },
+    {
+      "id": "packages/features/articulation/src/ui/player",
+      "name": "ArticulationPlayer",
+      "category": "feature",
+      "file": "packages/features/articulation/src/ui/player.tsx",
+      "variants": [
+        {
+          "platform": "shared",
+          "file": "packages/features/articulation/src/ui/player.tsx"
+        }
+      ],
+      "platforms": [
+        "native",
+        "web"
+      ],
+      "hasPlatformVariants": false,
+      "exports": [
+        {
+          "name": "ArticulationPlayer",
+          "kind": "component",
+          "isDefault": false,
+          "isReExport": false
+        }
+      ],
+      "previews": [],
+      "defaultExport": null,
+      "occurrences": [],
+      "usedBy": [],
+      "usageCount": 0,
+      "importCount": 0,
+      "renderCount": 0,
+      "callCount": 0,
+      "referenceCount": 0,
+      "onlyImported": false,
+      "unused": true
     },
     {
       "id": "apps/mobile/src/onboarding/OnboardingState",

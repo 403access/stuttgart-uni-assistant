@@ -3,19 +3,16 @@ import { Animated, Easing } from 'react-native';
 
 import { useReducedMotion } from '@ua/ui';
 
-import type { ArticulationSound } from '@ua/quiz-content/types';
-import {
-  articulationPhaseWindows,
-  type ArticulationPhaseWindow,
-} from '@ua/quiz-content/articulation';
+import type { ArticulationPhaseWindow, ArticulationSound } from '../core';
+import { articulationPhaseWindows } from '../core';
 
 /**
- * One shared storyboard for the 2D and 3D views: a `clock` that runs 0 → 1 over
+ * One shared storyboard for the 2D and 3D views: a clock that runs 0 → 1 over
  * the sound's phases, the phase that is active, and the cross-fade when the
  * learner picks another sound.
  *
  * Everything that moves — airstream, pressure ring, pose — is derived from the
- * clock through the phase windows, so the views stay in step.
+ * clock through the phase windows, so both views stay in step.
  */
 export const CYCLE_MS = 6400;
 const CURVE_STEPS = 120;
@@ -55,11 +52,10 @@ export function airflowSegment(
 }
 
 /** How often the airstream travels its segment within one phase. */
-function passes(window: ArticulationPhaseWindow): number {
-  return window.phase.airflow === 'burst' ? 1 : 2;
-}
+const passes = (window: ArticulationPhaseWindow): number =>
+  window.phase.airflow === 'burst' ? 1 : 2;
 
-/** Opacity of one air puff at time `t`, by its position on the lane (0–1). */
+/** Opacity of one air puff at time `value`, by its position on the lane (0–1). */
 export function airstreamOpacity(
   windows: ArticulationPhaseWindow[],
   focusT: number,
@@ -74,8 +70,7 @@ export function airstreamOpacity(
 
   const span = Math.max(0.0001, to - from);
   const along = (position - from) / span;
-  const progress = windowProgress(window, value);
-  const phase = (progress * passes(window)) % 1;
+  const phase = (windowProgress(window, value) * passes(window)) % 1;
   const distance = Math.abs(phase - along);
   const wrapped = Math.min(distance, 1 - distance);
   return Math.max(0, 1 - wrapped / 0.15);
@@ -105,8 +100,6 @@ export function ringOpacity(window: ArticulationPhaseWindow, value: number): num
 export function ringScale(window: ArticulationPhaseWindow, value: number): number {
   const progress = windowProgress(window, value);
   switch (window.phase.airflow) {
-    case 'rising':
-      return 1;
     case 'blocked':
       return 1 + 0.12 * Math.abs(Math.sin(progress * Math.PI * 3));
     case 'burst':
@@ -126,9 +119,22 @@ export function poseProgress(windows: ArticulationPhaseWindow[], value: number):
   return 1;
 }
 
+/** The colour the focus ring takes for a phase. */
+export function ringColor(airflow: string): string {
+  switch (airflow) {
+    case 'blocked':
+      return '#B7791F';
+    case 'free':
+    case 'nasal':
+      return '#2F6B52';
+    default:
+      return '#004191';
+  }
+}
+
 /**
  * Sample a function of the clock into the input/output arrays `Animated` needs,
- * so a complicated rule becomes a single interpolation per element.
+ * so a complicated rule becomes one interpolation per element.
  */
 export function sampleCurve(fn: (value: number) => number, steps = CURVE_STEPS) {
   const inputRange: number[] = [];

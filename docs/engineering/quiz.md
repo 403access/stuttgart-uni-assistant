@@ -30,8 +30,9 @@ explanation.
 
 The figure reuses the quiz diagram: it draws `articulationRegions` (the static
 anatomy from `vocalTractRegions`) with the same `DiagramCanvas` in `plain` mode,
-then layers the movable articulators on top. The pose geometry lives in
-`packages/quiz-content/src/figures/articulation.ts`:
+then layers the movable articulators on top. The studio is its own package
+(`@ua/feature-articulation`); the pose geometry lives in
+`packages/features/articulation/src/core/geometry/`:
 
 - `tongueOutline(pose)` builds a closed Catmull-Rom curve through a handful of
   anchors per `TonguePose`, so every tongue position shares one shape family.
@@ -43,7 +44,7 @@ then layers the movable articulators on top. The pose geometry lives in
   surface so the air never disappears inside the dorsum.
 - `articulationFocus(sound)` is the point the focus ring pulses on.
 
-`useArticulationTimeline` (`packages/features/quiz/src/ui/components/articulation-timeline.ts`)
+`useArticulationTimeline` (`packages/features/articulation/src/ui/timeline.ts`)
 drives one clock from 0 to 1 over the sound's phases. The flat and the 3D figure
 both consume it, so the airstream, the pressure/burst ring and the pose always
 show the same phase. Switching sounds cross-fades the pose layer. With the
@@ -98,7 +99,7 @@ screen readers can step it as well. The `3D` badge, the drag hint and the angle
 readout make the state explicit.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
-works offline and looks the same on iOS, Android and the web. `tools/check-quiz.ts`
+works offline and looks the same on iOS, Android and the web. `tools/check-articulation.ts`
 asserts that every airstream point still lands inside the padded 3D frame at the
 extreme angles, so the model can never be clipped while turning.
 
@@ -107,14 +108,14 @@ extreme angles, so the model can never be clipped while turning.
 The marketing page (`apps/site`) runs the same studio as a live demo in its
 **Lernwerkzeuge** section. It has no build step, so the geometry is committed as a
 snapshot: `bun run site:articulation` writes `apps/site/assets/articulation.js`
-from `packages/quiz-content/src/articulation-site.ts`, and
+from `packages/features/articulation/src/core/site.ts`, and
 `apps/site/articulation.js` renders it with plain SVG and a `requestAnimationFrame`
-timeline. The snapshot is checked by `tools/check-quiz.ts`, so a new sound cannot
+timeline. The snapshot is checked by `tools/check-articulation.ts`, so a new sound cannot
 ship in the app while the website still shows the old set.
 
-The sound catalog is `packages/quiz-content/src/articulation.ts`. Adding a sound
+The sound catalog lives in `packages/features/articulation/src/core/sounds/`. Adding a sound
 is a data-only change: pick a `manner`, an optional `place` (vowels use `shape`
-instead), `voiced`, and the `pose`. `tools/check-quiz.ts` verifies unique ids,
+instead), `voiced`, and the `pose`. `tools/check-articulation.ts` verifies unique ids,
 bilingual copy, manner/velum/airstream consistency, drawable paths and that
 `studioSoundForTopic` points at real topics and sounds.
 

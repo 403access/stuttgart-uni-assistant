@@ -117,7 +117,7 @@ Scanned PDFs need OCR first. `--dry-run` prints the topic without writing; `--fo
 | `apps/server/routes/` | Route modules for admin, health, auth, mail, C@MPUS, OIDC, and the Grok rewrite |
 | `packages/` | Shared workspace packages: `core`, `contracts`, `format`, `design-tokens`, `api-client`, `ui`, `ui-react`, `server-kit`, `quiz-content`, and `features/*` |
 | `tools/quiz-from-pdf.ts` | Builds quiz topics from PDF handouts; see [docs/engineering/quiz.md](docs/engineering/quiz.md) |
-| `packages/quiz-content/src/articulation.ts` | Sounds and poses for the articulation studio, the quiz's 2D/3D learning tool; see [docs/engineering/quiz.md](docs/engineering/quiz.md#articulation-studio) |
+| `packages/features/articulation/` | The articulation studio: sounds, phases, geometry and the 2D/3D player; see [its README](packages/features/articulation/README.md) |
 | `tools/tunnel-assistant.mjs` | Cloudflare quick tunnel for the assistant; writes `EXPO_PUBLIC_ASSISTANT_TUNNEL_URL` and clears it on exit |
 | `tools/set-campus-secret.mjs` | Writes `CAMPUS_BEARER_TOKEN` or `CAMPUS_SESSION_COOKIE` into `.env` |
 | `docs/` | Product description, engineering notes, and the lifecycle write-up |

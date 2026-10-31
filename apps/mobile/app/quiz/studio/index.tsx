@@ -4,15 +4,16 @@ import { useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { Card, Pill, Screen, Section } from '@ua/ui';
-import { ArticulationPlayer, QuizButton } from '@ua/feature-quiz/ui';
+import { QuizButton } from '@ua/feature-quiz/ui';
+import { ArticulationPlayer } from '@ua/feature-articulation/ui';
 import {
   articulationGroups,
   articulationSounds,
   findArticulationSound,
   studioSoundForTopic,
-} from '@ua/quiz-content/articulation';
+} from '@ua/feature-articulation';
+import type { ArticulationManner, ArticulationSound } from '@ua/feature-articulation';
 import { findQuizTopic } from '@ua/quiz-content';
-import type { ArticulationManner, ArticulationSound } from '@ua/quiz-content/types';
 import { useAppSelector } from '@/src/state/AppState';
 import { colors, themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';

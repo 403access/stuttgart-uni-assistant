@@ -2,22 +2,23 @@ import type { Localized } from '@ua/core/domain/types';
 
 import type { ArticulationManner, ArticulationPlace, ArticulationSound } from './types';
 
-import { articulationGroups, articulationPhases, articulationSounds } from './articulation';
+import { articulationGroups, articulationSounds } from './sounds';
+import { mannerLabels, placeLabels } from './labels';
+import { articulationPhases } from './phases';
 import {
-  ARTICULATION_3D_VIEW_BOX,
-  ARTICULATION_SLAB,
-  HEAD_VIEW_BOX,
   airflowLane,
-  articulationBackdrop,
   articulationFocus,
-  articulationRegions,
   cordOutlines,
   lipOutlines,
   tongueOutline,
   velumAngle,
   velumOutlines,
-} from './figures/articulation';
-import { diagramPalette } from './figures/palette';
+  articulationBackdrop,
+  articulationRegions,
+  HEAD_VIEW_BOX,
+} from './geometry';
+import { diagramPalette } from '@ua/quiz-content/figures/palette';
+import { ARTICULATION_3D_VIEW_BOX, ARTICULATION_SLAB } from './view3d';
 
 /**
  * Everything the static website needs to render the articulation studio, as
@@ -25,7 +26,7 @@ import { diagramPalette } from './figures/palette';
  * ship a zero-dependency demo that stays in step with the app.
  *
  * `bun run site:articulation` writes this into `apps/site/assets/articulation.js`
- * and `bun run check:quiz` fails when the file is stale.
+ * and `tools/check-articulation.ts` fails when the file is stale.
  */
 export interface ArticulationSitePhase {
   id: string;
@@ -73,25 +74,6 @@ export interface ArticulationSiteData {
   sounds: ArticulationSiteSound[];
 }
 
-const MANNER_LABELS: Record<ArticulationManner, Localized> = {
-  stop: { de: 'Plosiv', en: 'Stop' },
-  nasal: { de: 'Nasal', en: 'Nasal' },
-  fricative: { de: 'Frikativ', en: 'Fricative' },
-  approximant: { de: 'Approximant', en: 'Approximant' },
-  vowel: { de: 'Vokal', en: 'Vowel' },
-};
-
-const PLACE_LABELS: Record<ArticulationPlace, Localized> = {
-  bilabial: { de: 'bilabial', en: 'bilabial' },
-  labiodental: { de: 'labiodental', en: 'labiodental' },
-  dental: { de: 'dental', en: 'dental' },
-  alveolar: { de: 'alveolar', en: 'alveolar' },
-  postalveolar: { de: 'postalveolar', en: 'postalveolar' },
-  palatal: { de: 'palatal', en: 'palatal' },
-  velar: { de: 'velar', en: 'velar' },
-  glottal: { de: 'glottal', en: 'glottal' },
-};
-
 function pose(sound: ArticulationSound) {
   return {
     tongue: tongueOutline(sound.pose.tongue),
@@ -123,15 +105,15 @@ export function buildArticulationSiteData(): ArticulationSiteData {
     rest: { tongue: tongueOutline('rest'), lips: lipOutlines('open') },
     manners: articulationGroups.map((group) => ({
       id: group.manner,
-      label: MANNER_LABELS[group.manner],
+      label: mannerLabels[group.manner],
     })),
     sounds: articulationSounds.map((sound) => ({
       id: sound.id,
       glyph: sound.glyph,
       word: sound.word,
       manner: sound.manner,
-      mannerLabel: MANNER_LABELS[sound.manner],
-      ...(sound.place ? { place: sound.place, placeLabel: PLACE_LABELS[sound.place] } : {}),
+      mannerLabel: mannerLabels[sound.manner],
+      ...(sound.place ? { place: sound.place, placeLabel: placeLabels[sound.place] } : {}),
       ...(sound.shape ? { shape: sound.shape } : {}),
       voiced: sound.voiced,
       airflow: sound.pose.airflow,

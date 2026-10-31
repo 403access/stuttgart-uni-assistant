@@ -8,7 +8,7 @@ import { confirmQuizAction } from '@/src/quiz/confirm';
 import { useQuizCatalogVersion } from '@/src/quiz/catalog-state';
 import { StudioLinkCard } from '@/src/quiz/studio-link';
 import { findQuizTopic, isMixedTopic } from '@ua/quiz-content';
-import { studioSoundForTopic } from '@ua/quiz-content/articulation';
+import { studioSoundForTopic } from '@ua/feature-articulation';
 import { DiagramFigureCard , QuizButton } from '@ua/feature-quiz/ui';
 import { questionKindLabel , topicStats } from '@ua/feature-quiz';
 import { useQuizProgress } from '@/src/quiz/progress';

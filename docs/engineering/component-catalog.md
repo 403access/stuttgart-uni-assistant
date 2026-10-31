@@ -18,16 +18,16 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Metric | Value |
 | --- | ---: |
-| Components | 82 |
-| Exports | 121 |
-| Usage references | 854 |
-| Files with occurrences | 111 |
-| Unused components | 0 |
+| Components | 87 |
+| Exports | 128 |
+| Usage references | 842 |
+| Files with occurrences | 112 |
+| Unused components | 1 |
 | Imported but never used | 0 |
 | Components with platform files | 4 |
 | Components with live previews | 32 |
 | Shared UI | 37 |
-| Feature components | 37 |
+| Feature components | 42 |
 | App-wide providers | 8 |
 
 ## Shared UI
@@ -129,7 +129,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/quiz/[topic]/index.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 36 render `Screen`; 38 render `Card`; 47 render `Screen`; 121 render `Screen`; 127 render `Card`; 141 render `Meter`; 147 render `Pill`; 169 render `Meter`; 199 render `Section`; 200 render `Card`; 247 render `Section`; 248 render `Card`
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 6 import `Card`; 6 import `Meter`; 6 import `Pill`; 6 import `Screen`; 58 render `Screen`; 60 render `Card`; 69 render `Screen`; 187 render `Screen`; 305 render `Screen`; 311 render `Meter`; 313 render `Pill`; 314 render `Pill`; 367 render `Screen`; 378 render `Card`; 391 render `Meter`
 - `apps/mobile/app/quiz/modul/[id].tsx`: 5 import `Card`; 5 import `Meter`; 5 import `Pill`; 5 import `Screen`; 5 import `Section`; 30 render `Screen`; 32 render `Card`; 41 render `Screen`; 76 render `Screen`; 79 render `Card`; 93 render `Meter`; 105 render `Section`; 132 render `Card`; 150 render `Meter`; 165 render `Pill`
-- `apps/mobile/app/quiz/studio/index.tsx`: 6 import `Card`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 42 render `Card`; 49 render `Section`; 56 render `Card`; 62 render `Card`; 81 render `Screen`; 116 render `Pill`; 118 render `Pill`; 120 render `Pill`; 122 render `Pill`; 148 render `Card`
+- `apps/mobile/app/quiz/studio/index.tsx`: 6 import `Card`; 6 import `Pill`; 6 import `Screen`; 6 import `Section`; 43 render `Card`; 50 render `Section`; 57 render `Card`; 63 render `Card`; 82 render `Screen`; 117 render `Pill`; 119 render `Pill`; 121 render `Pill`; 123 render `Pill`; 149 render `Card`
 - `apps/mobile/app/raum/[id].tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 18 render `Screen`; 27 render `Screen`; 29 render `Card`; 39 render `InfoRow`
 - `apps/mobile/app/reihenfolge.tsx`: 4 import `Card`; 4 import `InfoRow`; 4 import `Screen`; 4 import `Section`; 17 render `Screen`; 22 render `Card`; 32 render `Section`; 36 render `InfoRow`; 49 render `Card`
 - `apps/mobile/app/sicherheit.tsx`: 10 import `Button`; 10 import `Card`; 117 render `Card`; 135 render `Button`; 143 render `Card`; 160 render `Button`
@@ -567,21 +567,24 @@ Every component under `src/` with its exports, platform files, and every place i
 
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
-| `diagram` | `packages/features/quiz/src/ui/components/diagram.tsx` | Native + Web | – | DiagramCanvas, DiagramView, diagramAspect, diagramTone | 24 | 5 |
 | `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 9 | 4 |
+| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, PlayButton, ViewToggle, formatAngle | 4 | 1 |
 | `mail-skeletons` | `packages/features/mail/src/ui/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 3 |
 | `OptionRow` | `packages/features/quiz/src/ui/components/option-row.tsx` | Native + Web | OptionRow | OptionRow | 4 | 4 |
 | `ProfileSummary` | `apps/mobile/src/profile/profile-summary.tsx` | Native + Web | ProfileSummary | ProfileSummary | 4 | 4 |
+| `diagram` | `packages/features/quiz/src/ui/components/diagram.tsx` | Native + Web | – | DiagramCanvas, DiagramView, diagramAspect, diagramTone | 3 | 3 |
 | `RecipientField` | `packages/features/mail/src/ui/recipient-field.tsx` | Native + Web | – | RecipientField | 3 | 2 |
 | `ContactBadge` | `packages/features/mail/src/ui/contact-badge.tsx` | Native + Web | ContactBadge | ContactBadge | 2 | 2 |
 | `ilias-dashboard` | `packages/features/ilias/src/ui/ilias-dashboard.tsx` | Native + Web | – | IliasDashboardView, iliasFilterLabel | 2 | 2 |
 | `MailMessageList` | `apps/mobile/src/mail/components/mail-message-list.tsx` | Native + Web | – | MailMessageList | 2 | 1 |
 | `MailReader` | `apps/mobile/src/mail/components/mail-reader.tsx` | Native + Web | – | MailReader | 2 | 2 |
 | `MemberAvatar` | `apps/mobile/src/ilias/components/member-avatar.tsx` | Native + Web | MemberAvatar | MemberAvatar | 2 | 2 |
+| `Plates` | `packages/features/articulation/src/ui/plates.tsx` | Native + Web | – | Plates | 2 | 1 |
+| `PoseArt` | `packages/features/articulation/src/ui/pose-art.tsx` | Native + Web | – | PoseArt | 2 | 1 |
 | `ProfilePreview` | `apps/mobile/src/profile/profile-preview.tsx` | Native + Web | ProfilePreview | ProfilePreview | 2 | 2 |
 | `StudioLinkCard` | `apps/mobile/src/quiz/studio-link.tsx` | Native + Web | – | StudioLinkCard | 2 | 2 |
-| `articulation` | `packages/features/quiz/src/ui/components/articulation.tsx` | Native + Web | – | ArticulationFigure, ArticulationPlayer | 1 | 2 |
-| `ArticulationFigure3D` | `packages/features/quiz/src/ui/components/articulation-3d.tsx` | Native + Web | – | ArticulationFigure3D | 1 | 2 |
+| `ArticulationFigure` | `packages/features/articulation/src/ui/figure-2d.tsx` | Native + Web | – | ArticulationFigure | 1 | 1 |
+| `ArticulationFigure3D` | `packages/features/articulation/src/ui/figure-3d.tsx` | Native + Web | – | ArticulationFigure3D | 1 | 1 |
 | `AttachmentList` | `packages/features/mail/src/ui/attachment-list.tsx` | Native + Web | AttachmentList | AttachmentList | 1 | 2 |
 | `ClozeView` | `packages/features/quiz/src/ui/components/cloze.tsx` | Native + Web | ClozeView | ClozeView | 1 | 2 |
 | `DiagramFigureCard` | `packages/features/quiz/src/ui/components/diagram-figure.tsx` | Native + Web | – | DiagramFigureCard | 1 | 2 |
@@ -598,25 +601,14 @@ Every component under `src/` with its exports, platform files, and every place i
 | `MatchingView` | `packages/features/quiz/src/ui/components/matching.tsx` | Native + Web | – | MatchingView | 1 | 2 |
 | `MultipleChoiceView` | `packages/features/quiz/src/ui/components/multiple-choice.tsx` | Native + Web | – | MultipleChoiceView | 1 | 2 |
 | `OrderingView` | `packages/features/quiz/src/ui/components/ordering.tsx` | Native + Web | – | OrderingView | 1 | 2 |
+| `PhaseStrip` | `packages/features/articulation/src/ui/phase-strip.tsx` | Native + Web | – | PhaseStrip | 1 | 1 |
 | `QuestionFeedback` | `packages/features/quiz/src/ui/components/question-feedback.tsx` | Native + Web | QuestionFeedback | QuestionFeedback | 1 | 2 |
 | `QuestionView` | `packages/features/quiz/src/ui/components/question-view.tsx` | Native + Web | – | QuestionView | 1 | 2 |
 | `QuizToolbar` | `packages/features/quiz/src/ui/components/quiz-toolbar.tsx` | Native + Web | QuizToolbar | QuizToolbar | 1 | 2 |
 | `SingleChoiceView` | `packages/features/quiz/src/ui/components/single-choice.tsx` | Native + Web | SingleChoiceView | SingleChoiceView | 1 | 2 |
 | `TemplateSheet` | `packages/features/mail/src/ui/template-sheet.tsx` | Native + Web | – | TemplateSheet | 1 | 2 |
 | `TrueFalseView` | `packages/features/quiz/src/ui/components/true-false.tsx` | Native + Web | TrueFalseView | TrueFalseView | 1 | 2 |
-
-### diagram
-
-- File: `packages/features/quiz/src/ui/components/diagram.tsx`
-- Category: Feature components
-- Exports: `DiagramCanvas` (component), `DiagramView` (component), `diagramAspect` (helper), `diagramTone` (helper)
-- Usages: 24 references in 5 files
-
-- `packages/features/quiz/src/ui.ts`: 5 re-export `DiagramCanvas`; 5 re-export `DiagramView`
-- `packages/features/quiz/src/ui/components/articulation-3d.tsx`: 31 import `diagramAspect`; 31 import `diagramTone`; 130 call `diagramTone` ×2; 131 call `diagramTone` ×2; 136 call `diagramTone`; 137 call `diagramTone`; 140 call `diagramTone` ×2; 215 call `diagramAspect`; 250 call `diagramTone`; 251 call `diagramTone`
-- `packages/features/quiz/src/ui/components/articulation.tsx`: 28 import `diagramAspect`; 28 import `DiagramCanvas`; 28 import `diagramTone`; 81 call `diagramTone`; 82 call `diagramTone`; 90 call `diagramTone`; 91 call `diagramTone`; 99 call `diagramTone`; 100 call `diagramTone`; 109 call `diagramTone`; 110 call `diagramTone`; 164 call `diagramAspect`; 165 render `DiagramCanvas`
-- `packages/features/quiz/src/ui/components/diagram-figure.tsx`: 9 import `diagramAspect`; 9 import `DiagramCanvas`; 29 call `diagramAspect`; 30 render `DiagramCanvas`
-- `packages/features/quiz/src/ui/components/question-view.tsx`: 5 import `DiagramView`; 120 render `DiagramView`
+| `ArticulationPlayer` | `packages/features/articulation/src/ui/player.tsx` | Native + Web | – | ArticulationPlayer | 0 | 0 |
 
 ### QuizButton
 
@@ -628,8 +620,17 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - `apps/mobile/app/quiz/[topic]/index.tsx`: 12 import `QuizButton`; 175 render `QuizButton`; 179 render `QuizButton`; 238 render `QuizButton`
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 10 import `QuizButton`; 192 render `QuizButton`; 293 render `QuizButton`; 300 render `QuizButton`; 373 render `QuizButton`; 374 render `QuizButton`
-- `apps/mobile/app/quiz/studio/index.tsx`: 7 import `QuizButton`; 70 render `QuizButton`
-- `packages/features/quiz/src/ui.ts`: 15 re-export `QuizButton`
+- `apps/mobile/app/quiz/studio/index.tsx`: 7 import `QuizButton`; 71 render `QuizButton`
+- `packages/features/quiz/src/ui.ts`: 13 re-export `QuizButton`
+
+### controls
+
+- File: `packages/features/articulation/src/ui/controls.tsx`
+- Category: Feature components
+- Exports: `AngleRow` (component), `PlayButton` (component), `ViewToggle` (component), `formatAngle` (helper)
+- Usages: 4 references in 1 file
+
+- `packages/features/articulation/src/ui/player.tsx`: 10 import `AngleRow`; 10 import `formatAngle`; 10 import `PlayButton`; 10 import `ViewToggle`; 115 render `PlayButton`; 117 render `ViewToggle`; 121 render `AngleRow`; 125 call `formatAngle`
 
 ### mail-skeletons
 
@@ -651,7 +652,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `OptionRow`
 - Usages: 4 references in 4 files
 
-- `packages/features/quiz/src/ui.ts`: 11 re-export `OptionRow`
+- `packages/features/quiz/src/ui.ts`: 9 re-export `OptionRow`
 - `packages/features/quiz/src/ui/components/multiple-choice.tsx`: 9 import `OptionRow`; 32 render `OptionRow`
 - `packages/features/quiz/src/ui/components/single-choice.tsx`: 9 import `OptionRow`; 30 render `OptionRow`
 - `packages/features/quiz/src/ui/components/true-false.tsx`: 7 import `OptionRow`; 24 render `OptionRow`; 32 render `OptionRow`
@@ -668,6 +669,17 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/profil/daten.tsx`: 8 import `ProfileSummary`; 23 render `ProfileSummary`
 - `apps/mobile/app/profil/index.tsx`: 6 import `ProfileSummary`; 26 render `ProfileSummary`
 - `apps/mobile/app/profil/sichtbarkeit.tsx`: 8 import `ProfileSummary`; 32 render `ProfileSummary`
+
+### diagram
+
+- File: `packages/features/quiz/src/ui/components/diagram.tsx`
+- Category: Feature components
+- Exports: `DiagramCanvas` (component), `DiagramView` (component), `diagramAspect` (helper), `diagramTone` (helper)
+- Usages: 3 references in 3 files
+
+- `packages/features/quiz/src/ui.ts`: 3 re-export `DiagramCanvas`; 3 re-export `DiagramView`
+- `packages/features/quiz/src/ui/components/diagram-figure.tsx`: 9 import `diagramAspect`; 9 import `DiagramCanvas`; 29 call `diagramAspect`; 30 render `DiagramCanvas`
+- `packages/features/quiz/src/ui/components/question-view.tsx`: 5 import `DiagramView`; 120 render `DiagramView`
 
 ### RecipientField
 
@@ -730,6 +742,24 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/ilias/[refId].tsx`: 10 import `MemberAvatar`; 69 render `MemberAvatar`
 - `apps/mobile/app/ilias/mitglied.tsx`: 8 import `MemberAvatar`; 82 render `MemberAvatar`
 
+### Plates
+
+- File: `packages/features/articulation/src/ui/plates.tsx`
+- Category: Feature components
+- Exports: `Plates` (component)
+- Usages: 2 references in 1 file
+
+- `packages/features/articulation/src/ui/figure-3d.tsx`: 28 import `Plates`; 144 render `Plates`; 151 render `Plates`
+
+### PoseArt
+
+- File: `packages/features/articulation/src/ui/pose-art.tsx`
+- Category: Feature components
+- Exports: `PoseArt` (component)
+- Usages: 2 references in 1 file
+
+- `packages/features/articulation/src/ui/figure-2d.tsx`: 21 import `PoseArt`; 106 render `PoseArt`; 109 render `PoseArt`
+
 ### ProfilePreview
 
 - File: `apps/mobile/src/profile/profile-preview.tsx`
@@ -751,25 +781,23 @@ Every component under `src/` with its exports, platform files, and every place i
 - `apps/mobile/app/(tabs)/quiz.tsx`: 20 import `StudioLinkCard`; 330 render `StudioLinkCard`
 - `apps/mobile/app/quiz/[topic]/index.tsx`: 9 import `StudioLinkCard`; 191 render `StudioLinkCard`
 
-### articulation
+### ArticulationFigure
 
-- File: `packages/features/quiz/src/ui/components/articulation.tsx`
+- File: `packages/features/articulation/src/ui/figure-2d.tsx`
 - Category: Feature components
-- Exports: `ArticulationFigure` (component), `ArticulationPlayer` (component)
-- Usages: 1 reference in 2 files
+- Exports: `ArticulationFigure` (component)
+- Usages: 1 reference in 1 file
 
-- `apps/mobile/app/quiz/studio/index.tsx`: 7 import `ArticulationPlayer`; 43 render `ArticulationPlayer`
-- `packages/features/quiz/src/ui.ts`: 1 re-export `ArticulationFigure`; 1 re-export `ArticulationPlayer`
+- `packages/features/articulation/src/ui/player.tsx`: 11 import `ArticulationFigure`; 103 render `ArticulationFigure`
 
 ### ArticulationFigure3D
 
-- File: `packages/features/quiz/src/ui/components/articulation-3d.tsx`
+- File: `packages/features/articulation/src/ui/figure-3d.tsx`
 - Category: Feature components
 - Exports: `ArticulationFigure3D` (component)
-- Usages: 1 reference in 2 files
+- Usages: 1 reference in 1 file
 
-- `packages/features/quiz/src/ui.ts`: 2 re-export `ArticulationFigure3D`
-- `packages/features/quiz/src/ui/components/articulation.tsx`: 29 import `ArticulationFigure3D`; 330 render `ArticulationFigure3D`
+- `packages/features/articulation/src/ui/player.tsx`: 12 import `ArticulationFigure3D`; 94 render `ArticulationFigure3D`
 
 ### AttachmentList
 
@@ -790,7 +818,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `ClozeView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 3 re-export `ClozeView`
+- `packages/features/quiz/src/ui.ts`: 1 re-export `ClozeView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 4 import `ClozeView`; 100 render `ClozeView`
 
 ### DiagramFigureCard
@@ -801,7 +829,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `apps/mobile/app/quiz/[topic]/index.tsx`: 12 import `DiagramFigureCard`; 188 render `DiagramFigureCard`
-- `packages/features/quiz/src/ui.ts`: 4 re-export `DiagramFigureCard`
+- `packages/features/quiz/src/ui.ts`: 2 re-export `DiagramFigureCard`
 
 ### FlashcardView
 
@@ -811,7 +839,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `FlashcardView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 6 re-export `FlashcardView`
+- `packages/features/quiz/src/ui.ts`: 4 re-export `FlashcardView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 6 import `FlashcardView`; 130 render `FlashcardView`
 
 ### FreeTextView
@@ -821,7 +849,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `FreeTextView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 7 re-export `FreeTextView`
+- `packages/features/quiz/src/ui.ts`: 5 re-export `FreeTextView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 7 import `FreeTextView`; 69 render `FreeTextView`
 
 ### IliasOfficeView
@@ -902,7 +930,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MapView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 8 re-export `MapView`
+- `packages/features/quiz/src/ui.ts`: 6 re-export `MapView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 8 import `MapView`; 110 render `MapView`
 
 ### MatchingView
@@ -912,7 +940,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MatchingView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 9 re-export `MatchingView`
+- `packages/features/quiz/src/ui.ts`: 7 re-export `MatchingView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 9 import `MatchingView`; 80 render `MatchingView`
 
 ### MultipleChoiceView
@@ -922,7 +950,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `MultipleChoiceView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 10 re-export `MultipleChoiceView`
+- `packages/features/quiz/src/ui.ts`: 8 re-export `MultipleChoiceView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 10 import `MultipleChoiceView`; 49 render `MultipleChoiceView`
 
 ### OrderingView
@@ -932,8 +960,17 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `OrderingView` (component)
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 12 re-export `OrderingView`
+- `packages/features/quiz/src/ui.ts`: 10 re-export `OrderingView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 11 import `OrderingView`; 90 render `OrderingView`
+
+### PhaseStrip
+
+- File: `packages/features/articulation/src/ui/phase-strip.tsx`
+- Category: Feature components
+- Exports: `PhaseStrip` (component)
+- Usages: 1 reference in 1 file
+
+- `packages/features/articulation/src/ui/player.tsx`: 13 import `PhaseStrip`; 106 render `PhaseStrip`
 
 ### QuestionFeedback
 
@@ -944,7 +981,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 10 import `QuestionFeedback`; 335 render `QuestionFeedback`
-- `packages/features/quiz/src/ui.ts`: 13 re-export `QuestionFeedback`
+- `packages/features/quiz/src/ui.ts`: 11 re-export `QuestionFeedback`
 
 ### QuestionView
 
@@ -954,7 +991,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `apps/mobile/app/quiz/[topic]/run.tsx`: 10 import `QuestionView`; 326 render `QuestionView`
-- `packages/features/quiz/src/ui.ts`: 14 re-export `QuestionView`
+- `packages/features/quiz/src/ui.ts`: 12 re-export `QuestionView`
 
 ### QuizToolbar
 
@@ -965,7 +1002,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Usages: 1 reference in 2 files
 
 - `apps/mobile/app/(tabs)/quiz.tsx`: 19 import `QuizToolbar`; 235 render `QuizToolbar`
-- `packages/features/quiz/src/ui.ts`: 16 re-export `QuizToolbar`
+- `packages/features/quiz/src/ui.ts`: 14 re-export `QuizToolbar`
 
 ### SingleChoiceView
 
@@ -975,7 +1012,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `SingleChoiceView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 17 re-export `SingleChoiceView`
+- `packages/features/quiz/src/ui.ts`: 15 re-export `SingleChoiceView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 12 import `SingleChoiceView`; 39 render `SingleChoiceView`
 
 ### TemplateSheet
@@ -996,8 +1033,18 @@ Every component under `src/` with its exports, platform files, and every place i
 - Live preview in the app: `TrueFalseView`
 - Usages: 1 reference in 2 files
 
-- `packages/features/quiz/src/ui.ts`: 18 re-export `TrueFalseView`
+- `packages/features/quiz/src/ui.ts`: 16 re-export `TrueFalseView`
 - `packages/features/quiz/src/ui/components/question-view.tsx`: 13 import `TrueFalseView`; 59 render `TrueFalseView`
+
+### ArticulationPlayer
+
+- File: `packages/features/articulation/src/ui/player.tsx`
+- Category: Feature components
+- Exports: `ArticulationPlayer` (component)
+- Usages: 0 references in 0 files
+- **Unused:** no import or reference was found.
+
+_No occurrences found._
 
 ## App-wide providers
 
