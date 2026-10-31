@@ -142,7 +142,12 @@ The **stage colours** are chosen separately from the model: a canvas (paper,
 sand, slate or ink) and a grid tone (blue, warm, grey or ink), defined once in
 `core/surface.ts` and resolved by `articulationStage`. Every grid tone has to
 stay visible on every canvas — the check asserts it — so no combination hides
-the grid. The website demo offers the same two rows.
+the grid, and picking a tone switches the grid on so the choice is visible.
+
+Grid widths are in viewBox units, and the canvas renders 840 units into roughly
+360 CSS px: a 1-unit line would be half a pixel and wash out on a phone, so the
+grid uses `GRID_WIDTH` (2.4) and `GRID_STRONG_WIDTH` (3.2). The website demo
+offers the same two rows.
 
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web.

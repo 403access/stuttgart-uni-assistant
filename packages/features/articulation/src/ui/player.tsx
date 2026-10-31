@@ -193,7 +193,11 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           canvas={canvas}
           gridTone={gridTone}
           onCanvas={setCanvas}
-          onGridTone={setGridTone}
+          onGridTone={(tone) => {
+            setGridTone(tone);
+            // Picking a grid colour is only meaningful with the grid shown.
+            setShowGrid(true);
+          }}
         />
       ) : null}
     </View>

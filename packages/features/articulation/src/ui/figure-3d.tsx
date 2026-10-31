@@ -52,6 +52,12 @@ const AXES = [
   { label: 'Y', direction: [0, 1, 0] as const, color: '#1E8449' },
   { label: 'Z', direction: [0, 0, 1] as const, color: '#1F5FA8' },
 ];
+/**
+ * Grid line weights in viewBox units. The canvas is ~360 CSS px wide for 840
+ * units, so a 1-unit stroke would be half a pixel and wash out on a phone.
+ */
+const GRID_WIDTH = 2.4;
+const GRID_STRONG_WIDTH = 3.2;
 /** Where the airstream and the focus marker sit inside the volumes. */
 const AIR_Z = 10;
 const FOCUS_Z = 20;
@@ -200,7 +206,7 @@ export function ArticulationFigure3D({
               x2={line.x2}
               y2={line.y2}
               stroke={line.strong ? stage.gridStrong : stage.grid}
-              strokeWidth={line.strong ? 1.4 : 1}
+              strokeWidth={line.strong ? GRID_STRONG_WIDTH : GRID_WIDTH}
             />
           ))}
 

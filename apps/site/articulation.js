@@ -394,7 +394,7 @@
             1,
           )}" y2="${line.y2.toFixed(1)}" stroke="${
             line.strong ? tone.gridStrong : tone.grid
-          }" stroke-width="${line.strong ? 1.4 : 1}"/>`,
+          }" stroke-width="${line.strong ? 3.2 : 2.4}"/>`,
       )
       .join('');
   }
@@ -849,6 +849,8 @@
     bar.querySelectorAll('[data-grid-tone]').forEach((button) => {
       button.addEventListener('click', () => {
         gridChoice = button.dataset.gridTone;
+        // Picking a grid colour is only meaningful with the grid shown.
+        showGrid = true;
         renderBar();
         drawStatic();
       });
