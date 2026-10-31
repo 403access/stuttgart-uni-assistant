@@ -85,6 +85,11 @@ resetting it, which is what makes stepping through a stop by hand practical.
 timeline, which multiplies the per-frame delta, so changing speed mid-flight
 never restarts the cycle or drops the current phase.
 
+**Axes** toggles an orientation gizmo in the corner of the 3D view: X red, Y
+green, Z blue, projected through the same camera, so it turns with the model.
+Axes pointing away from the viewer are dimmed. It is an orientation aid, not a
+control — it never affects the scene.
+
 ### 3D view
 
 A sagittal section is flat by nature, so the 3D view is built like a cutaway

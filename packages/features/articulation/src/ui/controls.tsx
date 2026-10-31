@@ -156,6 +156,20 @@ const styles = themedStyles((colors) => ({
   presetLabel: { color: colors.inkSoft, fontSize: 12, fontWeight: '700' },
   presetLabelActive: { color: colors.blue },
   caption: { marginLeft: 'auto', color: colors.inkSoft, fontSize: 11, fontWeight: '600' },
+  axes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.line,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  axesActive: { borderColor: colors.blue, backgroundColor: colors.blueSoft },
+  axesLabel: { color: colors.mute, fontSize: 11, fontWeight: '700' },
+  axesLabelActive: { color: colors.blue },
   pressed: { opacity: 0.7 },
 }));
 
@@ -198,5 +212,31 @@ export function SpeedRow({
         );
       })}
     </View>
+  );
+}
+
+/** Turns the axis gizmo on and off; only meaningful in the 3D view. */
+export function AxesToggle({
+  locale,
+  active,
+  onToggle,
+}: {
+  locale: Locale;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={tx(locale, 'quiz.studio.axes_a11y')}
+      accessibilityState={{ checked: active }}
+      onPress={onToggle}
+      style={({ pressed }) => [styles.axes, active && styles.axesActive, pressed && styles.pressed]}
+    >
+      <MaterialIcons name="open-with" size={13} color={active ? colors.blue : colors.mute} />
+      <Text style={[styles.axesLabel, active && styles.axesLabelActive]}>
+        {tx(locale, 'quiz.studio.axes')}
+      </Text>
+    </Pressable>
   );
 }

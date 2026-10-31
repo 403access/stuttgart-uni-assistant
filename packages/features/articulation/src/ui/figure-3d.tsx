@@ -1,7 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Animated, Text, View } from 'react-native';
-import Svg, { G, Path } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
@@ -17,6 +17,7 @@ import {
   articulationPoseLayers,
   articulationStaticLayers,
   pointPercent,
+  projectSceneDirection,
   projectScenePoint,
   shadeColor,
   type ArticulationCamera,
@@ -34,6 +35,13 @@ import {
 } from './timeline';
 
 const HEAD_SIDE = shadeColor('#FFFDF9', 0.22);
+
+/** Screen axes: X to the right, Y down, Z towards the viewer. */
+const AXES = [
+  { label: 'X', direction: [1, 0, 0] as const, color: '#C0392B' },
+  { label: 'Y', direction: [0, 1, 0] as const, color: '#1E8449' },
+  { label: 'Z', direction: [0, 0, 1] as const, color: '#1F5FA8' },
+];
 /** Where the airstream and the focus marker sit inside the volumes. */
 const AIR_Z = 10;
 const FOCUS_Z = 20;
@@ -52,6 +60,7 @@ export function ArticulationFigure3D({
   camera,
   steps = 10,
   hint,
+  showAxes = false,
 }: {
   locale: Locale;
   timeline: ArticulationTimeline;
@@ -59,6 +68,8 @@ export function ArticulationFigure3D({
   /** Rim slices of the shell; dragging lowers this to keep the SVG light. */
   steps?: number;
   hint?: string;
+  /** Draw the orientation gizmo in the corner. */
+  showAxes?: boolean;
 }) {
   const { clock, fade, displayed, windows, phaseWindow } = timeline;
   const pose = displayed.pose;
@@ -97,6 +108,17 @@ export function ArticulationFigure3D({
   );
 
   const ringPoint = pointPercent(projectScenePoint(focus, FOCUS_Z, camera), ARTICULATION_3D_VIEW_BOX);
+  const axes = showAxes
+    ? AXES.map((axis) => {
+        const direction = projectSceneDirection(axis.direction, camera);
+        const yaw = (camera.yaw * Math.PI) / 180;
+        const pitch = (camera.pitch * Math.PI) / 180;
+        const depth =
+          Math.sin(pitch) * axis.direction[1] +
+          Math.cos(pitch) * (-Math.sin(yaw) * axis.direction[0] + Math.cos(yaw) * axis.direction[2]);
+        return { ...axis, direction, depth };
+      })
+    : [];
   const ringOpacityCurve = clock.interpolate(
     sampleCurve((value) => ringOpacity(windowAt(windows, value), value)),
   );
@@ -192,6 +214,31 @@ export function ArticulationFigure3D({
         />
       </View>
 
+      {showAxes ? (
+        <Svg width={72} height={72} viewBox="0 0 72 72" style={styles.gizmo} pointerEvents="none">
+          <Circle cx={36} cy={36} r={2.4} fill="#5E666E" />
+          {axes.map((axis) => {
+            const x = 36 + axis.direction.x * 24;
+            const y = 36 + axis.direction.y * 24;
+            return (
+              <G key={axis.label} opacity={axis.depth > 0 ? 1 : 0.5}>
+                <Line x1={36} y1={36} x2={x} y2={y} stroke={axis.color} strokeWidth={2.4} strokeLinecap="round" />
+                <SvgText
+                  x={36 + axis.direction.x * 31}
+                  y={36 + axis.direction.y * 31 + 3}
+                  fontSize={9}
+                  fontWeight="700"
+                  textAnchor="middle"
+                  fill={axis.color}
+                >
+                  {axis.label}
+                </SvgText>
+              </G>
+            );
+          })}
+        </Svg>
+      ) : null}
+
       <View style={styles.badge} pointerEvents="none">
         <MaterialIcons name="view-in-ar" size={12} color={colors.blue} />
         <Text style={styles.badgeText}>{tx(locale, 'quiz.studio.view.3d')}</Text>
@@ -230,6 +277,7 @@ const styles = themedStyles((colors) => ({
     height: 26,
     borderRadius: 13,
   },
+  gizmo: { position: 'absolute', top: 6, right: 6 },
   badge: {
     position: 'absolute',
     left: 8,

@@ -19,8 +19,8 @@ Every component under `src/` with its exports, platform files, and every place i
 | Metric | Value |
 | --- | ---: |
 | Components | 86 |
-| Exports | 130 |
-| Usage references | 841 |
+| Exports | 131 |
+| Usage references | 842 |
 | Files with occurrences | 111 |
 | Unused components | 1 |
 | Imported but never used | 0 |
@@ -568,7 +568,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
 | `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 9 | 4 |
-| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, PlayButton, SpeedRow, ViewToggle, SPEEDS, formatAngle, formatSpeed | 5 | 1 |
+| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, AxesToggle, PlayButton, SpeedRow, ViewToggle, SPEEDS, formatAngle, formatSpeed | 6 | 1 |
 | `mail-skeletons` | `packages/features/mail/src/ui/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 3 |
 | `OptionRow` | `packages/features/quiz/src/ui/components/option-row.tsx` | Native + Web | OptionRow | OptionRow | 4 | 4 |
 | `ProfileSummary` | `apps/mobile/src/profile/profile-summary.tsx` | Native + Web | ProfileSummary | ProfileSummary | 4 | 4 |
@@ -626,10 +626,10 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - File: `packages/features/articulation/src/ui/controls.tsx`
 - Category: Feature components
-- Exports: `AngleRow` (component), `PlayButton` (component), `SpeedRow` (component), `ViewToggle` (component), `SPEEDS` (constant), `formatAngle` (helper), `formatSpeed` (helper)
-- Usages: 5 references in 1 file
+- Exports: `AngleRow` (component), `AxesToggle` (component), `PlayButton` (component), `SpeedRow` (component), `ViewToggle` (component), `SPEEDS` (constant), `formatAngle` (helper), `formatSpeed` (helper)
+- Usages: 6 references in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 10 import `AngleRow`; 10 import `formatAngle`; 10 import `PlayButton`; 10 import `SpeedRow`; 10 import `ViewToggle`; 128 render `PlayButton`; 130 render `ViewToggle`; 133 render `SpeedRow`; 136 render `AngleRow`; 140 call `formatAngle`
+- `packages/features/articulation/src/ui/player.tsx`: 10 import `AngleRow`; 10 import `AxesToggle`; 10 import `formatAngle`; 10 import `PlayButton`; 10 import `SpeedRow`; 10 import `ViewToggle`; 130 render `PlayButton`; 133 render `AxesToggle`; 135 render `ViewToggle`; 138 render `SpeedRow`; 141 render `AngleRow`; 145 call `formatAngle`
 
 ### mail-skeletons
 
@@ -778,7 +778,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 11 import `ArticulationFigure`; 111 render `ArticulationFigure`
+- `packages/features/articulation/src/ui/player.tsx`: 11 import `ArticulationFigure`; 113 render `ArticulationFigure`
 
 ### ArticulationFigure3D
 
@@ -787,7 +787,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure3D` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 12 import `ArticulationFigure3D`; 102 render `ArticulationFigure3D`
+- `packages/features/articulation/src/ui/player.tsx`: 12 import `ArticulationFigure3D`; 103 render `ArticulationFigure3D`
 
 ### AttachmentList
 
@@ -960,7 +960,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `PhaseStrip` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 13 import `PhaseStrip`; 114 render `PhaseStrip`
+- `packages/features/articulation/src/ui/player.tsx`: 13 import `PhaseStrip`; 116 render `PhaseStrip`
 
 ### QuestionFeedback
 

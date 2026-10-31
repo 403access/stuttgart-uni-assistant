@@ -64,7 +64,7 @@ Your progress lives on the device. With a session, checked answers and completed
 
 The studio animates how a sound is produced on the same head cross-section the diagram questions use: the airstream rises from the lungs, the vocal cords vibrate or stay apart, and the tongue, lips, and velum take the pose of the sound. Pick from 24 sounds — stops, nasals, fricatives, approximants, and vowels — each with an IPA symbol, an example word, and a one-line explanation.
 
-**2D / 3D** switches between the flat cutaway and a turnable block of the same anatomy. In 3D the head is a cutaway model with real depth: **drag it sideways to turn it**, or tap one of the three preset views. The airstream follows.
+**2D / 3D** switches between the flat cutaway and a turnable block of the same anatomy. In 3D the head is a cutaway model with real depth: **drag it sideways to turn it**, or tap one of the three preset views. **Achsen (axes)** shows the X/Y/Z orientation in the corner. The airstream follows.
 
 Under the figure, the sound's own stages light up in order: for **t** that is **Annäherung (approach)** — the tongue moves into place while the air rises — **Verschluss (closure)**, where the air is trapped and the pressure builds, **Lösung (release)**, the little burst, and **Behauchung (aspiration)**, the puff of air before the next sound voices. **Tap a stage to jump straight to it** instead of waiting for the loop; **Pause** freezes the current frame, and **Tempo (speed)** runs the animation at 0.5×, 1×, 1.5× or 2×. Nasals close the mouth but let the air out through the nose; fricatives keep a narrow gap and let the air hiss.
 

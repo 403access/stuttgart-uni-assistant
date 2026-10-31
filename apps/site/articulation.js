@@ -21,6 +21,7 @@
       flat: '2D',
       solid: '3D',
       turn: 'Drehen',
+      axes: 'Achsen',
       drag: 'Ziehen zum Drehen',
       viaMouth: 'Luft durch den Mund',
       viaNose: 'Luft durch die Nase',
@@ -35,6 +36,7 @@
       flat: '2D',
       solid: '3D',
       turn: 'Turn',
+      axes: 'Axes',
       drag: 'Drag to turn',
       viaMouth: 'Air through the mouth',
       viaNose: 'Air through the nose',
@@ -49,6 +51,7 @@
   let sound = data.sounds.find((entry) => entry.id === 't') || data.sounds[0];
   let manner = sound.manner;
   let threeD = false;
+  let showAxes = false;
   let camera = { ...data.scene.camera };
   let speed = 1;
   let playing = !reducedMotion;
@@ -352,6 +355,34 @@
     )}" preserveAspectRatio="xMidYMid meet">${parts.join('')}</svg>`;
   }
 
+  function axes() {
+    const u = Math.cos(rad(camera.yaw));
+    const v = Math.sin(rad(camera.yaw));
+    const w = Math.sin(rad(camera.pitch));
+    const q = Math.cos(rad(camera.pitch));
+    const colors = ['#C0392B', '#1E8449', '#1F5FA8'];
+    const names = ['X', 'Y', 'Z'];
+    return `<svg class="studio-axes" viewBox="0 0 72 72" aria-hidden="true">
+      <circle cx="36" cy="36" r="2.4" fill="#5E666E"/>
+      ${[
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ]
+        .map(([dx, dy, dz], index) => {
+          const x = u * dx + v * dz;
+          const y = q * dy + v * w * dx - u * w * dz;
+          const depth = w * dy + q * (-v * dx + u * dz);
+          const color = colors[index];
+          return `<g opacity="${depth > 0 ? 1 : 0.5}">
+            <line x1="36" y1="36" x2="${(36 + x * 24).toFixed(1)}" y2="${(36 + y * 24).toFixed(1)}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>
+            <text x="${(36 + x * 31).toFixed(1)}" y="${(36 + y * 31 + 3).toFixed(1)}" font-size="9" font-weight="700" text-anchor="middle" fill="${color}">${names[index]}</text>
+          </g>`;
+        })
+        .join('')}
+    </svg>`;
+  }
+
   function figure2d() {
     const target = sound.pose;
     return `<svg viewBox="${data.headViewBox}" role="img" aria-label="${esc(
@@ -419,7 +450,8 @@
     canvas.innerHTML = `<div class="studio-figure">${threeD ? figure3d() : figure2d()}</div>
       <div class="studio-overlay"></div>
       <span class="studio-badge">${esc(sound.airflow === 'nasal' ? copy().viaNose : copy().viaMouth)}</span>
-      ${threeD ? `<span class="studio-hint">${esc(copy().drag)}</span>` : ''}`;
+      ${threeD ? `<span class="studio-hint">${esc(copy().drag)}</span>` : ''}
+      ${threeD && showAxes ? axes() : ''}`;
     buildOverlay();
     update(elapsed);
   }
@@ -589,6 +621,13 @@
           }</svg>
           <span>${esc(playing ? copy().pause : copy().play)}</span>
         </button>
+        ${
+          threeD
+            ? `<button type="button" class="studio-btn" data-axes aria-pressed="${showAxes}">${esc(
+                copy().axes,
+              )}</button>`
+            : ''
+        }
         <div class="studio-seg" role="group" aria-label="${lang === 'en' ? 'View' : 'Ansicht'}">
           <button type="button" data-view="flat" aria-pressed="${!threeD}">${esc(copy().flat)}</button>
           <button type="button" data-view="solid" aria-pressed="${threeD}">${esc(copy().solid)}</button>
@@ -626,6 +665,13 @@
       if (playing) start();
       else cancelAnimationFrame(frame);
       update(elapsed);
+    });
+    bar.querySelectorAll('[data-axes]').forEach((button) => {
+      button.addEventListener('click', () => {
+        showAxes = !showAxes;
+        renderBar();
+        drawStatic();
+      });
     });
     bar.querySelectorAll('[data-view]').forEach((button) => {
       button.addEventListener('click', () => {

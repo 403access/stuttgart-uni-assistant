@@ -1026,6 +1026,8 @@ export const en: Record<TranslationKey, string> = {
   "quiz.study_module_count": "{0} modules",
   "quiz.study_module_count_one": "1 module",
   "quiz.studio.angle": "Angle {0}",
+  "quiz.studio.axes": "Axes",
+  "quiz.studio.axes_a11y": "Show axes",
   "quiz.studio.detail": "How the sound is made",
   "quiz.studio.drag_hint": "Drag to turn",
   "quiz.studio.intro": "Pick a sound. The animation shows where the airstream starts, whether the vocal cords vibrate, and which articulators shape the sound.",

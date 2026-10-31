@@ -134,6 +134,27 @@ export function articulationScene(pose: ArticulationPose, voiced: boolean): Arti
 export { articulationBackdrop };
 
 /**
+ * Projection of a direction (no position), e.g. one axis of the gizmo. Same
+ * camera as `projectScenePoint`, without the translation.
+ */
+export function projectSceneDirection(
+  direction: readonly [number, number, number],
+  camera: ArticulationCamera,
+): { x: number; y: number } {
+  const yaw = (camera.yaw * Math.PI) / 180;
+  const pitch = (camera.pitch * Math.PI) / 180;
+  const u = Math.cos(yaw);
+  const v = Math.sin(yaw);
+  const w = Math.sin(pitch);
+  const q = Math.cos(pitch);
+  const [dx, dy, dz] = direction;
+  return {
+    x: u * dx + v * dz,
+    y: q * dy + v * w * dx - u * w * dz,
+  };
+}
+
+/**
  * Orthographic projection of a point at depth `z`. The camera looks from a
  * three-quarter angle: yaw turns the model, pitch tilts it.
  */

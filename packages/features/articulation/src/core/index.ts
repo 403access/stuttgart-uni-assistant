@@ -30,6 +30,7 @@ export {
   articulationScene,
   articulationPoseLayers,
   articulationStaticLayers,
+  projectSceneDirection,
   projectScenePoint,
 } from './scene3d';
 export type { ArticulationCamera, ArticulationSceneLayer } from './scene3d';
