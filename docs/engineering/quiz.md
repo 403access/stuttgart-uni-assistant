@@ -138,6 +138,12 @@ The drag schedules at most one React render per frame. The canvas reports
 itself as an adjustable control for the selected axis, so screen readers can
 turn it too.
 
+The **stage colours** are chosen separately from the model: a canvas (paper,
+sand, slate or ink) and a grid tone (blue, warm, grey or ink), defined once in
+`core/surface.ts` and resolved by `articulationStage`. Every grid tone has to
+stay visible on every canvas — the check asserts it — so no combination hides
+the grid. The website demo offers the same two rows.
+
 It is all plain SVG — no WebGL, no `three.js`, no new dependency — so the view
 works offline and looks the same on iOS, Android and the web.
 `tools/articulation/check-articulation.ts` projects the airstream, the focus point and the

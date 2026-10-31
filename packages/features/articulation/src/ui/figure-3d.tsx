@@ -9,6 +9,7 @@ import type { Locale } from '@ua/core/domain/types';
 
 import {
   ARTICULATION_3D_VIEW_BOX,
+  ARTICULATION_SURFACE,
   airflowFocusT,
   airflowLane,
   articulationFocus,
@@ -16,12 +17,15 @@ import {
   ARTICULATION_SHELL,
   articulationPoseLayers,
   articulationShellOutline,
+  articulationStage,
   articulationStaticLayers,
   pointPercent,
   projectSceneDirection,
   projectScenePoint,
   shadeColor,
   type ArticulationCamera,
+  type ArticulationCanvas,
+  type ArticulationGridTone,
 } from '../core';
 import { aspectOf } from './aspect';
 import { faceMatrix, layerRotation, sceneOrder, shellRim, volumeSlices } from './scene';
@@ -65,6 +69,8 @@ export function ArticulationFigure3D({
   timeline,
   camera,
   hint,
+  canvas = ARTICULATION_SURFACE.canvas,
+  gridTone = ARTICULATION_SURFACE.grid,
   showAxes = false,
   showGrid = false,
 }: {
@@ -72,6 +78,10 @@ export function ArticulationFigure3D({
   timeline: ArticulationTimeline;
   camera: ArticulationCamera;
   hint?: string;
+  /** Stage colour behind the model. */
+  canvas?: ArticulationCanvas;
+  /** Colour of the reference grid. */
+  gridTone?: ArticulationGridTone;
   /** Draw the orientation gizmo in the corner. */
   showAxes?: boolean;
   /** Draw the reference grid on the cut plane. */
@@ -79,6 +89,7 @@ export function ArticulationFigure3D({
 }) {
   const { clock, fade, displayed, windows, phaseWindow } = timeline;
   const pose = displayed.pose;
+  const stage = articulationStage(canvas, gridTone);
 
   const layers = useMemo(
     () => sceneOrder([...articulationStaticLayers(), ...articulationPoseLayers(pose, displayed.voiced)], camera),
@@ -140,7 +151,12 @@ export function ArticulationFigure3D({
   const ringScaleCurve = clock.interpolate(sampleCurve((value) => ringScale(windowAt(windows, value), value)));
 
   return (
-    <View style={[styles.canvas, { aspectRatio: aspectOf(ARTICULATION_3D_VIEW_BOX) }]}>
+    <View
+      style={[
+        styles.canvas,
+        { aspectRatio: aspectOf(ARTICULATION_3D_VIEW_BOX), backgroundColor: stage.background },
+      ]}
+    >
       <Animated.View style={[styles.fill, { opacity: fade }]} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox={ARTICULATION_3D_VIEW_BOX}>
           {/* Cutaway head shell: the cut face, and the skull receding behind it.
@@ -183,7 +199,7 @@ export function ArticulationFigure3D({
               y1={line.y1}
               x2={line.x2}
               y2={line.y2}
-              stroke={line.strong ? '#BFD2E4' : '#DEE8F2'}
+              stroke={line.strong ? stage.gridStrong : stage.grid}
               strokeWidth={line.strong ? 1.4 : 1}
             />
           ))}
@@ -250,6 +266,8 @@ export function ArticulationFigure3D({
 
       {showAxes ? (
         <Svg width={72} height={72} viewBox="0 0 72 72" style={styles.gizmo} pointerEvents="none">
+          {/* A soft chip keeps the axis colours readable on a dark canvas. */}
+          <Circle cx={36} cy={36} r={32} fill="rgba(255,255,255,0.72)" />
           <Circle cx={36} cy={36} r={2.4} fill="#5E666E" />
           {axes.map((axis) => {
             const x = 36 + axis.direction.x * 24;

@@ -19,8 +19,8 @@ Every component under `src/` with its exports, platform files, and every place i
 | Metric | Value |
 | --- | ---: |
 | Components | 86 |
-| Exports | 132 |
-| Usage references | 843 |
+| Exports | 133 |
+| Usage references | 844 |
 | Files with occurrences | 111 |
 | Unused components | 1 |
 | Imported but never used | 0 |
@@ -568,7 +568,7 @@ Every component under `src/` with its exports, platform files, and every place i
 | Component | File | Platform | Preview | Exports | Usages | Files |
 | --- | --- | --- | --- | --- | ---: | ---: |
 | `QuizButton` | `packages/features/quiz/src/ui/components/quiz-button.tsx` | Native + Web | QuizButton | QuizButton | 9 | 4 |
-| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, AxisPicker, OverlayToggle, PlayButton, SpeedRow, ViewToggle, SPEEDS, formatAngle, formatSpeed | 7 | 1 |
+| `controls` | `packages/features/articulation/src/ui/controls.tsx` | Native + Web | – | AngleRow, AxisPicker, OverlayToggle, PlayButton, SpeedRow, StageColors, ViewToggle, SPEEDS, formatAngle, formatSpeed | 8 | 1 |
 | `mail-skeletons` | `packages/features/mail/src/ui/mail-skeletons.tsx` | Native + Web | MailListSkeleton, ToolbarSkeleton | MailListSkeleton, MailReveal, ToolbarReveal, ToolbarSkeleton | 4 | 3 |
 | `OptionRow` | `packages/features/quiz/src/ui/components/option-row.tsx` | Native + Web | OptionRow | OptionRow | 4 | 4 |
 | `ProfileSummary` | `apps/mobile/src/profile/profile-summary.tsx` | Native + Web | ProfileSummary | ProfileSummary | 4 | 4 |
@@ -626,10 +626,10 @@ Every component under `src/` with its exports, platform files, and every place i
 
 - File: `packages/features/articulation/src/ui/controls.tsx`
 - Category: Feature components
-- Exports: `AngleRow` (component), `AxisPicker` (component), `OverlayToggle` (component), `PlayButton` (component), `SpeedRow` (component), `ViewToggle` (component), `SPEEDS` (constant), `formatAngle` (helper), `formatSpeed` (helper)
-- Usages: 7 references in 1 file
+- Exports: `AngleRow` (component), `AxisPicker` (component), `OverlayToggle` (component), `PlayButton` (component), `SpeedRow` (component), `StageColors` (component), `ViewToggle` (component), `SPEEDS` (constant), `formatAngle` (helper), `formatSpeed` (helper)
+- Usages: 8 references in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 16 import `AngleRow`; 16 import `formatAngle`; 16 import `OverlayToggle`; 16 import `PlayButton`; 16 import `SpeedRow`; 16 import `ViewToggle`; 137 render `PlayButton`; 141 render `OverlayToggle`; 147 render `OverlayToggle`; 155 render `ViewToggle`; 158 render `SpeedRow`; 161 render `AngleRow`; 167 call `formatAngle`
+- `packages/features/articulation/src/ui/player.tsx`: 24 import `AngleRow`; 25 import `OverlayToggle`; 26 import `PlayButton`; 27 import `SpeedRow`; 28 import `StageColors`; 29 import `ViewToggle`; 30 import `formatAngle`; 156 render `PlayButton`; 160 render `OverlayToggle`; 166 render `OverlayToggle`; 174 render `ViewToggle`; 177 render `SpeedRow`; 180 render `AngleRow`; 186 call `formatAngle`; 191 render `StageColors`
 
 ### mail-skeletons
 
@@ -778,7 +778,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 17 import `ArticulationFigure`; 120 render `ArticulationFigure`
+- `packages/features/articulation/src/ui/player.tsx`: 32 import `ArticulationFigure`; 139 render `ArticulationFigure`
 
 ### ArticulationFigure3D
 
@@ -787,7 +787,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `ArticulationFigure3D` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 18 import `ArticulationFigure3D`; 110 render `ArticulationFigure3D`
+- `packages/features/articulation/src/ui/player.tsx`: 33 import `ArticulationFigure3D`; 127 render `ArticulationFigure3D`
 
 ### AttachmentList
 
@@ -960,7 +960,7 @@ Every component under `src/` with its exports, platform files, and every place i
 - Exports: `PhaseStrip` (component)
 - Usages: 1 reference in 1 file
 
-- `packages/features/articulation/src/ui/player.tsx`: 19 import `PhaseStrip`; 123 render `PhaseStrip`
+- `packages/features/articulation/src/ui/player.tsx`: 34 import `PhaseStrip`; 142 render `PhaseStrip`
 
 ### QuestionFeedback
 

@@ -57,6 +57,8 @@
   let showGrid = false;
   let camera = { ...data.scene.camera };
   let axis = 'y';
+  let canvasChoice = data.surface.defaults.canvas;
+  let gridChoice = data.surface.defaults.grid;
   let speed = 1;
   let playing = !reducedMotion;
   let elapsed = 0;
@@ -243,6 +245,14 @@
 
   const viewBox = () => (threeD ? data.view3d : data.headViewBox).split(' ').map(Number);
 
+  /** The chosen canvas and grid tone, resolved to the colours they draw with. */
+  const stage = () => {
+    const canvas =
+      data.surface.canvases.find((entry) => entry.id === canvasChoice) ?? data.surface.canvases[0];
+    const tone = data.surface.gridTones.find((entry) => entry.id === gridChoice) ?? data.surface.gridTones[0];
+    return { background: canvas.color, grid: tone.line, gridStrong: tone.strong };
+  };
+
   /** Projection of a point at depth `z`; the 2D view ignores depth. */
   function project(point, z = 0) {
     if (!threeD) return { x: point[0], y: point[1] };
@@ -376,13 +386,14 @@
   }
 
   function gridSvg() {
+    const tone = stage();
     return gridLines()
       .map(
         (line) =>
           `<line x1="${line.x.toFixed(1)}" y1="${line.y.toFixed(1)}" x2="${line.x2.toFixed(
             1,
           )}" y2="${line.y2.toFixed(1)}" stroke="${
-            line.strong ? '#BFD2E4' : '#DEE8F2'
+            line.strong ? tone.gridStrong : tone.grid
           }" stroke-width="${line.strong ? 1.4 : 1}"/>`,
       )
       .join('');
@@ -444,6 +455,7 @@
     const colors = ['#C0392B', '#1E8449', '#1F5FA8'];
     const names = ['X', 'Y', 'Z'];
     return `<svg class="studio-axes" viewBox="0 0 72 72" aria-hidden="true">
+      <circle cx="36" cy="36" r="32" fill="rgba(255,255,255,0.72)"/>
       <circle cx="36" cy="36" r="2.4" fill="#5E666E"/>
       ${[
         [1, 0, 0],
@@ -533,6 +545,7 @@
     const canvas = document.getElementById('studio-canvas');
     const [, , width, height] = viewBox();
     canvas.style.aspectRatio = `${width} / ${height}`;
+    canvas.style.background = stage().background;
     canvas.classList.toggle('is-3d', threeD);
     canvas.innerHTML = `<div class="studio-figure">${threeD ? figure3d() : figure2d()}</div>
       <div class="studio-overlay"></div>
@@ -754,6 +767,38 @@
                 )
                 .join('')}
               <em>${axis.toUpperCase()} ${fmt(axisAngle())}</em>
+            </div>
+            <div class="studio-palette">
+              <span>${lang === 'en' ? 'Background' : 'Hintergrund'}</span>
+              <span class="studio-swatches" role="group" aria-label="${
+                lang === 'en' ? 'Background' : 'Hintergrund'
+              }">
+                ${data.surface.canvases
+                  .map(
+                    (entry) =>
+                      `<button type="button" class="studio-swatch" data-canvas="${entry.id}" aria-pressed="${
+                        entry.id === canvasChoice
+                      }" aria-label="${lang === 'en' ? 'Background' : 'Hintergrund'} ${esc(
+                        local(entry.label),
+                      )}" style="--swatch:${entry.color}"><i aria-hidden="true"></i></button>`,
+                  )
+                  .join('')}
+              </span>
+              <span>${lang === 'en' ? 'Grid colour' : 'Gitterfarbe'}</span>
+              <span class="studio-swatches" role="group" aria-label="${
+                lang === 'en' ? 'Grid colour' : 'Gitterfarbe'
+              }">
+                ${data.surface.gridTones
+                  .map(
+                    (entry) =>
+                      `<button type="button" class="studio-swatch" data-grid-tone="${entry.id}" aria-pressed="${
+                        entry.id === gridChoice
+                      }" aria-label="${lang === 'en' ? 'Grid colour' : 'Gitterfarbe'} ${esc(
+                        local(entry.label),
+                      )}" style="--swatch:${entry.strong}"><i aria-hidden="true"></i></button>`,
+                  )
+                  .join('')}
+              </span>
             </div>`
           : ''
       }`;
@@ -792,6 +837,20 @@
       button.addEventListener('click', () => {
         speed = Number(button.dataset.speed);
         renderBar();
+      });
+    });
+    bar.querySelectorAll('[data-canvas]').forEach((button) => {
+      button.addEventListener('click', () => {
+        canvasChoice = button.dataset.canvas;
+        renderBar();
+        drawStatic();
+      });
+    });
+    bar.querySelectorAll('[data-grid-tone]').forEach((button) => {
+      button.addEventListener('click', () => {
+        gridChoice = button.dataset.gridTone;
+        renderBar();
+        drawStatic();
       });
     });
     bar.querySelectorAll('[data-axis]').forEach((button) => {

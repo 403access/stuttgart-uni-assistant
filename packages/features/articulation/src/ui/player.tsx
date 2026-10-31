@@ -5,15 +5,30 @@ import { themedStyles } from '@ua/ui/theme';
 import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import type { ArticulationAxis, ArticulationCamera, ArticulationSound } from '../core';
+import type {
+  ArticulationAxis,
+  ArticulationCamera,
+  ArticulationCanvas,
+  ArticulationGridTone,
+  ArticulationSound,
+} from '../core';
 import {
   ARTICULATION_CAMERA,
+  ARTICULATION_SURFACE,
   ARTICULATION_TURN,
   articulationAxisAngle,
   withArticulationAxis,
   wrapArticulationAngle,
 } from '../core';
-import { AngleRow, OverlayToggle, PlayButton, SpeedRow, ViewToggle, formatAngle } from './controls';
+import {
+  AngleRow,
+  OverlayToggle,
+  PlayButton,
+  SpeedRow,
+  StageColors,
+  ViewToggle,
+  formatAngle,
+} from './controls';
 import { ArticulationFigure } from './figure-2d';
 import { ArticulationFigure3D } from './figure-3d';
 import { PhaseStrip } from './phase-strip';
@@ -34,6 +49,8 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
   const [showGrid, setShowGrid] = useState(false);
   const [camera, setCamera] = useState<ArticulationCamera>(ARTICULATION_CAMERA);
   const [axis, setAxis] = useState<ArticulationAxis>('y');
+  const [canvas, setCanvas] = useState<ArticulationCanvas>(ARTICULATION_SURFACE.canvas);
+  const [gridTone, setGridTone] = useState<ArticulationGridTone>(ARTICULATION_SURFACE.grid);
   const timeline = useArticulationTimeline(sound, playing, speed);
   const { reduced, phaseIndex, phaseWindow } = timeline;
   const angle = articulationAxisAngle(camera, axis);
@@ -112,6 +129,8 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
             timeline={timeline}
             camera={camera}
             hint={tx(locale, 'quiz.studio.drag_hint')}
+            canvas={canvas}
+            gridTone={gridTone}
             showAxes={showAxes}
             showGrid={showGrid}
           />
@@ -165,6 +184,16 @@ export function ArticulationPlayer({ sound, locale }: { sound: ArticulationSound
           angle={angle}
           onSelect={(value) => setCamera((current) => withArticulationAxis(current, axis, value))}
           caption={`${axis.toUpperCase()} ${formatAngle(angle)}`}
+        />
+      ) : null}
+
+      {threeD ? (
+        <StageColors
+          locale={locale}
+          canvas={canvas}
+          gridTone={gridTone}
+          onCanvas={setCanvas}
+          onGridTone={setGridTone}
         />
       ) : null}
     </View>

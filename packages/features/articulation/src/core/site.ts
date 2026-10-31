@@ -3,6 +3,13 @@ import type { Localized } from '@ua/core/domain/types';
 import type { ArticulationManner, ArticulationPlace, ArticulationSound } from './types';
 
 import { articulationGroups, articulationSounds } from './sounds';
+import {
+  ARTICULATION_CANVASES,
+  ARTICULATION_GRID_TONES,
+  ARTICULATION_SURFACE,
+  type ArticulationCanvasOption,
+  type ArticulationGridToneOption,
+} from './surface';
 import { mannerLabels, placeLabels } from './labels';
 import { articulationPhases } from './phases';
 import {
@@ -88,6 +95,12 @@ export interface ArticulationSiteData {
     layers: ArticulationSceneLayer[];
     camera: typeof ARTICULATION_CAMERA;
   };
+  /** Stage colours: the canvas choices, the grid tones and their defaults. */
+  surface: {
+    canvases: ArticulationCanvasOption[];
+    gridTones: ArticulationGridToneOption[];
+    defaults: typeof ARTICULATION_SURFACE;
+  };
   manners: { id: ArticulationManner; label: Localized }[];
   sounds: ArticulationSiteSound[];
 }
@@ -126,6 +139,11 @@ export function buildArticulationSiteData(): ArticulationSiteData {
       shell: ARTICULATION_SHELL,
       layers: articulationStaticLayers(),
       camera: ARTICULATION_CAMERA,
+    },
+    surface: {
+      canvases: ARTICULATION_CANVASES,
+      gridTones: ARTICULATION_GRID_TONES,
+      defaults: ARTICULATION_SURFACE,
     },
     manners: articulationGroups.map((group) => ({
       id: group.manner,

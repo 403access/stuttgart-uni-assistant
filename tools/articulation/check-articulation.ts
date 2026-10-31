@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 import {
   ARTICULATION_3D_VIEW_BOX,
   ARTICULATION_CAMERA,
+  ARTICULATION_CANVASES,
+  ARTICULATION_GRID_TONES,
+  ARTICULATION_SURFACE,
+  articulationStage,
   ARTICULATION_SHELL,
   ARTICULATION_TURN,
   airflowLane,
@@ -173,6 +177,47 @@ expect(wrapArticulationAngle(180) === 180, 'articulation 3D keeps the half turn'
 expect(
   Object.values(ARTICULATION_TURN.presets).every((preset) => preset >= ARTICULATION_TURN.minAngle && preset <= ARTICULATION_TURN.maxAngle),
   'articulation 3D presets sit inside the full turn',
+);
+// The 3D stage is configurable, so every choice has to be a real colour and
+// every grid tone has to stay visible on every canvas, or the learner could
+// pick a combination they cannot see.
+const HEX = /^#[0-9a-f]{6}$/i;
+const channelDistance = (left: string, right: string) =>
+  [0, 2, 4].reduce((sum, offset) => {
+    const channel = (color: string) => Number.parseInt(color.slice(1 + offset, 3 + offset), 16);
+    return sum + Math.abs(channel(left) - channel(right));
+  }, 0);
+expect(ARTICULATION_CANVASES.length >= 2, 'articulation 3D offers canvas colours');
+expect(ARTICULATION_GRID_TONES.length >= 2, 'articulation 3D offers grid colours');
+expect(
+  ARTICULATION_CANVASES.every((option) => HEX.test(option.color) && option.label.de && option.label.en),
+  'articulation 3D canvas colours are named hex values',
+);
+expect(
+  ARTICULATION_GRID_TONES.every(
+    (option) => HEX.test(option.line) && HEX.test(option.strong) && option.label.de && option.label.en,
+  ),
+  'articulation 3D grid colours are named hex values',
+);
+expect(
+  ARTICULATION_GRID_TONES.every((option) => option.line !== option.strong),
+  'articulation 3D grid lines and pivot lines differ',
+);
+expect(
+  ARTICULATION_CANVASES.every((canvasOption) =>
+    ARTICULATION_GRID_TONES.every((tone) => channelDistance(tone.line, canvasOption.color) >= 30),
+  ),
+  'articulation 3D grid stays visible on every canvas',
+);
+expect(
+  ARTICULATION_CANVASES.some((option) => option.id === ARTICULATION_SURFACE.canvas) &&
+    ARTICULATION_GRID_TONES.some((option) => option.id === ARTICULATION_SURFACE.grid),
+  'articulation 3D surface defaults exist',
+);
+expect(
+  articulationStage(ARTICULATION_SURFACE.canvas, ARTICULATION_SURFACE.grid).background ===
+    ARTICULATION_CANVASES.find((option) => option.id === ARTICULATION_SURFACE.canvas)?.color,
+  'articulation 3D stage resolves the chosen canvas',
 );
 expect(shadeColor('#FFFDF9') !== '#FFFDF9', 'articulation 3D shades the side wall');
 expect(/^#[0-9a-f]{6}$/.test(shadeColor('#FFFDF9')), 'articulation 3D shading is a hex colour');

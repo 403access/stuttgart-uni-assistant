@@ -3,10 +3,17 @@ import type { ComponentProps } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { colors, themedStyles } from '@ua/ui/theme';
-import { tx } from '@ua/core/format';
+import { pick, tx } from '@ua/core/format';
 import type { Locale } from '@ua/core/domain/types';
 
-import { ARTICULATION_TURN, type ArticulationAxis } from '../core';
+import {
+  ARTICULATION_CANVASES,
+  ARTICULATION_GRID_TONES,
+  ARTICULATION_TURN,
+  type ArticulationAxis,
+  type ArticulationCanvas,
+  type ArticulationGridTone,
+} from '../core';
 
 /** The axes the model can turn around. */
 const AXES: ArticulationAxis[] = ['x', 'y', 'z'];
@@ -105,6 +112,86 @@ export function AxisPicker({
   );
 }
 
+/** One colour choice of the 3D stage. */
+function Swatch({
+  label,
+  color,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  color: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected }}
+      onPress={onSelect}
+      style={({ pressed }) => [
+        styles.swatchFrame,
+        selected && styles.swatchFrameActive,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={[styles.swatch, { backgroundColor: color }]} />
+    </Pressable>
+  );
+}
+
+/**
+ * Colours of the 3D stage: the canvas the model sits on and the reference
+ * grid. They are picked independently — a projection reads differently on
+ * paper than on a dark board — and every grid tone stays visible on every
+ * canvas.
+ */
+export function StageColors({
+  locale,
+  canvas,
+  gridTone,
+  onCanvas,
+  onGridTone,
+}: {
+  locale: Locale;
+  canvas: ArticulationCanvas;
+  gridTone: ArticulationGridTone;
+  onCanvas: (canvas: ArticulationCanvas) => void;
+  onGridTone: (tone: ArticulationGridTone) => void;
+}) {
+  const canvasLabel = tx(locale, 'quiz.studio.canvas');
+  const gridLabel = tx(locale, 'quiz.studio.grid_color');
+  return (
+    <View style={styles.stageColors}>
+      <View style={styles.row}>
+        <Text style={styles.colorLabel}>{canvasLabel}</Text>
+        {ARTICULATION_CANVASES.map((option) => (
+          <Swatch
+            key={option.id}
+            label={`${canvasLabel} ${pick(option.label, locale)}`}
+            color={option.color}
+            selected={option.id === canvas}
+            onSelect={() => onCanvas(option.id)}
+          />
+        ))}
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.colorLabel}>{gridLabel}</Text>
+        {ARTICULATION_GRID_TONES.map((option) => (
+          <Swatch
+            key={option.id}
+            label={`${gridLabel} ${pick(option.label, locale)}`}
+            color={option.strong}
+            selected={option.id === gridTone}
+            onSelect={() => onGridTone(option.id)}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /** Preset angles next to the current one; dragging covers everything between. */
 export function AngleRow({
   locale,
@@ -179,6 +266,26 @@ const styles = themedStyles((colors) => ({
   toggleLabel: { color: colors.mute, fontSize: 11, fontWeight: '700' },
   toggleLabelActive: { color: colors.blue },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stageColors: { gap: 6 },
+  colorLabel: {
+    width: 96,
+    color: colors.mute,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  swatchFrame: {
+    width: 27,
+    height: 27,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swatchFrameActive: { borderWidth: 2, borderColor: colors.blue },
+  swatch: { width: 19, height: 19, borderRadius: 6, borderWidth: 1, borderColor: colors.line },
   axisGroup: {
     flexDirection: 'row',
     borderRadius: 9,

@@ -1069,6 +1069,40 @@ p { margin: 0; }
 .studio-turn .studio-axis-group button { min-width: 30px; padding: 0 6px; font-size: 0.72rem; }
 .studio-turn button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
 .studio-turn em { margin-left: auto; font-style: normal; color: var(--ink-soft); letter-spacing: 0; text-transform: none; }
+.studio-palette {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  color: var(--mute);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.studio-swatches { display: inline-flex; gap: 5px; }
+.studio-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+}
+.studio-swatch i {
+  display: block;
+  width: 19px;
+  height: 19px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--swatch);
+}
+.studio-swatch[aria-pressed="true"] { border: 2px solid var(--blue); }
+.studio-swatch:hover { border-color: var(--blue); }
 
 .studio-side { display: grid; gap: 12px; }
 .studio-tabs { display: flex; flex-wrap: wrap; gap: 6px; }

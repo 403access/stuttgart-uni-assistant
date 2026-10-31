@@ -37,7 +37,7 @@ const sound = findArticulationSound('t') ?? findArticulationSound(studioSoundFor
 <ArticulationPlayer sound={sound} locale={locale} />;
 ```
 
-The player owns the timeline, the 2D/3D switch and the camera controls; the 3D view is a solid cutaway head — the section face plus the rest of the head receding behind it — built from shaded volumes; dragging turns it through a full circle around the selected axis (X/Y/Z), three presets cover the useful angles, and two overlay switches show an orientation gizmo and a reference grid. The phase chips seek, the speed row scales the clock (0.5×–2×), and the timeline never restarts when either changes:
+The player owns the timeline, the 2D/3D switch and the camera controls; the 3D view is a solid cutaway head — the section face plus the rest of the head receding behind it — built from shaded volumes; dragging turns it through a full circle around the selected axis (X/Y/Z), three presets cover the useful angles, and two overlay switches show an orientation gizmo and a reference grid, and two swatch rows pick the background and the grid colour. The phase chips seek, the speed row scales the clock (0.5×–2×), and the timeline never restarts when either changes:
 `timeline.seekPhase(index)` jumps to a stage without restarting the loop, and pausing keeps the
 current frame. `ArticulationFigure` and `ArticulationFigure3D` are exported for compositions that
 need their own controls.

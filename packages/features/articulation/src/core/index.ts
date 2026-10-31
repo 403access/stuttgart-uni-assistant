@@ -44,6 +44,14 @@ export type {
   ArticulationGridLine,
   ArticulationSceneLayer,
 } from './scene3d';
+export { ARTICULATION_CANVASES, ARTICULATION_GRID_TONES, ARTICULATION_SURFACE, articulationStage } from './surface';
+export type {
+  ArticulationCanvas,
+  ArticulationCanvasOption,
+  ArticulationGridTone,
+  ArticulationGridToneOption,
+  ArticulationStage,
+} from './surface';
 export type { ArticulationSiteData, ArticulationSitePhase, ArticulationSiteSound } from './site';
 
 export {
