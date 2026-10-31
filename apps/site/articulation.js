@@ -297,7 +297,7 @@
 
   const PIVOT = { x: 540, y: 515 };
 
-  const sceneMatrix = (anchor, scale, z) => {
+  const sceneMatrix = (anchor, scale, z, scaleY = scale) => {
     const u = Math.cos(rad(camera.yaw));
     const v = Math.sin(rad(camera.yaw));
     const w = Math.sin(rad(camera.pitch));
@@ -306,10 +306,10 @@
     const sr = Math.sin(rad(camera.roll));
     const [cx, cy] = anchor;
     const x0 = cx - PIVOT.x - scale * cx;
-    const y0 = cy - PIVOT.y - scale * cy;
+    const y0 = cy - PIVOT.y - scaleY * cy;
     const a0 = scale * u;
     const b0 = scale * v * w;
-    const d0 = scale * q;
+    const d0 = scaleY * q;
     const e0 = PIVOT.x + u * x0 + v * z;
     const f0 = PIVOT.y + q * y0 + w * v * x0 - w * u * z;
     const a = cr * a0 - sr * b0;
@@ -454,11 +454,11 @@
     const far = project([data.scene.depth.x, data.scene.depth.y], -shell.depth);
     const near = project([data.scene.depth.x, data.scene.depth.y], 0);
     const shadeId = 'studioShellShade';
-    const defs = `<defs><linearGradient id="${shadeId}" gradientUnits="userSpaceOnUse" x1="${far.x.toFixed(
+    const defs = `<defs><clipPath id="studioBust"><rect x="0" y="0" width="1000" height="${data.bust}"/></clipPath><linearGradient id="${shadeId}" gradientUnits="userSpaceOnUse" x1="${far.x.toFixed(
       1,
     )}" y1="${far.y.toFixed(1)}" x2="${near.x.toFixed(1)}" y2="${near.y.toFixed(
       1,
-    )}"><stop offset="0" stop-color="${shade('#FFFDF9', 0.2)}"/><stop offset="1" stop-color="#FFFDF9"/></linearGradient>${organDefs(
+    )}"><stop offset="0" stop-color="${shade('#FFFDF9', 0.3)}"/><stop offset="1" stop-color="#FFFDF9"/></linearGradient>${organDefs(
       [...data.scene.layers, ...sound.poseLayers],
     )}</defs>`;
     const parts = [defs];
@@ -467,21 +467,20 @@
     // head and not as a sheet. The bands share one scene-space gradient and are
     // stroked with it, so they fuse into a single surface from any angle.
     const bandWidth = (shell.depth / shell.rim) * 2;
+    parts.push('<g clip-path="url(#studioBust)">');
     for (let index = shell.rim; index >= 0; index -= 1) {
       const back = index / shell.rim;
       const scale = 1 - shell.taper * back ** 1.4;
-      const matrix = sceneMatrix([data.scene.depth.x, data.scene.depth.y], scale, -shell.depth * back);
-      const front = back === 0;
-      const fill = front ? '#FFFDF9' : `url(#${shadeId})`;
+      const matrix = sceneMatrix([data.scene.depth.x, data.scene.depth.y], scale, -shell.depth * back, 1);
       parts.push(
-        ...data.shellOutline.map(
-          (shape) =>
-            `<path d="${shape.d}" transform="${matrix}" fill="${fill}" stroke="${
-              front ? shape.stroke : fill
-            }" stroke-width="${front ? 2.4 : bandWidth}" stroke-linejoin="round"/>`,
-        ),
+        `<path d="${data.side}" transform="${matrix}" fill="url(#${shadeId})" stroke="url(#${shadeId})" stroke-width="${bandWidth}" stroke-linejoin="round"/>`,
       );
     }
+    parts.push('</g>');
+    // The cut face, on the midline.
+    parts.push(
+      `<path d="${data.head}" transform="${sceneMatrix([DEPTH().x, DEPTH().y], 1, 0)}" fill="#FFFDF9" stroke="#243447" stroke-width="2.4" stroke-linejoin="round"/>`,
+    );
     if (showGrid) parts.push(gridSvg());
     const layers = [...data.scene.layers, ...sound.poseLayers].map((layer) => sceneLayer(layer));
     // Bodies first, far to near; then every cut face, in the order the flat

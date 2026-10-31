@@ -24,7 +24,10 @@ export {
 export { mannerLabels, placeLabels } from './labels';
 export { buildArticulationSiteData } from './site';
 export {
+  ARTICULATION_BUST,
   ARTICULATION_CAMERA,
+  ARTICULATION_HEAD,
+  ARTICULATION_SIDE,
   ARTICULATION_DEPTH,
   ARTICULATION_PIVOT,
   ARTICULATION_GRID,
@@ -34,7 +37,6 @@ export {
   withArticulationAxis,
   articulationScene,
   articulationPoseLayers,
-  articulationShellOutline,
   articulationStaticLayers,
   projectSceneDirection,
   projectScenePoint,

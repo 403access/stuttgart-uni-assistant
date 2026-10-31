@@ -109,7 +109,9 @@ anatomy model (`packages/features/articulation/src/core/scene3d.ts`):
   ends it on a flat cut; in 3-D that cut would turn the receding bands into a
   staircase, so the shell's neck is carried below the bottom edge.
 - Every organ is a **swept body of its own** — depth and taper in
-  `articulationScene`/`articulationPoseLayers`. Its cross-sections narrow as
+  `articulationScene`/`articulationPoseLayers`, chosen so the body stays inside
+  the head's profile when the model turns (a deeper jaw punched out through the
+  cheek). Its cross-sections narrow as
   they recede towards the core of the head (`ARTICULATION_DEPTH`, near the back
   of the skull, not the organ's own centre), so a turned body recedes into the
   skull instead of sliding forwards with the camera. A lobe such as the tongue

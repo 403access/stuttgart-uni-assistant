@@ -28,11 +28,13 @@ import {
 import { diagramPalette } from '@ua/quiz-content/figures/palette';
 import { ARTICULATION_3D_VIEW_BOX, ARTICULATION_TURN } from './view3d';
 import {
+  ARTICULATION_BUST,
   ARTICULATION_CAMERA,
+  ARTICULATION_HEAD,
+  ARTICULATION_SIDE,
   ARTICULATION_DEPTH,
   ARTICULATION_SHELL,
   articulationPoseLayers,
-  articulationShellOutline,
   articulationStaticLayers,
   type ArticulationSceneLayer,
 } from './scene3d';
@@ -85,8 +87,12 @@ export interface ArticulationSiteData {
   view3d: string;
   turn: typeof ARTICULATION_TURN;
   silhouette: { d: string; fill: string; stroke: string }[];
-  /** The skull outline with the neck carried past the 3-D frame. */
-  shellOutline: { d: string; fill: string; stroke: string }[];
+  /** Where the neck is cut, like a model on a stand. */
+  bust: number;
+  /** The 3-D shell's profile (the flat figure keeps `silhouette`). */
+  head: string;
+  /** The head's lateral surface, which the far half shows when turned. */
+  side: string;
   regions: { d: string; fill: string; stroke: string }[];
   velum: string[];
   /** The neutral articulators the approach phase starts from. */
@@ -128,7 +134,9 @@ export function buildArticulationSiteData(): ArticulationSiteData {
     view3d: ARTICULATION_3D_VIEW_BOX,
     turn: ARTICULATION_TURN,
     silhouette: articulationBackdrop.map((d) => ({ d, fill: '#FFFDF9', stroke: '#243447' })),
-    shellOutline: articulationShellOutline.map((d) => ({ d, fill: '#FFFDF9', stroke: '#243447' })),
+    bust: ARTICULATION_BUST,
+    head: ARTICULATION_HEAD,
+    side: ARTICULATION_SIDE,
     regions: articulationRegions.flatMap((region) =>
       region.path
         ? [

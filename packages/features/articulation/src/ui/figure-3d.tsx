@@ -1,7 +1,18 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Animated, Text, View } from 'react-native';
-import Svg, { Circle, Defs, G, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import Svg, {
+  Circle,
+  ClipPath,
+  Defs,
+  G,
+  Line,
+  LinearGradient,
+  Path,
+  Rect,
+  Stop,
+  Text as SvgText,
+} from 'react-native-svg';
 
 import { colors, themedStyles } from '@ua/ui/theme';
 import { tx } from '@ua/core/format';
@@ -9,6 +20,7 @@ import type { Locale } from '@ua/core/domain/types';
 
 import {
   ARTICULATION_3D_VIEW_BOX,
+  ARTICULATION_BUST,
   ARTICULATION_DEPTH,
   ARTICULATION_SURFACE,
   airflowFocusT,
@@ -16,8 +28,9 @@ import {
   articulationFocus,
   articulationGrid,
   ARTICULATION_SHELL,
+  ARTICULATION_HEAD,
+  ARTICULATION_SIDE,
   articulationPoseLayers,
-  articulationShellOutline,
   articulationStage,
   articulationStaticLayers,
   pointPercent,
@@ -50,11 +63,13 @@ import {
 } from './timeline';
 
 /** How dark the far side of the head gets. */
-const SHELL_TONE = 0.2;
+const SHELL_TONE = 0.3;
 /** Wide enough to bridge the gap between two shell bands at any angle. */
 const SHELL_BAND_WIDTH = (ARTICULATION_SHELL.depth / ARTICULATION_SHELL.rim) * 2;
 /** The shell's shading runs from the far side of the head to the cut face. */
 const SHELL_SHADE = 'shell-shade';
+/** The neck is cut at the bust line, so every band ends on the same edge. */
+const SHELL_BUST = 'shell-bust';
 /** How dark an organ's body gets. */
 const SIDE_TONE = 0.3;
 /** Cross-sections per organ while a drag is in progress. */
@@ -188,6 +203,9 @@ export function ArticulationFigure3D({
               The bands share one scene-space gradient and are stroked with it,
               so they fuse into a single surface from any angle. */}
           <Defs>
+            <ClipPath id={SHELL_BUST}>
+              <Rect x={0} y={0} width={1000} height={ARTICULATION_BUST} />
+            </ClipPath>
             <LinearGradient
               id={SHELL_SHADE}
               gradientUnits="userSpaceOnUse"
@@ -218,21 +236,33 @@ export function ArticulationFigure3D({
               </LinearGradient>
             );
           })}
-          {[...rim].reverse().map((slice) => {
-            const front = slice.back === 0;
-            const shade = `url(#${SHELL_SHADE})`;
-            return articulationShellOutline.map((d, pathIndex) => (
-              <Path
-                key={`shell-${slice.back}-${pathIndex}`}
-                d={d}
-                transform={slice.matrix}
-                fill={front ? '#FFFDF9' : shade}
-                stroke={front ? '#243447' : shade}
-                strokeWidth={front ? 2.4 : SHELL_BAND_WIDTH}
-                strokeLinejoin="round"
-              />
-            ));
-          })}
+          {/* The far half: the lateral surface of the skull, cheek and neck. */}
+          <G clipPath={`url(#${SHELL_BUST})`}>
+            {[...rim].reverse().map((slice) => {
+              const shade = `url(#${SHELL_SHADE})`;
+              return (
+                <Path
+                  key={`shell-${slice.back}`}
+                  d={ARTICULATION_SIDE}
+                  transform={slice.matrix}
+                  fill={shade}
+                  stroke={shade}
+                  strokeWidth={SHELL_BAND_WIDTH}
+                  strokeLinejoin="round"
+                />
+              );
+            })}
+          </G>
+
+          {/* The cut face, on the midline. */}
+          <Path
+            d={ARTICULATION_HEAD}
+            transform={rim[0].matrix}
+            fill="#FFFDF9"
+            stroke="#243447"
+            strokeWidth={2.4}
+            strokeLinejoin="round"
+          />
 
           {/* Reference grid on the cut plane. */}
           {grid.map((line, index) => (

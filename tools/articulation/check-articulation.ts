@@ -235,12 +235,14 @@ for (const sound of articulationSounds) {
         projectScenePoint(focus, 20, { yaw, pitch, roll }),
         // points on the head shell, which is the outer bound of the model:
         // the cut face and the far side of the skull
-        ...([[186, 500], [600, 68], [900, 486], [806, 986], [258, 660]] as const).flatMap((corner) =>
+        ...([[186, 502], [600, 68], [884, 486], [804, 986], [258, 638]] as const).flatMap((corner) =>
           [0, 0.5, 1].map((back) => {
+            // The shell narrows front-to-back only, so the far half keeps the
+            // height of the cut face.
             const scale = 1 - ARTICULATION_SHELL.taper * back ** 1.4;
             const [ax, ay] = [ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y];
             return projectScenePoint(
-              [ax + (corner[0] - ax) * scale, ay + (corner[1] - ay) * scale],
+              [ax + (corner[0] - ax) * scale, corner[1]],
               -ARTICULATION_SHELL.depth * back,
               { yaw, pitch, roll },
             );

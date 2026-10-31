@@ -27,6 +27,8 @@ export function sliceMatrix(
   scale: number,
   z: number,
   camera: ArticulationCamera,
+  /** Vertical scale, when the outline should narrow only front-to-back. */
+  scaleY: number = scale,
 ): string {
   const u = Math.cos(rad(camera.yaw));
   const v = Math.sin(rad(camera.yaw));
@@ -40,10 +42,10 @@ export function sliceMatrix(
   // The outline is scaled around its anchor, turned and tilted; the roll then
   // rotates the finished image around the pivot.
   const x0 = cx - px - scale * cx;
-  const y0 = cy - py - scale * cy;
+  const y0 = cy - py - scaleY * cy;
   const a0 = scale * u;
   const b0 = scale * v * w;
-  const d0 = scale * q;
+  const d0 = scaleY * q;
   const e0 = px + u * x0 + v * z;
   const f0 = py + q * y0 + w * v * x0 - w * u * z;
   const a = cr * a0 - sr * b0;
@@ -167,7 +169,9 @@ export function shellRim(
     // Round the far edge instead of tapering to a point.
     const scale = 1 - ARTICULATION_SHELL.taper * back ** 1.4;
     slices.push({
-      matrix: sliceMatrix([ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y], scale, -depth * back, camera),
+      // A head is shorter front-to-back on its far side, not shorter overall:
+      // scaling y as well would make the turned head sink into the neck.
+      matrix: sliceMatrix([ARTICULATION_DEPTH.x, ARTICULATION_DEPTH.y], scale, -depth * back, camera, 1),
       scale,
       z: -depth * back,
       back,

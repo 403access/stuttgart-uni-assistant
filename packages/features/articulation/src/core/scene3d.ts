@@ -66,9 +66,7 @@ export const ARTICULATION_SHELL = {
   /** Tone bands between the cut face and the far side of the head. */
   rim: 26,
   /** How much narrower the far side is than the cut face. */
-  taper: 0.26,
-  /** How far the neck runs on below the 2-D cut, so the 3-D bands get clipped. */
-  neck: 320,
+  taper: 0.2,
 } as const;
 
 /** The model turns around the middle of the head, not around the origin. */
@@ -122,15 +120,15 @@ interface Placement {
 }
 
 const STATIC: Record<string, Placement> = {
-  'nasal-cavity': { depth: 110, taper: 0.22, order: 10 },
-  pharynx: { depth: 110, taper: 0.28, order: 20 },
-  'oral-cavity': { depth: 100, taper: 0.25, order: 30 },
-  'hard-palate': { depth: 130, taper: 0.1, order: 50 },
-  'alveolar-ridge': { depth: 90, taper: 0.16, order: 60 },
-  teeth: { depth: 80, taper: 0.1, order: 70 },
-  'lower-jaw': { depth: 170, taper: 0.14, order: 110 },
-  larynx: { depth: 90, taper: 0.32, order: 120 },
-  trachea: { depth: 60, taper: 0.12, order: 140 },
+  'nasal-cavity': { depth: 90, taper: 0.22, order: 10 },
+  pharynx: { depth: 90, taper: 0.28, order: 20 },
+  'oral-cavity': { depth: 90, taper: 0.25, order: 30 },
+  'hard-palate': { depth: 100, taper: 0.1, order: 50 },
+  'alveolar-ridge': { depth: 80, taper: 0.16, order: 60 },
+  teeth: { depth: 70, taper: 0.1, order: 70 },
+  'lower-jaw': { depth: 110, taper: 0.14, order: 110 },
+  larynx: { depth: 80, taper: 0.32, order: 120 },
+  trachea: { depth: 55, taper: 0.12, order: 140 },
 };
 
 /** A volume starts at the cut plane and recedes by its depth. */
@@ -165,7 +163,7 @@ export function articulationPoseLayers(
       id: 'vocal-cords',
       paths: cordOutlines(voiced),
       ...tone('cords'),
-      depth: 45,
+      depth: 40,
       taper: 0.3,
       z: behind(45),
       order: 130,
@@ -174,7 +172,7 @@ export function articulationPoseLayers(
       id: 'tongue',
       paths: [tongueOutline(pose.tongue)],
       ...tone('tongue'),
-      depth: 120,
+      depth: 100,
       taper: 0.28,
       z: behind(120),
       order: 40,
@@ -183,7 +181,7 @@ export function articulationPoseLayers(
       id: 'velum',
       paths: velumOutlines,
       ...tone('violet'),
-      depth: 90,
+      depth: 80,
       taper: 0.3,
       z: behind(90),
       order: 90,
@@ -193,7 +191,7 @@ export function articulationPoseLayers(
       id: 'lips',
       paths: lipOutlines(pose.lips),
       ...tone('lip'),
-      depth: 90,
+      depth: 60,
       taper: 0.4,
       z: behind(90),
       order: 80,
@@ -249,17 +247,62 @@ export function articulationGrid(camera: ArticulationCamera): ArticulationGridLi
 /** The skull outline the shell is built from. */
 export { articulationBackdrop };
 
+/** The bust line: the neck runs out of the frame here, as the flat figure's does. */
+export const ARTICULATION_BUST = 1080;
+
 /**
- * The skull outline with the neck carried down past the 3D frame. The 2-D
- * figure ends the neck on a flat cut, which would turn the shell's bands into a
- * staircase as they recede; in 3D the neck simply runs out of the picture.
+ * The 3-D shell's profile. The flat figure's outline is drawn for a diagram —
+ * a tall egg with a straight column for a neck — which reads as a bottle once
+ * it is turned. This profile keeps the face where the anatomy sits, but the
+ * cranium is rounder and the neck narrows under the jaw and widens into the
+ * shoulders, so the bust reads as a head and a neck.
  */
-export const articulationShellOutline: string[] = articulationBackdrop.map((d) =>
-  d.replace(
-    'L806 986',
-    `L526 ${986 + ARTICULATION_SHELL.neck} L806 ${986 + ARTICULATION_SHELL.neck} L806 986`,
-  ),
-);
+export const ARTICULATION_HEAD = [
+  'M600 68',
+  'C470 56 372 140 320 262',
+  'C306 300 306 340 292 372',
+  'C280 406 246 434 214 462',
+  'C196 478 176 490 186 502',
+  'C194 512 210 512 222 512',
+  'C232 518 238 528 236 536',
+  'C238 544 238 554 234 560',
+  'C230 572 236 590 246 606',
+  'C252 616 254 628 258 638',
+  'C300 680 360 704 420 724',
+  'C480 744 540 750 586 742',
+  'C574 786 566 826 562 866',
+  'C558 896 556 916 556 946',
+  'L556 1300',
+  'L780 1300',
+  'L780 856',
+  'C806 790 884 640 884 486',
+  'C884 300 776 138 600 68',
+  'Z',
+].join(' ');
+
+/**
+ * The head's lateral surface, which is what you see of the far half when the
+ * model turns. It cannot be a copy of the section: the nose and the lips lie on
+ * the midline, so they have no lateral extent — copying them would grow a
+ * second face beside the first. Behind the temple the profile steps back to the
+ * cheek, the jaw and the neck.
+ */
+export const ARTICULATION_SIDE = [
+  'M600 68',
+  'C470 56 372 140 336 250',
+  'C326 300 330 350 348 400',
+  'C366 448 386 486 404 530',
+  'C424 578 452 626 486 664',
+  'C512 694 552 720 586 742',
+  'C574 786 566 826 562 866',
+  'C558 896 556 916 556 946',
+  'L556 1300',
+  'L780 1300',
+  'L780 856',
+  'C806 790 884 640 884 486',
+  'C884 300 776 138 600 68',
+  'Z',
+].join(' ');
 
 /**
  * Projection of a direction (no position), e.g. one axis of the gizmo. Same
